@@ -39,6 +39,9 @@ jobs:
           test -f docs/goreecloud/API.md
           test -f docs/goreecloud/DEPLOYMENT.md
           test -f goreecloud/settings.yml.example
+          test -f goreecloud/compose.yml.example
+          test -f .github/workflows/goreecloud-runtime-smoke.yml
+          test -f .github/workflows/goreecloud-container-build.yml
           test -f searx/static/themes/simple/goreecloud.css
           grep -q 'GoreeCloud Search' README.rst
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
@@ -56,10 +59,18 @@ jobs:
           grep -q 'query_in_title: false' goreecloud/settings.yml.example
           grep -q 'public_instance: false' goreecloud/settings.yml.example
           grep -q '^    - html$' goreecloud/settings.yml.example
+          grep -q '127.0.0.1:' goreecloud/compose.yml.example
+          grep -q 'SEARXNG_SECRET:.*:?Set SEARXNG_SECRET' goreecloud/compose.yml.example
           if grep -Eq '^    - (json|csv|rss)$' goreecloud/settings.yml.example; then
             echo 'Machine-readable formats must remain disabled in the foundation baseline.' >&2
             exit 1
           fi
+
+      - name: Validate container naming compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'CONTAINER_IMAGE_ORGANIZATION="${CONTAINER_IMAGE_ORGANIZATION,,}"' utils/lib_sxng_container.sh
 
       - name: Guard upstream license
         shell: bash
