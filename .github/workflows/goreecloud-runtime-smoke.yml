@@ -1,0 +1,107 @@
+name: GoreeCloud runtime smoke
+
+on:
+  push:
+    branches:
+      - 'agent/**'
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Prepare GoreeCloud runtime settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp goreecloud/settings.yml.example /tmp/goreecloud-search-settings.yml
+          python - <<'PY'
+          import yaml
+          from pathlib import Path
+
+          path = Path('/tmp/goreecloud-search-settings.yml')
+          data = yaml.safe_load(path.read_text())
+          assert data['general']['instance_name'] == 'GoreeCloud Search'
+          assert data['server']['image_proxy'] is True
+          assert data['server']['public_instance'] is False
+          assert data['search']['formats'] == ['html']
+          PY
+
+      - name: Start GoreeCloud Search
+        env:
+          SEARXNG_SETTINGS_PATH: /tmp/goreecloud-search-settings.yml
+          SEARXNG_SECRET: goreecloud-ci-only-secret-not-for-production
+          SEARXNG_BIND_ADDRESS: 127.0.0.1
+          SEARXNG_PORT: '8888'
+          SEARXNG_DISABLE_ETC_SETTINGS: 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup python -m searx.webapp >/tmp/goreecloud-search.log 2>&1 &
+          echo $! >/tmp/goreecloud-search.pid
+
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent --show-error http://127.0.0.1:8888/ >/tmp/index.html; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/goreecloud-search.pid)" 2>/dev/null; then
+              cat /tmp/goreecloud-search.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          cat /tmp/goreecloud-search.log
+          exit 1
+
+      - name: Validate rendered product shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '<title>GoreeCloud Search</title>' /tmp/index.html
+          grep -q 'GoreeCloud Search' /tmp/index.html
+          grep -q 'goreecloud.css' /tmp/index.html
+          grep -q 'Powered by' /tmp/index.html
+          grep -q 'SearXNG' /tmp/index.html
+
+          curl --fail --silent --show-error http://127.0.0.1:8888/preferences >/tmp/preferences.html
+          grep -q 'GoreeCloud Search' /tmp/preferences.html
+
+          curl --fail --silent --show-error 'http://127.0.0.1:8888/search?q=GoreeCloud+Search' >/tmp/search.html
+          grep -q 'GoreeCloud Search' /tmp/search.html
+          grep -q 'goreecloud.css' /tmp/search.html
+
+      - name: Validate privacy-facing headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --head http://127.0.0.1:8888/ >/tmp/headers.txt
+          grep -qi '^referrer-policy: no-referrer' /tmp/headers.txt
+          grep -qi '^x-content-type-options: nosniff' /tmp/headers.txt
+          grep -qi '^x-robots-tag: noindex, nofollow' /tmp/headers.txt
+
+      - name: Print application log on failure
+        if: failure()
+        run: cat /tmp/goreecloud-search.log || true
