@@ -8,6 +8,8 @@
   --gc-surface-strong: rgba(255, 255, 255, 0.94);
   --gc-border: rgba(84, 104, 138, 0.18);
   --gc-shadow: 0 18px 50px rgba(35, 55, 90, 0.12);
+  --gc-shadow-soft: 0 10px 30px rgba(35, 55, 90, 0.07);
+  --gc-radius-xl: 32px;
   --gc-radius-lg: 28px;
   --gc-radius-md: 18px;
   --gc-radius-sm: 12px;
@@ -20,6 +22,7 @@ html.theme-black {
   --gc-surface-strong: rgba(31, 35, 46, 0.94);
   --gc-border: rgba(173, 190, 224, 0.16);
   --gc-shadow: 0 20px 56px rgba(0, 0, 0, 0.32);
+  --gc-shadow-soft: 0 12px 34px rgba(0, 0, 0, 0.22);
   --gc-page-gradient: radial-gradient(circle at top, rgba(79, 124, 255, 0.17), transparent 34rem), var(--color-base-background);
 }
 
@@ -103,19 +106,145 @@ body {
   -webkit-backdrop-filter: blur(22px) saturate(145%);
 }
 
+.goreecloud-search-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--color-base-font) !important;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.goreecloud-search-wordmark:hover {
+  text-decoration: none;
+}
+
+.goreecloud-search-wordmark-mark {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.7rem;
+  background: linear-gradient(145deg, var(--gc-accent), var(--gc-accent-strong));
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(49, 94, 232, 0.24);
+}
+
+.goreecloud-search-wordmark-text strong {
+  font-weight: 780;
+}
+
+#search_logo.goreecloud-search-wordmark {
+  min-width: max-content;
+  padding: 0.55rem 0.65rem;
+}
+
+#search_header {
+  border-bottom-color: var(--gc-border);
+}
+
+.search_box {
+  border-radius: var(--gc-radius-md);
+}
+
 #q,
 .search_box input[type="search"] {
   border-radius: calc(var(--gc-radius-lg) - 8px) !important;
 }
 
+#send_search,
+#clear_search {
+  border-radius: 999px;
+}
+
+#send_search {
+  background: var(--gc-accent);
+  color: white;
+}
+
+#categories_container {
+  padding-block: 0.3rem;
+}
+
+.category label {
+  border-radius: 999px;
+}
+
+.category input:checked + label,
+.category label:hover {
+  background: color-mix(in srgb, var(--gc-accent) 11%, transparent);
+}
+
+.search_filters {
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+}
+
+#categories_container,
+.search_filters {
+  scrollbar-width: thin;
+}
+
+.goreecloud-results-context {
+  width: min(96%, 86rem);
+  margin: 1.25rem auto 0.5rem;
+  padding: 1rem 1.15rem;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.goreecloud-results-eyebrow {
+  margin: 0 0 0.2rem;
+  color: var(--gc-accent);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goreecloud-results-title {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 1.85rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.goreecloud-results-title span {
+  font-weight: 520;
+}
+
+.goreecloud-results-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.goreecloud-results-meta span {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: var(--gc-surface);
+  color: color-mix(in srgb, var(--color-base-font) 72%, transparent);
+  font-size: 0.76rem;
+}
+
 .result,
 .answer,
 .infobox,
-#sidebar .infobox {
+#sidebar .infobox,
+.sidebar-collapsible,
+#suggestions,
+#engines_msg,
+#apis {
   border: 1px solid var(--gc-border);
   border-radius: var(--gc-radius-md);
   background: var(--gc-surface);
-  box-shadow: 0 10px 30px rgba(35, 55, 90, 0.07);
+  box-shadow: var(--gc-shadow-soft);
   backdrop-filter: blur(16px) saturate(125%);
   -webkit-backdrop-filter: blur(16px) saturate(125%);
 }
@@ -129,6 +258,7 @@ body {
 .result:hover {
   border-color: color-mix(in srgb, var(--gc-accent) 36%, var(--gc-border));
   box-shadow: 0 14px 38px rgba(35, 55, 90, 0.11);
+  transform: translateY(-1px);
 }
 
 .result h3 a {
@@ -136,18 +266,56 @@ body {
   text-underline-offset: 0.16em;
 }
 
-#categories_container,
-.search_filters {
-  scrollbar-width: thin;
+.result .engines {
+  opacity: 0.72;
 }
 
-.category label {
+#pagination button,
+#pagination input[type="submit"],
+#pagination input[type="button"] {
+  min-width: 2.5rem;
+  border: 1px solid var(--gc-border);
   border-radius: 999px;
+  background: var(--gc-surface);
 }
 
-.category input:checked + label,
-.category label:hover {
-  background: color-mix(in srgb, var(--gc-accent) 11%, transparent);
+#pagination .page_number_current {
+  background: var(--gc-accent);
+  color: white;
+}
+
+.goreecloud-page-header {
+  width: min(92vw, 78rem);
+  margin: 1.25rem auto 0;
+}
+
+.goreecloud-search-wordmark-page {
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: var(--gc-surface);
+  box-shadow: var(--gc-shadow-soft);
+}
+
+.goreecloud-page.page_with_header {
+  width: min(92vw, 78rem);
+  margin-top: 1.2rem;
+}
+
+.goreecloud-page.page_with_header > h1,
+.goreecloud-page.page_with_header form > h1 {
+  letter-spacing: -0.035em;
+}
+
+.goreecloud-page .tabs,
+.goreecloud-page fieldset,
+.goreecloud-page table {
+  border-color: var(--gc-border);
+}
+
+.goreecloud-page fieldset,
+.goreecloud-page .tabs > section {
+  border-radius: var(--gc-radius-md);
 }
 
 footer {
@@ -177,6 +345,17 @@ footer p {
   }
 }
 
+@media (max-width: 64rem) {
+  .goreecloud-results-context {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .goreecloud-results-meta {
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 50rem) {
   #main_index {
     margin-top: 4.5rem;
@@ -191,9 +370,26 @@ footer p {
     margin-bottom: 1.4rem;
   }
 
+  #search_logo.goreecloud-search-wordmark {
+    padding-inline: 0.35rem;
+  }
+
+  .goreecloud-search-wordmark-text {
+    display: none;
+  }
+
+  .goreecloud-search-wordmark-page .goreecloud-search-wordmark-text {
+    display: inline;
+  }
+
   .result {
     border-radius: var(--gc-radius-sm);
     padding: 0.9rem;
+  }
+
+  .goreecloud-results-context {
+    width: auto;
+    padding-inline: 1rem;
   }
 }
 
@@ -201,12 +397,25 @@ footer p {
   .result,
   .answer,
   .infobox,
+  .sidebar-collapsible,
+  #suggestions,
+  #engines_msg,
+  #apis,
   .index #search,
   .index #search_header,
-  .goreecloud-search-kicker {
+  .goreecloud-search-kicker,
+  .goreecloud-search-wordmark-page,
+  .goreecloud-results-meta span {
     border: 1px solid CanvasText !important;
     background: Canvas !important;
     box-shadow: none !important;
+  }
+
+  #send_search,
+  #pagination .page_number_current,
+  .goreecloud-search-wordmark-mark {
+    background: Highlight !important;
+    color: HighlightText !important;
   }
 }
 
@@ -214,9 +423,15 @@ footer p {
   .result,
   .answer,
   .infobox,
+  .sidebar-collapsible,
+  #suggestions,
+  #engines_msg,
+  #apis,
   .index #search,
   .index #search_header,
-  .goreecloud-search-kicker {
+  .goreecloud-search-kicker,
+  .goreecloud-search-wordmark-page,
+  .goreecloud-results-meta span {
     background: var(--gc-surface-strong) !important;
   }
 }
