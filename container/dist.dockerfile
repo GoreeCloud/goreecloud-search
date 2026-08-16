@@ -15,13 +15,13 @@ ARG VCS_URL="unknown"
 ARG VCS_REVISION="unknown"
 
 LABEL org.opencontainers.image.created="$CREATED" \
-    org.opencontainers.image.description="SearXNG is a metasearch engine. Users are neither tracked nor profiled." \
-    org.opencontainers.image.documentation="https://docs.searxng.org/admin/installation-docker" \
+    org.opencontainers.image.description="GoreeCloud Search is the private metasearch and research gateway for GoreeCloud, derived from SearXNG." \
+    org.opencontainers.image.documentation="https://github.com/GoreeCloud/goreecloud-search/blob/master/docs/goreecloud/DEPLOYMENT.md" \
     org.opencontainers.image.licenses="AGPL-3.0-or-later" \
     org.opencontainers.image.revision="$VCS_REVISION" \
     org.opencontainers.image.source="$VCS_URL" \
-    org.opencontainers.image.title="SearXNG" \
-    org.opencontainers.image.url="https://searxng.org" \
+    org.opencontainers.image.title="GoreeCloud Search" \
+    org.opencontainers.image.url="https://search.goreecloud.com" \
     org.opencontainers.image.version="$VERSION"
 
 ENV __SEARXNG_VERSION="$VERSION" \
