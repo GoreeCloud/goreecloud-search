@@ -1,0 +1,97 @@
+name: GoreeCloud container build
+
+on:
+  push:
+    branches:
+      - 'agent/**'
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  container-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build custom SearXNG-derived image
+        shell: bash
+        run: |
+          set -euo pipefail
+          make container
+
+      - name: Locate built image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker image ls --format '{{.Repository}}:{{.Tag}}  {{.ID}}'
+          image="$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '(^|/)searxng/searxng:latest$' | head -n 1)"
+          test -n "$image"
+          echo "GOREECLOUD_SEARCH_IMAGE=$image" >> "$GITHUB_ENV"
+
+      - name: Prepare container runtime configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-searxng
+          cp goreecloud/settings.yml.example .ci-searxng/settings.yml
+
+      - name: Run built GoreeCloud Search image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach \
+            --name goreecloud-search-ci \
+            --publish 127.0.0.1:8888:8080 \
+            --env SEARXNG_SECRET=goreecloud-ci-only-secret-not-for-production \
+            --env FORCE_OWNERSHIP=false \
+            --volume "$PWD/.ci-searxng:/etc/searxng:ro" \
+            "$GOREECLOUD_SEARCH_IMAGE"
+
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:8888/ >/tmp/container-index.html; then
+              exit 0
+            fi
+            if ! docker container inspect goreecloud-search-ci >/dev/null 2>&1; then
+              exit 1
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' goreecloud-search-ci)" != "true" ]; then
+              docker logs goreecloud-search-ci
+              exit 1
+            fi
+            sleep 1
+          done
+
+          docker logs goreecloud-search-ci
+          exit 1
+
+      - name: Validate container product identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '<title>GoreeCloud Search</title>' /tmp/container-index.html
+          grep -q 'goreecloud.css' /tmp/container-index.html
+          grep -q 'SearXNG' /tmp/container-index.html
+          curl --fail --silent --show-error http://127.0.0.1:8888/preferences >/tmp/container-preferences.html
+          grep -q 'GoreeCloud Search' /tmp/container-preferences.html
+
+      - name: Show container diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          docker image ls || true
+          docker ps -a || true
+          docker logs goreecloud-search-ci || true
+
+      - name: Stop validation container
+        if: always()
+        run: docker rm --force goreecloud-search-ci || true
