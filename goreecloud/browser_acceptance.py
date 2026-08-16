@@ -83,6 +83,24 @@ def _assert_no_horizontal_overflow(driver: webdriver.Chrome, context: str) -> No
         )
 
 
+def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> None:
+    application_name = driver.find_element(By.CSS_SELECTOR, 'meta[name="application-name"]').get_attribute("content")
+    if application_name != "GoreeCloud Search":
+        raise AssertionError(f"{viewport.name}: browser application name is {application_name!r}")
+
+    manifest = driver.find_element(By.CSS_SELECTOR, 'link[rel="manifest"]').get_attribute("href")
+    if not manifest:
+        raise AssertionError(f"{viewport.name}: web app manifest link is missing")
+
+    search_provider = driver.find_element(By.CSS_SELECTOR, 'link[rel="search"]').get_attribute("href")
+    if not search_provider:
+        raise AssertionError(f"{viewport.name}: OpenSearch provider link is missing")
+
+    color_scheme = driver.find_element(By.CSS_SELECTOR, 'meta[name="color-scheme"]').get_attribute("content")
+    if "light" not in color_scheme or "dark" not in color_scheme:
+        raise AssertionError(f"{viewport.name}: browser color-scheme metadata is incomplete")
+
+
 def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
     driver.get(f"{BASE_URL}/")
     wait.until(EC.title_is("GoreeCloud Search"))
@@ -114,6 +132,7 @@ def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewpo
     if not any(url and "goreecloud.css" in url for url in stylesheet_urls):
         raise AssertionError(f"{viewport.name}: GoreeCloud Glaze UI stylesheet is not loaded")
 
+    _assert_browser_metadata(driver, viewport)
     _assert_no_horizontal_overflow(driver, f"{viewport.name} home")
 
 
