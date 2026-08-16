@@ -1,5 +1,7 @@
+---
 name: GoreeCloud runtime smoke
 
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
@@ -63,7 +65,8 @@ jobs:
           echo $! >/tmp/goreecloud-search.pid
 
           for attempt in $(seq 1 45); do
-            if curl --fail --silent --show-error http://127.0.0.1:8888/ >/tmp/index.html; then
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8888/ >/tmp/index.html; then
               exit 0
             fi
             if ! kill -0 "$(cat /tmp/goreecloud-search.pid)" 2>/dev/null; then
@@ -86,10 +89,12 @@ jobs:
           grep -q 'Powered by' /tmp/index.html
           grep -q 'SearXNG' /tmp/index.html
 
-          curl --fail --silent --show-error http://127.0.0.1:8888/preferences >/tmp/preferences.html
+          curl --fail --silent --show-error \
+            http://127.0.0.1:8888/preferences >/tmp/preferences.html
           grep -q 'GoreeCloud Search' /tmp/preferences.html
 
-          curl --fail --silent --show-error 'http://127.0.0.1:8888/search?q=GoreeCloud+Search' >/tmp/search.html
+          curl --fail --silent --show-error \
+            'http://127.0.0.1:8888/search?q=GoreeCloud+Search' >/tmp/search.html
           grep -q 'GoreeCloud Search' /tmp/search.html
           grep -q 'goreecloud.css' /tmp/search.html
 
@@ -97,7 +102,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --silent --show-error --head http://127.0.0.1:8888/ >/tmp/headers.txt
+          curl --silent --show-error --head \
+            http://127.0.0.1:8888/ >/tmp/headers.txt
           grep -qi '^referrer-policy: no-referrer' /tmp/headers.txt
           grep -qi '^x-content-type-options: nosniff' /tmp/headers.txt
           grep -qi '^x-robots-tag: noindex, nofollow' /tmp/headers.txt
