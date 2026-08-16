@@ -1,0 +1,75 @@
+name: GoreeCloud browser acceptance
+
+on:
+  push:
+    branches:
+      - 'agent/**'
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  browser-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install application and browser dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt selenium==4.47.0
+
+      - name: Prepare GoreeCloud runtime settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp goreecloud/settings.yml.example /tmp/goreecloud-search-settings.yml
+
+      - name: Start GoreeCloud Search
+        env:
+          SEARXNG_SETTINGS_PATH: /tmp/goreecloud-search-settings.yml
+          SEARXNG_SECRET: goreecloud-ci-only-secret-not-for-production
+          SEARXNG_BIND_ADDRESS: 127.0.0.1
+          SEARXNG_PORT: '8888'
+          SEARXNG_DISABLE_ETC_SETTINGS: 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup python -m searx.webapp >/tmp/goreecloud-search-browser.log 2>&1 &
+          echo $! >/tmp/goreecloud-search-browser.pid
+
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent --show-error http://127.0.0.1:8888/ >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/goreecloud-search-browser.pid)" 2>/dev/null; then
+              cat /tmp/goreecloud-search-browser.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          cat /tmp/goreecloud-search-browser.log
+          exit 1
+
+      - name: Run desktop and mobile browser acceptance
+        env:
+          GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
+        run: python goreecloud/browser_acceptance.py
+
+      - name: Print application log on failure
+        if: failure()
+        run: cat /tmp/goreecloud-search-browser.log || true
