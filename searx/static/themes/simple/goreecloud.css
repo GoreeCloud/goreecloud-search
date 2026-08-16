@@ -67,10 +67,11 @@ body { background: var(--gc-page-gradient); }
 #pagination .page_number_current { background: var(--gc-accent); color: white; }
 .goreecloud-page-header { width: min(92vw, 78rem); margin: 1.25rem auto 0; }
 .goreecloud-search-wordmark-page { padding: 0.65rem 0.8rem; border: 1px solid var(--gc-border); border-radius: 999px; background: var(--gc-surface); box-shadow: var(--gc-shadow-soft); }
-.goreecloud-page.page_with_header { width: min(92vw, 78rem); margin-top: 1.2rem; }
+.goreecloud-page.page_with_header { box-sizing: border-box; width: min(92vw, 78rem); margin-top: 1.2rem; }
 .goreecloud-page.page_with_header > h1, .goreecloud-page.page_with_header form > h1 { letter-spacing: -0.035em; }
 .goreecloud-page .tabs, .goreecloud-page fieldset, .goreecloud-page table { border-color: var(--gc-border); }
 .goreecloud-page fieldset, .goreecloud-page .tabs > section { border-radius: var(--gc-radius-md); }
+.goreecloud-page .pref-group { box-sizing: border-box; max-width: 100%; min-width: 0; }
 footer { background: transparent; border-top-color: var(--gc-border); }
 footer p { max-width: 60rem; margin-inline: auto; padding-inline: 1rem; }
 :focus-visible { outline: 3px solid color-mix(in srgb, var(--gc-accent) 70%, white); outline-offset: 3px; }
@@ -88,6 +89,8 @@ footer p { max-width: 60rem; margin-inline: auto; padding-inline: 1rem; }
   .goreecloud-search-wordmark-page .goreecloud-search-wordmark-text { display: inline; }
   .result { border-radius: var(--gc-radius-sm); padding: 0.9rem; }
   .goreecloud-results-context { width: auto; padding-inline: 1rem; }
+  .goreecloud-page.page_with_header { width: 100%; padding-inline: 0.75rem; }
+  .goreecloud-page .pref-group { width: 100%; }
 }
 @media (forced-colors: active) { .result, .answer, .infobox, .sidebar-collapsible, #suggestions, #engines_msg, #apis, .index #search, .index #search_header, .goreecloud-search-kicker, .goreecloud-search-wordmark-page, .goreecloud-results-meta span { border: 1px solid CanvasText !important; background: Canvas !important; box-shadow: none !important; } #send_search, #pagination .page_number_current, .goreecloud-search-wordmark-mark { background: Highlight !important; color: HighlightText !important; } }
 @supports not (backdrop-filter: blur(1px)) { .result, .answer, .infobox, .sidebar-collapsible, #suggestions, #engines_msg, #apis, .index #search, .index #search_header, .goreecloud-search-kicker, .goreecloud-search-wordmark-page, .goreecloud-results-meta span { background: var(--gc-surface-strong) !important; } }
