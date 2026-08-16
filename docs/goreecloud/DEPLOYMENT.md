@@ -36,14 +36,22 @@ The development baseline establishes:
 
 ## Automated validation
 
-The development branch includes four GoreeCloud-specific validation layers:
+The development branch includes four deterministic GoreeCloud-specific validation layers:
 
-1. `goreecloud-foundation.yml` performs source, product-marker, browser-contract, privacy-default, upstream-baseline, Python syntax, and AGPL-preservation checks.
+1. `goreecloud-foundation.yml` performs source, product-marker, browser-contract, privacy-default, deployment-syntax, upstream-baseline, Python syntax, and AGPL-preservation checks.
 2. `goreecloud-runtime-smoke.yml` installs the reviewed source revision, loads the GoreeCloud settings file through `SEARXNG_SETTINGS_PATH`, starts the application, verifies the home/search/preferences product shell, and checks privacy-facing HTTP behavior.
 3. `goreecloud-container-build.yml` builds the SearXNG-derived container image from the fork's source and runs the resulting image with the GoreeCloud runtime configuration before validating the rendered product identity and health endpoint.
 4. `goreecloud-browser-acceptance.yml` runs Chromium at desktop and mobile viewport sizes, validates the visible product shell and keyboard behavior, verifies GoreeCloud browser metadata, and fails on unintended horizontal page overflow with element-level diagnostics.
 
 The runtime smoke workflow is intentionally valuable as a schema-compatibility gate. During initial implementation it detected an invalid boolean value in the `brand` settings, which was corrected to the current string-based schema before deployment. Browser acceptance likewise detected mobile overflow in both the landing search shell and the Preferences interface, allowing those layout defects to be corrected without hiding overflow globally.
+
+## Real-provider acceptance
+
+Real search providers are intentionally tested outside the required pull-request gates because third-party engines can throttle, reject, or temporarily block shared CI runners independently of GoreeCloud Search correctness.
+
+`goreecloud/provider_acceptance.py` performs an explicit HTML search against a running GoreeCloud Search instance and requires a configurable minimum number of rendered result cards. `.github/workflows/goreecloud-provider-acceptance.yml` exposes that check through `workflow_dispatch`, with explicit query, category, and minimum-result inputs.
+
+A failed provider-acceptance run must be investigated rather than automatically classified as an application defect. The acceptance record should distinguish application/runtime failure from provider throttling, provider blocking, engine initialization failure, or a genuinely empty result set. Target-environment provider acceptance remains mandatory before production cutover even if a GitHub-hosted provider run succeeds.
 
 ## Local acceptance commands
 
@@ -59,6 +67,12 @@ Do not use an unreviewed `latest` image tag as production provenance. Production
 
 After startup, verify Compose health before publishing the service through any reverse proxy or private routing layer. An unhealthy container is not ready for Caddy, DNS, or NetBird cutover even if its process is still running.
 
+A local real-provider check can then be run explicitly, for example:
+
+```bash
+python goreecloud/provider_acceptance.py --base-url http://127.0.0.1:8888 --category general --query "GoreeCloud private search"
+```
+
 ## API boundary
 
 Machine-readable formats remain disabled until the GoreeCloud Search API contract and access controls are accepted. See `docs/goreecloud/API.md`.
@@ -71,7 +85,7 @@ Before replacing the current SearXNG runtime, the deployment must validate at mi
 2. Docker build and application startup;
 3. health and readiness behavior;
 4. representative web, image, news, video, technical, and academic searches;
-5. provider failure behavior;
+5. provider failure behavior and clear classification of external-engine failures;
 6. responsive Glaze UI behavior;
 7. keyboard and accessibility behavior;
 8. browser/OpenSearch/manifest identity behavior;
