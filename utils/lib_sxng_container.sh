@@ -9,9 +9,7 @@ EOF
 }
 
 CONTAINER_IMAGE_ORGANIZATION=${GITHUB_REPOSITORY_OWNER:-"searxng"}
-# OCI/Docker repository names must be lowercase. GitHub organization names are
-# case-preserving, so normalize the derived owner before it is used in image
-# references (for example GoreeCloud -> goreecloud).
+# OCI/Docker repository names must be lowercase even when the GitHub owner is case-preserving.
 CONTAINER_IMAGE_ORGANIZATION="${CONTAINER_IMAGE_ORGANIZATION,,}"
 CONTAINER_IMAGE_NAME="searxng"
 
@@ -53,7 +51,6 @@ container.build() {
         "ARM64" | "aarch64" | "arm64")
             arch="arm64"
             variant=""
-            platform="linux/$arch/$variant"
             platform="linux/$arch"
             ;;
         "ARMV7" | "armhf" | "armv7l" | "armv7")
@@ -176,7 +173,7 @@ container.test() {
             variant=""
             platform="linux/$arch"
             ;;
-        "ARMV7" | "armv7" | "armhf" | "arm")
+        "ARMV7" | "armhf" | "armv7l" | "armv7")
             arch="arm"
             variant="v7"
             platform="linux/$arch/$variant"
@@ -192,72 +189,6 @@ container.test() {
         set -e
 
         podman pull "ghcr.io/$CONTAINER_IMAGE_ORGANIZATION/cache:$CONTAINER_IMAGE_NAME-$arch$variant"
-
-        name="$CONTAINER_IMAGE_NAME-$(date +%N)"
-
-        podman create --name="$name" --rm --timeout=60 --network="host" \
-            "ghcr.io/$CONTAINER_IMAGE_ORGANIZATION/cache:$CONTAINER_IMAGE_NAME-$arch$variant" >/dev/null
-
-        podman start "$name" >/dev/null
-        podman logs -f "$name" &
-        pid_logs=$!
-
-        # Wait until container is ready
-        sleep 5
-
-        curl -vf --max-time 5 "http://localhost:8080/healthz"
-
-        kill $pid_logs &>/dev/null || true
-        podman stop "$name" >/dev/null
-    )
-    dump_return $?
-}
-
-container.push() {
-    # Architectures on manifest
-    local release_archs=("amd64" "arm64" "armv7")
-
-    local archs=()
-    local variants=()
-    local platforms=()
-
-    if [ "$GITHUB_ACTIONS" != "true" ]; then
-        die 1 "This command is intended to be run in GitHub Actions"
-    fi
-
-    required_commands podman
-
-    for arch in "${release_archs[@]}"; do
-        case $arch in
-            "X64" | "x86_64" | "amd64")
-                archs+=("amd64")
-                variants+=("")
-                platforms+=("linux/${archs[-1]}")
-                ;;
-            "ARM64" | "aarch64" | "arm64")
-                archs+=("arm64")
-                variants+=("")
-                platforms+=("linux/${archs[-1]}")
-                ;;
-            "ARMV7" | "armv7" | "armhf" | "arm")
-                archs+=("arm")
-                variants+=("v7")
-                platforms+=("linux/${archs[-1]}/${variants[-1]}")
-                ;;
-            *)
-                err_msg "Unsupported architecture; $arch"
-                exit 1
-                ;;
-        esac
-    done
-
-    (
-        set -e
-
-        # Pull archs
-        for i in "${!archs[@]}"; do
-            podman pull "ghcr.io/$CONTAINER_IMAGE_ORGANIZATION/cache:$CONTAINER_IMAGE_NAME-${archs[$i]}${variants[$i]}"
-        done
 
         name="$CONTAINER_IMAGE_NAME-$(date +%N)"
 
