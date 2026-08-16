@@ -27,17 +27,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Force Docker so the build and runtime acceptance steps use the same
-          # local image store. Treat this as a local acceptance build rather than
-          # an upstream release job, so the helper does not push a cache image.
-          GITHUB_ACTIONS=false ./manage container.build docker
+          # Use the upstream-preferred Podman path and keep this as a local
+          # acceptance build so no registry push is attempted.
+          GITHUB_ACTIONS=false ./manage container.build podman
 
       - name: Locate built image
         shell: bash
         run: |
           set -euo pipefail
-          docker image ls --format '{{.Repository}}:{{.Tag}}  {{.ID}}'
-          image="$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^localhost/goreecloud/searxng:latest$' | head -n 1)"
+          podman image ls --format '{{.Repository}}:{{.Tag}}  {{.ID}}'
+          image="$(podman image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^localhost/goreecloud/searxng:latest$' | head -n 1)"
           test -n "$image"
           echo "GOREECLOUD_SEARCH_IMAGE=$image" >> "$GITHUB_ENV"
 
@@ -52,7 +51,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --detach \
+          podman run --detach \
             --name goreecloud-search-ci \
             --publish 127.0.0.1:8888:8080 \
             --env SEARXNG_SECRET=goreecloud-ci-only-secret-not-for-production \
@@ -64,17 +63,17 @@ jobs:
             if curl --fail --silent --show-error http://127.0.0.1:8888/ >/tmp/container-index.html; then
               exit 0
             fi
-            if ! docker container inspect goreecloud-search-ci >/dev/null 2>&1; then
+            if ! podman container inspect goreecloud-search-ci >/dev/null 2>&1; then
               exit 1
             fi
-            if [ "$(docker inspect -f '{{.State.Running}}' goreecloud-search-ci)" != "true" ]; then
-              docker logs goreecloud-search-ci
+            if [ "$(podman inspect -f '{{.State.Running}}' goreecloud-search-ci)" != "true" ]; then
+              podman logs goreecloud-search-ci
               exit 1
             fi
             sleep 1
           done
 
-          docker logs goreecloud-search-ci
+          podman logs goreecloud-search-ci
           exit 1
 
       - name: Validate container product identity
@@ -92,10 +91,10 @@ jobs:
         if: failure()
         shell: bash
         run: |
-          docker image ls || true
-          docker ps -a || true
-          docker logs goreecloud-search-ci || true
+          podman image ls || true
+          podman ps -a || true
+          podman logs goreecloud-search-ci || true
 
       - name: Stop validation container
         if: always()
-        run: docker rm --force goreecloud-search-ci || true
+        run: podman rm --force goreecloud-search-ci || true
