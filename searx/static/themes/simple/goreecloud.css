@@ -1,0 +1,222 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — Glaze UI foundation overrides. */
+
+:root {
+  --gc-accent: #4f7cff;
+  --gc-accent-strong: #315ee8;
+  --gc-surface: rgba(255, 255, 255, 0.78);
+  --gc-surface-strong: rgba(255, 255, 255, 0.94);
+  --gc-border: rgba(84, 104, 138, 0.18);
+  --gc-shadow: 0 18px 50px rgba(35, 55, 90, 0.12);
+  --gc-radius-lg: 28px;
+  --gc-radius-md: 18px;
+  --gc-radius-sm: 12px;
+  --gc-page-gradient: radial-gradient(circle at top, rgba(79, 124, 255, 0.12), transparent 36rem), var(--color-base-background);
+}
+
+html.theme-dark,
+html.theme-black {
+  --gc-surface: rgba(34, 39, 51, 0.76);
+  --gc-surface-strong: rgba(31, 35, 46, 0.94);
+  --gc-border: rgba(173, 190, 224, 0.16);
+  --gc-shadow: 0 20px 56px rgba(0, 0, 0, 0.32);
+  --gc-page-gradient: radial-gradient(circle at top, rgba(79, 124, 255, 0.17), transparent 34rem), var(--color-base-background);
+}
+
+body {
+  background: var(--gc-page-gradient);
+}
+
+#links_on_top {
+  padding: 0.85rem 1rem;
+}
+
+#links_on_top a {
+  border-radius: 999px;
+  padding: 0.55rem 0.75rem;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+#links_on_top a:hover,
+#links_on_top a:focus-visible {
+  background: color-mix(in srgb, var(--gc-accent) 10%, transparent);
+}
+
+#main_index {
+  margin-top: clamp(5rem, 18vh, 11rem);
+}
+
+.index {
+  width: min(92vw, 56rem);
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.index .title {
+  min-height: auto;
+  margin: 0 auto 1.1rem;
+  background: none !important;
+}
+
+.index .title h1 {
+  visibility: visible;
+  margin: 0;
+  font-size: clamp(2.35rem, 8vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  font-weight: 750;
+  color: var(--color-base-font);
+}
+
+.goreecloud-search-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: var(--gc-surface);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+}
+
+.goreecloud-search-subtitle {
+  max-width: 42rem;
+  margin: 0.9rem auto 2rem;
+  color: color-mix(in srgb, var(--color-base-font) 72%, transparent);
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.6;
+}
+
+.index #search,
+.index #search_header {
+  padding: 0.55rem !important;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: var(--gc-radius-lg) !important;
+  background: var(--gc-surface) !important;
+  box-shadow: var(--gc-shadow);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+}
+
+#q,
+.search_box input[type="search"] {
+  border-radius: calc(var(--gc-radius-lg) - 8px) !important;
+}
+
+.result,
+.answer,
+.infobox,
+#sidebar .infobox {
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-md);
+  background: var(--gc-surface);
+  box-shadow: 0 10px 30px rgba(35, 55, 90, 0.07);
+  backdrop-filter: blur(16px) saturate(125%);
+  -webkit-backdrop-filter: blur(16px) saturate(125%);
+}
+
+.result {
+  margin-block: 0.8rem;
+  padding: 1rem 1.15rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.result:hover {
+  border-color: color-mix(in srgb, var(--gc-accent) 36%, var(--gc-border));
+  box-shadow: 0 14px 38px rgba(35, 55, 90, 0.11);
+}
+
+.result h3 a {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.16em;
+}
+
+#categories_container,
+.search_filters {
+  scrollbar-width: thin;
+}
+
+.category label {
+  border-radius: 999px;
+}
+
+.category input:checked + label,
+.category label:hover {
+  background: color-mix(in srgb, var(--gc-accent) 11%, transparent);
+}
+
+footer {
+  background: transparent;
+  border-top-color: var(--gc-border);
+}
+
+footer p {
+  max-width: 60rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 70%, white);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (max-width: 50rem) {
+  #main_index {
+    margin-top: 4.5rem;
+  }
+
+  .index {
+    width: auto;
+    padding-inline: 1rem;
+  }
+
+  .goreecloud-search-subtitle {
+    margin-bottom: 1.4rem;
+  }
+
+  .result {
+    border-radius: var(--gc-radius-sm);
+    padding: 0.9rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .result,
+  .answer,
+  .infobox,
+  .index #search,
+  .index #search_header,
+  .goreecloud-search-kicker {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    box-shadow: none !important;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .result,
+  .answer,
+  .infobox,
+  .index #search,
+  .index #search_header,
+  .goreecloud-search-kicker {
+    background: var(--gc-surface-strong) !important;
+  }
+}
