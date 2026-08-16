@@ -54,6 +54,7 @@ jobs:
           grep -q 'GoreeCloud Search' searx/templates/simple/index.html
           grep -q 'GoreeCloud Search' searx/templates/simple/search.html
           grep -q 'Private metasearch' searx/templates/simple/results.html
+          grep -q '^# About GoreeCloud Search$' searx/infopage/en/about.md
           grep -q 'GoreeCloud Search' goreecloud/settings.yml.example
           grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' \
             docs/goreecloud/UPSTREAM.md
@@ -70,6 +71,22 @@ jobs:
           grep -q 'rel="manifest"' searx/templates/simple/base.html
           grep -q 'goreecloud-page .pref-group' searx/static/themes/simple/goreecloud.css
           grep -q '_overflow_diagnostics' goreecloud/browser_acceptance.py
+
+      - name: Validate Glaze UI resilience contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          css='searx/static/themes/simple/goreecloud.css'
+          grep -q -- '--gc-target-min: 44px' "$css"
+          grep -q -- '--gc-motion-instant: 90ms' "$css"
+          grep -q -- '--gc-motion-fast: 160ms' "$css"
+          grep -q -- '--gc-motion-standard: 220ms' "$css"
+          grep -q -- '--gc-motion-emphasized: 320ms' "$css"
+          grep -q 'prefers-reduced-motion: reduce' "$css"
+          grep -q 'prefers-reduced-transparency: reduce' "$css"
+          grep -q 'prefers-contrast: more' "$css"
+          grep -q 'forced-colors: active' "$css"
+          grep -q '@supports not (backdrop-filter: blur(1px))' "$css"
 
       - name: Validate privacy-oriented runtime baseline
         shell: bash
