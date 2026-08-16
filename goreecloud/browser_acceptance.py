@@ -47,13 +47,39 @@ def _driver(viewport: Viewport) -> webdriver.Chrome:
     return webdriver.Chrome(options=options)
 
 
+def _overflow_diagnostics(driver: webdriver.Chrome) -> list[str]:
+    return driver.execute_script(
+        """
+        const viewport = document.documentElement.clientWidth;
+        return Array.from(document.querySelectorAll('body *'))
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              tag: element.tagName.toLowerCase(),
+              id: element.id || '',
+              classes: typeof element.className === 'string' ? element.className : '',
+              left: Math.round(rect.left * 10) / 10,
+              right: Math.round(rect.right * 10) / 10,
+              width: Math.round(rect.width * 10) / 10,
+            };
+          })
+          .filter((item) => item.right > viewport + 2 || item.left < -2)
+          .sort((a, b) => Math.max(b.right - viewport, -b.left) - Math.max(a.right - viewport, -a.left))
+          .slice(0, 8)
+          .map((item) => `${item.tag}${item.id ? '#' + item.id : ''}${item.classes ? '.' + item.classes.trim().replace(/\\s+/g, '.') : ''} [left=${item.left}, right=${item.right}, width=${item.width}]`);
+        """
+    )
+
+
 def _assert_no_horizontal_overflow(driver: webdriver.Chrome, context: str) -> None:
     scroll_width, client_width = driver.execute_script(
         "return [document.documentElement.scrollWidth, document.documentElement.clientWidth];"
     )
     if scroll_width > client_width + 2:
+        details = _overflow_diagnostics(driver)
+        suffix = f"; offenders: {' | '.join(details)}" if details else ""
         raise AssertionError(
-            f"{context}: horizontal overflow detected: scrollWidth={scroll_width}, clientWidth={client_width}"
+            f"{context}: horizontal overflow detected: scrollWidth={scroll_width}, clientWidth={client_width}{suffix}"
         )
 
 
