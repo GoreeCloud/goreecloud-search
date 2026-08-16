@@ -17,11 +17,13 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
 BASE_URL = os.environ.get("GOREECLOUD_SEARCH_TEST_URL", "http://127.0.0.1:8888").rstrip("/")
+MIN_TARGET_SIZE = 44
 
 
 @dataclass(frozen=True)
@@ -83,6 +85,17 @@ def _assert_no_horizontal_overflow(driver: webdriver.Chrome, context: str) -> No
         )
 
 
+def _assert_target_size(element: WebElement, context: str) -> None:
+    rect = element.rect
+    width = float(rect.get("width", 0))
+    height = float(rect.get("height", 0))
+    if width + 0.5 < MIN_TARGET_SIZE or height + 0.5 < MIN_TARGET_SIZE:
+        raise AssertionError(
+            f"{context}: rendered target is {width:.1f}x{height:.1f}px; expected at least "
+            f"{MIN_TARGET_SIZE}x{MIN_TARGET_SIZE}px"
+        )
+
+
 def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> None:
     application_name = driver.find_element(By.CSS_SELECTOR, 'meta[name="application-name"]').get_attribute("content")
     if application_name != "GoreeCloud Search":
@@ -138,6 +151,9 @@ def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewpo
     if not submit.get_attribute("aria-label"):
         raise AssertionError(f"{viewport.name}: search button has no accessible label")
 
+    _assert_target_size(query, f"{viewport.name} search input")
+    _assert_target_size(submit, f"{viewport.name} search submit")
+
     query.click()
     if driver.switch_to.active_element.get_attribute("id") != "q":
         raise AssertionError(f"{viewport.name}: search input did not receive focus")
@@ -168,7 +184,32 @@ def _assert_preferences(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
     if "Preferences" not in body_text:
         raise AssertionError(f"{viewport.name}: preferences page title is missing")
 
+    visible_submit = next(
+        (element for element in driver.find_elements(By.CSS_SELECTOR, 'input[type="submit"], button[type="submit"]') if element.is_displayed()),
+        None,
+    )
+    if visible_submit is not None:
+        _assert_target_size(visible_submit, f"{viewport.name} preferences submit")
+
     _assert_no_horizontal_overflow(driver, f"{viewport.name} preferences")
+
+
+def _assert_about(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
+    driver.get(f"{BASE_URL}/about")
+    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    body_text = driver.find_element(By.TAG_NAME, "body").text
+
+    required_text = (
+        "About GoreeCloud Search",
+        "Privacy model",
+        "Open-source foundation",
+        "SearXNG",
+    )
+    missing = [text for text in required_text if text not in body_text]
+    if missing:
+        raise AssertionError(f"{viewport.name}: about page is missing product contract text: {missing!r}")
+
+    _assert_no_horizontal_overflow(driver, f"{viewport.name} about")
 
 
 def run() -> None:
@@ -184,6 +225,7 @@ def run() -> None:
             wait = WebDriverWait(driver, 20)
             _assert_home(driver, wait, viewport)
             _assert_preferences(driver, wait, viewport)
+            _assert_about(driver, wait, viewport)
         except (AssertionError, WebDriverException) as exc:
             errors.append(f"{viewport.name}: {exc}")
         finally:
