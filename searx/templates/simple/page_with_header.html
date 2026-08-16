@@ -1,7 +1,10 @@
-{%- set body_class = "page_with_header" -%}
+{%- set body_class = "page_with_header goreecloud-page" -%}
 {%- extends "simple/base.html" -%}
 {%- block header -%}
-  <a href="{{ url_for('index') }}">{{- '' -}}
-    <img class="logo" src="{{ url_for('static', filename='img/searxng.png') }}" alt="SearXNG">{{- '' -}}
-  </a>{{- '' -}}
+  <header class="goreecloud-page-header">
+    <a class="goreecloud-search-wordmark goreecloud-search-wordmark-page" href="{{ url_for('index') }}" aria-label="GoreeCloud Search home">{{- '' -}}
+      <span class="goreecloud-search-wordmark-mark" aria-hidden="true">G</span>{{- '' -}}
+      <span class="goreecloud-search-wordmark-text">GoreeCloud <strong>Search</strong></span>{{- '' -}}
+    </a>{{- '' -}}
+  </header>
 {%- endblock -%}
