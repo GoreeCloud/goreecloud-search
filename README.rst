@@ -10,7 +10,9 @@ This repository is a GoreeCloud-maintained fork of `SearXNG <https://github.com/
 Project status
 --------------
 
-Development is active on the ``agent/stable-foundation`` branch. The current work is a source-development foundation and is not yet an approved production replacement for the existing SearXNG deployment at ``search.goreecloud.com``.
+Development is active on the ``agent/stable-foundation`` branch. The current foundation includes GoreeCloud-specific source validation, direct application runtime smoke testing, custom container build/runtime acceptance, and desktop/mobile Chromium acceptance.
+
+This is not yet an approved production replacement for the existing SearXNG deployment at ``search.goreecloud.com``. Production readiness still requires representative real-provider search validation, target-network integration, monitoring, backup/restore validation, and a tested rollback path.
 
 Current upstream baseline
 -------------------------
@@ -37,7 +39,7 @@ GoreeCloud Search is intended to provide:
 - Web, image, video, news, technical, academic, software, and other supported search categories.
 - Clear engine and source visibility.
 - Privacy-oriented search defaults with minimal retained user data.
-- Browser and OpenSearch integration.
+- Browser, web-app manifest, and OpenSearch integration.
 - A stable GoreeCloud-facing search API for approved applications and local AI research workflows.
 - Failure isolation when individual external search providers are unavailable.
 - Documented backup, restore, upgrade, rollback, and upstream-maintenance procedures.
@@ -48,6 +50,18 @@ Architecture principle
 **GoreeCloud Search is the product. SearXNG is the initial search foundation.**
 
 The GoreeCloud-facing UI and integration boundaries should remain sufficiently independent that the backend can evolve later without forcing every GoreeCloud consumer to depend directly on SearXNG internals.
+
+Validation model
+----------------
+
+The maintained fork uses four complementary GoreeCloud validation layers:
+
+- ``goreecloud-foundation.yml`` for source, product-contract, privacy, deployment, provenance, syntax, and AGPL checks.
+- ``goreecloud-runtime-smoke.yml`` for direct application startup and HTTP behavior.
+- ``goreecloud-container-build.yml`` for OCI image build and container-runtime acceptance.
+- ``goreecloud-browser-acceptance.yml`` for desktop/mobile browser identity, keyboard, metadata, and responsive-layout checks.
+
+These automated gates validate the maintained-fork foundation. They do not replace target-environment or provider acceptance.
 
 Development boundaries
 ----------------------
