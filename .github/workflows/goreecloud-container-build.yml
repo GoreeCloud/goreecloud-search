@@ -1,5 +1,7 @@
+---
 name: GoreeCloud container build
 
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
@@ -36,7 +38,11 @@ jobs:
         run: |
           set -euo pipefail
           podman image ls --format '{{.Repository}}:{{.Tag}}  {{.ID}}'
-          image="$(podman image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^localhost/goreecloud/searxng:latest$' | head -n 1)"
+          image="$(
+            podman image ls --format '{{.Repository}}:{{.Tag}}' \
+              | grep -E '^localhost/goreecloud/searxng:latest$' \
+              | head -n 1
+          )"
           test -n "$image"
           echo "GOREECLOUD_SEARCH_IMAGE=$image" >> "$GITHUB_ENV"
 
@@ -44,9 +50,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.title" }}' "$GOREECLOUD_SEARCH_IMAGE")" = "GoreeCloud Search"
-          test "$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.licenses" }}' "$GOREECLOUD_SEARCH_IMAGE")" = "AGPL-3.0-or-later"
-          test "$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.source" }}' "$GOREECLOUD_SEARCH_IMAGE")" = "https://github.com/GoreeCloud/goreecloud-search"
+          title="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.title" }}' \
+              "$GOREECLOUD_SEARCH_IMAGE"
+          )"
+          licenses="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.licenses" }}' \
+              "$GOREECLOUD_SEARCH_IMAGE"
+          )"
+          source="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.source" }}' \
+              "$GOREECLOUD_SEARCH_IMAGE"
+          )"
+          test "$title" = "GoreeCloud Search"
+          test "$licenses" = "AGPL-3.0-or-later"
+          test "$source" = "https://github.com/GoreeCloud/goreecloud-search"
 
       - name: Prepare container runtime configuration
         shell: bash
@@ -68,7 +89,8 @@ jobs:
             "$GOREECLOUD_SEARCH_IMAGE"
 
           for attempt in $(seq 1 60); do
-            if curl --fail --silent --show-error http://127.0.0.1:8888/ >/tmp/container-index.html; then
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8888/ >/tmp/container-index.html; then
               exit 0
             fi
             if ! podman container inspect goreecloud-search-ci >/dev/null 2>&1; then
@@ -91,9 +113,11 @@ jobs:
           grep -q '<title>GoreeCloud Search</title>' /tmp/container-index.html
           grep -q 'goreecloud.css' /tmp/container-index.html
           grep -q 'SearXNG' /tmp/container-index.html
-          curl --fail --silent --show-error http://127.0.0.1:8888/preferences >/tmp/container-preferences.html
+          curl --fail --silent --show-error \
+            http://127.0.0.1:8888/preferences >/tmp/container-preferences.html
           grep -q 'GoreeCloud Search' /tmp/container-preferences.html
-          curl --fail --silent --show-error http://127.0.0.1:8888/healthz >/tmp/container-health.txt
+          curl --fail --silent --show-error \
+            http://127.0.0.1:8888/healthz >/tmp/container-health.txt
 
       - name: Show container diagnostics on failure
         if: failure()
