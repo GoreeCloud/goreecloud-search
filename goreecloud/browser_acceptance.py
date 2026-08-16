@@ -88,9 +88,31 @@ def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> No
     if application_name != "GoreeCloud Search":
         raise AssertionError(f"{viewport.name}: browser application name is {application_name!r}")
 
-    manifest = driver.find_element(By.CSS_SELECTOR, 'link[rel="manifest"]').get_attribute("href")
-    if not manifest:
+    manifest_url = driver.find_element(By.CSS_SELECTOR, 'link[rel="manifest"]').get_attribute("href")
+    if not manifest_url:
         raise AssertionError(f"{viewport.name}: web app manifest link is missing")
+
+    manifest = driver.execute_async_script(
+        """
+        const url = arguments[0];
+        const done = arguments[arguments.length - 1];
+        fetch(url, {credentials: 'same-origin'})
+          .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+          })
+          .then((payload) => done({ok: true, payload}))
+          .catch((error) => done({ok: false, error: String(error)}));
+        """,
+        manifest_url,
+    )
+    if not manifest.get("ok"):
+        raise AssertionError(f"{viewport.name}: manifest fetch failed: {manifest.get('error')}")
+    payload = manifest.get("payload") or {}
+    if payload.get("name") != "GoreeCloud Search" or payload.get("short_name") != "GoreeCloud Search":
+        raise AssertionError(f"{viewport.name}: manifest GoreeCloud identity is incomplete: {payload!r}")
+    if payload.get("display") != "standalone":
+        raise AssertionError(f"{viewport.name}: manifest display mode is {payload.get('display')!r}")
 
     search_provider = driver.find_element(By.CSS_SELECTOR, 'link[rel="search"]').get_attribute("href")
     if not search_provider:
@@ -157,6 +179,7 @@ def run() -> None:
         try:
             driver = _driver(viewport)
             driver.set_page_load_timeout(30)
+            driver.set_script_timeout(20)
             driver.set_window_size(viewport.width, viewport.height)
             wait = WebDriverWait(driver, 20)
             _assert_home(driver, wait, viewport)
