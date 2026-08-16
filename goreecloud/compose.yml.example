@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# GoreeCloud Search deployment example.
+#
+# This example intentionally binds the application only to loopback. Publication
+# through Caddy/private-network routing remains a separate deployment concern.
+
+name: goreecloud-search
+
+services:
+  search:
+    image: ${GOREECLOUD_SEARCH_IMAGE:?Set GOREECLOUD_SEARCH_IMAGE to the reviewed GoreeCloud Search image}
+    container_name: goreecloud-search
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${GOREECLOUD_SEARCH_PORT:-8888}:8080"
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Set SEARXNG_SECRET in protected runtime configuration}
+      SEARXNG_BASE_URL: ${GOREECLOUD_SEARCH_BASE_URL:-https://search.goreecloud.com/}
+      FORCE_OWNERSHIP: "false"
+    volumes:
+      - ./settings.yml:/etc/searxng/settings.yml:ro
+      - goreecloud-search-cache:/var/cache/searxng
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  goreecloud-search-cache:
