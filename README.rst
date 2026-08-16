@@ -1,62 +1,69 @@
 .. SPDX-License-Identifier: AGPL-3.0-or-later
 
-.. _metasearch engine: https://en.wikipedia.org/wiki/Metasearch_engine
-.. _Installation guide: https://docs.searxng.org/admin/installation.html
-.. _Configuration guide: https://docs.searxng.org/admin/settings/index.html
-.. _CONTRIBUTING: https://github.com/searxng/searxng/blob/master/CONTRIBUTING.rst
-.. _LICENSE: https://github.com/searxng/searxng/blob/master/LICENSE
+GoreeCloud Search
+=================
 
-.. figure:: https://raw.githubusercontent.com/searxng/searxng/master/client/simple/src/brand/searxng.svg
-   :target: https://searxng.org
-   :alt: SearXNG
-   :width: 512px
+GoreeCloud Search is the privacy-first metasearch and research gateway for the GoreeCloud personal cloud platform.
 
+This repository is a GoreeCloud-maintained fork of `SearXNG <https://github.com/searxng/searxng>`_. It keeps SearXNG's mature metasearch engine foundation while establishing a distinct GoreeCloud product experience, Glaze UI presentation layer, privacy-oriented defaults, operational contract, and future GoreeCloud integrations.
 
-SearXNG is a `metasearch engine`_. Users are neither tracked nor profiled.
+Project status
+--------------
 
-.. image:: https://img.shields.io/badge/organization-3050ff?style=flat-square&logo=searxng&logoColor=fff&cacheSeconds=86400
-   :target: https://github.com/searxng
-   :alt: Organization
+Development is active on the ``agent/stable-foundation`` branch. The current work is a source-development foundation and is not yet an approved production replacement for the existing SearXNG deployment at ``search.goreecloud.com``.
 
-.. image:: https://img.shields.io/badge/documentation-3050ff?style=flat-square&logo=readthedocs&logoColor=fff&cacheSeconds=86400
-   :target: https://docs.searxng.org
-   :alt: Documentation
+Current upstream baseline
+-------------------------
 
-.. image:: https://img.shields.io/github/license/searxng/searxng?style=flat-square&label=license&color=3050ff&cacheSeconds=86400
-   :target: https://github.com/searxng/searxng/blob/master/LICENSE
-   :alt: License
+The initial GoreeCloud development branch was created from upstream commit::
 
-.. image:: https://img.shields.io/github/commit-activity/y/searxng/searxng/master?style=flat-square&label=commits&color=3050ff&cacheSeconds=3600
-   :target: https://github.com/searxng/searxng/commits/master/
-   :alt: Commits
+    b2da6b90f2f8446557c91f67d6be5064ab785ecd
 
-.. image:: https://img.shields.io/weblate/progress/searxng?server=https%3A%2F%2Ftranslate.codeberg.org&style=flat-square&label=translated&color=3050ff&cacheSeconds=86400
-   :target: https://translate.codeberg.org/projects/searxng/
-   :alt: Translated
+Upstream repository:
 
-Setup
-=====
+- https://github.com/searxng/searxng
 
-To install SearXNG, see `Installation guide`_.
+GoreeCloud repository:
 
-To fine-tune SearXNG, see `Configuration guide`_.
+- https://github.com/GoreeCloud/goreecloud-search
 
-Further information on *how-to* can be found `here <https://docs.searxng.org/admin/index.html>`_.
+Product direction
+-----------------
 
-Connect
-=======
+GoreeCloud Search is intended to provide:
 
-If you have questions or want to connect with others in the community:
+- Private and self-hosted metasearch.
+- A GoreeCloud-owned search experience using Glaze UI.
+- Web, image, video, news, technical, academic, software, and other supported search categories.
+- Clear engine and source visibility.
+- Privacy-oriented search defaults with minimal retained user data.
+- Browser and OpenSearch integration.
+- A stable GoreeCloud-facing search API for approved applications and local AI research workflows.
+- Failure isolation when individual external search providers are unavailable.
+- Documented backup, restore, upgrade, rollback, and upstream-maintenance procedures.
 
-- `#searxng:matrix.org <https://matrix.to/#/#searxng:matrix.org>`_
+Architecture principle
+----------------------
 
-Contributing
-============
+**GoreeCloud Search is the product. SearXNG is the initial search foundation.**
 
-See CONTRIBUTING_ for more details.
+The GoreeCloud-facing UI and integration boundaries should remain sufficiently independent that the backend can evolve later without forcing every GoreeCloud consumer to depend directly on SearXNG internals.
+
+Development boundaries
+----------------------
+
+The project intentionally preserves upstream provenance and minimizes unnecessary divergence. Changes should be isolated, documented, testable, and reviewable so that relevant upstream security fixes and engine improvements can continue to be incorporated safely.
+
+Production deployment, DNS changes, Caddy changes, NetBird policy changes, and migration of the existing SearXNG service require separate validation and acceptance.
+
+Upstream SearXNG
+----------------
+
+SearXNG is a privacy-respecting open metasearch engine. The original project documentation is available at https://docs.searxng.org/.
+
+This fork preserves SearXNG copyright, license, source-availability, and attribution requirements. See ``LICENSE`` and ``GORECLOUD.md`` for additional project-specific information.
 
 License
-=======
+-------
 
-This project is licensed under the GNU Affero General Public License (AGPL-3.0).
-See LICENSE_ for more details.
+This repository is licensed under the GNU Affero General Public License v3.0 or later, consistent with the upstream SearXNG source baseline. See ``LICENSE`` for the complete terms.
