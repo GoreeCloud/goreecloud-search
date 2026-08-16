@@ -89,7 +89,7 @@ footer p { max-width: 60rem; margin-inline: auto; padding-inline: 1rem; }
   .goreecloud-search-wordmark-page .goreecloud-search-wordmark-text { display: inline; }
   .result { border-radius: var(--gc-radius-sm); padding: 0.9rem; }
   .goreecloud-results-context { width: auto; padding-inline: 1rem; }
-  .goreecloud-page.page_with_header { width: 100%; padding-inline: 0.75rem; }
+  .goreecloud-page.page_with_header { width: auto; max-width: 100%; padding-inline: 0.75rem; }
   .goreecloud-page .pref-group { width: 100%; }
 }
 @media (forced-colors: active) { .result, .answer, .infobox, .sidebar-collapsible, #suggestions, #engines_msg, #apis, .index #search, .index #search_header, .goreecloud-search-kicker, .goreecloud-search-wordmark-page, .goreecloud-results-meta span { border: 1px solid CanvasText !important; background: Canvas !important; box-shadow: none !important; } #send_search, #pagination .page_number_current, .goreecloud-search-wordmark-mark { background: Highlight !important; color: HighlightText !important; } }
