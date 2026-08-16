@@ -36,11 +36,30 @@ jobs:
           set -euo pipefail
           test -f GORECLOUD.md
           test -f docs/goreecloud/UPSTREAM.md
+          test -f docs/goreecloud/API.md
+          test -f docs/goreecloud/DEPLOYMENT.md
+          test -f goreecloud/settings.yml.example
           test -f searx/static/themes/simple/goreecloud.css
           grep -q 'GoreeCloud Search' README.rst
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
           grep -q 'GoreeCloud Search' searx/templates/simple/index.html
+          grep -q 'GoreeCloud Search' searx/templates/simple/search.html
+          grep -q 'Private metasearch' searx/templates/simple/results.html
+          grep -q 'GoreeCloud Search' goreecloud/settings.yml.example
           grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' docs/goreecloud/UPSTREAM.md
+
+      - name: Validate privacy-oriented runtime baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'image_proxy: true' goreecloud/settings.yml.example
+          grep -q 'query_in_title: false' goreecloud/settings.yml.example
+          grep -q 'public_instance: false' goreecloud/settings.yml.example
+          grep -q '^    - html$' goreecloud/settings.yml.example
+          if grep -Eq '^    - (json|csv|rss)$' goreecloud/settings.yml.example; then
+            echo 'Machine-readable formats must remain disabled in the foundation baseline.' >&2
+            exit 1
+          fi
 
       - name: Guard upstream license
         shell: bash
@@ -48,3 +67,4 @@ jobs:
           set -euo pipefail
           test -f LICENSE
           grep -q 'GNU AFFERO GENERAL PUBLIC LICENSE' LICENSE
+          grep -q 'SearXNG' searx/templates/simple/base.html
