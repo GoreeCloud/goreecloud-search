@@ -1,5 +1,7 @@
+---
 name: GoreeCloud foundation
 
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
@@ -53,14 +55,17 @@ jobs:
           grep -q 'GoreeCloud Search' searx/templates/simple/search.html
           grep -q 'Private metasearch' searx/templates/simple/results.html
           grep -q 'GoreeCloud Search' goreecloud/settings.yml.example
-          grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' docs/goreecloud/UPSTREAM.md
+          grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' \
+            docs/goreecloud/UPSTREAM.md
 
       - name: Validate browser product contract
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'name="application-name" content="GoreeCloud Search"' searx/templates/simple/base.html
-          grep -q 'name="color-scheme" content="light dark"' searx/templates/simple/base.html
+          grep -q 'name="application-name" content="GoreeCloud Search"' \
+            searx/templates/simple/base.html
+          grep -q 'name="color-scheme" content="light dark"' \
+            searx/templates/simple/base.html
           grep -q 'rel="search"' searx/templates/simple/base.html
           grep -q 'rel="manifest"' searx/templates/simple/base.html
           grep -q 'goreecloud-page .pref-group' searx/static/themes/simple/goreecloud.css
@@ -105,7 +110,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq 'CONTAINER_IMAGE_ORGANIZATION="${CONTAINER_IMAGE_ORGANIZATION,,}"' utils/lib_sxng_container.sh
+          grep -Fq 'CONTAINER_IMAGE_ORGANIZATION="${CONTAINER_IMAGE_ORGANIZATION,,}"' \
+            utils/lib_sxng_container.sh
 
       - name: Guard upstream license
         shell: bash
