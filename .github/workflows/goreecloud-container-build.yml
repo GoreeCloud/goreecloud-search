@@ -40,6 +40,14 @@ jobs:
           test -n "$image"
           echo "GOREECLOUD_SEARCH_IMAGE=$image" >> "$GITHUB_ENV"
 
+      - name: Validate image metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.title" }}' "$GOREECLOUD_SEARCH_IMAGE")" = "GoreeCloud Search"
+          test "$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.licenses" }}' "$GOREECLOUD_SEARCH_IMAGE")" = "AGPL-3.0-or-later"
+          test "$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.source" }}' "$GOREECLOUD_SEARCH_IMAGE")" = "https://github.com/GoreeCloud/goreecloud-search"
+
       - name: Prepare container runtime configuration
         shell: bash
         run: |
