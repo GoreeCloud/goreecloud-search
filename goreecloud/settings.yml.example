@@ -15,9 +15,9 @@ general:
   enable_metrics: true
 
 brand:
-  docs_url: false
-  public_instances: false
-  wiki_url: false
+  docs_url: ""
+  public_instances: ""
+  wiki_url: ""
   issue_url: "https://github.com/GoreeCloud/goreecloud-search/issues"
   custom:
     links:
