@@ -1,5 +1,7 @@
+---
 name: GoreeCloud provider acceptance
 
+# yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
     inputs:
@@ -57,7 +59,8 @@ jobs:
           nohup python -m searx.webapp >/tmp/goreecloud-search-provider.log 2>&1 &
           echo $! >/tmp/goreecloud-search-provider.pid
           for attempt in $(seq 1 45); do
-            if curl --fail --silent --show-error http://127.0.0.1:8888/healthz >/dev/null; then
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8888/healthz >/dev/null; then
               exit 0
             fi
             if ! kill -0 "$(cat /tmp/goreecloud-search-provider.pid)" 2>/dev/null; then
