@@ -7,21 +7,22 @@ url = "http://localhost:11111/"
 
 
 def test_index(browser):
-    # Visit URL
     browser.visit(url)
-    assert browser.is_text_present('SearXNG')
+    assert browser.is_text_present('GoreeCloud Search')
+    assert browser.is_text_present('Private Search')
 
 
 def test_404(browser):
-    # Visit URL
     browser.visit(url + 'missing_link')
     assert browser.is_text_present('Page not found')
 
 
 def test_about(browser):
-    browser.visit(url)
-    browser.links.find_by_text('SearXNG').click()
-    assert browser.is_text_present('Why use it?')
+    browser.visit(url + 'about')
+    assert browser.is_text_present('About GoreeCloud Search')
+    assert browser.is_text_present('Privacy model')
+    assert browser.is_text_present('Open-source foundation')
+    assert browser.is_text_present('SearXNG')
 
 
 def test_preferences(browser):
@@ -67,7 +68,7 @@ def test_preferences_locale(browser):
 
     browser.visit(url)
     browser.links.find_by_href('/preferences').click()
-    browser.is_text_present('Préférences')
+    assert browser.is_text_present('Préférences')
 
 
 def test_search(browser):
