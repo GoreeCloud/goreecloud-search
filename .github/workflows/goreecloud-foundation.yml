@@ -79,6 +79,16 @@ jobs:
             exit 1
           fi
 
+      - name: Validate hardened Compose baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '^    init: true$' goreecloud/compose.yml.example
+          grep -q '^    stop_grace_period: 20s$' goreecloud/compose.yml.example
+          grep -q 'no-new-privileges:true' goreecloud/compose.yml.example
+          grep -q '^    healthcheck:$' goreecloud/compose.yml.example
+          grep -q '/healthz' goreecloud/compose.yml.example
+
       - name: Validate container naming compatibility
         shell: bash
         run: |
