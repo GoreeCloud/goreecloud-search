@@ -28,7 +28,7 @@ jobs:
           python-version: '3.13'
 
       - name: Validate Python source syntax
-        run: python -m compileall -q searx
+        run: python -m compileall -q searx goreecloud
 
       - name: Validate GoreeCloud product markers
         shell: bash
@@ -40,8 +40,10 @@ jobs:
           test -f docs/goreecloud/DEPLOYMENT.md
           test -f goreecloud/settings.yml.example
           test -f goreecloud/compose.yml.example
+          test -f goreecloud/browser_acceptance.py
           test -f .github/workflows/goreecloud-runtime-smoke.yml
           test -f .github/workflows/goreecloud-container-build.yml
+          test -f .github/workflows/goreecloud-browser-acceptance.yml
           test -f searx/static/themes/simple/goreecloud.css
           grep -q 'GoreeCloud Search' README.rst
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
