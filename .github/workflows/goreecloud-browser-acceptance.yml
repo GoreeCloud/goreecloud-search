@@ -1,5 +1,7 @@
+---
 name: GoreeCloud browser acceptance
 
+# yamllint disable-line rule:truthy
 on:
   push:
     branches:
