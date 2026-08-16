@@ -88,6 +88,9 @@ jobs:
           grep -q 'no-new-privileges:true' goreecloud/compose.yml.example
           grep -q '^    healthcheck:$' goreecloud/compose.yml.example
           grep -q '/healthz' goreecloud/compose.yml.example
+          GOREECLOUD_SEARCH_IMAGE='example.invalid/goreecloud/search:test' \
+          SEARXNG_SECRET='goreecloud-ci-compose-secret' \
+          docker compose -f goreecloud/compose.yml.example config --quiet
 
       - name: Validate container naming compatibility
         shell: bash
