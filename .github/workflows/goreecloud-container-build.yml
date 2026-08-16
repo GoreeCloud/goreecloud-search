@@ -27,14 +27,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          make container
+          # Force Docker so the build and runtime acceptance steps use the same
+          # local image store. Treat this as a local acceptance build rather than
+          # an upstream release job, so the helper does not push a cache image.
+          GITHUB_ACTIONS=false ./manage container.build docker
 
       - name: Locate built image
         shell: bash
         run: |
           set -euo pipefail
           docker image ls --format '{{.Repository}}:{{.Tag}}  {{.ID}}'
-          image="$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '(^|/)searxng/searxng:latest$' | head -n 1)"
+          image="$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -E '^localhost/goreecloud/searxng:latest$' | head -n 1)"
           test -n "$image"
           echo "GOREECLOUD_SEARCH_IMAGE=$image" >> "$GITHUB_ENV"
 
@@ -83,6 +86,7 @@ jobs:
           grep -q 'SearXNG' /tmp/container-index.html
           curl --fail --silent --show-error http://127.0.0.1:8888/preferences >/tmp/container-preferences.html
           grep -q 'GoreeCloud Search' /tmp/container-preferences.html
+          curl --fail --silent --show-error http://127.0.0.1:8888/healthz >/tmp/container-health.txt
 
       - name: Show container diagnostics on failure
         if: failure()
