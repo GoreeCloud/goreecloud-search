@@ -53,6 +53,17 @@ jobs:
           grep -q 'GoreeCloud Search' goreecloud/settings.yml.example
           grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' docs/goreecloud/UPSTREAM.md
 
+      - name: Validate browser product contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'name="application-name" content="GoreeCloud Search"' searx/templates/simple/base.html
+          grep -q 'name="color-scheme" content="light dark"' searx/templates/simple/base.html
+          grep -q 'rel="search"' searx/templates/simple/base.html
+          grep -q 'rel="manifest"' searx/templates/simple/base.html
+          grep -q 'goreecloud-page .pref-group' searx/static/themes/simple/goreecloud.css
+          grep -q '_overflow_diagnostics' goreecloud/browser_acceptance.py
+
       - name: Validate privacy-oriented runtime baseline
         shell: bash
         run: |
