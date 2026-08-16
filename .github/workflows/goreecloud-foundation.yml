@@ -41,9 +41,11 @@ jobs:
           test -f goreecloud/settings.yml.example
           test -f goreecloud/compose.yml.example
           test -f goreecloud/browser_acceptance.py
+          test -f goreecloud/provider_acceptance.py
           test -f .github/workflows/goreecloud-runtime-smoke.yml
           test -f .github/workflows/goreecloud-container-build.yml
           test -f .github/workflows/goreecloud-browser-acceptance.yml
+          test -f .github/workflows/goreecloud-provider-acceptance.yml
           test -f searx/static/themes/simple/goreecloud.css
           grep -q 'GoreeCloud Search' README.rst
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
@@ -91,6 +93,13 @@ jobs:
           GOREECLOUD_SEARCH_IMAGE='example.invalid/goreecloud/search:test' \
           SEARXNG_SECRET='goreecloud-ci-compose-secret' \
           docker compose -f goreecloud/compose.yml.example config --quiet
+
+      - name: Validate provider acceptance boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'workflow_dispatch:' .github/workflows/goreecloud-provider-acceptance.yml
+          grep -q 'real-provider acceptance' goreecloud/provider_acceptance.py
 
       - name: Validate container naming compatibility
         shell: bash
