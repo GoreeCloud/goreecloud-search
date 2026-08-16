@@ -1,0 +1,50 @@
+name: GoreeCloud foundation
+
+on:
+  push:
+    branches:
+      - master
+      - 'agent/**'
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate Python source syntax
+        run: python -m compileall -q searx
+
+      - name: Validate GoreeCloud product markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f GORECLOUD.md
+          test -f docs/goreecloud/UPSTREAM.md
+          test -f searx/static/themes/simple/goreecloud.css
+          grep -q 'GoreeCloud Search' README.rst
+          grep -q 'GoreeCloud Search' searx/templates/simple/base.html
+          grep -q 'GoreeCloud Search' searx/templates/simple/index.html
+          grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' docs/goreecloud/UPSTREAM.md
+
+      - name: Guard upstream license
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f LICENSE
+          grep -q 'GNU AFFERO GENERAL PUBLIC LICENSE' LICENSE
