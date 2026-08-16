@@ -50,6 +50,7 @@ body {
 }
 
 .index {
+  box-sizing: border-box;
   width: min(92vw, 56rem);
   margin: 0 auto;
   padding: clamp(1rem, 3vw, 2.5rem);
