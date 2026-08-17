@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# GoreeCloud Search runtime override example.
+#
+# Copy the reviewed values you need into the deployment-managed SearXNG
+# settings file. Secrets belong in environment variables or protected runtime
+# configuration, never in this repository.
+
+use_default_settings: true
+
+general:
+  instance_name: "GoreeCloud Search"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+  # GoreeCloud does not collect SearXNG usage metrics by default. Search queries
+  # can contain sensitive information, so metrics require a separate documented
+  # operational purpose before they are enabled.
+  enable_metrics: false
+
+brand:
+  docs_url: ""
+  public_instances: ""
+  wiki_url: ""
+  issue_url: "https://github.com/GoreeCloud/goreecloud-search/issues"
+  pwa_colors:
+    theme_color_light: "#eef3f9"
+    background_color_light: "#eef3f9"
+    theme_color_dark: "#0d1119"
+    background_color_dark: "#0d1119"
+    theme_color_black: "#000000"
+    background_color_black: "#000000"
+
+search:
+  safe_search: 0
+  autocomplete: "duckduckgo"
+  default_lang: "auto"
+  formats:
+    - html
+
+server:
+  bind_address: "127.0.0.1"
+  limiter: false
+  public_instance: false
+  image_proxy: true
+  method: "GET"
+  default_http_headers:
+    X-Content-Type-Options: nosniff
+    X-Download-Options: noopen
+    X-Frame-Options: DENY
+    X-Robots-Tag: noindex, nofollow
+    Referrer-Policy: no-referrer
+    Permissions-Policy: "camera=(), microphone=(), geolocation=()"
+
+ui:
+  default_theme: simple
+  query_in_title: false
+  center_alignment: false
+  default_locale: ""
+  search_on_category_select: true
+  hotkeys: default
+  url_formatting: pretty
+  theme_args:
+    simple_style: auto
+
+# JSON/RSS/CSV formats are intentionally not enabled in this baseline.
+# The GoreeCloud-facing API will be enabled only after its access, versioning,
+# rate-limiting, and operational contract has been accepted.

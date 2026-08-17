@@ -159,6 +159,13 @@ class InfoPageSet:  # pylint: disable=too-few-public-methods
         """
         locale = locale or self.locale_default
 
+        # GoreeCloud Search owns the product-level About surface. Until a
+        # GoreeCloud-maintained translation exists for a locale, always render
+        # the canonical English GoreeCloud About page rather than exposing
+        # upstream SearXNG product/instance messaging under another locale.
+        if pagename == 'about':
+            locale = self.locale_default
+
         if pagename not in self.toc:
             return None
         if locale not in self.locales:

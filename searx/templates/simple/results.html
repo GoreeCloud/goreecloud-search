@@ -8,9 +8,21 @@
     {% endfor %}
 {%- endmacro %}
 {% block title %}{% if query_in_title %}{{- q|e }} - {% endif %}{% endblock %}
-{% block meta %}<link rel="alternate" type="application/rss+xml" title="Searx search: {{ q|e }}" href="{{ url_for('search', _external=True) }}?q={{ q|urlencode }}&amp;categories={{ selected_categories|join(",") | replace(' ','+') }}&amp;pageno={{ pageno }}&amp;time_range={{ time_range }}&amp;language={{ current_language }}&amp;safesearch={{ safesearch }}&amp;format=rss">{% endblock %}
+{% block meta %}<link rel="alternate" type="application/rss+xml" title="GoreeCloud Search: {{ q|e }}" href="{{ url_for('search', _external=True) }}?q={{ q|urlencode }}&amp;categories={{ selected_categories|join(",") | replace(' ','+') }}&amp;pageno={{ pageno }}&amp;time_range={{ time_range }}&amp;language={{ current_language }}&amp;safesearch={{ safesearch }}&amp;format=rss">{% endblock %}
 {% block content %}
 {% include 'simple/search.html' %}
+
+<section class="goreecloud-results-context" aria-label="Search context">
+  <div>
+    <p class="goreecloud-results-eyebrow">Private metasearch</p>
+    <h1 class="goreecloud-results-title">Results for <span>“{{ q|e }}”</span></h1>
+  </div>
+  <div class="goreecloud-results-meta" aria-label="Active search settings">
+    {% if selected_categories %}<span>{{ selected_categories|join(', ') }}</span>{% endif %}
+    {% if current_language %}<span>{{ current_language }}</span>{% endif %}
+    {% if time_range %}<span>{{ time_range }}</span>{% endif %}
+  </div>
+</section>
 
 {% if results and results|map(attribute='template')|unique|list|count == 1 %}
   {% set only_template = 'only_template_' + results[0]['template']|default('default')|replace('.html', '') %}
@@ -28,7 +40,7 @@
 
         {%- if infoboxes -%}
           <div id="infoboxes">
-            <details open class="sidebar-collapsible">
+            <details open class="sidebar-collapsible goreecloud-sidebar-panel">
               <summary class="title">{{ _('Info') }}</summary>
               {%- for infobox in infoboxes -%}
                 {%- include 'simple/elements/infobox.html' -%}
@@ -58,7 +70,7 @@
       {%- include 'simple/elements/corrections.html' -%}
     {%- endif -%}
 
-    <div id="urls" role="main">
+    <div id="urls" role="main" aria-label="Search results">
     {% for result in results %}
         {% if result.open_group and not only_template %}<div class="template_group_{{ result['template']|replace('.html', '') }}">{% endif %}
         {% set index = loop.index %}
@@ -73,7 +85,7 @@
       <a href="#" aria-label="{{ _('Back to top') }}">{{ icon_small('navigate-up') }}</a>
     </div>
     {% if paging %}
-    <nav id="pagination" role="navigation">
+    <nav id="pagination" role="navigation" aria-label="Search result pages">
         {% if pageno > 1 %}
             <form method="{{ method }}" action="{{ url_for('search') }}" class="previous_page">
                 <div class="{% if rtl %}right{% else %}left{% endif %}">
@@ -106,7 +118,7 @@
                 <input type="hidden" name="theme" value="{{ theme }}" >
                 {% if timeout_limit %}<input type="hidden" name="timeout_limit" value="{{ timeout_limit|e }}" >{% endif %}
                 {{- engine_data_form(engine_data) -}}
-                <button role="link"  type="submit">{{ _('Next page') }} {{ icon_small('navigate-right') }}</button>
+                <button role="link" type="submit">{{ _('Next page') }} {{ icon_small('navigate-right') }}</button>
               </div>
           </form>
         {%- endif -%}

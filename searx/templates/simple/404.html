@@ -1,9 +1,13 @@
-{% extends "simple/base.html" %}
+{% extends "simple/page_with_header.html" %}
 {% block content %}
-<div class="center">
-    <h1>{{ _('Page not found') }}</h1>
-    {% autoescape false %}
-    <p>{{ _('Go to %(search_page)s.', search_page='<a href="{}">{}</a>'.format(url_for('index'), _('search page'))) }}</p>
-    {% endautoescape %}
-</div>
+<section class="goreecloud-not-found" aria-labelledby="goreecloud-not-found-title">
+    <p class="goreecloud-not-found-code" aria-hidden="true">404</p>
+    <p class="goreecloud-not-found-eyebrow">{{ _('GoreeCloud Search') }}</p>
+    <h1 id="goreecloud-not-found-title">{{ _('Page not found') }}</h1>
+    <p class="goreecloud-not-found-copy">{{ _('The page may have moved, the address may be incomplete, or the requested resource may no longer exist.') }}</p>
+    <div class="goreecloud-not-found-actions">
+        <a class="goreecloud-action goreecloud-action-primary" href="{{ url_for('index') }}">{{ _('Return to search') }}</a>
+        <a class="goreecloud-action" href="{{ url_for('info', pagename='about') }}">{{ _('About GoreeCloud Search') }}</a>
+    </div>
+</section>
 {% endblock %}

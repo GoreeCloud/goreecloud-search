@@ -1,79 +1,35 @@
-# About SearXNG
+# About GoreeCloud Search
 
-SearXNG is a [metasearch engine], aggregating the results of other
-{{link('search engines', 'preferences')}} while not storing information about
-its users.
+GoreeCloud Search is a privacy-first metasearch service maintained as part of the GoreeCloud platform. It sends a search to selected external search providers, combines the returned results, and presents them through a GoreeCloud-controlled interface without requiring a search-provider account.
 
-The SearXNG project is driven by an open community. Come join us on Matrix if
-you have questions or just want to chat about SearXNG at [#searxng:matrix.org]
+The service is built from the open-source [SearXNG] project. GoreeCloud maintains its own product identity, interface, deployment defaults, validation, and operational documentation while preserving SearXNG attribution and the terms of the upstream license.
 
-Make SearXNG better:
+## Privacy model
 
-- You can improve SearXNG translations at [Weblate], or...
-- Track development, send contributions, and report issues at [SearXNG sources].
-- To get further information, visit SearXNG's project documentation at [SearXNG
-  docs].
+GoreeCloud Search is designed to reduce unnecessary disclosure during ordinary web search. The application does not need to build a personal search profile in order to provide results, and GoreeCloud-specific defaults are intended to minimize avoidable tracking-oriented behavior.
 
-## Why use it?
+Search results still come from external providers. Those providers remain independent services with their own availability, content, policies, rate limits, and network visibility. GoreeCloud Search cannot make an external provider private simply by querying it on your behalf.
 
-- SearXNG may not offer you as personalized results as Google, but it doesn't
-  generate a profile about you.
-- SearXNG doesn't care about what you search for, never shares anything with a
-  third-party, and can't be used to compromise you.
-- SearXNG is free software; the code is 100% open, and everyone is welcome to
-  make it better.
+## Search-provider choice
 
-If you do care about privacy, want to be a conscious user, or otherwise believe
-in digital freedom, make SearXNG your default search engine or run it on your
-own server!
+The available providers and categories are visible in {{link('Preferences', 'preferences')}}. Provider availability can change, and an individual engine may temporarily fail, throttle requests, or return no usable results. GoreeCloud Search is designed so that the metasearch experience does not depend on one provider being permanently available.
 
-## How do I set it as the default search engine?
+The {{link('stats page', 'stats')}} provides engine-performance information from the running instance.
 
-SearXNG supports [OpenSearch].  For more information on changing your default
-search engine, see your browser's documentation:
+## Browser integration
 
-- [Firefox]
-- [Microsoft Edge] - Behind the link, you will also find some useful instructions
-  for Chrome and Safari.
-- [Chromium]-based browsers only add websites that the user navigates to without
-  a path.
+GoreeCloud Search supports [OpenSearch], allowing compatible browsers to add the service as a search provider. Browser behavior differs by platform, so adding or selecting a default search provider may require browser-specific steps.
 
-When adding a search engine, there must be no duplicates with the same name.  If
-you encounter a problem where you cannot add the search engine, you can either:
+## Open-source foundation
 
-- Remove the duplicate (default name: SearXNG) or
-- Contact the owner to give the instance a different name from the default.
+GoreeCloud Search remains open source and traceable to its upstream foundation. SearXNG provides the metasearch engine, provider integrations, and much of the underlying application architecture. GoreeCloud-specific work focuses on product identity, Glaze UI integration, privacy-oriented defaults, deployment hardening, testing, and operation within the GoreeCloud environment.
 
-## How does it work?
+For upstream SearXNG documentation, development, translations, and community information, use the official [SearXNG project] resources.
 
-SearXNG is a fork of the well-known [searx] [metasearch engine] which was
-inspired by the [Seeks project].  It provides basic privacy by mixing your
-queries with searches on other platforms without storing search data.  SearXNG
-can be added to your browser's search bar; moreover, it can be set as the
-default search engine.
+## Service boundary
 
-The {{link('stats page', 'stats')}} contains some useful anonymous usage
-statistics about the engines used.
+GoreeCloud Search is a search interface, not an authoritative archive of the web. Results can change or disappear as external sites and providers change. Important information should be preserved separately when long-term retention matters.
 
-## How can I make it my own?
-
-SearXNG appreciates your concern regarding logs, so take the code from the
-[SearXNG sources] and run it yourself!
-
-Add your instance to this [list of public
-instances]({{get_setting('brand.public_instances')}}) to help other people
-reclaim their privacy and make the internet freer.  The more decentralized the
-internet is, the more freedom we have!
-
-
-[SearXNG sources]: {{GIT_URL}}
-[#searxng:matrix.org]: https://matrix.to/#/#searxng:matrix.org
-[SearXNG docs]: {{get_setting('brand.docs_url')}}
-[searx]: https://github.com/searx/searx
-[metasearch engine]: https://en.wikipedia.org/wiki/Metasearch_engine
-[Weblate]: https://translate.codeberg.org/projects/searxng/
-[Seeks project]: https://beniz.github.io/seeks/
+[SearXNG]: https://github.com/searxng/searxng
+[SearXNG project]: https://docs.searxng.org/
 [OpenSearch]: https://github.com/dewitt/opensearch/blob/master/opensearch-1-1-draft-6.md
-[Firefox]: https://support.mozilla.org/en-US/kb/add-or-remove-search-engine-firefox
-[Microsoft Edge]: https://support.microsoft.com/en-us/help/4028574/microsoft-edge-change-the-default-search-engine
-[Chromium]: https://www.chromium.org/tab-to-search

@@ -1,0 +1,100 @@
+---
+name: GoreeCloud provider acceptance
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Run the representative suite or one diagnostic category
+        required: true
+        default: suite
+        type: choice
+        options:
+          - suite
+          - single
+      query:
+        description: Search query used in single-category mode
+        required: true
+        default: GoreeCloud private search
+        type: string
+      category:
+        description: SearXNG category used in single-category mode
+        required: true
+        default: general
+        type: string
+      minimum_results:
+        description: Minimum result cards required per category for success
+        required: true
+        default: '1'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  provider-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Prepare GoreeCloud runtime settings
+        run: cp goreecloud/settings.yml.example /tmp/goreecloud-search-provider-settings.yml
+
+      - name: Start GoreeCloud Search
+        env:
+          SEARXNG_SETTINGS_PATH: /tmp/goreecloud-search-provider-settings.yml
+          SEARXNG_SECRET: goreecloud-provider-acceptance-only-secret
+          SEARXNG_BIND_ADDRESS: 127.0.0.1
+          SEARXNG_PORT: '8888'
+          SEARXNG_DISABLE_ETC_SETTINGS: 'true'
+        run: |
+          set -euo pipefail
+          nohup python -m searx.webapp >/tmp/goreecloud-search-provider.log 2>&1 &
+          echo $! >/tmp/goreecloud-search-provider.pid
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8888/healthz >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/goreecloud-search-provider.pid)" 2>/dev/null; then
+              cat /tmp/goreecloud-search-provider.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/goreecloud-search-provider.log
+          exit 1
+
+      - name: Run explicit real-provider acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.mode }}" = "suite" ]; then
+            python goreecloud/provider_acceptance.py \
+              --suite \
+              --minimum-results "${{ inputs.minimum_results }}"
+          else
+            python goreecloud/provider_acceptance.py \
+              --query "${{ inputs.query }}" \
+              --category "${{ inputs.category }}" \
+              --minimum-results "${{ inputs.minimum_results }}"
+          fi
+
+      - name: Print application log on failure
+        if: failure()
+        run: cat /tmp/goreecloud-search-provider.log || true

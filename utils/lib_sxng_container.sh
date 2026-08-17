@@ -9,6 +9,8 @@ EOF
 }
 
 CONTAINER_IMAGE_ORGANIZATION=${GITHUB_REPOSITORY_OWNER:-"searxng"}
+# OCI/Docker repository names must be lowercase even when the GitHub owner is case-preserving.
+CONTAINER_IMAGE_ORGANIZATION="${CONTAINER_IMAGE_ORGANIZATION,,}"
 CONTAINER_IMAGE_NAME="searxng"
 
 container.build() {

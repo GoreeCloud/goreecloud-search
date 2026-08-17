@@ -82,7 +82,7 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
         result = self.client.post('/')
         self.assertEqual(result.status_code, 200)
         self.assertIn(
-            b'<div class="title"><h1>SearXNG</h1></div>',
+            b'<div class="title"><h1>GoreeCloud Search</h1></div>',
             result.data,
         )
 
@@ -99,7 +99,7 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_search_empty_html(self):
         result = self.client.post('/search', data={'q': ''})
         self.assertEqual(result.status_code, 200)
-        self.assertIn(b'<div class="title"><h1>SearXNG</h1></div>', result.data)
+        self.assertIn(b'<div class="title"><h1>GoreeCloud Search</h1></div>', result.data)
 
     def test_search_empty_json(self):
         result = self.client.post('/search', data={'q': '', 'format': 'json'})
@@ -228,9 +228,13 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_opensearch_xml(self):
         result = self.client.get('/opensearch.xml')
         self.assertEqual(result.status_code, 200)
+        self.assertIn(b'<LongName>GoreeCloud Search private metasearch</LongName>', result.data)
         self.assertIn(
-            b'<Description>SearXNG is a metasearch engine that respects your privacy.</Description>', result.data
+            b'<Description>Search the web through the private GoreeCloud Search metasearch service.</Description>',
+            result.data,
         )
+        self.assertIn(b'<Image type="image/svg+xml">/static/themes/simple/img/favicon.svg</Image>', result.data)
+        self.assertIn(b'<Query role="example" searchTerms="GoreeCloud Search" />', result.data)
 
     def test_favicon(self):
         result = self.client.get('/favicon.ico')
