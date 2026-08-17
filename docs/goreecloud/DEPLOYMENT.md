@@ -27,19 +27,21 @@ Secrets must not be committed. The SearXNG secret key and any future provider cr
 The development baseline establishes:
 
 - instance identity as GoreeCloud Search;
-- GoreeCloud source and upstream links;
+- explicit GoreeCloud source and upstream attribution without duplicate footer navigation;
 - private-instance behavior;
 - SearXNG usage metrics disabled;
 - image proxying enabled for result privacy;
 - query text excluded from page titles;
 - `noindex, nofollow` response directives plus `noindex, nofollow, noarchive` browser metadata;
 - `no-referrer` policy;
+- frame embedding denied with `X-Frame-Options: DENY`;
+- camera, microphone, and geolocation disabled through `Permissions-Policy`;
 - HTML as the only enabled search response format;
 - no public-instance directory integration;
 - no donation link;
 - loopback-only publication in the GoreeCloud Compose example;
 - container health checking and bounded restart/shutdown behavior;
-- browser application identity, manifest discovery, OpenSearch discovery, and light/dark browser metadata;
+- GoreeCloud-owned browser icon, application manifest, OpenSearch identity, and light/dark browser metadata;
 - canonical Glaze UI 1.0 semantic tokens and adaptive layout ranges.
 
 ## Automated validation
@@ -47,9 +49,9 @@ The development baseline establishes:
 The development branch includes four deterministic GoreeCloud-specific validation layers in addition to the retained upstream Integration workflow:
 
 1. `goreecloud-foundation.yml` performs source, product-marker, browser-contract, Glaze UI 1.0, privacy-default, deployment-syntax, upstream-baseline, Python syntax, and AGPL-preservation checks.
-2. `goreecloud-runtime-smoke.yml` installs the reviewed source revision, loads the GoreeCloud settings file through `SEARXNG_SETTINGS_PATH`, starts the application, verifies the home/search/preferences product shell, and checks privacy-facing configuration and HTTP behavior.
+2. `goreecloud-runtime-smoke.yml` installs the reviewed source revision, loads the GoreeCloud settings file through `SEARXNG_SETTINGS_PATH`, starts the application, verifies the home/search/preferences product shell, and checks privacy/security-facing configuration and HTTP behavior.
 3. `goreecloud-container-build.yml` builds the SearXNG-derived container image from the fork's source and runs the resulting image with the GoreeCloud runtime configuration before validating the rendered product identity and health endpoint.
-4. `goreecloud-browser-acceptance.yml` runs Chromium through the canonical Glaze UI Compact, Medium, Expanded, and Wide layout classes. It validates the visible product shell, practical target sizing, keyboard behavior, About and Preferences surfaces, GoreeCloud browser metadata, OpenSearch and manifest behavior, and unintended horizontal overflow with element-level diagnostics.
+4. `goreecloud-browser-acceptance.yml` runs Chromium through the canonical Glaze UI Compact, Medium, Expanded, and Wide layout classes. It validates the visible product shell, practical target sizing, keyboard behavior, About, Preferences, and recovery surfaces, GoreeCloud browser artwork/metadata, the manifest and OpenSearch payloads, and unintended horizontal overflow with element-level diagnostics.
 
 The runtime smoke workflow is intentionally valuable as a schema-compatibility gate. During initial implementation it detected an invalid boolean value in the `brand` settings, which was corrected to the current string-based schema before deployment. Browser acceptance likewise detected overflow in both the landing search shell and the Preferences interface, allowing those layout defects to be corrected without hiding overflow globally.
 
@@ -57,7 +59,12 @@ The runtime smoke workflow is intentionally valuable as a schema-compatibility g
 
 Real search providers are intentionally tested outside the required pull-request gates because third-party engines can throttle, reject, or temporarily block shared CI runners independently of GoreeCloud Search correctness.
 
-`goreecloud/provider_acceptance.py` performs an explicit HTML search against a running GoreeCloud Search instance and requires a configurable minimum number of rendered result cards. `.github/workflows/goreecloud-provider-acceptance.yml` exposes that check through `workflow_dispatch`, with explicit query, category, and minimum-result inputs.
+`goreecloud/provider_acceptance.py` supports two explicit modes:
+
+- a representative suite covering the SearXNG `general`, `images`, `news`, `videos`, `it`, and `science` categories; and
+- a single-category diagnostic mode for isolating a provider/category failure.
+
+`.github/workflows/goreecloud-provider-acceptance.yml` exposes both modes through `workflow_dispatch`. Suite mode is the default for release acceptance. Each category must meet the configured minimum rendered-result threshold independently.
 
 A failed provider-acceptance run must be investigated rather than automatically classified as an application defect. The acceptance record should distinguish application/runtime failure from provider throttling, provider blocking, engine initialization failure, or a genuinely empty result set. Target-environment provider acceptance remains mandatory before production cutover even if a GitHub-hosted provider run succeeds.
 
@@ -75,7 +82,13 @@ Do not use an unreviewed `latest` image tag as production provenance. Production
 
 After startup, verify Compose health before publishing the service through any reverse proxy or private routing layer. An unhealthy container is not ready for Caddy, DNS, or NetBird cutover even if its process is still running.
 
-A local real-provider check can then be run explicitly, for example:
+Run the representative real-provider suite with:
+
+```bash
+python goreecloud/provider_acceptance.py --base-url http://127.0.0.1:8888 --suite
+```
+
+For diagnosis, run one category explicitly, for example:
 
 ```bash
 python goreecloud/provider_acceptance.py --base-url http://127.0.0.1:8888 --category general --query "GoreeCloud private search"
@@ -94,7 +107,7 @@ Before replacing the current SearXNG runtime, the deployment must validate at mi
 1. exact source revision and build provenance;
 2. Docker build and application startup;
 3. health and readiness behavior;
-4. representative web, image, news, video, technical, and academic searches;
+4. representative general/web, image, news, video, IT/technical, and science/academic searches;
 5. provider failure behavior and clear classification of external-engine failures;
 6. Glaze UI behavior across Compact, Medium, Expanded, and Wide layouts;
 7. light/dark, keyboard, contrast, reduced-motion, and resilience behavior;
