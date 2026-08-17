@@ -2,4 +2,6 @@ blank_issues_enabled: true
 contact_links:
   - name: Upstream SearXNG project
     url: https://github.com/searxng/searxng
-    about: Use upstream for generally applicable SearXNG engine or backend work that is not GoreeCloud-specific.
+    about: >-
+      Use upstream for generally applicable SearXNG engine or backend work
+      that is not GoreeCloud-specific.
