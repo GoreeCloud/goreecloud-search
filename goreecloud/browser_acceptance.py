@@ -33,7 +33,6 @@ class Viewport:
     height: int
 
 
-# Exercise every canonical Glaze UI 1.0 adaptive layout class.
 VIEWPORTS = (
     Viewport("compact", 390, 844),
     Viewport("medium", 768, 900),
@@ -50,6 +49,23 @@ def _driver(viewport: Viewport) -> webdriver.Chrome:
     options.add_argument(f"--window-size={viewport.width},{viewport.height}")
     options.add_argument("--force-device-scale-factor=1")
     return webdriver.Chrome(options=options)
+
+
+def _fetch_text(driver: webdriver.Chrome, url: str) -> dict[str, object]:
+    return driver.execute_async_script(
+        """
+        const url = arguments[0];
+        const done = arguments[arguments.length - 1];
+        fetch(url, {credentials: 'same-origin'})
+          .then((response) => {
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.text();
+          })
+          .then((payload) => done({ok: true, payload}))
+          .catch((error) => done({ok: false, error: String(error)}));
+        """,
+        url,
+    )
 
 
 def _overflow_diagnostics(driver: webdriver.Chrome) -> list[str]:
@@ -108,6 +124,10 @@ def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> No
     if "noindex" not in robots or "nofollow" not in robots:
         raise AssertionError(f"{viewport.name}: private-search robots metadata is incomplete: {robots!r}")
 
+    favicon = driver.find_element(By.CSS_SELECTOR, 'link[rel="icon"]').get_attribute("href")
+    if not favicon or not favicon.endswith("favicon.svg"):
+        raise AssertionError(f"{viewport.name}: browser icon is not the GoreeCloud SVG mark: {favicon!r}")
+
     manifest_url = driver.find_element(By.CSS_SELECTOR, 'link[rel="manifest"]').get_attribute("href")
     if not manifest_url:
         raise AssertionError(f"{viewport.name}: web app manifest link is missing")
@@ -131,12 +151,27 @@ def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> No
     payload = manifest.get("payload") or {}
     if payload.get("name") != "GoreeCloud Search" or payload.get("short_name") != "GoreeCloud Search":
         raise AssertionError(f"{viewport.name}: manifest GoreeCloud identity is incomplete: {payload!r}")
+    if payload.get("description") != "Private metasearch and research for GoreeCloud":
+        raise AssertionError(f"{viewport.name}: manifest description is not GoreeCloud-owned: {payload!r}")
     if payload.get("display") != "standalone":
         raise AssertionError(f"{viewport.name}: manifest display mode is {payload.get('display')!r}")
+    icons = payload.get("icons") or []
+    if len(icons) != 1 or not str(icons[0].get("src", "")).endswith("favicon.svg"):
+        raise AssertionError(f"{viewport.name}: manifest advertises non-GoreeCloud artwork: {icons!r}")
 
     search_provider = driver.find_element(By.CSS_SELECTOR, 'link[rel="search"]').get_attribute("href")
     if not search_provider:
         raise AssertionError(f"{viewport.name}: OpenSearch provider link is missing")
+    opensearch = _fetch_text(driver, search_provider)
+    if not opensearch.get("ok"):
+        raise AssertionError(f"{viewport.name}: OpenSearch fetch failed: {opensearch.get('error')}")
+    opensearch_text = str(opensearch.get("payload") or "")
+    if "GoreeCloud Search private metasearch" not in opensearch_text:
+        raise AssertionError(f"{viewport.name}: OpenSearch long name is not GoreeCloud-owned")
+    if "img/favicon.svg" not in opensearch_text:
+        raise AssertionError(f"{viewport.name}: OpenSearch does not advertise GoreeCloud SVG artwork")
+    if "SearXNG metasearch" in opensearch_text:
+        raise AssertionError(f"{viewport.name}: upstream OpenSearch product identity leaked into GoreeCloud Search")
 
     color_scheme = driver.find_element(By.CSS_SELECTOR, 'meta[name="color-scheme"]').get_attribute("content")
     if "light" not in color_scheme or "dark" not in color_scheme:
@@ -146,39 +181,30 @@ def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> No
 def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
     driver.get(f"{BASE_URL}/")
     wait.until(EC.title_is("GoreeCloud Search"))
-
     heading = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".index .title h1")))
     if "GoreeCloud Search" not in heading.text:
         raise AssertionError(f"{viewport.name}: expected GoreeCloud Search heading, got {heading.text!r}")
-
     query = wait.until(EC.visibility_of_element_located((By.ID, "q")))
     submit = wait.until(EC.element_to_be_clickable((By.ID, "send_search")))
     if not query.get_attribute("placeholder"):
         raise AssertionError(f"{viewport.name}: search input has no placeholder")
     if not submit.get_attribute("aria-label"):
         raise AssertionError(f"{viewport.name}: search button has no accessible label")
-
     _assert_target_size(query, f"{viewport.name} search input")
     _assert_target_size(submit, f"{viewport.name} search submit")
-
     query.click()
     if driver.switch_to.active_element.get_attribute("id") != "q":
         raise AssertionError(f"{viewport.name}: search input did not receive focus")
-
     query.send_keys(Keys.TAB)
-    active = driver.switch_to.active_element
-    if not active.is_displayed():
+    if not driver.switch_to.active_element.is_displayed():
         raise AssertionError(f"{viewport.name}: keyboard focus moved to a hidden element")
-
     stylesheet_urls = [
-        element.get_attribute("href")
-        for element in driver.find_elements(By.CSS_SELECTOR, 'link[rel="stylesheet"]')
+        element.get_attribute("href") for element in driver.find_elements(By.CSS_SELECTOR, 'link[rel="stylesheet"]')
     ]
     if not any(url and "goreecloud.css" in url for url in stylesheet_urls):
         raise AssertionError(f"{viewport.name}: GoreeCloud Glaze UI stylesheet is not loaded")
     if not any(url and "goreecloud-states.css" in url for url in stylesheet_urls):
         raise AssertionError(f"{viewport.name}: GoreeCloud secondary-state stylesheet is not loaded")
-
     _assert_browser_metadata(driver, viewport)
     _assert_no_horizontal_overflow(driver, f"{viewport.name} home")
 
@@ -186,24 +212,15 @@ def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewpo
 def _assert_preferences(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
     driver.get(f"{BASE_URL}/preferences")
     wait.until(EC.presence_of_element_located((By.ID, "search_form")))
-
     body_text = driver.find_element(By.TAG_NAME, "body").text
-    if "GoreeCloud Search" not in body_text:
-        raise AssertionError(f"{viewport.name}: preferences page does not expose GoreeCloud Search identity")
-    if "Preferences" not in body_text:
-        raise AssertionError(f"{viewport.name}: preferences page title is missing")
-
+    if "GoreeCloud Search" not in body_text or "Preferences" not in body_text:
+        raise AssertionError(f"{viewport.name}: preferences page product identity is incomplete")
     visible_submit = next(
-        (
-            element
-            for element in driver.find_elements(By.CSS_SELECTOR, 'input[type="submit"], button[type="submit"]')
-            if element.is_displayed()
-        ),
+        (element for element in driver.find_elements(By.CSS_SELECTOR, 'input[type="submit"], button[type="submit"]') if element.is_displayed()),
         None,
     )
     if visible_submit is not None:
         _assert_target_size(visible_submit, f"{viewport.name} preferences submit")
-
     _assert_no_horizontal_overflow(driver, f"{viewport.name} preferences")
 
 
@@ -211,17 +228,10 @@ def _assert_about(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewp
     driver.get(f"{BASE_URL}/about")
     wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
     body_text = driver.find_element(By.TAG_NAME, "body").text
-
-    required_text = (
-        "About GoreeCloud Search",
-        "Privacy model",
-        "Open-source foundation",
-        "SearXNG",
-    )
+    required_text = ("About GoreeCloud Search", "Privacy model", "Open-source foundation", "SearXNG")
     missing = [text for text in required_text if text not in body_text]
     if missing:
         raise AssertionError(f"{viewport.name}: about page is missing product contract text: {missing!r}")
-
     _assert_no_horizontal_overflow(driver, f"{viewport.name} about")
 
 
@@ -230,11 +240,9 @@ def _assert_not_found(driver: webdriver.Chrome, wait: WebDriverWait, viewport: V
     heading = wait.until(EC.visibility_of_element_located((By.ID, "goreecloud-not-found-title")))
     if heading.text != "Page not found":
         raise AssertionError(f"{viewport.name}: 404 heading is {heading.text!r}")
-
     body_text = driver.find_element(By.TAG_NAME, "body").text
     if "GoreeCloud Search" not in body_text or "Return to search" not in body_text:
         raise AssertionError(f"{viewport.name}: 404 recovery surface is missing GoreeCloud product guidance")
-
     primary_action = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".goreecloud-not-found .goreecloud-action-primary")))
     _assert_target_size(primary_action, f"{viewport.name} 404 primary action")
     _assert_no_horizontal_overflow(driver, f"{viewport.name} 404")
@@ -242,7 +250,6 @@ def _assert_not_found(driver: webdriver.Chrome, wait: WebDriverWait, viewport: V
 
 def run() -> None:
     errors: list[str] = []
-
     for viewport in VIEWPORTS:
         driver: webdriver.Chrome | None = None
         try:
@@ -261,13 +268,11 @@ def run() -> None:
             if driver is not None:
                 driver.quit()
             time.sleep(0.25)
-
     if errors:
         for error in errors:
             print(error, file=sys.stderr)
         raise SystemExit(1)
-
-    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes and recovery surfaces.")
+    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes, recovery surfaces, and browser integrations.")
 
 
 if __name__ == "__main__":
