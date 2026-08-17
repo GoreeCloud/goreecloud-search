@@ -46,8 +46,11 @@ jobs:
           path = Path('/tmp/goreecloud-search-settings.yml')
           data = yaml.safe_load(path.read_text())
           assert data['general']['instance_name'] == 'GoreeCloud Search'
+          assert data['general']['enable_metrics'] is False
           assert data['server']['image_proxy'] is True
           assert data['server']['public_instance'] is False
+          assert data['server']['default_http_headers']['X-Robots-Tag'] == 'noindex, nofollow'
+          assert data['server']['default_http_headers']['Referrer-Policy'] == 'no-referrer'
           assert data['search']['formats'] == ['html']
           PY
 
@@ -86,6 +89,7 @@ jobs:
           grep -q '<title>GoreeCloud Search</title>' /tmp/index.html
           grep -q 'GoreeCloud Search' /tmp/index.html
           grep -q 'goreecloud.css' /tmp/index.html
+          grep -q 'name="robots" content="noindex, nofollow, noarchive"' /tmp/index.html
           grep -q 'Powered by' /tmp/index.html
           grep -q 'SearXNG' /tmp/index.html
 
