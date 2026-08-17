@@ -1,50 +1,43 @@
 ---
 name: "Bug report"
-about: Report a bug in SearXNG"
+about: "Report a bug in GoreeCloud Search"
 labels: ["bug"]
 type: "bug"
 ---
 
-_Replace this placeholder with a meaningful and precise description of the bug._
+_Describe the problem clearly and avoid including secrets or private GoreeCloud infrastructure information._
 
-<!-- FILL IN THESE FIELDS .. and delete the comments after reading.
+### What happened?
 
-     Use Markdown for formatting ->  https://www.markdowntools.io/cheat-sheet
--->
+<!-- Describe the observed behavior and why it appears incorrect. -->
 
-### How To Reproduce?
+### How can it be reproduced?
 
-<!-- How can we reproduce this issue? (as minimally and as precisely as
-     possible) -->
+<!-- Provide the smallest reliable reproduction. Redact credentials, private addresses, user data, and sensitive logs. -->
 
 ### Expected behavior
 
-<!-- A clear and concise description of what you expected to happen. -->
+<!-- Describe what GoreeCloud Search should have done instead. -->
 
-### Screenshots & Logs
+### Affected revision or image
 
-<!-- If applicable, add screenshots, logs to help explain your problem. -->
+<!-- Provide the GoreeCloud Search commit SHA, image digest/tag, or other build identifier when known. -->
 
-### Version of SearXNG
+### Affected surface
 
-<!-- Commit number if you are using on master branch and stipulate if you forked
-     SearXNG -->
+<!-- Examples: search results, Glaze UI, Preferences, About, browser/PWA integration, engine/provider behavior, runtime configuration, container/deployment example, CI/acceptance tooling. -->
 
-<!-- Look at the bottom of the SearXNG page and check for the version after
-     "Powered by SearXNG" If you are using a forked version of SearXNG include a
-     link to the fork source code. -->
+### Screenshots or sanitized logs
 
-### How did you install SearXNG?
+<!-- Include only information safe to publish. For a sensitive security issue, follow SECURITY.md instead of opening a public bug with exploit details. -->
 
-<!-- Did you install SearXNG using the official documentation or using
-     searxng-docker? -->
+### Upstream comparison
+
+<!-- If relevant, state whether the problem is also reproducible in upstream SearXNG. Generally applicable upstream engine/backend defects may belong upstream as described in CONTRIBUTING.rst. -->
 
 ### Additional context
 
-<!-- Add any other context about the problem here. -->
+<!-- Add other information that materially helps investigation, including rollback or workaround details when known. -->
 
-### Code of Conduct
-
-[AI Policy]: https://github.com/searxng/searxng/blob/master/AI_POLICY.rst
-
-- [ ] I read the [AI Policy] and hereby confirm that this issue conforms with the policy.
+- [ ] I removed secrets, private infrastructure information, and personal data from this report.
+- [ ] I reviewed `SECURITY.md` and am not publicly disclosing a sensitive vulnerability.
