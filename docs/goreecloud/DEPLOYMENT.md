@@ -4,11 +4,15 @@
 
 Development documentation. Production cutover is not approved by this file.
 
+The complete source-versus-production readiness contract is maintained in `docs/goreecloud/READINESS.md`.
+
 ## Runtime model
 
 GoreeCloud Search is intended to run as a Docker-managed private web service behind the approved GoreeCloud reverse-proxy and private-network architecture. The application should bind to loopback or an otherwise explicitly approved private interface rather than exposing its application port directly to the public Internet.
 
 The maintained fork uses SearXNG's upstream container build system rather than introducing a parallel, GoreeCloud-only container implementation. The fork's source, templates, Glaze UI layer, and GoreeCloud documentation therefore remain inside the image produced from the reviewed source revision.
+
+The approved user path is expected to preserve GoreeCloud's private-access model through individually attributable private access, NetBird/private networking, private DNS, and Caddy or an equivalently reviewed private publication layer. The application container itself is not treated as the public access-control boundary.
 
 ## Configuration
 
@@ -25,25 +29,29 @@ The development baseline establishes:
 - instance identity as GoreeCloud Search;
 - GoreeCloud source and upstream links;
 - private-instance behavior;
+- SearXNG usage metrics disabled;
 - image proxying enabled for result privacy;
 - query text excluded from page titles;
+- `noindex, nofollow` response directives plus `noindex, nofollow, noarchive` browser metadata;
+- `no-referrer` policy;
 - HTML as the only enabled search response format;
 - no public-instance directory integration;
 - no donation link;
 - loopback-only publication in the GoreeCloud Compose example;
 - container health checking and bounded restart/shutdown behavior;
-- browser application identity, manifest discovery, OpenSearch discovery, and light/dark browser metadata.
+- browser application identity, manifest discovery, OpenSearch discovery, and light/dark browser metadata;
+- canonical Glaze UI 1.0 semantic tokens and adaptive layout ranges.
 
 ## Automated validation
 
-The development branch includes four deterministic GoreeCloud-specific validation layers:
+The development branch includes four deterministic GoreeCloud-specific validation layers in addition to the retained upstream Integration workflow:
 
-1. `goreecloud-foundation.yml` performs source, product-marker, browser-contract, privacy-default, deployment-syntax, upstream-baseline, Python syntax, and AGPL-preservation checks.
-2. `goreecloud-runtime-smoke.yml` installs the reviewed source revision, loads the GoreeCloud settings file through `SEARXNG_SETTINGS_PATH`, starts the application, verifies the home/search/preferences product shell, and checks privacy-facing HTTP behavior.
+1. `goreecloud-foundation.yml` performs source, product-marker, browser-contract, Glaze UI 1.0, privacy-default, deployment-syntax, upstream-baseline, Python syntax, and AGPL-preservation checks.
+2. `goreecloud-runtime-smoke.yml` installs the reviewed source revision, loads the GoreeCloud settings file through `SEARXNG_SETTINGS_PATH`, starts the application, verifies the home/search/preferences product shell, and checks privacy-facing configuration and HTTP behavior.
 3. `goreecloud-container-build.yml` builds the SearXNG-derived container image from the fork's source and runs the resulting image with the GoreeCloud runtime configuration before validating the rendered product identity and health endpoint.
-4. `goreecloud-browser-acceptance.yml` runs Chromium at desktop and mobile viewport sizes, validates the visible product shell and keyboard behavior, verifies GoreeCloud browser metadata, and fails on unintended horizontal page overflow with element-level diagnostics.
+4. `goreecloud-browser-acceptance.yml` runs Chromium through the canonical Glaze UI Compact, Medium, Expanded, and Wide layout classes. It validates the visible product shell, practical target sizing, keyboard behavior, About and Preferences surfaces, GoreeCloud browser metadata, OpenSearch and manifest behavior, and unintended horizontal overflow with element-level diagnostics.
 
-The runtime smoke workflow is intentionally valuable as a schema-compatibility gate. During initial implementation it detected an invalid boolean value in the `brand` settings, which was corrected to the current string-based schema before deployment. Browser acceptance likewise detected mobile overflow in both the landing search shell and the Preferences interface, allowing those layout defects to be corrected without hiding overflow globally.
+The runtime smoke workflow is intentionally valuable as a schema-compatibility gate. During initial implementation it detected an invalid boolean value in the `brand` settings, which was corrected to the current string-based schema before deployment. Browser acceptance likewise detected overflow in both the landing search shell and the Preferences interface, allowing those layout defects to be corrected without hiding overflow globally.
 
 ## Real-provider acceptance
 
@@ -73,9 +81,11 @@ A local real-provider check can then be run explicitly, for example:
 python goreecloud/provider_acceptance.py --base-url http://127.0.0.1:8888 --category general --query "GoreeCloud private search"
 ```
 
-## API boundary
+## API and integration boundary
 
 Machine-readable formats remain disabled until the GoreeCloud Search API contract and access controls are accepted. See `docs/goreecloud/API.md`.
+
+Open WebUI, AnythingLLM, research-agent, and automation integration must define an access boundary, request volume, query sensitivity, logging and retention behavior, timeout/failure behavior, recovery, and disablement before JSON or another machine-readable format is enabled. Browser OpenSearch integration remains supported by the normal HTML/private-user path.
 
 ## Production acceptance
 
@@ -86,12 +96,13 @@ Before replacing the current SearXNG runtime, the deployment must validate at mi
 3. health and readiness behavior;
 4. representative web, image, news, video, technical, and academic searches;
 5. provider failure behavior and clear classification of external-engine failures;
-6. responsive Glaze UI behavior;
-7. keyboard and accessibility behavior;
+6. Glaze UI behavior across Compact, Medium, Expanded, and Wide layouts;
+7. light/dark, keyboard, contrast, reduced-motion, and resilience behavior;
 8. browser/OpenSearch/manifest identity behavior;
-9. private DNS, Caddy, and NetBird routing;
-10. secret separation;
-11. backup and restoration procedures;
-12. monitoring and rollback procedures.
+9. private DNS, Caddy, NetBird, and individual-user access boundaries;
+10. secret separation and privacy-conscious logging;
+11. backup, representative restoration, and recovery procedures;
+12. monitoring, alerting, upgrade, and rollback procedures;
+13. every enabled AI, automation, browser, or portal integration.
 
 No DNS, Caddy, firewall, NetBird, or current production SearXNG configuration should be changed merely because a development branch passes source-level or CI runtime validation.
