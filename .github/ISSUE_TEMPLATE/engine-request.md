@@ -1,46 +1,40 @@
 ---
-name: Engine request"
-about: Request a new engine in SearXNG"
+name: "Engine or provider request"
+about: "Request a search engine/provider for GoreeCloud Search"
 labels: ["engine request"]
 type: "feature"
 ---
 
-<!-- FILL IN THESE FIELDS .. and delete the comments after reading.
+Before submitting, review `CONTRIBUTING.rst`. A generally useful SearXNG engine integration should normally be considered for upstream SearXNG as well so GoreeCloud Search can inherit it without unnecessary fork divergence.
 
-     Use Markdown for formatting ->  https://www.markdowntools.io/cheat-sheet
--->
+### Provider or engine
 
-### Working URL to the engine
+<!-- Name the provider and include its public documentation or search URL. Do not include private credentials or tokens. -->
 
-<!-- Please check if the engine is responding correctly before submitting -->
+### Why is it useful to GoreeCloud Search?
 
-### Why do you want to add this engine?
+<!-- Explain the user, research, privacy, regional, technical, academic, or resilience value. -->
 
-<!-- What's special about this engine?  -->
+### Applicable categories
 
-### Features of this engine
+<!-- Examples: general, images, news, videos, it, science, files, map, music, social media. -->
 
-<!-- Features of this engine: Serves special content, is fast, is easy to
-     integrate, ... ? -->
+### Integration method
 
-### How can SearXNG fetch results from this engine?
+<!-- Describe an API, HTML result interface, authentication requirement, query parameters, rate limits, or other implementation details if known. Do not post restricted credentials. -->
 
-<!-- List API URL, example code and more that could be useful for the developers
-     in order to implement this engine.  If you don't know what to write, let
-     this part blank. -->
+### Privacy, terms, and reliability considerations
 
-### Applicable category of this engine
+<!-- Note tracking behavior, provider policies, authentication, throttling, geographic restrictions, result licensing, or operational risks that should be reviewed. -->
 
-<!-- Where should this new engine fit in SearXNG?  Current categories in
-     SearXNG: general, files, images, it, map, music, news, science, social
-     media and videos. -->
+### Upstream status
+
+<!-- Does SearXNG already support this provider? Is there an upstream issue/PR? If this is broadly useful and absent upstream, should it be proposed there first? -->
+
+### Acceptance expectations
+
+<!-- Describe representative queries/categories and any result behavior needed to validate the provider safely. -->
 
 ### Additional context
 
-<!-- Add any other context about the problem here. -->
-
-### Code of Conduct
-
-[AI Policy]: https://github.com/searxng/searxng/blob/master/AI_POLICY.rst
-
-- [ ] I read the [AI Policy] and hereby confirm that this issue conforms with the policy.
+<!-- Add other non-sensitive implementation or usability context. -->
