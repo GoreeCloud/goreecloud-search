@@ -1,32 +1,44 @@
 ---
 name: "Feature request"
-about: "Request a new feature in SearXNG"
+about: "Request an improvement to GoreeCloud Search"
 labels: ["new feature"]
 type: "feature"
 ---
 
-_Replace this placeholder with a concise description of the feature._
+_Describe the user or operational problem before proposing an implementation._
 
-<!-- FILL IN THESE FIELDS .. and delete the comments after reading.
+### Problem or opportunity
 
-     Use Markdown for formatting ->  https://www.markdowntools.io/cheat-sheet
--->
+<!-- What is difficult, missing, unsafe, inconsistent, or unnecessarily manual today? -->
 
-### Is your feature request related to a problem?
+### Proposed outcome
 
-<!-- A clear and concise description of what the problem is. Ex. I'm always
-     frustrated when [...] -->
+<!-- Describe the behavior or experience you want GoreeCloud Search to provide. -->
 
-### Describe the solution you'd like
+### GoreeCloud role and users
 
-<!-- A clear and concise description of what you want to happen. -->
+<!-- Who benefits: private web users, family users, administrators, local AI/research tools, browser integration, another GoreeCloud application, etc.? -->
 
-### Describe alternatives you've considered
+### Glaze UI and accessibility impact
 
-<!-- A clear and concise description of any alternative solutions or features you've considered. -->
+<!-- For a user-facing change, describe any navigation, component, responsive, light/dark, keyboard, target-size, reduced-motion, contrast, or other Glaze UI implications. -->
 
-### Code of Conduct
+### Privacy and security impact
 
-[AI Policy]: https://github.com/searxng/searxng/blob/master/AI_POLICY.rst
+<!-- Note new data, credentials, external services/providers, permissions, logging, network access, or machine-readable API behavior. -->
 
-- [ ] I read the [AI Policy] and hereby confirm that this issue conforms with the policy.
+### Upstream relationship
+
+<!-- Could this be a generally useful SearXNG engine/backend improvement? If so, review CONTRIBUTING.rst and consider upstream contribution to reduce fork divergence. -->
+
+### Alternatives considered
+
+<!-- Include simpler options or reasons existing SearXNG/GoreeCloud behavior is insufficient. -->
+
+### Readiness and recovery considerations
+
+<!-- Note testing, monitoring, backup/recovery, rollback, deployment, or migration work that would be needed for a stable release. -->
+
+### Additional context
+
+<!-- Add screenshots, sketches, references, or other non-sensitive context. -->
