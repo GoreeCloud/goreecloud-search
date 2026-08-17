@@ -176,6 +176,8 @@ def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewpo
     ]
     if not any(url and "goreecloud.css" in url for url in stylesheet_urls):
         raise AssertionError(f"{viewport.name}: GoreeCloud Glaze UI stylesheet is not loaded")
+    if not any(url and "goreecloud-states.css" in url for url in stylesheet_urls):
+        raise AssertionError(f"{viewport.name}: GoreeCloud secondary-state stylesheet is not loaded")
 
     _assert_browser_metadata(driver, viewport)
     _assert_no_horizontal_overflow(driver, f"{viewport.name} home")
@@ -223,6 +225,21 @@ def _assert_about(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewp
     _assert_no_horizontal_overflow(driver, f"{viewport.name} about")
 
 
+def _assert_not_found(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
+    driver.get(f"{BASE_URL}/goreecloud-browser-acceptance-missing")
+    heading = wait.until(EC.visibility_of_element_located((By.ID, "goreecloud-not-found-title")))
+    if heading.text != "Page not found":
+        raise AssertionError(f"{viewport.name}: 404 heading is {heading.text!r}")
+
+    body_text = driver.find_element(By.TAG_NAME, "body").text
+    if "GoreeCloud Search" not in body_text or "Return to search" not in body_text:
+        raise AssertionError(f"{viewport.name}: 404 recovery surface is missing GoreeCloud product guidance")
+
+    primary_action = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".goreecloud-not-found .goreecloud-action-primary")))
+    _assert_target_size(primary_action, f"{viewport.name} 404 primary action")
+    _assert_no_horizontal_overflow(driver, f"{viewport.name} 404")
+
+
 def run() -> None:
     errors: list[str] = []
 
@@ -237,6 +254,7 @@ def run() -> None:
             _assert_home(driver, wait, viewport)
             _assert_preferences(driver, wait, viewport)
             _assert_about(driver, wait, viewport)
+            _assert_not_found(driver, wait, viewport)
         except (AssertionError, WebDriverException) as exc:
             errors.append(f"{viewport.name}: {exc}")
         finally:
@@ -249,7 +267,7 @@ def run() -> None:
             print(error, file=sys.stderr)
         raise SystemExit(1)
 
-    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes.")
+    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes and recovery surfaces.")
 
 
 if __name__ == "__main__":
