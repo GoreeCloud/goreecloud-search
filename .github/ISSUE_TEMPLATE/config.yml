@@ -1,5 +1,5 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
-  - name: Questions & Answers (Q&A)
-    url: https://github.com/searxng/searxng/discussions/categories/q-a
-    about: Ask questions and find answers
+  - name: Upstream SearXNG project
+    url: https://github.com/searxng/searxng
+    about: Use upstream for generally applicable SearXNG engine or backend work that is not GoreeCloud-specific.
