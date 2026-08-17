@@ -76,9 +76,17 @@ jobs:
           grep -q 'GoreeCloud-owned changes' CONTRIBUTING.rst
           grep -q 'Upstream-capable changes' CONTRIBUTING.rst
           grep -q 'Glaze UI 1.0 is mandatory' CONTRIBUTING.rst
-          grep -q 'canonical GoreeCloud product content may intentionally fall back to English' \
+          grep -q 'GoreeCloud-maintained translation exists' CONTRIBUTING.rst
+          grep -q 'GoreeCloud product content may intentionally fall back to English' \
             CONTRIBUTING.rst
           grep -q 'localized About route' goreecloud/browser_acceptance.py
+          grep -q 'Report a bug in GoreeCloud Search' \
+            .github/ISSUE_TEMPLATE/bug-report.md
+          grep -q 'Request an improvement to GoreeCloud Search' \
+            .github/ISSUE_TEMPLATE/feature-request.md
+          grep -q 'Request a search engine/provider for GoreeCloud Search' \
+            .github/ISSUE_TEMPLATE/engine-request.md
+          grep -q 'Upstream SearXNG project' .github/ISSUE_TEMPLATE/config.yml
 
       - name: Validate browser product contract
         shell: bash
