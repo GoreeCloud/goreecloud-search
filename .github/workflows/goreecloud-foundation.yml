@@ -40,6 +40,7 @@ jobs:
           test -f docs/goreecloud/UPSTREAM.md
           test -f docs/goreecloud/API.md
           test -f docs/goreecloud/DEPLOYMENT.md
+          test -f docs/goreecloud/READINESS.md
           test -f goreecloud/settings.yml.example
           test -f goreecloud/compose.yml.example
           test -f goreecloud/browser_acceptance.py
@@ -67,21 +68,34 @@ jobs:
             searx/templates/simple/base.html
           grep -q 'name="color-scheme" content="light dark"' \
             searx/templates/simple/base.html
+          grep -q 'name="robots" content="noindex, nofollow, noarchive"' \
+            searx/templates/simple/base.html
           grep -q 'rel="search"' searx/templates/simple/base.html
           grep -q 'rel="manifest"' searx/templates/simple/base.html
           grep -q 'goreecloud-page .pref-group' searx/static/themes/simple/goreecloud.css
           grep -q '_overflow_diagnostics' goreecloud/browser_acceptance.py
+          grep -q 'Viewport("compact", 390, 844)' goreecloud/browser_acceptance.py
+          grep -q 'Viewport("medium", 768, 900)' goreecloud/browser_acceptance.py
+          grep -q 'Viewport("expanded", 1280, 900)' goreecloud/browser_acceptance.py
+          grep -q 'Viewport("wide", 1600, 1000)' goreecloud/browser_acceptance.py
 
-      - name: Validate Glaze UI resilience contract
+      - name: Validate Glaze UI 1.0 contract
         shell: bash
         run: |
           set -euo pipefail
           css='searx/static/themes/simple/goreecloud.css'
+          grep -q -- '--gc-accent: #366cf6' "$css"
+          grep -q -- '--gc-accent-secondary: #7c5cff' "$css"
           grep -q -- '--gc-target-min: 44px' "$css"
+          grep -q -- '--gc-target-comfortable: 48px' "$css"
           grep -q -- '--gc-motion-instant: 90ms' "$css"
           grep -q -- '--gc-motion-fast: 160ms' "$css"
           grep -q -- '--gc-motion-standard: 220ms' "$css"
           grep -q -- '--gc-motion-emphasized: 320ms' "$css"
+          grep -q '@media (max-width: 599px)' "$css"
+          grep -q '@media (min-width: 600px) and (max-width: 1023px)' "$css"
+          grep -q '@media (min-width: 1024px) and (max-width: 1439px)' "$css"
+          grep -q '@media (min-width: 1440px)' "$css"
           grep -q 'prefers-reduced-motion: reduce' "$css"
           grep -q 'prefers-reduced-transparency: reduce' "$css"
           grep -q 'prefers-contrast: more' "$css"
@@ -92,9 +106,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          grep -q 'enable_metrics: false' goreecloud/settings.yml.example
           grep -q 'image_proxy: true' goreecloud/settings.yml.example
           grep -q 'query_in_title: false' goreecloud/settings.yml.example
           grep -q 'public_instance: false' goreecloud/settings.yml.example
+          grep -q 'X-Robots-Tag: noindex, nofollow' goreecloud/settings.yml.example
+          grep -q 'Referrer-Policy: no-referrer' goreecloud/settings.yml.example
           grep -q '^    - html$' goreecloud/settings.yml.example
           grep -q '127.0.0.1:' goreecloud/compose.yml.example
           grep -q 'SEARXNG_SECRET:.*:?Set SEARXNG_SECRET' goreecloud/compose.yml.example
