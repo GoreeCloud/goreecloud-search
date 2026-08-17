@@ -228,9 +228,13 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_opensearch_xml(self):
         result = self.client.get('/opensearch.xml')
         self.assertEqual(result.status_code, 200)
+        self.assertIn(b'<LongName>GoreeCloud Search private metasearch</LongName>', result.data)
         self.assertIn(
-            b'<Description>SearXNG is a metasearch engine that respects your privacy.</Description>', result.data
+            b'<Description>Search the web through the private GoreeCloud Search metasearch service.</Description>',
+            result.data,
         )
+        self.assertIn(b'<Image type="image/svg+xml">/static/themes/simple/img/favicon.svg</Image>', result.data)
+        self.assertIn(b'<Query role="example" searchTerms="GoreeCloud Search" />', result.data)
 
     def test_favicon(self):
         result = self.client.get('/favicon.ico')
