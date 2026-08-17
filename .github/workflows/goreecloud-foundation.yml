@@ -50,6 +50,7 @@ jobs:
           test -f .github/workflows/goreecloud-browser-acceptance.yml
           test -f .github/workflows/goreecloud-provider-acceptance.yml
           test -f searx/static/themes/simple/goreecloud.css
+          test -f searx/static/themes/simple/goreecloud-states.css
           grep -q 'GoreeCloud Search' README.rst
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
           grep -q 'GoreeCloud Search' searx/templates/simple/index.html
@@ -70,10 +71,12 @@ jobs:
             searx/templates/simple/base.html
           grep -q 'name="robots" content="noindex, nofollow, noarchive"' \
             searx/templates/simple/base.html
+          grep -q 'goreecloud-states.css' searx/templates/simple/base.html
           grep -q 'rel="search"' searx/templates/simple/base.html
           grep -q 'rel="manifest"' searx/templates/simple/base.html
           grep -q 'goreecloud-page .pref-group' searx/static/themes/simple/goreecloud.css
           grep -q '_overflow_diagnostics' goreecloud/browser_acceptance.py
+          grep -q '_assert_not_found' goreecloud/browser_acceptance.py
           grep -q 'Viewport("compact", 390, 844)' goreecloud/browser_acceptance.py
           grep -q 'Viewport("medium", 768, 900)' goreecloud/browser_acceptance.py
           grep -q 'Viewport("expanded", 1280, 900)' goreecloud/browser_acceptance.py
@@ -84,6 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           css='searx/static/themes/simple/goreecloud.css'
+          states='searx/static/themes/simple/goreecloud-states.css'
           grep -q -- '--gc-accent: #366cf6' "$css"
           grep -q -- '--gc-accent-secondary: #7c5cff' "$css"
           grep -q -- '--gc-target-min: 44px' "$css"
@@ -101,6 +105,25 @@ jobs:
           grep -q 'prefers-contrast: more' "$css"
           grep -q 'forced-colors: active' "$css"
           grep -q '@supports not (backdrop-filter: blur(1px))' "$css"
+          grep -q 'goreecloud-empty-state' "$states"
+          grep -q 'goreecloud-not-found' "$states"
+          grep -q 'goreecloud-action-primary' "$states"
+          grep -q 'prefers-reduced-motion: reduce' "$states"
+          grep -q 'forced-colors: active' "$states"
+
+      - name: Validate private recovery and empty-state contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'extends "simple/page_with_header.html"' searx/templates/simple/404.html
+          grep -q 'goreecloud-not-found' searx/templates/simple/404.html
+          grep -q 'goreecloud-empty-state' searx/templates/simple/messages/no_results.html
+          grep -q 'does not automatically redirect searches to a public provider' \
+            searx/templates/simple/messages/no_results.html
+          if grep -q 'searx.space' searx/templates/simple/messages/no_results.html; then
+            echo 'The private empty-state must not direct users to the public SearXNG instance directory.' >&2
+            exit 1
+          fi
 
       - name: Validate privacy-oriented runtime baseline
         shell: bash
