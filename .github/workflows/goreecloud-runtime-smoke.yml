@@ -45,12 +45,15 @@ jobs:
 
           path = Path('/tmp/goreecloud-search-settings.yml')
           data = yaml.safe_load(path.read_text())
+          headers = data['server']['default_http_headers']
           assert data['general']['instance_name'] == 'GoreeCloud Search'
           assert data['general']['enable_metrics'] is False
           assert data['server']['image_proxy'] is True
           assert data['server']['public_instance'] is False
-          assert data['server']['default_http_headers']['X-Robots-Tag'] == 'noindex, nofollow'
-          assert data['server']['default_http_headers']['Referrer-Policy'] == 'no-referrer'
+          assert headers['X-Robots-Tag'] == 'noindex, nofollow'
+          assert headers['Referrer-Policy'] == 'no-referrer'
+          assert headers['X-Frame-Options'] == 'DENY'
+          assert headers['Permissions-Policy'] == 'camera=(), microphone=(), geolocation=()'
           assert data['search']['formats'] == ['html']
           PY
 
@@ -110,6 +113,8 @@ jobs:
             http://127.0.0.1:8888/ >/tmp/headers.txt
           grep -qi '^referrer-policy: no-referrer' /tmp/headers.txt
           grep -qi '^x-content-type-options: nosniff' /tmp/headers.txt
+          grep -qi '^x-frame-options: DENY' /tmp/headers.txt
+          grep -qi '^permissions-policy: camera=(), microphone=(), geolocation=()' /tmp/headers.txt
           grep -qi '^x-robots-tag: noindex, nofollow' /tmp/headers.txt
 
       - name: Print application log on failure
