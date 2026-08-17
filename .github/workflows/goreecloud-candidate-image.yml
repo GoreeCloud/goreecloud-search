@@ -1,0 +1,79 @@
+---
+name: GoreeCloud candidate image
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - agent/production-acceptance
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  candidate-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Build GoreeCloud Search candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_ACTIONS=false ./manage container.build podman
+
+      - name: Validate source image metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          image='localhost/goreecloud/searxng:latest'
+          test "$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.title" }}' "$image")" \
+            = 'GoreeCloud Search'
+          test "$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.licenses" }}' "$image")" \
+            = 'AGPL-3.0-or-later'
+          test "$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.source" }}' "$image")" \
+            = 'https://github.com/GoreeCloud/goreecloud-search'
+
+      - name: Authenticate to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" \
+            | podman login ghcr.io \
+                --username '${{ github.actor }}' \
+                --password-stdin
+
+      - name: Publish immutable candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_image='localhost/goreecloud/searxng:latest'
+          target="ghcr.io/goreecloud/goreecloud-search:${GITHUB_SHA}"
+          podman tag "$source_image" "$target"
+          podman push --digestfile /tmp/candidate-digest "$target"
+          digest="$(cat /tmp/candidate-digest)"
+          printf 'Published %s@%s\n' \
+            'ghcr.io/goreecloud/goreecloud-search' "$digest"
+          printf '%s@%s\n' \
+            'ghcr.io/goreecloud/goreecloud-search' "$digest" \
+            > candidate-image.txt
+
+      - name: Upload candidate identity
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-search-candidate-${{ github.sha }}
+          path: candidate-image.txt
+          if-no-files-found: error
+          retention-days: 30
