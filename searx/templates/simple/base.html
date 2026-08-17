@@ -9,10 +9,10 @@
   <meta name="application-name" content="GoreeCloud Search">
   <meta name="apple-mobile-web-app-title" content="GoreeCloud Search">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f7f9fc" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1f232e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#eef3f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1119" media="(prefers-color-scheme: dark)">
   <meta name="referrer" content="no-referrer">
-  <meta name="robots" content="noarchive">
+  <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %}GoreeCloud Search</title>
   <script type="module" src="{{ url_for('static', filename='sxng-core.min.js') }}" client_settings="{{ client_settings }}"></script>
@@ -37,8 +37,8 @@
 <body class="{{ endpoint }}_endpoint" >
   <main id="main_{{  self._TemplateReference__context.name|replace("simple/", "")|replace(".html", "") }}" class="{{body_class}}">
     {% if errors %}
-        <div class="dialog-error" role="alert">
-            <a href="#" class="close" aria-label="close" title="close">×</a>
+        <div class="dialog-error goreecloud-feedback goreecloud-feedback-error" role="alert" aria-live="assertive">
+            <a href="#" class="close" aria-label="{{ _('Close') }}" title="{{ _('Close') }}">×</a>
             <ul>
             {% for message in errors %}
                 <li>{{ message }}</li>
