@@ -37,6 +37,8 @@ jobs:
         run: |
           set -euo pipefail
           test -f GORECLOUD.md
+          test -f SECURITY.md
+          test -f CONTRIBUTING.rst
           test -f docs/goreecloud/UPSTREAM.md
           test -f docs/goreecloud/API.md
           test -f docs/goreecloud/DEPLOYMENT.md
@@ -52,14 +54,31 @@ jobs:
           test -f searx/static/themes/simple/goreecloud.css
           test -f searx/static/themes/simple/goreecloud-states.css
           grep -q 'GoreeCloud Search' README.rst
+          grep -q 'GoreeCloud Search Security Policy' SECURITY.md
+          grep -q 'Contributing to GoreeCloud Search' CONTRIBUTING.rst
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
           grep -q 'GoreeCloud Search' searx/templates/simple/index.html
           grep -q 'GoreeCloud Search' searx/templates/simple/search.html
           grep -q 'Private metasearch' searx/templates/simple/results.html
           grep -q '^# About GoreeCloud Search$' searx/infopage/en/about.md
+          grep -q "if pagename == 'about':" searx/infopage/__init__.py
           grep -q 'GoreeCloud Search' goreecloud/settings.yml.example
           grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' \
             docs/goreecloud/UPSTREAM.md
+
+      - name: Validate maintained-fork ownership contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'GoreeCloud Search issues' SECURITY.md
+          grep -q 'Upstream SearXNG issues' SECURITY.md
+          grep -q 'security@searxng.org' SECURITY.md
+          grep -q 'GoreeCloud-owned changes' CONTRIBUTING.rst
+          grep -q 'Upstream-capable changes' CONTRIBUTING.rst
+          grep -q 'Glaze UI 1.0 is mandatory' CONTRIBUTING.rst
+          grep -q 'canonical GoreeCloud product content may intentionally fall back to English' \
+            CONTRIBUTING.rst
+          grep -q 'localized About route' goreecloud/browser_acceptance.py
 
       - name: Validate browser product contract
         shell: bash
@@ -135,6 +154,9 @@ jobs:
           grep -q 'public_instance: false' goreecloud/settings.yml.example
           grep -q 'X-Robots-Tag: noindex, nofollow' goreecloud/settings.yml.example
           grep -q 'Referrer-Policy: no-referrer' goreecloud/settings.yml.example
+          grep -q 'X-Frame-Options: DENY' goreecloud/settings.yml.example
+          grep -q 'Permissions-Policy: "camera=(), microphone=(), geolocation=()"' \
+            goreecloud/settings.yml.example
           grep -q '^    - html$' goreecloud/settings.yml.example
           grep -q '127.0.0.1:' goreecloud/compose.yml.example
           grep -q 'SEARXNG_SECRET:.*:?Set SEARXNG_SECRET' goreecloud/compose.yml.example
@@ -162,6 +184,9 @@ jobs:
           set -euo pipefail
           grep -q 'workflow_dispatch:' .github/workflows/goreecloud-provider-acceptance.yml
           grep -q 'real-provider acceptance' goreecloud/provider_acceptance.py
+          for category in general images news videos it science; do
+            grep -q "\"$category\"" goreecloud/provider_acceptance.py
+          done
 
       - name: Validate container naming compatibility
         shell: bash
