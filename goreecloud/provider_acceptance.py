@@ -13,6 +13,23 @@ import html.parser
 import sys
 import urllib.parse
 import urllib.request
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class AcceptanceCase:
+    category: str
+    query: str
+
+
+REPRESENTATIVE_SUITE = (
+    AcceptanceCase("general", "GoreeCloud private search"),
+    AcceptanceCase("images", "open source personal cloud"),
+    AcceptanceCase("news", "privacy technology"),
+    AcceptanceCase("videos", "self hosted search"),
+    AcceptanceCase("it", "Python metasearch engine"),
+    AcceptanceCase("science", "information retrieval privacy research"),
+)
 
 
 class ResultCounter(html.parser.HTMLParser):
@@ -30,11 +47,11 @@ class ResultCounter(html.parser.HTMLParser):
             self.engine_messages += 1
 
 
-def run(base_url: str, query: str, category: str, minimum_results: int, timeout: float) -> int:
+def run_case(base_url: str, case: AcceptanceCase, minimum_results: int, timeout: float) -> int:
     params = urllib.parse.urlencode(
         {
-            "q": query,
-            "categories": category,
+            "q": case.query,
+            "categories": case.category,
             "language": "auto",
             "safesearch": "0",
         }
@@ -53,30 +70,52 @@ def run(base_url: str, query: str, category: str, minimum_results: int, timeout:
             status = response.status
             body = response.read().decode("utf-8", errors="replace")
     except Exception as exc:  # explicit acceptance command should explain external failures
-        print(f"Provider acceptance request failed: {exc}", file=sys.stderr)
+        print(f"[{case.category}] Provider acceptance request failed: {exc}", file=sys.stderr)
         return 2
 
     parser = ResultCounter()
     parser.feed(body)
 
-    print(f"URL: {url}")
-    print(f"HTTP status: {status}")
-    print(f"Category: {category}")
-    print(f"Result cards: {parser.results}")
-    print(f"Engine-message surfaces: {parser.engine_messages}")
+    print(f"[{case.category}] URL: {url}")
+    print(f"[{case.category}] HTTP status: {status}")
+    print(f"[{case.category}] Result cards: {parser.results}")
+    print(f"[{case.category}] Engine-message surfaces: {parser.engine_messages}")
 
     if status != 200:
-        print(f"Expected HTTP 200, received {status}.", file=sys.stderr)
+        print(f"[{case.category}] Expected HTTP 200, received {status}.", file=sys.stderr)
         return 3
     if parser.results < minimum_results:
         print(
-            f"Expected at least {minimum_results} result card(s), received {parser.results}. "
+            f"[{case.category}] Expected at least {minimum_results} result card(s), received {parser.results}. "
             "External engines may be unavailable, throttled, or blocked from this runner.",
             file=sys.stderr,
         )
         return 4
 
-    print("GoreeCloud Search real-provider acceptance passed.")
+    print(f"[{case.category}] Real-provider acceptance passed.")
+    return 0
+
+
+def run_suite(base_url: str, minimum_results: int, timeout: float) -> int:
+    failures: list[tuple[str, int]] = []
+    for case in REPRESENTATIVE_SUITE:
+        result = run_case(base_url, case, minimum_results, timeout)
+        if result != 0:
+            failures.append((case.category, result))
+        print()
+
+    if failures:
+        print("GoreeCloud Search representative provider suite did not fully pass:", file=sys.stderr)
+        for category, code in failures:
+            print(f"- {category}: exit code {code}", file=sys.stderr)
+        print(
+            "Classify each failure as application/runtime, provider throttling/blocking, engine initialization, "
+            "or genuinely empty results before deciding whether the release candidate is defective.",
+            file=sys.stderr,
+        )
+        return 5
+
+    print("GoreeCloud Search representative real-provider suite passed.")
     return 0
 
 
@@ -87,8 +126,21 @@ def main() -> int:
     parser.add_argument("--category", default="general")
     parser.add_argument("--minimum-results", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=45.0)
+    parser.add_argument(
+        "--suite",
+        action="store_true",
+        help="Run the representative general/images/news/videos/IT/science acceptance suite.",
+    )
     args = parser.parse_args()
-    return run(args.base_url, args.query, args.category, args.minimum_results, args.timeout)
+
+    if args.suite:
+        return run_suite(args.base_url, args.minimum_results, args.timeout)
+    return run_case(
+        args.base_url,
+        AcceptanceCase(args.category, args.query),
+        args.minimum_results,
+        args.timeout,
+    )
 
 
 if __name__ == "__main__":
