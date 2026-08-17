@@ -5,18 +5,26 @@ name: GoreeCloud provider acceptance
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: Run the representative suite or one diagnostic category
+        required: true
+        default: suite
+        type: choice
+        options:
+          - suite
+          - single
       query:
-        description: Search query used for real-provider acceptance
+        description: Search query used in single-category mode
         required: true
         default: GoreeCloud private search
         type: string
       category:
-        description: SearXNG category to exercise
+        description: SearXNG category used in single-category mode
         required: true
         default: general
         type: string
       minimum_results:
-        description: Minimum result cards required for success
+        description: Minimum result cards required per category for success
         required: true
         default: '1'
         type: string
@@ -27,7 +35,7 @@ permissions:
 jobs:
   provider-acceptance:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out exact revision
         uses: actions/checkout@v4
@@ -73,11 +81,19 @@ jobs:
           exit 1
 
       - name: Run explicit real-provider acceptance
-        run: >-
-          python goreecloud/provider_acceptance.py
-          --query "${{ inputs.query }}"
-          --category "${{ inputs.category }}"
-          --minimum-results "${{ inputs.minimum_results }}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.mode }}" = "suite" ]; then
+            python goreecloud/provider_acceptance.py \
+              --suite \
+              --minimum-results "${{ inputs.minimum_results }}"
+          else
+            python goreecloud/provider_acceptance.py \
+              --query "${{ inputs.query }}" \
+              --category "${{ inputs.category }}" \
+              --minimum-results "${{ inputs.minimum_results }}"
+          fi
 
       - name: Print application log on failure
         if: failure()
