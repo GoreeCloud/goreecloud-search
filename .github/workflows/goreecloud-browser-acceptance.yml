@@ -67,7 +67,7 @@ jobs:
           cat /tmp/goreecloud-search-browser.log
           exit 1
 
-      - name: Run desktop and mobile browser acceptance
+      - name: Run Glaze UI adaptive browser acceptance
         env:
           GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
         run: python goreecloud/browser_acceptance.py
