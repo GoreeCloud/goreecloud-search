@@ -234,6 +234,18 @@ def _assert_about(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewp
         raise AssertionError(f"{viewport.name}: about page is missing product contract text: {missing!r}")
     _assert_no_horizontal_overflow(driver, f"{viewport.name} about")
 
+    # Product-level About content is GoreeCloud-owned. A non-English locale may
+    # use upstream translations for retained help content, but it must not expose
+    # an upstream SearXNG About/public-instance page as the GoreeCloud product.
+    driver.get(f"{BASE_URL}/info/fr/about")
+    wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+    localized_body = driver.find_element(By.TAG_NAME, "body").text
+    if "About GoreeCloud Search" not in localized_body:
+        raise AssertionError(f"{viewport.name}: localized About route did not use the GoreeCloud product page")
+    if "A propos de SearXNG" in localized_body or "liste d'instances publiques" in localized_body:
+        raise AssertionError(f"{viewport.name}: localized About route leaked upstream SearXNG product guidance")
+    _assert_no_horizontal_overflow(driver, f"{viewport.name} localized about")
+
 
 def _assert_not_found(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
     driver.get(f"{BASE_URL}/goreecloud-browser-acceptance-missing")
@@ -272,7 +284,7 @@ def run() -> None:
         for error in errors:
             print(error, file=sys.stderr)
         raise SystemExit(1)
-    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes, recovery surfaces, and browser integrations.")
+    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes, recovery surfaces, localized product identity, and browser integrations.")
 
 
 if __name__ == "__main__":
