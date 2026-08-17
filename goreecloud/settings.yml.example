@@ -22,10 +22,6 @@ brand:
   public_instances: ""
   wiki_url: ""
   issue_url: "https://github.com/GoreeCloud/goreecloud-search/issues"
-  custom:
-    links:
-      Source: "https://github.com/GoreeCloud/goreecloud-search"
-      Upstream: "https://github.com/searxng/searxng"
   pwa_colors:
     theme_color_light: "#eef3f9"
     background_color_light: "#eef3f9"
