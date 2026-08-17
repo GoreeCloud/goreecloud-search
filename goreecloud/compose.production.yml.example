@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# GoreeCloud Search production Compose baseline.
+#
+# This file intentionally publishes no host port. Caddy reaches the application
+# only through the approved external Docker proxy network. Use the loopback
+# compose example for isolated staging and acceptance before cutover.
+
+name: goreecloud-search
+
+services:
+  search:
+    image: ${GOREECLOUD_SEARCH_IMAGE:?Set GOREECLOUD_SEARCH_IMAGE to an immutable reviewed image reference}
+    container_name: goreecloud-search
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 20s
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?Set SEARXNG_SECRET in protected runtime configuration}
+      SEARXNG_BASE_URL: ${GOREECLOUD_SEARCH_BASE_URL:-https://search.goreecloud.com/}
+      FORCE_OWNERSHIP: "false"
+    volumes:
+      - ./config/settings.yml:/etc/searxng/settings.yml:ro
+      - ${GOREECLOUD_SEARCH_CACHE_DIR:-/srv/docker/appdata/goreecloud-search/cache}:/var/cache/searxng
+    expose:
+      - "8080"
+    networks:
+      - proxy
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3).read()"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy:
+    external: true
