@@ -12,7 +12,10 @@ general:
   privacypolicy_url: false
   donation_url: false
   contact_url: false
-  enable_metrics: true
+  # GoreeCloud does not collect SearXNG usage metrics by default. Search queries
+  # can contain sensitive information, so metrics require a separate documented
+  # operational purpose before they are enabled.
+  enable_metrics: false
 
 brand:
   docs_url: ""
@@ -24,10 +27,10 @@ brand:
       Source: "https://github.com/GoreeCloud/goreecloud-search"
       Upstream: "https://github.com/searxng/searxng"
   pwa_colors:
-    theme_color_light: "#f7f9ff"
-    background_color_light: "#f7f9ff"
-    theme_color_dark: "#161922"
-    background_color_dark: "#161922"
+    theme_color_light: "#eef3f9"
+    background_color_light: "#eef3f9"
+    theme_color_dark: "#0d1119"
+    background_color_dark: "#0d1119"
     theme_color_black: "#000000"
     background_color_black: "#000000"
 
