@@ -43,8 +43,11 @@ jobs:
           test -f docs/goreecloud/API.md
           test -f docs/goreecloud/DEPLOYMENT.md
           test -f docs/goreecloud/READINESS.md
+          test -f docs/goreecloud/TARGET-ACCEPTANCE.md
           test -f goreecloud/settings.yml.example
           test -f goreecloud/compose.yml.example
+          test -f goreecloud/compose.production.yml.example
+          test -f goreecloud/target_acceptance.sh
           test -f goreecloud/browser_acceptance.py
           test -f goreecloud/provider_acceptance.py
           test -f .github/workflows/goreecloud-runtime-smoke.yml
@@ -173,7 +176,7 @@ jobs:
             exit 1
           fi
 
-      - name: Validate hardened Compose baseline
+      - name: Validate hardened Compose baselines
         shell: bash
         run: |
           set -euo pipefail
@@ -185,6 +188,38 @@ jobs:
           GOREECLOUD_SEARCH_IMAGE='example.invalid/goreecloud/search:test' \
           SEARXNG_SECRET='goreecloud-ci-compose-secret' \
           docker compose -f goreecloud/compose.yml.example config --quiet
+
+          grep -q '^    init: true$' goreecloud/compose.production.yml.example
+          grep -q '^    expose:$' goreecloud/compose.production.yml.example
+          grep -q '^      - "8080"$' goreecloud/compose.production.yml.example
+          grep -q '^      - proxy$' goreecloud/compose.production.yml.example
+          grep -q '^    external: true$' goreecloud/compose.production.yml.example
+          if grep -q '^    ports:$' goreecloud/compose.production.yml.example; then
+            echo 'Production Compose must not publish a host port.' >&2
+            exit 1
+          fi
+          GOREECLOUD_SEARCH_IMAGE='example.invalid/goreecloud/search@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
+          SEARXNG_SECRET='goreecloud-ci-compose-secret' \
+          docker compose -f goreecloud/compose.production.yml.example config --quiet
+
+      - name: Validate production acceptance contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n goreecloud/target_acceptance.sh
+          grep -q 'This result does not by itself authorize production cutover' \
+            goreecloud/target_acceptance.sh
+          grep -q '/srv/docker/stacks/goreecloud-search/' \
+            docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'goreecloud/compose.production.yml.example' \
+            docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'general' docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'images' docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'news' docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'videos' docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'science' docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'rollback' docs/goreecloud/TARGET-ACCEPTANCE.md
+          grep -q 'representative restore' docs/goreecloud/TARGET-ACCEPTANCE.md
 
       - name: Validate provider acceptance boundary
         shell: bash
