@@ -33,9 +33,12 @@ class Viewport:
     height: int
 
 
+# Exercise every canonical Glaze UI 1.0 adaptive layout class.
 VIEWPORTS = (
-    Viewport("desktop", 1440, 1000),
-    Viewport("mobile", 390, 844),
+    Viewport("compact", 390, 844),
+    Viewport("medium", 768, 900),
+    Viewport("expanded", 1280, 900),
+    Viewport("wide", 1600, 1000),
 )
 
 
@@ -100,6 +103,10 @@ def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> No
     application_name = driver.find_element(By.CSS_SELECTOR, 'meta[name="application-name"]').get_attribute("content")
     if application_name != "GoreeCloud Search":
         raise AssertionError(f"{viewport.name}: browser application name is {application_name!r}")
+
+    robots = driver.find_element(By.CSS_SELECTOR, 'meta[name="robots"]').get_attribute("content").lower()
+    if "noindex" not in robots or "nofollow" not in robots:
+        raise AssertionError(f"{viewport.name}: private-search robots metadata is incomplete: {robots!r}")
 
     manifest_url = driver.find_element(By.CSS_SELECTOR, 'link[rel="manifest"]').get_attribute("href")
     if not manifest_url:
@@ -185,7 +192,11 @@ def _assert_preferences(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
         raise AssertionError(f"{viewport.name}: preferences page title is missing")
 
     visible_submit = next(
-        (element for element in driver.find_elements(By.CSS_SELECTOR, 'input[type="submit"], button[type="submit"]') if element.is_displayed()),
+        (
+            element
+            for element in driver.find_elements(By.CSS_SELECTOR, 'input[type="submit"], button[type="submit"]')
+            if element.is_displayed()
+        ),
         None,
     )
     if visible_submit is not None:
@@ -238,7 +249,7 @@ def run() -> None:
             print(error, file=sys.stderr)
         raise SystemExit(1)
 
-    print("GoreeCloud Search browser acceptance passed for desktop and mobile viewports.")
+    print("GoreeCloud Search browser acceptance passed all Glaze UI adaptive layout classes.")
 
 
 if __name__ == "__main__":
