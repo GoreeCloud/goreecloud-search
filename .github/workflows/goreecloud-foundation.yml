@@ -198,7 +198,8 @@ jobs:
             echo 'Production Compose must not publish a host port.' >&2
             exit 1
           fi
-          GOREECLOUD_SEARCH_IMAGE='example.invalid/goreecloud/search@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
+          digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+          GOREECLOUD_SEARCH_IMAGE="example.invalid/goreecloud/search@$digest" \
           SEARXNG_SECRET='goreecloud-ci-compose-secret' \
           docker compose -f goreecloud/compose.production.yml.example config --quiet
 
