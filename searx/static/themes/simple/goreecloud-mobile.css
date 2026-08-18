@@ -124,7 +124,13 @@
 @media (max-width: 599px) {
   .goreecloud-page.page_with_header {
     width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
     padding-inline: 0.9rem;
+  }
+
+  .preferences_endpoint .goreecloud-page {
+    overflow-x: clip;
   }
 
   .preferences_endpoint .tabs {
