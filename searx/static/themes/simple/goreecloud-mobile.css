@@ -122,9 +122,15 @@
 }
 
 @media (max-width: 599px) {
+  /* Upstream page_with_header retains an inline margin on compact layouts. A
+     full-width GoreeCloud page plus that margin widens the document by a few
+     pixels. Normalize the shared product shell once for Preferences, About,
+     recovery pages, and future informational routes. */
   .goreecloud-page.page_with_header {
     width: 100%;
     max-width: 100%;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     box-sizing: border-box;
     padding-inline: 0.9rem;
   }
@@ -134,8 +140,6 @@
   }
 
   .preferences_endpoint .goreecloud-page.page_with_header {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
     overflow-x: clip;
   }
 
