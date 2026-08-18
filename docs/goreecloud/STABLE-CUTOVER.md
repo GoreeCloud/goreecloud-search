@@ -35,9 +35,11 @@ The current compatibility names must not be removed until the Stable migration i
 
 ## Documentation transition
 
-After Stable acceptance, active GoreeCloud documentation must use **GoreeCloud Search** as the canonical search product and service. Current-state inventories, strategies, architectures, AI integration records, monitoring records, VPS records, and software-portfolio records must no longer present upstream SearXNG as an independently operated GoreeCloud service.
+After Stable acceptance, active GoreeCloud documentation must use **GoreeCloud Search** as the canonical search product and service. Current-state inventories, strategies, architectures, AI integration records, monitoring records, VPS records, software-portfolio records, deployment instructions, and task records must no longer present upstream SearXNG as an independently operated GoreeCloud service.
 
 Historical change logs must remain historically accurate. References required to explain provenance, upstream maintenance, licensing, compatibility, or migration history must remain. GoreeCloud Search is a maintained fork derived from SearXNG, so legal and technical upstream attribution must not be erased.
+
+The post-Stable documentation pass must explicitly inspect records that previously treated SearXNG as an active GoreeCloud component, including local-AI/research architecture, software portfolio, VPS runtime inventory, listening/routing records, Caddy references, monitoring records, Docker records, and Search project/change-log material. Those records must be updated in the same cutover window so the operational documentation cannot drift from the deployed service identity.
 
 ## Runtime retirement
 
@@ -51,6 +53,28 @@ Once the Stable cutover and rollback window are complete:
 6. Remove obsolete upstream `searxng/searxng` container images from the VPS if no rollback dependency remains.
 7. Remove obsolete historical stack/application-data paths only after validation and retention requirements are satisfied.
 8. Retain required source attribution, AGPL material, upstream documentation, and migration history.
+
+## Cutover verification
+
+The cutover is not complete until both runtime and documentation audits pass.
+
+Runtime audit must confirm:
+
+- no running container uses the historical SearXNG service/container name;
+- no active Docker network uses the historical SearXNG deployment name;
+- no Caddy backend target references the retired container name;
+- no active monitoring target presents SearXNG as the GoreeCloud search service;
+- no active stack or application-data path remains authoritative under the historical name;
+- the public/private user-facing product identity remains GoreeCloud Search on home, results, Preferences, About, errors, PWA metadata, OpenSearch metadata, and browser integration surfaces.
+
+Documentation audit must classify every remaining `SearXNG` reference as one of the following:
+
+- required upstream attribution or licensing;
+- maintained-fork provenance or upstream-sync guidance;
+- historically accurate change/migration history;
+- implementation-level compatibility terminology that cannot yet be renamed safely.
+
+Any remaining reference that describes SearXNG as the current GoreeCloud search product, VPS service, user-facing application, monitoring identity, or canonical architecture component fails the cutover and must be corrected before the retirement is considered complete.
 
 ## Safety boundary
 
