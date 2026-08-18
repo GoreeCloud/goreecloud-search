@@ -39,8 +39,8 @@ jobs:
       - name: Validate GoreeCloud search shell contract
         run: python tests/unit/test_goreecloud_search_shell.py
 
-      - name: Validate GoreeCloud result polish contract
-        run: python tests/unit/test_goreecloud_result_polish.py
+      - name: Validate GoreeCloud result card contract
+        run: python tests/unit/test_goreecloud_result_cards.py
 
       - name: Prepare GoreeCloud runtime settings
         shell: bash
