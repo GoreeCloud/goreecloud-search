@@ -133,7 +133,9 @@
     overflow-x: clip;
   }
 
-  .preferences_endpoint .goreecloud-page {
+  .preferences_endpoint .goreecloud-page.page_with_header {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     overflow-x: clip;
   }
 
