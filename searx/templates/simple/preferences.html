@@ -2,13 +2,13 @@
 {%- extends "simple/page_with_header.html" -%}
 
 {%- macro tabs_open() -%}
-<div class="tabs" role="tablist">
+<div class="tabs">
 {%- endmacro -%}
 
 {%- macro tab_header(name, id, label, checked) -%}
-<input type="radio" name="{{ name }}" id="tab-{{ id }}" {% if checked is sameas true %}checked="checked"{% endif %}>
-<label id="tab-label-{{ id }}" for="tab-{{ id }}" role="tab" aria-controls="tab-content-{{ id }}">{{ label }}</label>
-<section id="tab-content-{{ id }}" role="tabpanel" aria-hidden="false">
+<input type="radio" name="{{ name }}" id="tab-{{ id }}" aria-controls="tab-content-{{ id }}" {% if checked is sameas true %}checked="checked"{% endif %}>
+<label id="tab-label-{{ id }}" for="tab-{{ id }}">{{ label }}</label>
+<section id="tab-content-{{ id }}" role="region" aria-labelledby="tab-label-{{ id }}">
 {%- endmacro -%}
 
 {%- macro tab_footer() -%}

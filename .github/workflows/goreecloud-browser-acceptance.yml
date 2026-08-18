@@ -83,6 +83,11 @@ jobs:
           GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
         run: python goreecloud/browser_acceptance.py
 
+      - name: Run Preferences keyboard and all-tab acceptance
+        env:
+          GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
+        run: python goreecloud/preferences_acceptance.py
+
       - name: Print application log on failure
         if: failure()
         run: cat /tmp/goreecloud-search-browser.log || true
