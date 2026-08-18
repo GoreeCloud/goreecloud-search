@@ -1,0 +1,240 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — Glaze UI mobile stabilization layer. */
+
+/* Keep horizontally dense controls inside the viewport without clipping content. */
+#categories_container,
+.search_filters,
+.scrollx {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+#categories_container {
+  scroll-snap-type: inline proximity;
+  scroll-padding-inline: 0.75rem;
+}
+
+#categories_container .category {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+/* Preference surfaces should never force the page wider than its viewport. */
+.preferences_endpoint,
+.preferences_endpoint .goreecloud-page,
+.preferences_endpoint form,
+.preferences_endpoint .tabs,
+.preferences_endpoint .tabs > section,
+.preferences_endpoint fieldset,
+.preferences_endpoint .pref-group,
+.preferences_endpoint table,
+.preferences_endpoint pre {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.preferences_endpoint fieldset {
+  overflow: hidden;
+  border-color: var(--gc-border);
+  background: color-mix(in srgb, var(--gc-surface) 90%, transparent);
+}
+
+.preferences_endpoint fieldset .value,
+.preferences_endpoint fieldset .description {
+  min-width: 0;
+}
+
+.preferences_endpoint select,
+.preferences_endpoint input[type="text"],
+.preferences_endpoint input[type="search"] {
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: var(--gc-radius-control);
+}
+
+.preferences_endpoint .scrollx {
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-md);
+  background: var(--gc-surface);
+  box-shadow: var(--gc-shadow-soft);
+}
+
+.preferences_endpoint .scrollx table {
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+}
+
+.preferences_endpoint .scrollx th,
+.preferences_endpoint .scrollx td {
+  vertical-align: top;
+}
+
+.preferences_endpoint .selectable_url,
+.preferences_endpoint #copy-hash-container {
+  max-width: 100%;
+}
+
+.preferences_endpoint .selectable_url pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Autocomplete is part of the product shell, not a separate stock-looking panel. */
+.autocomplete,
+.autocomplete ul,
+#autocomplete,
+#autocomplete ul {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.autocomplete,
+#autocomplete {
+  overflow: hidden;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: 0 0 var(--gc-radius-control) var(--gc-radius-control) !important;
+  background: var(--gc-surface-strong) !important;
+  box-shadow: var(--gc-shadow) !important;
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+}
+
+.autocomplete li,
+#autocomplete li {
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  padding: 0.7rem 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.autocomplete li:hover,
+.autocomplete li:focus,
+#autocomplete li:hover,
+#autocomplete li:focus {
+  background: color-mix(in srgb, var(--gc-accent) 10%, transparent);
+}
+
+@media (max-width: 599px) {
+  .goreecloud-page.page_with_header {
+    width: 100%;
+    padding-inline: 0.9rem;
+  }
+
+  .preferences_endpoint .tabs {
+    width: 100%;
+  }
+
+  .preferences_endpoint .tabs > label,
+  .preferences_endpoint .tabs > a {
+    min-height: var(--gc-target-min);
+    box-sizing: border-box;
+    padding-block: 0.65rem;
+  }
+
+  .preferences_endpoint .tabs > section {
+    padding-inline: 0;
+  }
+
+  .preferences_endpoint fieldset {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+    width: 100%;
+    margin-block: 0.75rem;
+    padding: 0.9rem;
+    border-radius: var(--gc-radius-md);
+  }
+
+  .preferences_endpoint fieldset legend {
+    width: auto;
+    max-width: 100%;
+    padding-inline: 0.2rem;
+    font-weight: 680;
+  }
+
+  .preferences_endpoint fieldset .value,
+  .preferences_endpoint fieldset .description {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .preferences_endpoint fieldset .description {
+    color: var(--gc-muted);
+    line-height: 1.45;
+  }
+
+  .preferences_endpoint fieldset select,
+  .preferences_endpoint fieldset input[type="text"],
+  .preferences_endpoint fieldset input[type="search"] {
+    width: 100%;
+    min-height: var(--gc-target-comfortable);
+  }
+
+  .preferences_endpoint .scrollx {
+    width: calc(100vw - 1.8rem);
+    margin-inline: 0;
+  }
+
+  .preferences_endpoint .scrollx::after {
+    content: "Swipe horizontally to view more";
+    display: block;
+    position: sticky;
+    left: 0;
+    width: max-content;
+    max-width: calc(100vw - 3.6rem);
+    padding: 0.55rem 0.75rem;
+    color: var(--gc-muted);
+    font-size: 0.75rem;
+  }
+
+  .preferences_endpoint .scrollx th,
+  .preferences_endpoint .scrollx td {
+    min-width: 8.5rem;
+    max-width: 14rem;
+    padding: 0.7rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .preferences_endpoint .scrollx .checkbox-col {
+    min-width: 4.5rem;
+  }
+
+  #categories_container {
+    display: flex;
+    flex-wrap: nowrap !important;
+    gap: 0.2rem;
+    padding-inline: 0.55rem 1rem;
+  }
+
+  #categories_container .category label {
+    white-space: nowrap;
+    padding-inline: 0.8rem;
+  }
+
+  .search_filters {
+    flex-wrap: nowrap !important;
+  }
+
+  footer p {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .autocomplete,
+  #autocomplete,
+  .preferences_endpoint .scrollx {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--gc-surface-strong) !important;
+  }
+}
