@@ -19,9 +19,18 @@
     {% include 'simple/categories.html' %}
   </div>
   <div class="search_filters goreecloud-search-filters" aria-label="Search filters">
-    {% include 'simple/filters/languages.html' %}
-    {% include 'simple/filters/time_range.html' %}
-    {% include 'simple/filters/safesearch.html' %}
+    <div class="goreecloud-filter-control goreecloud-filter-language">
+      <span class="goreecloud-filter-label">{{ _('Language') }}</span>
+      {% include 'simple/filters/languages.html' %}
+    </div>
+    <div class="goreecloud-filter-control goreecloud-filter-time">
+      <span class="goreecloud-filter-label">{{ _('Time') }}</span>
+      {% include 'simple/filters/time_range.html' %}
+    </div>
+    <div class="goreecloud-filter-control goreecloud-filter-safe">
+      <span class="goreecloud-filter-label">{{ _('SafeSearch') }}</span>
+      {% include 'simple/filters/safesearch.html' %}
+    </div>
   </div>
   <input type="hidden" name="theme" value="{{ theme }}" >
   {% if timeout_limit %}<input type="hidden" name="timeout_limit" value="{{ timeout_limit|e }}" >{% endif %}
