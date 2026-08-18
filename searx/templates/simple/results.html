@@ -16,8 +16,10 @@
   <div>
     <p class="goreecloud-results-eyebrow">Private metasearch</p>
     <h1 class="goreecloud-results-title">Results for <span>“{{ q|e }}”</span></h1>
+    <p class="goreecloud-results-ranking-note">Ranked locally using query relevance, provider position, and multi-engine agreement — never behavioral profiling.</p>
   </div>
   <div class="goreecloud-results-meta" aria-label="Active search settings">
+    {% if results %}<span>{{ results|length }} on this page</span>{% endif %}
     {% if selected_categories %}<span>{{ selected_categories|join(', ') }}</span>{% endif %}
     {% if current_language %}<span>{{ current_language }}</span>{% endif %}
     {% if time_range %}<span>{{ time_range }}</span>{% endif %}

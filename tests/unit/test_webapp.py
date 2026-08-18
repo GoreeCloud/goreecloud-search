@@ -121,7 +121,7 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
             result.data,
         )
         self.assertIn(
-            b'<p class="content">\n    second <span class="highlight">test</span> ',
+            b'<p class="content goreecloud-result-snippet">\n    second <span class="highlight">test</span> ',
             result.data,
         )
 
