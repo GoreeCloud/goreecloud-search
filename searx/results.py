@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # pylint: disable=missing-module-docstring, missing-class-docstring
 
+import math
+import re
 import typing as t
-
 import warnings
 from collections import defaultdict
 from threading import RLock
@@ -13,29 +14,157 @@ from searx.metrics import histogram_observe, counter_add
 from searx.result_types import Result, LegacyResult, MainResult
 from searx.result_types.answer import AnswerSet, BaseAnswer
 
+# GoreeCloud ranking is deliberately local, deterministic, and non-personalized. It
+# combines bounded provider confidence, reciprocal-rank evidence, multi-engine
+# consensus, query/title/domain/snippet relevance, and a light top-results domain
+# diversity pass. It never calls an external reranker or records user behavior.
+RRF_K = 20.0
+CONSENSUS_BONUS = 0.18
+TITLE_EXACT_BONUS = 0.90
+TITLE_ALL_TERMS_BONUS = 0.55
+TITLE_COVERAGE_BONUS = 0.35
+HOST_COVERAGE_BONUS = 0.18
+CONTENT_COVERAGE_BONUS = 0.12
+HIGH_PRIORITY_BONUS = 5.0
+DIVERSITY_WINDOW = 8
+DIVERSITY_MAX_PER_HOST = 2
+TAG_RE = re.compile(r"<[^>]+>")
+TOKEN_RE = re.compile(r"\w+", re.UNICODE)
+
+
+def _plain_text(value: str | None) -> str:
+    return TAG_RE.sub(" ", value or "").casefold()
+
+
+def _query_terms(query: str) -> tuple[str, list[str]]:
+    normalized = " ".join(TOKEN_RE.findall(_plain_text(query)))
+    terms = [term for term in normalized.split() if len(term) > 1]
+    if not terms and normalized:
+        terms = normalized.split()
+    return normalized, terms
+
+
+def _coverage(terms: list[str], text: str) -> float:
+    if not terms:
+        return 0.0
+    matched = sum(1 for term in terms if term in text)
+    return matched / len(terms)
+
+
+def _bounded_engine_weight(result: MainResult | LegacyResult) -> float:
+    weights: list[float] = []
+    for result_engine in result["engines"]:
+        engine = searx.engines.engines.get(result_engine)
+        try:
+            weight = float(getattr(engine, "weight", 1.0))
+        except (TypeError, ValueError):
+            weight = 1.0
+        weights.append(min(2.0, max(0.5, weight)))
+    if not weights:
+        return 1.0
+    return sum(weights) / len(weights)
+
+
+def _lexical_relevance(result: MainResult | LegacyResult, query: str) -> float:
+    normalized_query, terms = _query_terms(query)
+    if not normalized_query or not terms:
+        return 0.0
+
+    title = _plain_text(result.title)
+    content = _plain_text(result.content)
+    hostname = ""
+    if result.parsed_url:
+        hostname = result.parsed_url.hostname or result.parsed_url.netloc or ""
+    hostname = hostname.casefold().removeprefix("www.")
+
+    score = 0.0
+    if normalized_query in title:
+        score += TITLE_EXACT_BONUS
+    if all(term in title for term in terms):
+        score += TITLE_ALL_TERMS_BONUS
+    score += TITLE_COVERAGE_BONUS * _coverage(terms, title)
+    score += HOST_COVERAGE_BONUS * _coverage(terms, hostname)
+    score += CONTENT_COVERAGE_BONUS * _coverage(terms, content)
+    return score
+
 
 def calculate_score(
     result: MainResult | LegacyResult,
     priority: MainResult.PriorityType,
+    query: str = "",
 ) -> float:
-    weight = 1.0
+    """Calculate deterministic GoreeCloud metasearch relevance.
 
-    for result_engine in result['engines']:
-        if hasattr(searx.engines.engines.get(result_engine), 'weight'):
-            weight *= float(searx.engines.engines[result_engine].weight)
+    The upstream position signal remains important, but provider weights are averaged
+    and bounded instead of multiplied across duplicates. Agreement by independent
+    engines receives a modest bonus, while query/title/domain/snippet matching can
+    distinguish results with otherwise similar provider positions.
+    """
+    if priority == "low":
+        return 0.0
 
-    weight *= len(result['positions'])
-    score = 0
+    positions = [position for position in result["positions"] if isinstance(position, int) and position > 0]
+    if not positions:
+        positions = [1]
 
-    for position in result['positions']:
-        if priority == 'low':
-            continue
-        if priority == 'high':
-            score += weight
-        else:
-            score += weight / position
+    reciprocal_rank = sum(RRF_K / (RRF_K + position) for position in positions)
+    provider_weight = _bounded_engine_weight(result)
+    engine_count = len({engine for engine in result["engines"] if engine})
+    consensus = CONSENSUS_BONUS * math.log2(1 + max(1, engine_count))
+    lexical = _lexical_relevance(result, query)
 
+    score = reciprocal_rank * provider_weight + consensus + lexical
+    if priority == "high":
+        score += HIGH_PRIORITY_BONUS
     return score
+
+
+def _hostname(result: MainResult | LegacyResult) -> str:
+    if not result.parsed_url:
+        return ""
+    return (result.parsed_url.hostname or result.parsed_url.netloc or "").casefold().removeprefix("www.")
+
+
+def diversify_top_domains(
+    results: list[MainResult | LegacyResult],
+    window: int = DIVERSITY_WINDOW,
+    max_per_host: int = DIVERSITY_MAX_PER_HOST,
+) -> list[MainResult | LegacyResult]:
+    """Gently prevent one hostname from monopolizing the first result viewport.
+
+    Only the first ``window`` slots are diversified. Strong deferred results keep
+    their score order immediately after that window, so diversity does not become a
+    broad domain penalty across the result set.
+    """
+    if window <= 0 or max_per_host <= 0 or len(results) <= max_per_host:
+        return list(results)
+
+    remaining = list(results)
+    selected: list[MainResult | LegacyResult] = []
+    host_counts: dict[str, int] = defaultdict(int)
+
+    while remaining and len(selected) < min(window, len(results)):
+        chosen_index: int | None = None
+        for index, candidate in enumerate(remaining):
+            host = _hostname(candidate)
+            if not host or host_counts[host] < max_per_host:
+                chosen_index = index
+                break
+        if chosen_index is None:
+            break
+        candidate = remaining.pop(chosen_index)
+        selected.append(candidate)
+        host = _hostname(candidate)
+        if host:
+            host_counts[host] += 1
+
+    # If every remaining item is from already saturated hosts, fill the window in
+    # original score order rather than hiding valid results.
+    while remaining and len(selected) < min(window, len(results)):
+        selected.append(remaining.pop(0))
+
+    selected.extend(remaining)
+    return selected
 
 
 class Timing(t.NamedTuple):
@@ -62,12 +191,13 @@ class ResultContainer:
     answers: AnswerSet
     corrections: set[str]
 
-    def __init__(self):
+    def __init__(self, query: str = ""):
         self.main_results_map = {}
         self.infoboxes = []
         self.suggestions = set()
         self.answers = AnswerSet()
         self.corrections = set()
+        self.query = query
 
         self.engine_data: dict[str, dict[str, str]] = defaultdict(dict)
         self._closed: bool = False
@@ -88,7 +218,6 @@ class ResultContainer:
         main_count = 0
 
         for result in list(results):
-
             if isinstance(result, Result):
                 result.engine = result.engine or engine_name
                 result.normalize_result_fields()
@@ -101,12 +230,11 @@ class ResultContainer:
                     main_count += 1
                     self._merge_main_result(result, main_count)
                 else:
-                    # more types need to be implemented in the future ..
                     raise NotImplementedError(f"no handler implemented to process the result of type {result}")
 
             else:
                 result["engine"] = result.get("engine") or engine_name or ""
-                result = LegacyResult(result)  # for backward compatibility, will be romeved one day
+                result = LegacyResult(result)
                 result.normalize_result_fields()
 
                 if "suggestion" in result:
@@ -135,9 +263,8 @@ class ResultContainer:
                     continue
 
                 if "engine_data" in result:
-                    if self.on_result(result):
-                        if result.engine:
-                            self.engine_data[result.engine][result["key"]] = result["engine_data"]
+                    if self.on_result(result) and result.engine:
+                        self.engine_data[result.engine][result["key"]] = result["engine_data"]
                     continue
 
                 if self.on_result(result):
@@ -153,7 +280,6 @@ class ResultContainer:
 
     def _merge_infobox(self, new_infobox: LegacyResult):
         add_infobox = True
-
         new_id = getattr(new_infobox, "id", None)
         if new_id is not None:
             with self._lock:
@@ -166,80 +292,56 @@ class ResultContainer:
 
     def _merge_main_result(self, result: MainResult | LegacyResult, position: int):
         result_hash = hash(result)
-
         with self._lock:
-
             merged = self.main_results_map.get(result_hash)
             if not merged:
-                # if there is no duplicate in the merged results, append result
                 result.positions = [position]
                 self.main_results_map[result_hash] = result
                 return
-
             merge_two_main_results(merged, result)
-            # add the new position
             merged.positions.append(position)
 
     def close(self):
         self._closed = True
-
         for result in self.main_results_map.values():
-            result.score = calculate_score(result, result.priority)
+            result.score = calculate_score(result, result.priority, self.query)
             for eng_name in result.engines:
-                counter_add(result.score, 'engine', eng_name, 'score')
+                counter_add(result.score, "engine", eng_name, "score")
 
     def get_ordered_results(self) -> list[MainResult | LegacyResult]:
-        """Returns a sorted list of results to be displayed in the main result
-        area (:ref:`result types`)."""
-
+        """Returns a sorted list of results to be displayed in the main result area."""
         if not self._closed:
             self.close()
-
         if self._main_results_sorted:
             return self._main_results_sorted
 
-        # first pass, sort results by "score" (descanding)
+        # Pass 1: deterministic relevance score, followed by a light first-viewport
+        # hostname diversity pass. This is deliberately not personalization.
         results = sorted(self.main_results_map.values(), key=lambda x: x.score, reverse=True)
+        results = diversify_top_domains(results)
 
-        # pass 2 : group results by category and template
+        # Pass 2: preserve the existing SearXNG category/template grouping behavior.
         gresults: list[MainResult | LegacyResult] = []
         categoryPositions: dict[str, t.Any] = {}
         max_count = 8
         max_distance = 20
 
         for res in results:
-            # do we need to handle more than one category per engine?
             engine = searx.engines.engines.get(res.engine or "")
             if engine:
                 res.category = engine.categories[0] if len(engine.categories) > 0 else ""
 
-            # do we need to handle more than one category per engine?
             category = f"{res.category}:{res.template}:{'img_src' if (res.thumbnail or res.img_src) else ''}"
             grp = categoryPositions.get(category)
-
-            # group with previous results using the same category, if the group
-            # can accept more result and is not too far from the current
-            # position
-
             if (grp is not None) and (grp["count"] > 0) and (len(gresults) - grp["index"] < max_distance):
-                # group with the previous results using the same category with
-                # this one
                 index = grp["index"]
                 gresults.insert(index, res)
-
-                # update every index after the current one (including the
-                # current one)
                 for item in categoryPositions.values():
-                    v = item["index"]
-                    if v >= index:
-                        item["index"] = v + 1
-
-                # update this category
+                    if item["index"] >= index:
+                        item["index"] += 1
                 grp["count"] -= 1
-
             else:
                 gresults.append(res)
-                # update categoryIndex
                 categoryPositions[category] = {"index": len(gresults), "count": max_count}
                 continue
 
@@ -282,20 +384,15 @@ def merge_two_infoboxes(origin: LegacyResult, other: LegacyResult):
 
     if other.urls:
         url_items = origin.get("urls", [])
-
         for url2 in other.urls:
             unique_url = True
             entity_url2 = url2.get("entity")
-
             for url1 in origin.get("urls", []):
-                if (entity_url2 is not None and entity_url2 == url1.get("entity")) or (
-                    url1.get("url") == url2.get("url")
-                ):
+                if (entity_url2 is not None and entity_url2 == url1.get("entity")) or url1.get("url") == url2.get("url"):
                     unique_url = False
                     break
             if unique_url:
                 url_items.append(url2)
-
         origin.urls = url_items
 
     if other.img_src:
@@ -313,13 +410,11 @@ def merge_two_infoboxes(origin: LegacyResult, other: LegacyResult):
                 label = attr.get("label")
                 if label:
                     attr_names_1.add(label)
-
                 entity = attr.get("entity")
                 if entity:
                     attr_names_1.add(entity)
-
             for attr in other.attributes:
-                if attr.get("label") not in attr_names_1 and attr.get('entity') not in attr_names_1:
+                if attr.get("label") not in attr_names_1 and attr.get("entity") not in attr_names_1:
                     origin.attributes.append(attr)
 
     if other.content:
@@ -331,25 +426,18 @@ def merge_two_infoboxes(origin: LegacyResult, other: LegacyResult):
 
 def merge_two_main_results(origin: MainResult | LegacyResult, other: MainResult | LegacyResult):
     """Merges the values from ``other`` into ``origin``."""
-
     if len(other.content or "") > len(origin.content or ""):
-        # use content with more text
         origin.content = other.content
-
-    # use title with more text
     if len(other.title or "") > len(origin.title or ""):
         origin.title = other.title
 
-    # merge all result's parameters not found in origin
     if isinstance(other, MainResult) and isinstance(origin, MainResult):
         origin.defaults_from(other)
     elif isinstance(other, LegacyResult) and isinstance(origin, LegacyResult):
         origin.defaults_from(other)
 
-    # add engine to list of result-engines
     origin.engines.add(other.engine or "")
 
-    # use https, ftps, .. if possible
     if origin.parsed_url and not origin.parsed_url.scheme.endswith("s"):
         if other.parsed_url and other.parsed_url.scheme.endswith("s"):
             origin.parsed_url = origin.parsed_url._replace(scheme=other.parsed_url.scheme)
