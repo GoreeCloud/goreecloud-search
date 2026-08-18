@@ -130,8 +130,8 @@ def _assert_preferences(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
     if form.get_attribute("id") != "search_form":
         raise AssertionError(f"{viewport.name}: Preferences form identity is incomplete")
 
-    body_text = driver.find_element(By.TAG_NAME, "body").text
-    if "GoreeCloud Search" not in body_text or "Search settings" not in body_text or "Preferences" not in body_text:
+    body_text = driver.find_element(By.TAG_NAME, "body").text.casefold()
+    if "goreecloud search" not in body_text or "search settings" not in body_text or "preferences" not in body_text:
         raise AssertionError(f"{viewport.name}: Preferences product identity is incomplete")
 
     radios = driver.find_elements(
