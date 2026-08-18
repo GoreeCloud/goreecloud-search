@@ -1,0 +1,28 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — compact containment for landing and page-polish surfaces. */
+
+.index.goreecloud-search-landing #search_view,
+.index.goreecloud-search-landing .search_box {
+  box-sizing: border-box;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 599px) {
+  .index.goreecloud-search-landing #search_header {
+    box-sizing: border-box;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .index.goreecloud-search-landing #search_view {
+    margin-inline: 0 !important;
+    padding-inline: 0 !important;
+  }
+
+  .index.goreecloud-search-landing .search_box {
+    margin-inline: 0 !important;
+  }
+}
