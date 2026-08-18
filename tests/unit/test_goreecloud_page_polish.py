@@ -43,6 +43,27 @@ def test_preferences_surface_uses_goreecloud_language_and_actions():
     assert 'Oscar layout' not in alignment
 
 
+def test_preferences_tabs_keep_native_keyboard_semantics():
+    preferences = _read("searx/templates/simple/preferences.html")
+    compact = _read("searx/static/themes/simple/goreecloud-page-compact.css")
+
+    assert 'role="tablist"' not in preferences
+    assert 'role="tab"' not in preferences
+    assert 'role="tabpanel"' not in preferences
+    assert 'aria-hidden="false"' not in preferences
+    assert 'aria-controls="tab-content-{{ id }}"' in preferences
+    assert 'role="region" aria-labelledby="tab-label-{{ id }}"' in preferences
+
+    for tab_id in ("general", "ui", "privacy", "engines", "query", "cookies"):
+        assert f"tab_header('maintab', '{tab_id}'" in preferences
+
+    assert '.goreecloud-preferences-form .tabs > input[type="radio"]' in compact
+    assert 'display: block !important;' in compact
+    assert 'clip-path: inset(50%) !important;' in compact
+    assert ':focus-visible + label' in compact
+    assert 'forced-colors: active' in compact
+
+
 def test_page_polish_stylesheet_is_last_goreecloud_visual_layer():
     base = _read("searx/templates/simple/base.html")
     stylesheet = _read("searx/static/themes/simple/goreecloud-page-polish.css")
@@ -71,6 +92,7 @@ def run_contract_checks() -> None:
     """Allow this contract to run without adding a test-runner dependency."""
     test_landing_page_has_single_search_shell_and_product_principles()
     test_preferences_surface_uses_goreecloud_language_and_actions()
+    test_preferences_tabs_keep_native_keyboard_semantics()
     test_page_polish_stylesheet_is_last_goreecloud_visual_layer()
 
 
