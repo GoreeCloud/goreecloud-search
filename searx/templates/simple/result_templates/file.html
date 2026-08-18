@@ -5,66 +5,66 @@
 {{ result_sub_header(result) }}
 
 {% if result.abstract %}
-  <p class="abstract">{{ result.abstract|safe }}</p>
+  <p class="abstract goreecloud-file-abstract">{{ result.abstract|safe }}</p>
 {% endif -%}
 
 {%- if result.content %}
-  <p class="content">{{ result.content|safe }}</p>
+  <p class="content goreecloud-result-snippet goreecloud-file-snippet">{{ result.content|safe }}</p>
 {% endif -%}
 
-<div class="attributes">
+<div class="attributes goreecloud-file-attributes" aria-label="File details">
   {% if result.author %}
-  <div>
-    <span>{{ _("Author") }}:</span>
-    <span>{{ result.author }}</span>
+  <div class="goreecloud-file-attribute">
+    <span class="goreecloud-file-attribute-label">{{ _("Author") }}</span>
+    <span class="goreecloud-file-attribute-value">{{ result.author }}</span>
   </div>
   {% endif %}
   {% if result.filename %}
-    <div>
-      <span>{{ _("Filename") }}:</span>
-      <span>{{ result.filename }}</span>
+    <div class="goreecloud-file-attribute goreecloud-file-attribute-wide">
+      <span class="goreecloud-file-attribute-label">{{ _("Filename") }}</span>
+      <span class="goreecloud-file-attribute-value">{{ result.filename }}</span>
     </div>
   {% endif %}
   {% if result.size %}
-    <div>
-      <span>{{ _("Filesize") }}:</span>
-      <span>{{ result.size }}</span>
+    <div class="goreecloud-file-attribute">
+      <span class="goreecloud-file-attribute-label">{{ _("Filesize") }}</span>
+      <span class="goreecloud-file-attribute-value">{{ result.size }}</span>
     </div>
   {% endif %}
   {% if result.time %}
-    <div>
-      <span>{{ _("Date") }}:</span>
-      <span>{{ result.time }}</span>
+    <div class="goreecloud-file-attribute">
+      <span class="goreecloud-file-attribute-label">{{ _("Date") }}</span>
+      <span class="goreecloud-file-attribute-value">{{ result.time }}</span>
     </div>
   {% endif %}
   {% if result.mimetype %}
-    <div>
-      <span>{{ _("Type") }}:</span>
-      <span>{{ result.mimetype }}</span>
+    <div class="goreecloud-file-attribute">
+      <span class="goreecloud-file-attribute-label">{{ _("Type") }}</span>
+      <span class="goreecloud-file-attribute-value">{{ result.mimetype }}</span>
     </div>
   {% endif %}
 </div>
 
 {% if result.embedded %}
   {% if result.mtype in ("audio", "video") %}
-    <p class="altlink">
-      <a class="btn-collapse collapsed media-loader disabled_if_nojs"
+    <p class="altlink goreecloud-result-action-row">
+      <a class="btn-collapse collapsed media-loader disabled_if_nojs goreecloud-result-action"
         data-target="#result-media-{{ index }}"
         data-btn-text-collapsed="{{ _("show media") }}"
         data-btn-text-not-collapsed="{{ _("hide media") }}"
       >
-        {{ _("show media") }}
+        {{ icon_small('play') }} {{ _("show media") }}
       </a>
     </p>
-    <div id="result-media-{{ index }}" class="embedded-{{ result.mtype }} invisible">
+    <div id="result-media-{{ index }}" class="embedded-{{ result.mtype }} invisible goreecloud-embedded-media">
       <{{ result.mtype }} controls preload="metadata" {% if result.thumbnail %}poster="{{ result.thumbnail }}" {%  endif %}>
       <source src="{{result.embedded}}" type="{{ result.mtype }}/{{ result.subtype }}">
       </{{ result.mtype }}>
     </div>
   {% else %}
-    <p class="altlink">
-      <a href="{{result.embedded }}" target="_blank" rel="noopener noreferrer" download>
-        {{  _("Download") }}
+    <p class="altlink goreecloud-result-action-row">
+      <a class="goreecloud-result-action" href="{{result.embedded }}" target="_blank" rel="noopener noreferrer" download>
+        {{ icon_small('download') }} {{  _("Download") }}
       </a>
     </p>
   {% endif %}
