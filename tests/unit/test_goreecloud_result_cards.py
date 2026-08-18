@@ -14,36 +14,41 @@ def _read(path: str) -> str:
 def test_file_results_expose_structured_glaze_metadata():
     template = _read("searx/templates/simple/result_templates/file.html")
 
+    assert 'goreecloud-file-summary' in template
     assert 'goreecloud-file-attributes' in template
-    assert 'goreecloud-file-attribute-label' in template
-    assert 'goreecloud-file-attribute-value' in template
-    assert 'aria-label="File details"' in template
+    assert '<dt>{{ _("Filename") }}</dt>' in template
+    assert '<dd>{{ result.filename }}</dd>' in template
+    assert "File details" in template
+    assert 'goreecloud-file-actions' in template
     assert 'goreecloud-result-action' in template
     assert "icon_small('download')" in template
 
 
-def test_video_results_use_shared_result_actions_and_snippets():
+def test_video_results_use_shared_result_actions_and_descriptions():
     template = _read("searx/templates/simple/result_templates/videos.html")
 
+    assert 'goreecloud-video-action-row' in template
     assert 'goreecloud-result-action' in template
-    assert 'goreecloud-video-snippet' in template
+    assert 'goreecloud-video-description' in template
     assert 'goreecloud-embedded-media' in template
     assert "icon_small('film')" in template
     assert '\n</p>\n{{- result_sub_footer' not in template
 
 
-def test_result_styles_cover_media_file_sidebar_and_accessibility_states():
-    stylesheet = _read("searx/static/themes/simple/goreecloud-results.css")
+def test_result_polish_layer_covers_filters_file_video_and_accessibility_states():
+    base = _read("searx/templates/simple/base.html")
+    stylesheet = _read("searx/static/themes/simple/goreecloud-result-polish.css")
+
+    assert base.index("goreecloud-result-polish.css") > base.index("goreecloud-search-shell.css")
 
     required_contracts = (
+        ".goreecloud-filter-control",
+        ".goreecloud-result-action",
         ".result-file",
         ".goreecloud-file-attributes",
         ".result-videos",
-        ".goreecloud-result-action",
-        ".goreecloud-embedded-media",
-        ".goreecloud-sidebar-panel",
+        ".goreecloud-video-description",
         "@media (max-width: 599px)",
-        "prefers-reduced-motion",
         "prefers-reduced-transparency",
         "prefers-contrast: more",
         "forced-colors",
@@ -55,8 +60,8 @@ def test_result_styles_cover_media_file_sidebar_and_accessibility_states():
 def run_contract_checks() -> None:
     """Allow this contract to run directly in lightweight CI jobs."""
     test_file_results_expose_structured_glaze_metadata()
-    test_video_results_use_shared_result_actions_and_snippets()
-    test_result_styles_cover_media_file_sidebar_and_accessibility_states()
+    test_video_results_use_shared_result_actions_and_descriptions()
+    test_result_polish_layer_covers_filters_file_video_and_accessibility_states()
 
 
 if __name__ == "__main__":
