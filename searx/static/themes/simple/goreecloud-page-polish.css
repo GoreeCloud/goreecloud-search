@@ -1,0 +1,500 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — Glaze UI polish for landing and Preferences surfaces. */
+
+/* Landing page: keep the search experience focused, but remove the nested
+   double-shell appearance visible in the production review. */
+#main_index {
+  margin-top: clamp(4.5rem, 13vh, 8rem);
+}
+
+.index.goreecloud-search-landing {
+  width: min(94vw, 58rem);
+  padding: clamp(1rem, 2.5vw, 2rem);
+}
+
+.index.goreecloud-search-landing .title {
+  margin-bottom: 0.85rem;
+}
+
+.index.goreecloud-search-landing .title h1 {
+  max-width: 100%;
+  font-size: clamp(2.7rem, 7vw, 4.65rem);
+  line-height: 0.98;
+  letter-spacing: -0.058em;
+}
+
+.index.goreecloud-search-landing .goreecloud-search-subtitle {
+  max-width: 39rem;
+  margin-top: 0.8rem;
+  margin-bottom: 1.65rem;
+  font-size: clamp(1rem, 1.8vw, 1.12rem);
+  line-height: 1.55;
+}
+
+.index.goreecloud-search-landing #search {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.index.goreecloud-search-landing #search_header {
+  padding: 0.5rem !important;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: calc(var(--gc-radius-xl) + 2px) !important;
+  background: color-mix(in srgb, var(--gc-surface-strong) 76%, transparent) !important;
+  box-shadow: var(--gc-shadow);
+}
+
+.index.goreecloud-search-landing .search_box {
+  min-height: 3.6rem;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 12%, var(--gc-border));
+  border-radius: var(--gc-radius-lg) !important;
+  background: var(--gc-surface-strong) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 52%, transparent),
+    0 6px 18px color-mix(in srgb, var(--gc-text) 7%, transparent);
+}
+
+.index.goreecloud-search-landing #q {
+  min-height: 3.45rem;
+  padding-inline: 0.95rem 0.55rem;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--gc-text) !important;
+  font-size: 1rem;
+  box-shadow: none !important;
+}
+
+.index.goreecloud-search-landing #q::placeholder {
+  color: color-mix(in srgb, var(--gc-muted) 82%, transparent);
+}
+
+.index.goreecloud-search-landing #send_search,
+.index.goreecloud-search-landing #clear_search {
+  width: 3rem;
+  min-width: 3rem;
+  height: 3rem;
+  min-height: 3rem;
+  margin-block: auto;
+}
+
+.index.goreecloud-search-landing #send_search {
+  margin-inline-end: 0.18rem;
+}
+
+.goreecloud-search-principles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0.95rem auto 0;
+  color: var(--gc-muted);
+  font-size: 0.78rem;
+}
+
+.goreecloud-search-principles span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  box-sizing: border-box;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gc-surface) 82%, transparent);
+  font-weight: 620;
+}
+
+.goreecloud-search-principles span::before {
+  content: "";
+  width: 0.38rem;
+  height: 0.38rem;
+  margin-inline-end: 0.42rem;
+  border-radius: 999px;
+  background: var(--gc-accent);
+  box-shadow: 0 0 0 0.18rem color-mix(in srgb, var(--gc-accent) 12%, transparent);
+}
+
+/* Preferences: establish a clear product-level heading before the upstream
+   preference controls, then give each setting an intentional Glaze surface. */
+.preferences_endpoint .goreecloud-page-header,
+.preferences_endpoint .goreecloud-page.page_with_header {
+  width: min(94vw, 82rem);
+}
+
+.goreecloud-preferences-heading {
+  margin: 0.15rem 0 1rem;
+}
+
+.goreecloud-preferences-eyebrow {
+  margin: 0 0 0.28rem;
+  color: var(--gc-accent);
+  font-size: 0.76rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goreecloud-preferences-heading h1 {
+  margin: 0;
+  color: var(--gc-text);
+  font-size: clamp(1.8rem, 4vw, 2.45rem);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+}
+
+.goreecloud-preferences-intro {
+  max-width: 54rem;
+  margin: 0.55rem 0 0;
+  color: var(--gc-muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.goreecloud-preferences-form > .tabs > label {
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  margin: 0 0.14rem 0.28rem 0;
+  padding: 0.64rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 0.78rem 0.78rem 0 0;
+  color: var(--gc-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  transition:
+    border-color var(--gc-motion-fast) var(--gc-ease-standard),
+    background-color var(--gc-motion-fast) var(--gc-ease-standard),
+    color var(--gc-motion-fast) var(--gc-ease-standard);
+}
+
+.goreecloud-preferences-form > .tabs > label:hover,
+.goreecloud-preferences-form > .tabs > label:focus-visible {
+  border-color: var(--gc-border);
+  background: color-mix(in srgb, var(--gc-accent) 7%, var(--gc-surface));
+  color: var(--gc-text);
+}
+
+.goreecloud-preferences-form > .tabs > input[type="radio"]:checked + label {
+  border-color: color-mix(in srgb, var(--gc-accent) 24%, var(--gc-border));
+  background: color-mix(in srgb, var(--gc-accent) 9%, var(--gc-surface-strong));
+  color: var(--gc-accent);
+}
+
+.goreecloud-preferences-form > .tabs > section > fieldset,
+.goreecloud-preferences-form > .tabs > section > .tabs,
+.goreecloud-preferences-form .dialog-warning-block {
+  box-sizing: border-box;
+  border-color: var(--gc-border) !important;
+  border-radius: var(--gc-radius-md) !important;
+  background: color-mix(in srgb, var(--gc-surface) 88%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 30%, transparent);
+}
+
+.goreecloud-preferences-form > .tabs > section > fieldset {
+  margin-block: 0.58rem;
+  padding-block: 0.8rem !important;
+  padding-inline: 1rem !important;
+}
+
+.goreecloud-preferences-form fieldset legend {
+  color: var(--gc-text);
+  font-size: 0.87rem;
+  font-weight: 680;
+}
+
+.goreecloud-preferences-form fieldset .description {
+  color: var(--gc-muted);
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+
+.goreecloud-preferences-form select,
+.goreecloud-preferences-form input[type="text"],
+.goreecloud-preferences-form input[type="number"],
+.goreecloud-preferences-form input[type="url"] {
+  min-height: var(--gc-target-min) !important;
+  box-sizing: border-box;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: 0.78rem !important;
+  background-color: var(--gc-surface-strong) !important;
+  color: var(--gc-text) !important;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 28%, transparent) !important;
+}
+
+.goreecloud-preferences-form select:hover,
+.goreecloud-preferences-form select:focus-visible,
+.goreecloud-preferences-form input[type="text"]:hover,
+.goreecloud-preferences-form input[type="text"]:focus-visible,
+.goreecloud-preferences-form input[type="number"]:hover,
+.goreecloud-preferences-form input[type="number"]:focus-visible,
+.goreecloud-preferences-form input[type="url"]:hover,
+.goreecloud-preferences-form input[type="url"]:focus-visible {
+  border-color: color-mix(in srgb, var(--gc-accent) 42%, var(--gc-border)) !important;
+}
+
+/* Normal on/off preferences use a larger, readable switch. Reversed plugin
+   switches retain their upstream semantics because checked means disabled. */
+.goreecloud-preferences-form input.checkbox-onoff:not(.reversed-checkbox) {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  width: 3.15rem !important;
+  min-width: 3.15rem !important;
+  height: 1.82rem !important;
+  min-height: 1.82rem !important;
+  margin: 0 !important;
+  border: 1px solid var(--gc-border-strong) !important;
+  border-radius: 999px !important;
+  background-color: color-mix(in srgb, var(--gc-muted) 28%, var(--gc-surface-muted)) !important;
+  background-image: radial-gradient(circle, var(--gc-surface-strong) 0 0.5rem, transparent 0.54rem) !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.32rem 1.32rem !important;
+  background-position: 0.2rem center !important;
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--gc-text) 8%, transparent) !important;
+  cursor: pointer;
+  transition:
+    background-color var(--gc-motion-fast) var(--gc-ease-standard),
+    background-position var(--gc-motion-fast) var(--gc-ease-standard),
+    border-color var(--gc-motion-fast) var(--gc-ease-standard);
+}
+
+.goreecloud-preferences-form input.checkbox-onoff:not(.reversed-checkbox):checked {
+  border-color: color-mix(in srgb, var(--gc-accent) 70%, var(--gc-border)) !important;
+  background-color: var(--gc-accent) !important;
+  background-position: calc(100% - 0.2rem) center !important;
+}
+
+.goreecloud-preferences-form input.checkbox-onoff:not(.reversed-checkbox):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 60%, white) !important;
+  outline-offset: 2px !important;
+}
+
+.goreecloud-preferences-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 0 0;
+  padding: 1rem;
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-md);
+  background: color-mix(in srgb, var(--gc-surface-strong) 88%, transparent);
+  box-shadow: var(--gc-shadow-soft);
+}
+
+.goreecloud-preferences-storage-note {
+  max-width: 46rem;
+  margin: 0;
+  color: var(--gc-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.goreecloud-preferences-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.48rem;
+}
+
+.goreecloud-preferences-actions > input,
+.goreecloud-preferences-actions > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 0.55rem 0.82rem !important;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: 0.78rem !important;
+  font-size: 0.82rem;
+  font-weight: 680;
+  line-height: 1.1;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.goreecloud-preferences-save {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary)) !important;
+  color: white !important;
+}
+
+.goreecloud-preferences-back {
+  background: var(--gc-surface-strong) !important;
+  color: var(--gc-text) !important;
+}
+
+.goreecloud-preferences-reset {
+  border-color: color-mix(in srgb, var(--gc-danger) 24%, var(--gc-border)) !important;
+  background: color-mix(in srgb, var(--gc-danger) 5%, var(--gc-surface-strong)) !important;
+  color: var(--gc-danger) !important;
+}
+
+@media (max-width: 760px) {
+  #main_index {
+    margin-top: 4.35rem;
+  }
+
+  .index.goreecloud-search-landing {
+    width: 100%;
+    padding-inline: 1rem;
+  }
+
+  .index.goreecloud-search-landing .title h1 {
+    font-size: clamp(2.45rem, 12vw, 3.65rem);
+  }
+
+  .goreecloud-search-principles {
+    gap: 0.34rem;
+  }
+
+  .goreecloud-preferences-form > .tabs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scroll-padding-inline: 0.25rem;
+  }
+
+  .goreecloud-preferences-form > .tabs > label {
+    white-space: nowrap;
+  }
+
+  .goreecloud-preferences-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .goreecloud-preferences-actions {
+    justify-content: stretch;
+  }
+
+  .goreecloud-preferences-actions > input,
+  .goreecloud-preferences-actions > a {
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 599px) {
+  .index.goreecloud-search-landing .goreecloud-search-kicker {
+    margin-bottom: 0.72rem;
+  }
+
+  .index.goreecloud-search-landing .goreecloud-search-subtitle {
+    margin-bottom: 1.25rem;
+  }
+
+  .index.goreecloud-search-landing #search_header {
+    padding: 0.38rem !important;
+  }
+
+  .index.goreecloud-search-landing .search_box {
+    min-height: 3.35rem;
+  }
+
+  .index.goreecloud-search-landing #q {
+    min-height: 3.2rem;
+  }
+
+  .index.goreecloud-search-landing #send_search,
+  .index.goreecloud-search-landing #clear_search {
+    width: 2.8rem;
+    min-width: 2.8rem;
+    height: 2.8rem;
+    min-height: 2.8rem;
+  }
+
+  .goreecloud-search-principles span {
+    font-size: 0.72rem;
+  }
+
+  .preferences_endpoint .goreecloud-page-header,
+  .preferences_endpoint .goreecloud-page.page_with_header {
+    width: min(100%, calc(100vw - 1rem));
+  }
+
+  .goreecloud-preferences-heading {
+    padding-inline: 0.1rem;
+  }
+
+  .goreecloud-preferences-form > .tabs > section > fieldset {
+    padding-inline: 0.78rem !important;
+  }
+
+  .goreecloud-preferences-actions {
+    flex-direction: column;
+  }
+
+  .goreecloud-preferences-actions > input,
+  .goreecloud-preferences-actions > a {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goreecloud-preferences-form > .tabs > label,
+  .goreecloud-preferences-form input.checkbox-onoff:not(.reversed-checkbox) {
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .index.goreecloud-search-landing #search_header,
+  .goreecloud-search-principles span,
+  .goreecloud-preferences-form > .tabs > section > fieldset,
+  .goreecloud-preferences-form > .tabs > section > .tabs,
+  .goreecloud-preferences-footer {
+    background: var(--gc-surface-strong) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .index.goreecloud-search-landing #search_header,
+  .index.goreecloud-search-landing .search_box,
+  .goreecloud-search-principles span,
+  .goreecloud-preferences-form > .tabs > section > fieldset,
+  .goreecloud-preferences-footer,
+  .goreecloud-preferences-form select {
+    border-color: var(--gc-border-strong) !important;
+  }
+
+  .goreecloud-preferences-intro,
+  .goreecloud-preferences-storage-note,
+  .goreecloud-preferences-form fieldset .description {
+    color: var(--gc-text);
+  }
+}
+
+@media (forced-colors: active) {
+  .index.goreecloud-search-landing #search_header,
+  .index.goreecloud-search-landing .search_box,
+  .goreecloud-search-principles span,
+  .goreecloud-preferences-form > .tabs > section > fieldset,
+  .goreecloud-preferences-footer,
+  .goreecloud-preferences-form select,
+  .goreecloud-preferences-actions > input,
+  .goreecloud-preferences-actions > a {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  .goreecloud-preferences-form input.checkbox-onoff:not(.reversed-checkbox) {
+    border: 1px solid CanvasText !important;
+    background-color: Canvas !important;
+  }
+
+  .goreecloud-preferences-form input.checkbox-onoff:not(.reversed-checkbox):checked {
+    background-color: Highlight !important;
+  }
+}
