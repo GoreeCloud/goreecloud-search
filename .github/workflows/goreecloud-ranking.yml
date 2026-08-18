@@ -1,0 +1,69 @@
+---
+name: GoreeCloud ranking acceptance
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - master
+      - 'agent/**'
+    paths:
+      - searx/results.py
+      - searx/search/__init__.py
+      - searx/templates/simple/results.html
+      - searx/templates/simple/macros.html
+      - searx/templates/simple/result_templates/default.html
+      - searx/static/themes/simple/goreecloud-results.css
+      - tests/unit/test_results.py
+      - .github/workflows/goreecloud-ranking.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: goreecloud-ranking-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ranking:
+    name: Validate deterministic ranking and result UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Validate changed Python syntax
+        run: |
+          python -m py_compile \
+            searx/results.py \
+            searx/search/__init__.py \
+            tests/unit/test_results.py
+
+      - name: Validate result-interface contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'goreecloud-results.css' searx/templates/simple/base.html
+          grep -q 'never behavioral profiling' searx/templates/simple/results.html
+          grep -q 'goreecloud-rank-badge' searx/templates/simple/macros.html
+          grep -q 'goreecloud-consensus-chip' searx/templates/simple/macros.html
+          grep -q 'goreecloud-result-snippet' searx/templates/simple/result_templates/default.html
+          grep -q 'prefers-reduced-transparency: reduce' searx/static/themes/simple/goreecloud-results.css
+          grep -q 'prefers-contrast: more' searx/static/themes/simple/goreecloud-results.css
+          grep -q 'forced-colors: active' searx/static/themes/simple/goreecloud-results.css
+
+      - name: Install reviewed test environment
+        run: make V=1 install
+
+      - name: Run result-ranking unit tests
+        run: ./manage unit_tests tests/unit/test_results.py
