@@ -77,9 +77,9 @@
       {%- endfor -%}
     </p>{{- '' -}}
     <p>{{- '' -}}
-      <span class="right">{{ _("!bang for its categories") }}</span>{{- '' -}}
+      <span class="right">{{ _("!bang for its categories") }}</span>
       {%- for bang in search_engine.categories -%}
-        <span class="bang">{{ '!' + bang.replace(' ', '_') }}</span>{{- '' -}}
+        <span class="bang">{{ '!' + bang.replace(' ', '_') }}</span>
       {%- endfor -%}
     </p>{{- '' -}}
   </div>
@@ -130,7 +130,7 @@
           {{- icon_big('alert', 'The engine is not reliabled') }} {{ r -}}
         </span>{{- '' -}}
       </a>{{- '' -}}
-      <div class="engine-tooltip text-left" role="tooltip" id="{{engine_name}}_reliability">
+      <div class="engine-tooltip" role="tooltip" id="{{engine_name}}_reliability">
         {%- if errors -%}<p>{{ _('Errors:') }}</p>{%- endif -%}
         {%- for error in errors -%}
           <p>{{ error }}</p>{{- '' -}}
