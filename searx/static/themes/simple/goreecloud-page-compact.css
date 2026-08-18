@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* GoreeCloud Search — compact containment for landing and page-polish surfaces. */
+/* GoreeCloud Search — compact containment and keyboard-accessible Preferences controls. */
 
 .index.goreecloud-search-landing #search_view,
 .index.goreecloud-search-landing .search_box {
@@ -7,6 +7,29 @@
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
+}
+
+/* Preferences tabs keep native radio-group semantics. The upstream theme hides
+   these controls with display:none, which removes them from the keyboard order.
+   Keep them visually hidden instead so arrow-key navigation and focus remain
+   available without changing the Glaze UI label presentation. */
+.goreecloud-preferences-form .tabs > input[type="radio"] {
+  display: block !important;
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+
+.goreecloud-preferences-form .tabs > input[type="radio"]:focus-visible + label {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 60%, white);
+  outline-offset: 2px;
 }
 
 @media (max-width: 599px) {
@@ -24,5 +47,11 @@
 
   .index.goreecloud-search-landing .search_box {
     margin-inline: 0 !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .goreecloud-preferences-form .tabs > input[type="radio"]:focus-visible + label {
+    outline: 2px solid Highlight;
   }
 }
