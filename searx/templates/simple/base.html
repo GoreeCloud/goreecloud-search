@@ -29,6 +29,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-search-shell.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-result-polish.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-page-polish.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-page-compact.css') }}" type="text/css" media="screen">
   {% if get_setting('server.limiter') or get_setting('server.public_instance') %}
   <link rel="stylesheet" href="{{ url_for('client_token', token=link_token) }}" type="text/css">
   {% endif %}
