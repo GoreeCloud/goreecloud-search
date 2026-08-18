@@ -224,6 +224,19 @@
     flex-wrap: nowrap !important;
   }
 
+  /* The upstream autocomplete uses an absolute width that can exceed narrow viewports. */
+  .autocomplete,
+  #autocomplete {
+    width: calc(100vw - 3rem) !important;
+    max-width: calc(100vw - 3rem) !important;
+  }
+
+  .autocomplete ul,
+  #autocomplete ul {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   footer p {
     overflow-wrap: anywhere;
   }
