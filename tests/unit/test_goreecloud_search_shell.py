@@ -57,3 +57,15 @@ def test_search_shell_stylesheet_loads_after_existing_glaze_layers():
     )
     for marker in required_contracts:
         assert marker in stylesheet
+
+
+def run_contract_checks() -> None:
+    """Allow this contract to run in CI without adding a test-runner dependency."""
+    test_search_results_header_has_explicit_glaze_structure()
+    test_category_navigation_uses_semantic_icon_controls()
+    test_search_shell_stylesheet_loads_after_existing_glaze_layers()
+
+
+if __name__ == "__main__":
+    run_contract_checks()
+    print("GoreeCloud Search shell contract passed.")
