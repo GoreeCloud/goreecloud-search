@@ -2,13 +2,13 @@
 {%- extends "simple/page_with_header.html" -%}
 
 {%- macro tabs_open() -%}
-<div class="tabs" role="tablist">
+<div class="tabs">
 {%- endmacro -%}
 
 {%- macro tab_header(name, id, label, checked) -%}
-<input type="radio" name="{{ name }}" id="tab-{{ id }}" {% if checked is sameas true %}checked="checked"{% endif %}>
-<label id="tab-label-{{ id }}" for="tab-{{ id }}" role="tab" aria-controls="tab-content-{{ id }}">{{ label }}</label>
-<section id="tab-content-{{ id }}" role="tabpanel" aria-hidden="false">
+<input type="radio" name="{{ name }}" id="tab-{{ id }}" aria-controls="tab-content-{{ id }}" {% if checked is sameas true %}checked="checked"{% endif %}>
+<label id="tab-label-{{ id }}" for="tab-{{ id }}">{{ label }}</label>
+<section id="tab-content-{{ id }}" role="region" aria-labelledby="tab-label-{{ id }}">
 {%- endmacro -%}
 
 {%- macro tab_footer() -%}
@@ -77,9 +77,9 @@
       {%- endfor -%}
     </p>{{- '' -}}
     <p>{{- '' -}}
-      <span class="right">{{ _("!bang for its categories") }}</span>
+      <span class="right">{{ _("!bang for its categories") }}</span>{{- '' -}}
       {%- for bang in search_engine.categories -%}
-        <span class="bang">{{ '!' + bang.replace(' ', '_') }}</span>
+        <span class="bang">{{ '!' + bang.replace(' ', '_') }}</span>{{- '' -}}
       {%- endfor -%}
     </p>{{- '' -}}
   </div>
@@ -130,7 +130,7 @@
           {{- icon_big('alert', 'The engine is not reliabled') }} {{ r -}}
         </span>{{- '' -}}
       </a>{{- '' -}}
-      <div class="engine-tooltip" role="tooltip" id="{{engine_name}}_reliability">
+      <div class="engine-tooltip text-left" role="tooltip" id="{{engine_name}}_reliability">
         {%- if errors -%}<p>{{ _('Errors:') }}</p>{%- endif -%}
         {%- for error in errors -%}
           <p>{{ error }}</p>{{- '' -}}
