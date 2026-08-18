@@ -1,0 +1,451 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — Glaze UI search shell and category navigation refinement. */
+
+/* Keep category glyphs consistent even on secondary surfaces that reuse this template. */
+.goreecloud-category-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 1.9rem;
+  height: 1.9rem;
+  box-sizing: border-box;
+  border-radius: 0.7rem;
+}
+
+.goreecloud-category-icon svg {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* Results/search masthead. Override inherited SearXNG geometry with one explicit
+   Glaze UI composition so the wordmark, query field, categories, and filters
+   share a stable alignment boundary. */
+.search_endpoint #search_header.goreecloud-search-header {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0.9rem clamp(1rem, 3.2vw, 2.75rem) 0.7rem !important;
+  box-sizing: border-box;
+  border-top: 1px solid var(--gc-border);
+  border-bottom: 1px solid var(--gc-border);
+  background: color-mix(in srgb, var(--gc-surface-strong) 78%, transparent) !important;
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--gc-text) 5%, transparent);
+  backdrop-filter: blur(22px) saturate(135%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+}
+
+.search_endpoint .goreecloud-search-primary {
+  display: grid;
+  grid-template-columns: max-content minmax(18rem, 1fr);
+  align-items: center;
+  gap: clamp(0.8rem, 2vw, 1.35rem);
+  width: min(100%, 76rem);
+  min-width: 0;
+  margin: 0 auto;
+}
+
+.search_endpoint #search_logo.goreecloud-search-wordmark {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0.35rem 0.25rem !important;
+}
+
+.search_endpoint .goreecloud-search-wordmark-mark {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.8rem;
+}
+
+.search_endpoint .goreecloud-search-wordmark-text {
+  font-size: 0.98rem;
+}
+
+.search_endpoint #search_view.goreecloud-search-query {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.search_endpoint .search_box.goreecloud-search-box {
+  position: relative;
+  display: flex !important;
+  align-items: center;
+  gap: 0.22rem;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 3.5rem;
+  margin: 0 !important;
+  padding: 0.28rem !important;
+  box-sizing: border-box;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: 1.75rem !important;
+  background: var(--gc-surface-strong) !important;
+  box-shadow:
+    0 10px 28px color-mix(in srgb, var(--gc-text) 6%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 52%, transparent);
+}
+
+.search_endpoint .search_box.goreecloud-search-box:focus-within {
+  border-color: color-mix(in srgb, var(--gc-accent) 56%, var(--gc-border)) !important;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--gc-accent) 12%, transparent),
+    0 14px 32px color-mix(in srgb, var(--gc-text) 7%, transparent);
+}
+
+.search_endpoint .goreecloud-search-box #q {
+  position: static !important;
+  flex: 1 1 auto;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: var(--gc-target-comfortable);
+  margin: 0 !important;
+  padding: 0.65rem 0.9rem !important;
+  box-sizing: border-box;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: var(--gc-text) !important;
+  font-size: 1rem;
+}
+
+.search_endpoint .goreecloud-search-box #q::placeholder {
+  color: color-mix(in srgb, var(--gc-muted) 86%, transparent);
+  opacity: 1;
+}
+
+.search_endpoint .goreecloud-search-box #clear_search,
+.search_endpoint .goreecloud-search-box #send_search {
+  position: static !important;
+  inset: auto !important;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: var(--gc-target-comfortable);
+  min-width: var(--gc-target-comfortable);
+  height: var(--gc-target-comfortable);
+  min-height: var(--gc-target-comfortable);
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+.search_endpoint .goreecloud-search-box #clear_search {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--gc-muted);
+}
+
+.search_endpoint .goreecloud-search-box #clear_search:hover,
+.search_endpoint .goreecloud-search-box #clear_search:focus-visible {
+  background: color-mix(in srgb, var(--gc-text) 7%, transparent) !important;
+  color: var(--gc-text);
+}
+
+.search_endpoint .goreecloud-search-box #send_search {
+  border: 0 !important;
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary)) !important;
+  color: white !important;
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--gc-accent) 24%, transparent);
+}
+
+.search_endpoint .goreecloud-search-box #clear_search svg,
+.search_endpoint .goreecloud-search-box #send_search svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.search_endpoint .goreecloud-search-box .autocomplete,
+.search_endpoint .goreecloud-search-box #autocomplete {
+  left: 0 !important;
+  right: 0 !important;
+  top: calc(100% + 0.42rem) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Search categories are a single organized navigation strip rather than a row
+   of unrelated glyphs and labels. */
+.search_endpoint .goreecloud-category-nav {
+  width: min(100%, 76rem) !important;
+  max-width: 76rem !important;
+  min-width: 0 !important;
+  margin: 0.72rem auto 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+}
+
+.search_endpoint #categories_container.goreecloud-category-strip {
+  display: flex !important;
+  align-items: center;
+  gap: 0.28rem;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0.34rem !important;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--gc-border);
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, var(--gc-surface-muted) 84%, transparent);
+  scroll-padding-inline: 0.35rem;
+  scrollbar-width: thin;
+}
+
+.search_endpoint #categories_container .category {
+  flex: 0 0 auto;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.search_endpoint .goreecloud-category-control,
+.search_endpoint .category.goreecloud-category-control {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.46rem;
+  min-height: var(--gc-target-min);
+  margin: 0 !important;
+  padding: 0.34rem 0.68rem 0.34rem 0.36rem !important;
+  box-sizing: border-box;
+  border: 1px solid transparent !important;
+  border-radius: 0.95rem !important;
+  background: transparent !important;
+  color: var(--gc-muted) !important;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--gc-motion-fast) var(--gc-ease-standard),
+    border-color var(--gc-motion-fast) var(--gc-ease-standard),
+    color var(--gc-motion-fast) var(--gc-ease-standard),
+    box-shadow var(--gc-motion-fast) var(--gc-ease-standard),
+    transform var(--gc-motion-fast) var(--gc-ease-standard);
+}
+
+.search_endpoint .goreecloud-category-control:hover,
+.search_endpoint .goreecloud-category-control:focus-visible,
+.search_endpoint .category.goreecloud-category-control:hover,
+.search_endpoint .category.goreecloud-category-control:focus-visible {
+  border-color: color-mix(in srgb, var(--gc-accent) 18%, var(--gc-border)) !important;
+  background: color-mix(in srgb, var(--gc-surface-strong) 82%, transparent) !important;
+  color: var(--gc-text) !important;
+}
+
+.search_endpoint .goreecloud-category-icon {
+  background: color-mix(in srgb, var(--gc-text) 6%, transparent);
+  color: currentColor;
+  transition:
+    background-color var(--gc-motion-fast) var(--gc-ease-standard),
+    color var(--gc-motion-fast) var(--gc-ease-standard),
+    transform var(--gc-motion-fast) var(--gc-ease-standard);
+}
+
+.search_endpoint .goreecloud-category-name {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 0.83rem;
+  font-weight: 620;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.search_endpoint .category input:checked + .goreecloud-category-control,
+.search_endpoint .category_button.selected.goreecloud-category-control {
+  border-color: color-mix(in srgb, var(--gc-accent) 24%, var(--gc-border)) !important;
+  background: var(--gc-surface-strong) !important;
+  color: var(--gc-accent) !important;
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--gc-text) 7%, transparent);
+}
+
+.search_endpoint .category input:checked + .goreecloud-category-control .goreecloud-category-icon,
+.search_endpoint .category_button.selected.goreecloud-category-control .goreecloud-category-icon {
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary));
+  color: white;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--gc-accent) 22%, transparent);
+}
+
+.search_endpoint .goreecloud-category-control:active {
+  transform: scale(0.985);
+}
+
+.search_endpoint #categories_container .help {
+  align-self: center;
+  flex: 0 0 auto;
+  margin-inline: 0.35rem;
+  color: var(--gc-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+/* Keep filters aligned to the same masthead grid instead of visually floating
+   as a separate full-width row. */
+.search_endpoint .goreecloud-search-filters {
+  width: min(calc(100% - 2rem), 76rem);
+  max-width: 76rem;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 0.62rem 0 0.8rem;
+  box-sizing: border-box;
+}
+
+.search_endpoint .goreecloud-search-filters select,
+.search_endpoint .goreecloud-search-filters button {
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.search_endpoint .goreecloud-search-filters select:hover,
+.search_endpoint .goreecloud-search-filters select:focus-visible,
+.search_endpoint .goreecloud-search-filters button:hover,
+.search_endpoint .goreecloud-search-filters button:focus-visible {
+  border-color: var(--gc-border);
+  background: var(--gc-surface);
+}
+
+/* Glaze UI Compact. Keep the product mark and a full-width query control while
+   the category strip becomes an intentionally local horizontal scroller. */
+@media (max-width: 599px) {
+  .search_endpoint #search_header.goreecloud-search-header {
+    padding: 0.65rem 0.75rem 0.58rem !important;
+  }
+
+  .search_endpoint .goreecloud-search-primary {
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.52rem;
+  }
+
+  .search_endpoint #search_logo.goreecloud-search-wordmark {
+    padding-inline: 0 !important;
+  }
+
+  .search_endpoint .goreecloud-search-wordmark-mark {
+    width: var(--gc-target-min);
+    height: var(--gc-target-min);
+  }
+
+  .search_endpoint .goreecloud-search-wordmark-text {
+    display: none !important;
+  }
+
+  .search_endpoint .search_box.goreecloud-search-box {
+    min-height: 3.2rem;
+    border-radius: 1.6rem !important;
+  }
+
+  .search_endpoint .goreecloud-search-box #q {
+    padding-inline: 0.72rem !important;
+    font-size: 0.96rem;
+  }
+
+  .search_endpoint .goreecloud-search-box #clear_search,
+  .search_endpoint .goreecloud-search-box #send_search {
+    width: var(--gc-target-min);
+    min-width: var(--gc-target-min);
+    height: var(--gc-target-min);
+    min-height: var(--gc-target-min);
+  }
+
+  .search_endpoint .goreecloud-category-nav {
+    margin-top: 0.55rem !important;
+  }
+
+  .search_endpoint #categories_container.goreecloud-category-strip {
+    border-radius: 1rem;
+    padding: 0.28rem !important;
+  }
+
+  .search_endpoint .goreecloud-category-control,
+  .search_endpoint .category.goreecloud-category-control {
+    gap: 0.38rem;
+    padding-right: 0.58rem !important;
+  }
+
+  .search_endpoint .goreecloud-category-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .search_endpoint .goreecloud-category-icon svg {
+    width: 0.98rem;
+    height: 0.98rem;
+  }
+
+  .search_endpoint .goreecloud-search-filters {
+    width: calc(100% - 1.5rem);
+    padding-top: 0.5rem;
+  }
+}
+
+/* Medium layouts keep the wordmark but give the query field priority. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .search_endpoint .goreecloud-search-primary {
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .search_endpoint .goreecloud-search-wordmark-text {
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search_endpoint .goreecloud-category-control,
+  .search_endpoint .goreecloud-category-icon {
+    transition: none !important;
+  }
+
+  .search_endpoint .goreecloud-category-control:active {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .search_endpoint #search_header.goreecloud-search-header,
+  .search_endpoint #categories_container.goreecloud-category-strip {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--gc-surface-strong) !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .search_endpoint #search_header.goreecloud-search-header,
+  .search_endpoint .search_box.goreecloud-search-box,
+  .search_endpoint #categories_container.goreecloud-category-strip,
+  .search_endpoint .goreecloud-category-control,
+  .search_endpoint .category.goreecloud-category-control {
+    border-color: CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  .search_endpoint .category input:checked + .goreecloud-category-control,
+  .search_endpoint .category_button.selected.goreecloud-category-control,
+  .search_endpoint .category input:checked + .goreecloud-category-control .goreecloud-category-icon,
+  .search_endpoint .category_button.selected.goreecloud-category-control .goreecloud-category-icon {
+    background: Highlight !important;
+    color: HighlightText !important;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .search_endpoint #search_header.goreecloud-search-header,
+  .search_endpoint #categories_container.goreecloud-category-strip {
+    background: var(--gc-surface-strong) !important;
+  }
+}
