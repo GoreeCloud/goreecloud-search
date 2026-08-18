@@ -37,14 +37,22 @@ class ResultCounter(html.parser.HTMLParser):
         super().__init__()
         self.results = 0
         self.engine_messages = 0
+        self.product_identity = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        classes = dict(attrs).get("class", "") or ""
+        attributes = dict(attrs)
+        classes = attributes.get("class", "") or ""
         class_names = set(classes.split())
         if tag == "article" and "result" in class_names:
             self.results += 1
         if "engines_msg" in class_names:
             self.engine_messages += 1
+        if tag == "meta" and attributes.get("name") == "application-name":
+            self.product_identity = attributes.get("content") == "GoreeCloud Search"
+
+    def handle_data(self, data: str) -> None:
+        if "GoreeCloud Search" in data:
+            self.product_identity = True
 
 
 def run_case(base_url: str, case: AcceptanceCase, minimum_results: int, timeout: float) -> int:
@@ -78,19 +86,32 @@ def run_case(base_url: str, case: AcceptanceCase, minimum_results: int, timeout:
 
     print(f"[{case.category}] URL: {url}")
     print(f"[{case.category}] HTTP status: {status}")
+    print(f"[{case.category}] GoreeCloud Search identity: {'yes' if parser.product_identity else 'no'}")
     print(f"[{case.category}] Result cards: {parser.results}")
     print(f"[{case.category}] Engine-message surfaces: {parser.engine_messages}")
 
     if status != 200:
         print(f"[{case.category}] Expected HTTP 200, received {status}.", file=sys.stderr)
         return 3
-    if parser.results < minimum_results:
+    if not parser.product_identity:
         print(
-            f"[{case.category}] Expected at least {minimum_results} result card(s), received {parser.results}. "
-            "External engines may be unavailable, throttled, or blocked from this runner.",
+            f"[{case.category}] Search response lost the GoreeCloud Search product identity.",
             file=sys.stderr,
         )
         return 4
+    if parser.engine_messages:
+        print(
+            f"[{case.category}] Provider degradation is visible inside the intact GoreeCloud Search shell "
+            f"({parser.engine_messages} engine message surface(s))."
+        )
+    if parser.results < minimum_results:
+        print(
+            f"[{case.category}] Expected at least {minimum_results} result card(s), received {parser.results}. "
+            "External engines may be unavailable, throttled, or blocked from this runner. "
+            "The product-identity and engine-message lines above distinguish safe degradation from shell failure.",
+            file=sys.stderr,
+        )
+        return 5
 
     print(f"[{case.category}] Real-provider acceptance passed.")
     return 0
@@ -113,7 +134,7 @@ def run_suite(base_url: str, minimum_results: int, timeout: float) -> int:
             "or genuinely empty results before deciding whether the release candidate is defective.",
             file=sys.stderr,
         )
-        return 5
+        return 6
 
     print("GoreeCloud Search representative real-provider suite passed.")
     return 0
