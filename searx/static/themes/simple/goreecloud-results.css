@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 /* GoreeCloud Search — result hierarchy and relevance presentation. */
 
+.goreecloud-results-ranking-note {
+  max-width: 62ch;
+  margin: 0.38rem 0 0;
+  color: var(--gc-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 #urls .result {
   position: relative;
   overflow: clip;
@@ -156,6 +164,10 @@
 }
 
 @media (max-width: 599px) {
+  .goreecloud-results-ranking-note {
+    font-size: 0.78rem;
+  }
+
   .goreecloud-result-source-row {
     align-items: flex-start;
     gap: 0.45rem;
@@ -193,13 +205,16 @@
 }
 
 @media (prefers-contrast: more) {
+  .goreecloud-results-ranking-note,
   .goreecloud-rank-badge,
   .goreecloud-consensus-chip,
   .goreecloud-engine-chip {
     color: var(--gc-text);
-    border-color: var(--gc-border-strong);
   }
 
+  .goreecloud-rank-badge,
+  .goreecloud-consensus-chip,
+  .goreecloud-engine-chip,
   .goreecloud-top-result {
     border-color: var(--gc-border-strong);
   }
