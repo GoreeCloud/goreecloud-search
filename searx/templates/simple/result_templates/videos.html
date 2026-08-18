@@ -1,23 +1,24 @@
 {% from 'simple/macros.html' import iframe, result_header, result_sub_header, result_sub_footer, result_footer with context %}
+{% from 'simple/icons.html' import icon_small %}
 
 {{ result_header(result, favicons, image_proxify) }}
 {{ result_sub_header(result) }}
 {% if result.iframe_src -%}
-<p class="altlink goreecloud-result-action-row">
+<p class="altlink goreecloud-video-action-row">
   <a class="btn-collapse collapsed media-loader disabled_if_nojs goreecloud-result-action"
      data-target="#result-video-{{ index }}"
      data-btn-text-collapsed="{{ _('show video') }}"
      data-btn-text-not-collapsed="{{ _('hide video') }}">
-    {{ icon_small('film') }} {{ _('show video') }}
+    {{ icon_small('film') }} <span>{{ _('show video') }}</span>
   </a>
 </p>
 {%- endif %}
 {%- if result.content %}
-  <p class="content goreecloud-result-snippet goreecloud-video-snippet">
+  <p class="content goreecloud-result-snippet goreecloud-video-description">
     {{ result.content|safe }}
   </p>
 {%- else %}
-  <p class="content goreecloud-result-snippet goreecloud-video-snippet empty_element">
+  <p class="content goreecloud-result-snippet goreecloud-video-description empty_element">
     {{ _('This site did not provide any description.')|safe }}
   </p>
 {% endif -%}
