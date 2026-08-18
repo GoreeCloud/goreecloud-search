@@ -68,7 +68,7 @@
       <a href="{{ url_for('stats', engine=search_engine.name|e) }}" {{- ' ' -}}
          title="{{ _('View error logs and submit a bug report') }}">
       {{- _('View error logs and submit a bug report') -}}
-      </a>
+      </a>{{- '' -}}
     {%- endif -%}
     <p>{{- '' -}}
       <span class="right">{{ _("!bang for this engine") }}</span>{{- '' -}}
@@ -95,7 +95,7 @@
         <div class="stacked-bar-chart-median bar{{ (100 * (stats[engine_name].time / max_rate95))|round }}"></div>{{- '' -}}
         <div class="stacked-bar-chart-rate80 bar{{ (100 * ((stats[engine_name].rate80 - stats[engine_name].time) / max_rate95))|round }}"></div>{{- '' -}}
         <div class="stacked-bar-chart-rate95 bar{{ (100 * ((stats[engine_name].rate95 - stats[engine_name].rate80) / max_rate95))|round }}"></div>{{- '' -}}
-        <span class="stacked-bar-chart-rate100"></span>
+        <span class="stacked-bar-chart-rate100"></span>{{- '' -}}
         {%- endif -%}
     </span>{{- '' -}}
     <div class="engine-tooltip text-left" role="tooltip" id="{{engine_name}}_graph">{{- '' -}}
@@ -149,7 +149,11 @@
 
 {%- block content -%}
 
-  <h1>{{ _('Preferences') }}</h1>
+  <div class="goreecloud-preferences-heading">
+    <p class="goreecloud-preferences-eyebrow">Search settings</p>
+    <h1>{{ _('Preferences') }}</h1>
+    <p class="goreecloud-preferences-intro">Control appearance, privacy, providers, shortcuts, and result behavior. Preferences remain in this browser unless a setting explicitly states otherwise.</p>
+  </div>
 
   {%- if request.args.get('preferences_preview_only') == 'true' -%}
     <div class="dialog-warning-block">
@@ -161,7 +165,7 @@
     </div>
   {%- endif -%}
 
-  <form id="search_form" method="post" action="{{ url_for('preferences') }}" autocomplete="off">
+  <form id="search_form" class="goreecloud-preferences-form" method="post" action="{{ url_for('preferences') }}" autocomplete="off">
     {{- tabs_open() -}}
 
     {# tab: general #}
@@ -230,7 +234,7 @@
     {{- plugin_preferences('privacy') -}}
     {{- tab_footer() -}}
 
-    {# tab: enignes #}
+    {# tab: engines #}
 
     {{- tab_header('maintab', 'engines', _('Engines')) -}}
     <p>
