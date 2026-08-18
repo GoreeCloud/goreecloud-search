@@ -183,7 +183,8 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_preferences(self):
         result = self.client.get('/preferences')
         self.assertEqual(result.status_code, 200)
-        self.assertIn(b'<form id="search_form" method="post" action="/preferences"', result.data)
+        self.assertIn(b'<form id="search_form" class="goreecloud-preferences-form"', result.data)
+        self.assertIn(b'method="post" action="/preferences"', result.data)
         self.assertIn(b'id="categories_container"', result.data)
         self.assertIn(b'class="goreecloud-category-strip"', result.data)
         self.assertIn(b'<legend id="pref_ui_locale">Interface language</legend>', result.data)

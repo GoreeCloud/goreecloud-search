@@ -10,15 +10,24 @@ on:
     paths:
       - searx/results.py
       - searx/search/__init__.py
+      - searx/templates/simple/base.html
       - searx/templates/simple/results.html
       - searx/templates/simple/macros.html
       - searx/templates/simple/result_templates/default.html
       - searx/templates/simple/search.html
       - searx/templates/simple/categories.html
+      - searx/templates/simple/index.html
+      - searx/templates/simple/simple_search.html
+      - searx/templates/simple/preferences.html
+      - 'searx/templates/simple/preferences/**'
       - searx/static/themes/simple/goreecloud-results.css
       - searx/static/themes/simple/goreecloud-search-shell.css
+      - searx/static/themes/simple/goreecloud-result-polish.css
+      - searx/static/themes/simple/goreecloud-page-polish.css
+      - searx/static/themes/simple/goreecloud-page-compact.css
       - tests/unit/test_results.py
       - tests/unit/test_webapp.py
+      - tests/unit/test_goreecloud_page_polish.py
       - .github/workflows/goreecloud-ranking.yml
   workflow_dispatch:
 
@@ -51,7 +60,9 @@ jobs:
           python -m py_compile \
             searx/results.py \
             searx/search/__init__.py \
-            tests/unit/test_results.py
+            tests/unit/test_results.py \
+            tests/unit/test_webapp.py \
+            tests/unit/test_goreecloud_page_polish.py
 
       - name: Validate result-interface contract
         shell: bash
@@ -65,6 +76,9 @@ jobs:
           grep -q 'prefers-reduced-transparency: reduce' searx/static/themes/simple/goreecloud-results.css
           grep -q 'prefers-contrast: more' searx/static/themes/simple/goreecloud-results.css
           grep -q 'forced-colors: active' searx/static/themes/simple/goreecloud-results.css
+
+      - name: Validate landing and preferences contract
+        run: python tests/unit/test_goreecloud_page_polish.py
 
       - name: Install reviewed test environment
         run: make V=1 install
