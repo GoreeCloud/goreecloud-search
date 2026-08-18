@@ -65,5 +65,5 @@ jobs:
       - name: Install reviewed test environment
         run: make V=1 install
 
-      - name: Run result-ranking unit tests
-        run: ./manage unit_tests tests/unit/test_results.py
+      - name: Run upstream unit-test target including GoreeCloud ranking tests
+        run: make V=1 test.unit
