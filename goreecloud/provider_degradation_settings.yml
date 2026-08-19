@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Deterministic CI-only runtime for provider-failure degradation acceptance.
-# This file intentionally defines one healthy local provider and one failing
-# local provider so the Search failure boundary can be proven without relying
-# on external networks or third-party provider behavior.
+# This file intentionally defines one healthy offline provider and one failing
+# local online provider so the Search failure boundary can be proven without
+# relying on external networks or third-party provider behavior.
 
 use_default_settings:
   engines:
@@ -47,16 +47,10 @@ ui:
 
 engines:
   - name: goreecloud acceptance healthy
-    engine: json_engine
+    engine: goreecloud_acceptance
     categories: [general]
     shortcut: gcah
     disabled: false
-    timeout: 2.0
-    search_url: "http://127.0.0.1:8899/search?q={query}"
-    results_query: results
-    url_query: url
-    title_query: title
-    content_query: content
 
   - name: goreecloud acceptance failing
     engine: json_engine
