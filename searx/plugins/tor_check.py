@@ -40,8 +40,8 @@ class SXNGPlugin(Plugin):
             id=self.id,
             name=gettext("Tor check plugin"),
             description=gettext(
-                "This plugin checks if the address of the request is a Tor exit-node, and"
-                " informs the user if it is; like check.torproject.org, but from SearXNG."
+                "This plugin checks whether the request address is a Tor exit node and reports the result"
+                " through GoreeCloud Search using the Tor Project exit-node list."
             ),
             preference_section="query",
         )
