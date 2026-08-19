@@ -8,6 +8,7 @@ GoreeCloud-owned documentation for the maintained SearXNG fork.
 - `READINESS.md` — source-versus-production readiness contract.
 - `GLAZE-UI-CONFORMANCE.md` — exact Glaze UI 1.1 source binding, semantic mapping, automated evidence, and Stable visual-acceptance boundary.
 - `BROWSER-INTEGRATION.md` — GoreeCloud Browser search-provider and failure-boundary contract.
+- `CANDIDATE-PUBLICATION.md` — explicit stabilization candidate-request marker, reviewed-base binding, immutable GHCR publication, and non-authorizing rehearsal control.
 - `STABLE-CUTOVER.md` — first-Stable evidence gates, immutable release identity, runtime binding, and cutover/retirement controls.
 - `TARGET-ACCEPTANCE.md` — controlled `goreecloud-vps-01` staging, validation, cutover, recovery, and rollback procedure.
 - `RECOVERY-ACCEPTANCE.md` — candidate-bound application-level backup, isolated restore, monitoring, and rollback-evidence procedure.
