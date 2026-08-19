@@ -14,12 +14,31 @@ Stable approval requires all of the following evidence:
 - Provider failures degrade safely and do not break the application shell.
 - Private AdGuard DNS resolution, NetBird access, Caddy HTTPS routing, and backend Docker routing remain validated.
 - Uptime monitoring is healthy under the GoreeCloud Search product identity.
-- Backup and rollback material is verified and a recovery path is documented.
-- The release image is pinned by immutable digest.
+- Target-host backup and rollback material is verified and a recovery path is documented.
+- The release image is pinned by immutable digest and can be retrieved and executed by that digest.
+- The recorded known-good production rollback image can be retrieved and executed by immutable digest in an isolated image-level rollback rehearsal.
 - GoreeCloud Browser integration passes with GoreeCloud Search configured as the only and default browser search engine.
 - Address-bar, new-tab, and browser search-field queries resolve through GoreeCloud Search without direct or silent fallback to an external browser-level search provider.
 - Browser failure handling surfaces GoreeCloud Search connectivity/service state instead of bypassing the private search service.
 - Required AGPL licensing, source availability, and SearXNG upstream attribution remain intact.
+
+## Release identity and rollback evidence
+
+`goreecloud/release_baseline.json` records the current known-good GoreeCloud Search production image as an immutable GHCR digest together with the exact source revision that produced it. The record exists so a new candidate cannot define its rollback target as a mutable tag such as `latest` or silently substitute an unrelated image.
+
+When an exact candidate reaches `agent/production-acceptance`, `.github/workflows/goreecloud-candidate-image.yml` must:
+
+1. Validate the source-controlled rollback baseline.
+2. Build the exact checked-out revision and confirm its GoreeCloud Search OCI identity, source, license, revision, and version metadata.
+3. Publish the candidate under its exact source revision and resolve the registry digest.
+4. Pull the candidate back from GHCR by immutable digest.
+5. Pull the recorded known-good production rollback image by immutable digest.
+6. Execute both images separately in loopback-only isolated acceptance containers and verify GoreeCloud Search identity and health.
+7. Generate `release-evidence.json`, `candidate-image.txt`, `release-baseline.json`, and `SHA256SUMS` as the candidate evidence artifact.
+
+The generated release evidence must explicitly record that production cutover is **not** authorized by the image rehearsal. Image-level rollback rehearsal proves image identity, registry availability, and isolated executability only. It does not prove that the production Compose configuration, protected environment, persistent Search configuration/cache/Valkey data, Caddy routing, DNS, monitoring, backups, or target-host rollback procedure has been restored successfully.
+
+Stable approval therefore requires both layers: immutable source/image evidence from the release workflow and separately verified target-environment recovery/rollback evidence. Neither layer substitutes for the other.
 
 ## Stable cutover scope
 
