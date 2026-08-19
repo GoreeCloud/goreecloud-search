@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Create and validate GoreeCloud Search first-Stable final-candidate evidence.
+"""Assemble and validate GoreeCloud Search first-Stable final-candidate evidence.
 
-The final artifact binds already-validated release, target-runtime, recovery, and
-real-provider evidence to the manual Glaze UI and GoreeCloud Browser runtime
-acceptance that cannot be proven by source CI alone. Validation proves the
-reviewed evidence set is internally consistent for one exact candidate. It never
-sets or permits production_cutover_authorized=true; the explicit release decision
+The final manifest cryptographically binds release, target-runtime, recovery,
+real-provider, manual visual-review, and actual GoreeCloud Browser runtime
+evidence for one exact immutable Search candidate. Validation proves that the
+reviewed evidence set is internally consistent and unchanged. It never sets or
+permits production_cutover_authorized=true; the explicit release decision
 remains a separate human governance step.
 """
 
@@ -22,6 +22,7 @@ from typing import Any
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
+ARTIFACT_DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 IMAGE_RE = re.compile(r"^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$")
 LOOPBACK_URL_RE = re.compile(r"^https?://(?:127\.0\.0\.1|localhost|\[::1\])(?::[0-9]{1,5})?$")
 REQUIRED_PROVIDER_CATEGORIES = frozenset({"general", "images", "videos", "news", "files"})
@@ -30,6 +31,15 @@ REQUIRED_VISUAL_CASES = (
     "compact_dark",
     "expanded_light",
     "expanded_dark",
+)
+REQUIRED_BROWSER_BEHAVIORS = (
+    "search_only_default_provider",
+    "address_bar_routed_through_search",
+    "new_tab_routed_through_search",
+    "dedicated_search_field_routed_through_search",
+    "no_external_browser_fallback",
+    "search_unavailability_state_verified",
+    "recovery_after_search_reachability_verified",
 )
 FORBIDDEN_KEYS = {
     "password",
@@ -118,6 +128,13 @@ def _digest(value: Any, label: str) -> str:
     text = _nonempty(value, label)
     if not DIGEST_RE.fullmatch(text):
         raise EvidenceError(f"{label} must be a lowercase 64-character SHA-256 digest")
+    return text
+
+
+def _artifact_digest(value: Any, label: str) -> str:
+    text = _nonempty(value, label)
+    if not ARTIFACT_DIGEST_RE.fullmatch(text):
+        raise EvidenceError(f"{label} must be an immutable sha256:<64-lowercase-hex> artifact digest")
     return text
 
 
@@ -257,34 +274,143 @@ def _verify_provider(provider: dict[str, Any], source: str, image: str) -> None:
     _false(scope.get("production_cutover_authorized"), "provider production_cutover_authorized")
 
 
-def _bindings(args: argparse.Namespace) -> tuple[str, str, dict[str, str]]:
+def _passed_review(value: Any, label: str) -> dict[str, Any]:
+    review = _mapping(value, label)
+    _true(review.get("passed"), f"{label}.passed")
+    _nonempty(review.get("evidence_reference"), f"{label}.evidence_reference")
+    return {
+        "passed": True,
+        "evidence_reference": review["evidence_reference"].strip(),
+    }
+
+
+def _verify_visual(visual: dict[str, Any], source: str, image: str) -> dict[str, Any]:
+    _reject_sensitive_keys(visual, "visual_evidence")
+    if visual.get("schema_version") != 1 or visual.get("product") != "GoreeCloud Search":
+        raise EvidenceError("Visual evidence must be a GoreeCloud Search schema-version 1 artifact")
+    _iso_time(visual.get("generated_at"), "visual generated_at")
+    candidate = _mapping(visual.get("candidate"), "visual candidate")
+    if _sha(candidate.get("source_revision"), "visual source_revision") != source:
+        raise EvidenceError("Visual evidence refers to a different source revision")
+    if _image(candidate.get("image"), "visual image") != image:
+        raise EvidenceError("Visual evidence refers to a different image")
+    if visual.get("glaze_ui_version") != "1.1.0":
+        raise EvidenceError("Visual evidence glaze_ui_version must be 1.1.0")
+
+    review_artifact = _mapping(visual.get("review_artifact"), "visual review_artifact")
+    artifact_summary = {
+        "reference": _nonempty(review_artifact.get("reference"), "visual review_artifact.reference"),
+        "digest": _artifact_digest(review_artifact.get("digest"), "visual review_artifact.digest"),
+    }
+
+    reviews = _mapping(visual.get("reviews"), "visual reviews")
+    review_summary = {
+        case_name: _passed_review(reviews.get(case_name), f"visual reviews.{case_name}")
+        for case_name in REQUIRED_VISUAL_CASES
+    }
+    device_summary = {
+        "physical_android_preferences_review": _passed_review(
+            visual.get("physical_android_preferences_review"),
+            "visual physical_android_preferences_review",
+        ),
+        "desktop_regression_review": _passed_review(
+            visual.get("desktop_regression_review"),
+            "visual desktop_regression_review",
+        ),
+        "persisted_theme_preference_review": _passed_review(
+            visual.get("persisted_theme_preference_review"),
+            "visual persisted_theme_preference_review",
+        ),
+    }
+
+    scope = _mapping(visual.get("scope"), "visual scope")
+    _true(scope.get("exact_candidate_visual_artifact_verified"), "visual exact_candidate_visual_artifact_verified")
+    _true(scope.get("manual_visual_acceptance_verified"), "visual manual_visual_acceptance_verified")
+    _false(scope.get("production_cutover_authorized"), "visual production_cutover_authorized")
+    _nonempty(scope.get("statement"), "visual scope.statement")
+
+    return {
+        "glaze_ui_version": "1.1.0",
+        "review_artifact": artifact_summary,
+        "reviews": review_summary,
+        **device_summary,
+    }
+
+
+def _verify_browser(browser: dict[str, Any], source: str, image: str) -> dict[str, Any]:
+    _reject_sensitive_keys(browser, "browser_evidence")
+    if browser.get("schema_version") != 1 or browser.get("product") != "GoreeCloud Search":
+        raise EvidenceError("Browser evidence must be a GoreeCloud Search schema-version 1 artifact")
+    _iso_time(browser.get("generated_at"), "browser generated_at")
+    candidate = _mapping(browser.get("search_candidate"), "browser search_candidate")
+    if _sha(candidate.get("source_revision"), "browser Search source_revision") != source:
+        raise EvidenceError("Browser evidence refers to a different Search source revision")
+    if _image(candidate.get("image"), "browser Search image") != image:
+        raise EvidenceError("Browser evidence refers to a different Search image")
+
+    browser_source = _sha(browser.get("browser_source_revision"), "browser source_revision")
+    runtime_artifact = _mapping(browser.get("runtime_artifact"), "browser runtime_artifact")
+    runtime_summary = {
+        "reference": _nonempty(runtime_artifact.get("reference"), "browser runtime_artifact.reference"),
+        "digest": _artifact_digest(runtime_artifact.get("digest"), "browser runtime_artifact.digest"),
+    }
+    behaviors = _mapping(browser.get("behaviors"), "browser behaviors")
+    behavior_summary: dict[str, bool] = {}
+    for key in REQUIRED_BROWSER_BEHAVIORS:
+        _true(behaviors.get(key), f"browser behaviors.{key}")
+        behavior_summary[key] = True
+
+    scope = _mapping(browser.get("scope"), "browser scope")
+    _true(scope.get("actual_browser_runtime_verified"), "browser actual_browser_runtime_verified")
+    _true(scope.get("search_candidate_runtime_verified"), "browser search_candidate_runtime_verified")
+    _false(scope.get("production_cutover_authorized"), "browser production_cutover_authorized")
+    _nonempty(scope.get("statement"), "browser scope.statement")
+
+    return {
+        "browser_source_revision": browser_source,
+        "runtime_artifact": runtime_summary,
+        "behaviors": behavior_summary,
+    }
+
+
+def _bindings(
+    args: argparse.Namespace,
+) -> tuple[str, str, dict[str, str], dict[str, Any], dict[str, Any]]:
     release_path = pathlib.Path(args.release_evidence)
     runtime_path = pathlib.Path(args.target_runtime_evidence)
     recovery_path = pathlib.Path(args.recovery_evidence)
     provider_path = pathlib.Path(args.provider_evidence)
+    visual_path = pathlib.Path(args.visual_evidence)
+    browser_path = pathlib.Path(args.browser_evidence)
 
     release = _load(release_path)
     runtime = _load(runtime_path)
     recovery = _load(recovery_path)
     provider = _load(provider_path)
+    visual = _load(visual_path)
+    browser = _load(browser_path)
 
     source, image = _candidate_from_release(release)
     _verify_runtime(runtime, source, image)
     _verify_recovery(recovery, source, image)
     _verify_provider(provider, source, image)
+    visual_summary = _verify_visual(visual, source, image)
+    browser_summary = _verify_browser(browser, source, image)
 
     return source, image, {
         "release_evidence_sha256": _sha256(release_path),
         "target_runtime_evidence_sha256": _sha256(runtime_path),
         "recovery_evidence_sha256": _sha256(recovery_path),
         "provider_evidence_sha256": _sha256(provider_path),
-    }
+        "visual_evidence_sha256": _sha256(visual_path),
+        "browser_evidence_sha256": _sha256(browser_path),
+    }, visual_summary, browser_summary
 
 
-def build_template(args: argparse.Namespace) -> dict[str, Any]:
-    source, image, bindings = _bindings(args)
+def assemble_manifest(args: argparse.Namespace) -> dict[str, Any]:
+    source, image, bindings, visual_summary, browser_summary = _bindings(args)
     evidence = {
-        "schema_version": 1,
+        "schema_version": 2,
         "product": "GoreeCloud Search",
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"),
         "candidate": {
@@ -292,37 +418,19 @@ def build_template(args: argparse.Namespace) -> dict[str, Any]:
             "image": image,
         },
         "artifact_bindings": bindings,
-        "visual_acceptance": {
-            "glaze_ui_version": "1.1.0",
-            "compact_light": {"passed": False, "evidence_reference": ""},
-            "compact_dark": {"passed": False, "evidence_reference": ""},
-            "expanded_light": {"passed": False, "evidence_reference": ""},
-            "expanded_dark": {"passed": False, "evidence_reference": ""},
-            "physical_android_preferences_review": False,
-            "desktop_regression_review": False,
-        },
-        "browser_integration": {
-            "browser_source_revision": "",
-            "evidence_reference": "",
-            "search_only_default_provider": False,
-            "address_bar_routed_through_search": False,
-            "new_tab_routed_through_search": False,
-            "dedicated_search_field_routed_through_search": False,
-            "no_external_browser_fallback": False,
-            "search_unavailability_state_verified": False,
-            "recovery_after_search_reachability_verified": False,
-        },
+        "visual_acceptance": visual_summary,
+        "browser_integration": browser_summary,
         "scope": {
-            "glaze_ui_1_1_final_visual_acceptance_verified": False,
-            "browser_runtime_integration_verified": False,
+            "glaze_ui_1_1_final_visual_acceptance_verified": True,
+            "browser_runtime_integration_verified": True,
             "real_provider_acceptance_verified": True,
             "recovery_evidence_verified": True,
-            "final_candidate_acceptance_complete": False,
+            "final_candidate_acceptance_complete": True,
             "production_cutover_authorized": False,
             "statement": (
-                "This artifact binds the first-Stable final-candidate evidence set. It remains incomplete "
-                "until the manual Glaze UI and GoreeCloud Browser runtime review fields are completed and "
-                "validated. Passing validation does not independently authorize production cutover."
+                "This manifest binds the complete first-Stable final-candidate evidence set for one exact "
+                "Search candidate. Passing validation confirms evidence completeness and integrity only; it "
+                "does not independently authorize production cutover or Stable promotion."
             ),
         },
     }
@@ -334,10 +442,10 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
     evidence_path = pathlib.Path(args.evidence)
     evidence = _load(evidence_path)
     _reject_sensitive_keys(evidence)
-    source, image, expected_bindings = _bindings(args)
+    source, image, expected_bindings, visual_summary, browser_summary = _bindings(args)
 
-    if evidence.get("schema_version") != 1 or evidence.get("product") != "GoreeCloud Search":
-        raise EvidenceError("Final evidence must be a GoreeCloud Search schema-version 1 artifact")
+    if evidence.get("schema_version") != 2 or evidence.get("product") != "GoreeCloud Search":
+        raise EvidenceError("Final evidence must be a GoreeCloud Search schema-version 2 artifact")
     _iso_time(evidence.get("generated_at"), "final generated_at")
 
     candidate = _mapping(evidence.get("candidate"), "final candidate")
@@ -347,37 +455,20 @@ def validate_evidence(args: argparse.Namespace) -> dict[str, Any]:
         raise EvidenceError("Final evidence image does not match the bound candidate")
 
     bindings = _mapping(evidence.get("artifact_bindings"), "artifact_bindings")
+    if set(bindings) != set(expected_bindings):
+        raise EvidenceError("artifact_bindings must contain exactly the six required evidence hashes")
     for key, expected in expected_bindings.items():
         actual = _digest(bindings.get(key), f"artifact_bindings.{key}")
         if actual != expected:
             raise EvidenceError(f"artifact_bindings.{key} does not match the supplied artifact")
 
     visual = _mapping(evidence.get("visual_acceptance"), "visual_acceptance")
-    if visual.get("glaze_ui_version") != "1.1.0":
-        raise EvidenceError("visual_acceptance.glaze_ui_version must be 1.1.0")
-    for case_name in REQUIRED_VISUAL_CASES:
-        case = _mapping(visual.get(case_name), f"visual_acceptance.{case_name}")
-        _true(case.get("passed"), f"visual_acceptance.{case_name}.passed")
-        _nonempty(case.get("evidence_reference"), f"visual_acceptance.{case_name}.evidence_reference")
-    _true(
-        visual.get("physical_android_preferences_review"),
-        "visual_acceptance.physical_android_preferences_review",
-    )
-    _true(visual.get("desktop_regression_review"), "visual_acceptance.desktop_regression_review")
+    if visual != visual_summary:
+        raise EvidenceError("Final visual_acceptance does not exactly match the bound visual evidence")
 
     browser = _mapping(evidence.get("browser_integration"), "browser_integration")
-    _sha(browser.get("browser_source_revision"), "browser_integration.browser_source_revision")
-    _nonempty(browser.get("evidence_reference"), "browser_integration.evidence_reference")
-    for key in (
-        "search_only_default_provider",
-        "address_bar_routed_through_search",
-        "new_tab_routed_through_search",
-        "dedicated_search_field_routed_through_search",
-        "no_external_browser_fallback",
-        "search_unavailability_state_verified",
-        "recovery_after_search_reachability_verified",
-    ):
-        _true(browser.get(key), f"browser_integration.{key}")
+    if browser != browser_summary:
+        raise EvidenceError("Final browser_integration does not exactly match the bound Browser evidence")
 
     scope = _mapping(evidence.get("scope"), "scope")
     _true(
@@ -399,25 +490,30 @@ def _common_artifact_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--target-runtime-evidence", required=True)
     parser.add_argument("--recovery-evidence", required=True)
     parser.add_argument("--provider-evidence", required=True)
+    parser.add_argument("--visual-evidence", required=True)
+    parser.add_argument("--browser-evidence", required=True)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    template = subparsers.add_parser("template", help="Create an incomplete candidate-bound final evidence template.")
-    _common_artifact_args(template)
-    template.add_argument("--output", required=True)
+    assemble = subparsers.add_parser(
+        "assemble",
+        help="Assemble a completed candidate-bound final manifest from six validated evidence artifacts.",
+    )
+    _common_artifact_args(assemble)
+    assemble.add_argument("--output", required=True)
 
-    validate = subparsers.add_parser("validate", help="Validate a completed final-candidate evidence artifact.")
+    validate = subparsers.add_parser("validate", help="Validate a completed final-candidate evidence manifest.")
     _common_artifact_args(validate)
     validate.add_argument("--evidence", required=True)
 
     args = parser.parse_args()
     try:
-        if args.command == "template":
-            build_template(args)
-            print(f"Wrote incomplete final-candidate evidence template: {args.output}")
+        if args.command == "assemble":
+            assemble_manifest(args)
+            print(f"Wrote complete candidate-bound final evidence manifest: {args.output}")
         else:
             validate_evidence(args)
             print("GoreeCloud Search final-candidate evidence passed.")
