@@ -30,6 +30,9 @@ def test_preferences_surface_uses_goreecloud_language_and_actions():
     theme = _read("searx/templates/simple/preferences/theme.html")
     hotkeys = _read("searx/templates/simple/preferences/hotkeys.html")
     alignment = _read("searx/templates/simple/preferences/center_alignment.html")
+    language = _read("searx/templates/simple/preferences/language.html")
+    tor_check = _read("searx/plugins/tor_check.py")
+    base = _read("searx/templates/simple/base.html")
 
     assert 'goreecloud-preferences-heading' in preferences
     assert 'goreecloud-preferences-form' in preferences
@@ -41,6 +44,15 @@ def test_preferences_surface_uses_goreecloud_language_and_actions():
     assert 'Glaze UI' in theme
     assert '>SearXNG<' not in hotkeys
     assert 'Oscar layout' not in alignment
+
+    # Operational Preferences copy stays GoreeCloud-first. Upstream attribution
+    # remains intentionally present in the global footer for licensing/transparency.
+    assert 'Choose Auto-detect to let GoreeCloud Search detect the language of your query.' in language
+    assert 'Choose Auto-detect to let SearXNG detect the language of your query.' not in language
+    assert 'through GoreeCloud Search using the Tor Project exit-node list.' in tor_check
+    assert 'but from SearXNG.' not in tor_check
+    assert 'Powered by <a href="https://github.com/searxng/searxng">SearXNG</a>' in base
+    assert '>Upstream</a>' in base
 
 
 def test_preferences_cookie_empty_state_is_clear_and_accessible():
