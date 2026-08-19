@@ -43,10 +43,10 @@ Stable approval therefore requires both layers: immutable source/image evidence 
 
 ## Target runtime identity evidence
 
-Before a staged or production candidate can be accepted as the exact release runtime, `goreecloud/target_acceptance.sh` must be run with both the candidate's immutable image reference and its exact source revision. A typical controlled invocation is:
+Before a staged or production candidate can be accepted as the exact release runtime, `goreecloud/target_acceptance.sh` must be run with both the candidate's immutable image reference and its exact source revision. Invoke the script explicitly through Bash so acceptance does not depend on repository checkout executable-mode metadata:
 
 ```bash
-goreecloud/target_acceptance.sh \
+bash goreecloud/target_acceptance.sh \
   --base-url https://search.goreecloud.com \
   --container goreecloud-search \
   --expected-image 'ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>' \
