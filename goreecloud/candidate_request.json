@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "product": "GoreeCloud Search",
-  "request_id": "first-stable-2026-08-19-05",
-  "requested_at": "2026-08-19T14:24:51-05:00",
+  "request_id": "first-stable-2026-08-19-06",
+  "requested_at": "2026-08-19T14:59:23-05:00",
   "request": "publish-and-rehearse-final-candidate",
-  "reviewed_base_revision": "5cc37ffafcd0a0bb79071236b2851e00a947dcd2",
+  "reviewed_base_revision": "259e16b57b2f8d57c40aa65a5105b460a2468e72",
   "production_cutover_authorized": false,
   "stable_release_authorized": false,
   "target_host_change_authorized": false,
-  "statement": "This request authorizes immutable candidate publication and isolated image-level rehearsal only after redundant candidate-outcome observability, provider-health Glaze UI hardening, Preferences empty-state refinement, and public provider-diagnostics sanitization were integrated and exact-source gates passed. It does not authorize production cutover, Stable promotion, target-host changes, compatibility-name retirement, or rollback-material deletion."
+  "statement": "This request authorizes immutable candidate publication and isolated image-level rehearsal only after candidate #05 visual review identified and corrected the remaining GoreeCloud-first operational Preferences copy and the empty-query clear-control dark-theme defect, and after all eight source/evidence-contract gates passed on the exact reviewed base. It does not authorize production cutover, Stable promotion, target-host changes, compatibility-name retirement, or rollback-material deletion."
 }
