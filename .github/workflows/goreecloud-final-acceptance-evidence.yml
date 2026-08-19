@@ -1,0 +1,48 @@
+---
+name: GoreeCloud final acceptance evidence
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - 'agent/**'
+  pull_request:
+    branches:
+      - master
+      - 'agent/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  final-acceptance-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate final-acceptance Python syntax
+        run: |
+          python -m py_compile \
+            goreecloud/provider_acceptance.py \
+            goreecloud/final_acceptance_evidence.py \
+            tests/unit/test_goreecloud_final_acceptance_evidence.py
+
+      - name: Validate final-candidate evidence contract
+        run: python tests/unit/test_goreecloud_final_acceptance_evidence.py
+
+      - name: Confirm provider evidence remains explicit manual acceptance
+        run: |
+          python goreecloud/provider_acceptance.py --help | grep -- '--evidence-json'
+          grep -F 'production_cutover_authorized": False' goreecloud/provider_acceptance.py
+          grep -F 'production_cutover_authorized' goreecloud/final_acceptance_evidence.py
