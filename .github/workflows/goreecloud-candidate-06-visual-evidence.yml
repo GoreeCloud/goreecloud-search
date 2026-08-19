@@ -1,0 +1,202 @@
+---
+name: GoreeCloud candidate 06 visual evidence
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - agent/candidate-06-visual-evidence
+    paths:
+      - '.github/workflows/goreecloud-candidate-06-visual-evidence.yml'
+  pull_request:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - '.github/workflows/goreecloud-candidate-06-visual-evidence.yml'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  candidate-visual-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CANDIDATE_SOURCE: 1c7928afcc4e254f516781299d31b1de003d6f10
+      CANDIDATE_IMAGE: ghcr.io/goreecloud/goreecloud-search@sha256:9198aec25edd8a687343af4abdeb477b8daefc7c1be68cd19bb1367cd35a84e1
+      CANDIDATE_CONTAINER: goreecloud-search-candidate-06-visual
+      CANDIDATE_PORT: '8888'
+      DARK_PROXY_PORT: '8890'
+
+    steps:
+      - name: Check out exact candidate source
+        uses: actions/checkout@v4
+        with:
+          ref: 1c7928afcc4e254f516781299d31b1de003d6f10
+          persist-credentials: false
+
+      - name: Pull and verify exact immutable candidate
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" | podman login ghcr.io --username '${{ github.actor }}' --password-stdin
+          podman pull "$CANDIDATE_IMAGE"
+          title="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.title" }}' "$CANDIDATE_IMAGE")"
+          revision="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.revision" }}' "$CANDIDATE_IMAGE")"
+          source="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.source" }}' "$CANDIDATE_IMAGE")"
+          license="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.licenses" }}' "$CANDIDATE_IMAGE")"
+          version="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.version" }}' "$CANDIDATE_IMAGE")"
+          test "$title" = 'GoreeCloud Search'
+          test "$revision" = "$CANDIDATE_SOURCE"
+          test "$source" = 'https://github.com/GoreeCloud/goreecloud-search'
+          test "$license" = 'AGPL-3.0-or-later'
+          test -n "$version"
+          printf 'GOREECLOUD_CANDIDATE_OCI_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+
+      - name: Start exact candidate on loopback and snapshot HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-visual-searxng screenshots snapshots
+          cp goreecloud/settings.yml.example .ci-visual-searxng/settings.yml
+          podman run -d \
+            --name "$CANDIDATE_CONTAINER" \
+            --publish "127.0.0.1:${CANDIDATE_PORT}:8080" \
+            --env SEARXNG_SECRET=goreecloud-visual-evidence-only-secret \
+            --env FORCE_OWNERSHIP=false \
+            --volume "$PWD/.ci-visual-searxng:/etc/searxng:ro" \
+            "$CANDIDATE_IMAGE" >/tmp/candidate-id
+          for attempt in $(seq 1 60); do
+            curl -fsS "http://127.0.0.1:${CANDIDATE_PORT}/healthz" >/dev/null && break
+            test "$(podman inspect -f '{{.State.Running}}' "$CANDIDATE_CONTAINER" 2>/dev/null || true)" = true
+            sleep 1
+          done
+          curl -fsS "http://127.0.0.1:${CANDIDATE_PORT}/healthz" >/dev/null
+          curl -fsS "http://127.0.0.1:${CANDIDATE_PORT}/" > snapshots/home.html
+          curl -fsS "http://127.0.0.1:${CANDIDATE_PORT}/preferences" > snapshots/preferences.html
+          curl -fsS "http://127.0.0.1:${CANDIDATE_PORT}/stats" > snapshots/provider-diagnostics.html
+          grep -q '<title>GoreeCloud Search</title>' snapshots/home.html
+          grep -q 'goreecloud-preferences-form' snapshots/preferences.html
+          grep -q 'Choose Auto-detect to let GoreeCloud Search detect the language of your query.' snapshots/preferences.html
+          ! grep -q 'Choose Auto-detect to let SearXNG detect the language of your query.' snapshots/preferences.html
+          grep -q 'Provider diagnostics' snapshots/provider-diagnostics.html
+          ! grep -q 'error.log_parameters' snapshots/provider-diagnostics.html
+          ! grep -q 'error.filename' snapshots/provider-diagnostics.html
+
+      - name: Capture actual GoreeCloud light and dark theme evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v google-chrome >/dev/null; then CHROME="$(command -v google-chrome)";
+          elif command -v chromium >/dev/null; then CHROME="$(command -v chromium)";
+          elif command -v chromium-browser >/dev/null; then CHROME="$(command -v chromium-browser)";
+          else echo 'Chromium unavailable' >&2; exit 1; fi
+
+          cat >/tmp/dark-proxy.py <<'PY'
+          import re
+          from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+          from urllib.error import HTTPError
+          from urllib.request import Request, urlopen
+          UPSTREAM='http://127.0.0.1:8888'
+          class Proxy(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  try:
+                      with urlopen(Request(UPSTREAM+self.path, headers={'Accept':self.headers.get('Accept','*/*')}), timeout=15) as r:
+                          status, ctype, body = r.status, r.headers.get('Content-Type','application/octet-stream'), r.read()
+                  except HTTPError as e:
+                      status, ctype, body = e.code, e.headers.get('Content-Type','text/plain'), e.read()
+                  if 'text/html' in ctype:
+                      body=re.sub(rb'(<html\b[^>]*\bclass=")([^"]*\btheme-)(?:auto|light|dark|black)(\b[^"]*")', rb'\1\2dark\3', body, count=1)
+                  self.send_response(status); self.send_header('Content-Type',ctype); self.send_header('Content-Length',str(len(body))); self.send_header('Cache-Control','no-store'); self.end_headers(); self.wfile.write(body)
+              def log_message(self, *_args): return
+          ThreadingHTTPServer(('127.0.0.1',8890),Proxy).serve_forever()
+          PY
+          python /tmp/dark-proxy.py >/tmp/dark-proxy.log 2>&1 & echo $! >/tmp/dark-proxy.pid
+          for attempt in $(seq 1 30); do
+            curl -fsS "http://127.0.0.1:${DARK_PROXY_PORT}/" >/tmp/dark-home.html && grep -q 'theme-dark' /tmp/dark-home.html && break
+            sleep 1
+          done
+          grep -q 'theme-dark' /tmp/dark-home.html
+          ! grep -q 'theme-auto' /tmp/dark-home.html
+
+          capture() {
+            viewport="$1"; base="$2"; page="$3"; out="$4"; profile="$(mktemp -d)"
+            "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage --disable-gpu --hide-scrollbars \
+              --force-device-scale-factor=1 --window-size="$viewport" --virtual-time-budget=2500 \
+              --user-data-dir="$profile" --screenshot="$out" "${base}${page}"
+            test -s "$out"; rm -rf "$profile"
+          }
+          light="http://127.0.0.1:${CANDIDATE_PORT}"; dark="http://127.0.0.1:${DARK_PROXY_PORT}"
+          for theme in light dark; do
+            base="$light"; test "$theme" = dark && base="$dark"
+            capture 412,915 "$base" / "screenshots/compact-${theme}-home.png"
+            capture 412,915 "$base" /preferences "screenshots/compact-${theme}-preferences.png"
+            capture 412,915 "$base" /stats "screenshots/compact-${theme}-provider-diagnostics.png"
+            capture 1440,1000 "$base" / "screenshots/expanded-${theme}-home.png"
+            capture 1440,1000 "$base" /preferences "screenshots/expanded-${theme}-preferences.png"
+            capture 1440,1000 "$base" /stats "screenshots/expanded-${theme}-provider-diagnostics.png"
+          done
+          test "$(find screenshots -name '*.png' -type f | wc -l | tr -d ' ')" = 12
+          kill "$(cat /tmp/dark-proxy.pid)"; rm -f /tmp/dark-proxy.pid
+
+      - name: Write checksum-bound evidence manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed="$(podman inspect --format '{{.Image}}' "$CANDIDATE_CONTAINER")"
+          expected="$(podman image inspect --format '{{.Id}}' "$CANDIDATE_IMAGE")"
+          test "$observed" = "$expected"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          manifest={
+            'schema_version':3,
+            'product':'GoreeCloud Search',
+            'candidate_source':os.environ['CANDIDATE_SOURCE'],
+            'candidate_image':os.environ['CANDIDATE_IMAGE'],
+            'candidate_oci_version':os.environ['GOREECLOUD_CANDIDATE_OCI_VERSION'],
+            'runtime':{'base_url':'http://127.0.0.1:8888','container':os.environ['CANDIDATE_CONTAINER'],'loopback_only':True,'candidate_runtime_unmodified':True,'identity_verified_after_capture':True},
+            'viewport_evidence':{'compact':'412x915','expanded':'1440x1000'},
+            'theme_evidence':{
+              'light':{'method':'direct exact-candidate runtime rendering','root_theme_class':'theme-auto'},
+              'dark':{'method':'loopback evidence proxy rewrites only rendered root theme class to theme-dark','root_theme_class':'theme-dark','candidate_runtime_mutated':False,'preference_persistence_tested':False}},
+            'pages':['/','/preferences','/stats'],
+            'screenshots':sorted(str(p) for p in Path('screenshots').glob('*.png')),
+            'html_snapshots':sorted(str(p) for p in Path('snapshots').glob('*.html')),
+            'manual_visual_acceptance':False,
+            'physical_android_acceptance':False,
+            'desktop_runtime_acceptance':False,
+            'theme_preference_persistence_acceptance':False,
+            'statement':'Exact-candidate loopback visual evidence only; does not substitute for physical Android, persisted-theme, actual GoreeCloud Browser runtime, target-host, or production acceptance.'}
+          Path('visual-evidence.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          PY
+          sha256sum screenshots/*.png snapshots/*.html visual-evidence.json > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Show diagnostics on failure
+        if: failure()
+        run: |
+          podman ps -a || true
+          podman logs "$CANDIDATE_CONTAINER" || true
+          cat /tmp/dark-proxy.log 2>/dev/null || true
+
+      - name: Clean isolated evidence runtime
+        if: always()
+        run: |
+          test ! -f /tmp/dark-proxy.pid || kill "$(cat /tmp/dark-proxy.pid)" || true
+          podman rm -f "$CANDIDATE_CONTAINER" || true
+
+      - name: Upload candidate visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-search-candidate-06-visual-evidence
+          path: |
+            screenshots/
+            snapshots/
+            visual-evidence.json
+            SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
