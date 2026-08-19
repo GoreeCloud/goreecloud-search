@@ -8,9 +8,9 @@ This record defines the controlled transition that occurs only after GoreeCloud 
 
 Stable approval requires all of the following evidence:
 
-- Source CI passes for the exact release revision.
-- Mobile and desktop Glaze UI acceptance passes without viewport overflow or blocking usability defects.
-- General, Images, Videos, and News search paths are validated with representative queries.
+- Source CI passes for the exact release revision, including the version-specific Glaze UI 1.1 source contract.
+- Mobile and desktop Glaze UI 1.1 acceptance passes without viewport overflow or blocking usability defects, including representative Compact and Expanded review in both light and dark appearances against the exact final candidate.
+- General, Images, Videos, News, and Files search paths are validated with representative queries.
 - Provider failures degrade safely and do not break the application shell.
 - Private AdGuard DNS resolution, NetBird access, Caddy HTTPS routing, and backend Docker routing remain validated.
 - Uptime monitoring is healthy under the GoreeCloud Search product identity.
