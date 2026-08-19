@@ -10,17 +10,19 @@ Stable approval requires all of the following evidence:
 
 - Source CI passes for the exact release revision, including the version-specific Glaze UI 1.1 source contract.
 - Mobile and desktop Glaze UI 1.1 acceptance passes without viewport overflow or blocking usability defects, including representative Compact and Expanded review in both light and dark appearances against the exact final candidate.
-- General, Images, Videos, News, and Files search paths are validated with representative queries.
+- General, Images, Videos, News, and Files search paths are validated with representative queries and retained as candidate-bound real-provider evidence.
 - Provider failures degrade safely and do not break the application shell.
 - Private AdGuard DNS resolution, NetBird access, Caddy HTTPS routing, and backend Docker routing remain validated.
-- Uptime monitoring is healthy under the GoreeCloud Search product identity.
+- Uptime monitoring is healthy under the GoreeCloud Search product identity and approved alert delivery is verified.
 - Target-host backup and rollback material is verified and a recovery path is documented.
 - The release image is pinned by immutable digest and can be retrieved and executed by that digest.
 - The recorded known-good production rollback image can be retrieved and executed by immutable digest in an isolated image-level rollback rehearsal.
 - Target-host runtime acceptance proves that the running Search container uses the exact candidate digest and carries OCI source metadata for the exact release revision.
 - GoreeCloud Browser integration passes with GoreeCloud Search configured as the only and default browser search engine.
 - Address-bar, new-tab, and browser search-field queries resolve through GoreeCloud Search without direct or silent fallback to an external browser-level search provider.
-- Browser failure handling surfaces GoreeCloud Search connectivity/service state instead of bypassing the private search service.
+- Browser failure handling surfaces GoreeCloud Search connectivity/service state instead of bypassing the private search service, and recovery is verified when Search becomes reachable again.
+- Completed final-candidate evidence validates against the exact release, target-runtime, recovery, and provider artifacts and records the required Glaze UI 1.1 and Browser runtime acceptance for that same candidate.
+- The final-candidate evidence record keeps `production_cutover_authorized` false; explicit Stable approval remains a separate release decision.
 - Required AGPL licensing, source availability, and SearXNG upstream attribution remain intact.
 
 ## Release identity and rollback evidence
@@ -39,7 +41,7 @@ When an exact candidate reaches `agent/production-acceptance`, `.github/workflow
 
 The generated release evidence must explicitly record that production cutover is **not** authorized by the image rehearsal. Image-level rollback rehearsal proves image identity, registry availability, and isolated executability only. It does not prove that the production Compose configuration, protected environment, persistent Search configuration/cache/Valkey data, Caddy routing, DNS, monitoring, backups, or target-host rollback procedure has been restored successfully.
 
-Stable approval therefore requires both layers: immutable source/image evidence from the release workflow and separately verified target-environment recovery/rollback evidence. Neither layer substitutes for the other.
+Stable approval therefore requires both immutable source/image evidence and separately verified target-environment recovery/rollback evidence. Neither layer substitutes for the other.
 
 ## Target runtime identity evidence
 
@@ -74,9 +76,44 @@ The optional JSON artifact is sanitized and contains runtime identity and accept
 
 Target runtime identity proves that the candidate actually under test is the release image. It still does not prove that backup restoration or target-host rollback succeeds. Those remain separate Stable gates.
 
+## Final-candidate evidence
+
+`docs/goreecloud/FINAL-ACCEPTANCE.md` defines the last evidence-binding step before an explicit Stable release decision.
+
+The representative provider suite can write sanitized candidate-bound evidence with:
+
+```bash
+python goreecloud/provider_acceptance.py \
+  --base-url https://search.goreecloud.com \
+  --suite \
+  --expected-source '<40-character-candidate-source-sha>' \
+  --expected-image 'ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>' \
+  --evidence-json provider-evidence.json
+```
+
+After release evidence, target-runtime evidence, completed recovery evidence, and provider evidence all refer to the same candidate, `goreecloud/final_acceptance_evidence.py` creates an incomplete template. The manual Glaze UI and Browser runtime fields are completed only after those reviews are actually performed against that exact final candidate.
+
+The completed record must then validate against the original four artifacts. Validation requires:
+
+- Compact light and dark Glaze UI 1.1 review evidence;
+- Expanded light and dark Glaze UI 1.1 review evidence;
+- physical Android/mobile Preferences review;
+- desktop regression/final visual review;
+- exact GoreeCloud Browser source revision and runtime evidence reference;
+- GoreeCloud Search as the Browser's only/default search provider;
+- address-bar, new-tab, and dedicated search-field routing through Search;
+- no external Browser fallback when Search is unavailable;
+- Search-unavailability and recovery behavior;
+- passing candidate-bound evidence for General, Images, Videos, News, and Files;
+- completed recovery evidence proving application-level restore, monitoring/alerting, and rollback evidence;
+- unchanged SHA-256 bindings to the supplied release, target-runtime, recovery, and provider artifacts;
+- `production_cutover_authorized: false`.
+
+A passing final-candidate record proves that the defined evidence set is complete and internally consistent for one exact candidate. It does not itself authorize release publication, production cutover, runtime-name retirement, or deletion of rollback material.
+
 ## Stable cutover scope
 
-After the Stable gate passes, GoreeCloud Search becomes the sole active GoreeCloud search-service identity. The maintenance change should migrate internal runtime names from the historical SearXNG-derived deployment names to GoreeCloud Search names, including the Compose project, stack directory, application-data directory, container names, internal Docker network, Caddy backend target, and monitoring label.
+After the Stable gate passes and an explicit release decision is made, GoreeCloud Search becomes the sole active GoreeCloud search-service identity. The maintenance change should migrate internal runtime names from the historical SearXNG-derived deployment names to GoreeCloud Search names, including the Compose project, stack directory, application-data directory, container names, internal Docker network, Caddy backend target, and monitoring label.
 
 Target names:
 
