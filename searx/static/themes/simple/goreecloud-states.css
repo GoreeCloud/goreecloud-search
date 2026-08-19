@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
-/* GoreeCloud Search — Glaze UI 1.0 empty, recovery, and secondary states. */
+/* GoreeCloud Search — Glaze UI 1.0 empty, recovery, provider-health, and secondary states. */
 
 .goreecloud-action {
   display: inline-flex;
@@ -121,6 +121,156 @@
   letter-spacing: -0.07em;
 }
 
+.goreecloud-provider-health {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.goreecloud-provider-health-panel {
+  overflow: clip;
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-lg);
+  background: var(--gc-surface);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--gc-text) 7%, transparent);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.goreecloud-provider-health-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-sizing: border-box;
+  min-height: var(--gc-target-min);
+  padding: 0.75rem 0.85rem;
+  color: var(--gc-text);
+  font-weight: 800;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.goreecloud-provider-health-summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 72%, transparent);
+  outline-offset: -3px;
+}
+
+.goreecloud-provider-health-badge,
+.goreecloud-provider-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+  box-sizing: border-box;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: var(--gc-surface-muted);
+  color: var(--gc-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.goreecloud-provider-health-badge[data-state="available"],
+.goreecloud-provider-state[data-state="available"] {
+  border-color: color-mix(in srgb, var(--gc-success) 42%, var(--gc-border));
+  background: color-mix(in srgb, var(--gc-success) 12%, var(--gc-surface-muted));
+}
+
+.goreecloud-provider-health-badge[data-state="degraded"],
+.goreecloud-provider-state[data-state="degraded"] {
+  border-color: color-mix(in srgb, var(--gc-warning) 54%, var(--gc-border));
+  background: color-mix(in srgb, var(--gc-warning) 14%, var(--gc-surface-muted));
+}
+
+.goreecloud-provider-health-body {
+  padding: 0 0.85rem 0.85rem;
+}
+
+.goreecloud-provider-health-copy {
+  margin: 0;
+  padding: 0.75rem 0 0.8rem;
+  border-top: 1px solid var(--gc-border);
+  color: var(--gc-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.goreecloud-provider-health-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-control);
+  background: var(--gc-surface-muted);
+}
+
+.goreecloud-provider-health-table {
+  width: 100%;
+  min-width: 18rem;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  background: transparent;
+}
+
+.goreecloud-provider-health-table caption {
+  padding: 0.65rem 0.7rem;
+  color: var(--gc-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: start;
+}
+
+.goreecloud-provider-health-table th,
+.goreecloud-provider-health-table td {
+  padding: 0.65rem 0.7rem;
+  border-top: 1px solid var(--gc-border);
+  color: var(--gc-text);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.goreecloud-provider-health-table thead th {
+  color: var(--gc-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.goreecloud-provider-health-table tbody th {
+  min-width: 7.5rem;
+  font-weight: 750;
+}
+
+.goreecloud-provider-health-table a {
+  color: var(--gc-text);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.goreecloud-provider-health-table a:hover {
+  color: var(--gc-accent);
+}
+
+.goreecloud-provider-health-table .response-error,
+.goreecloud-provider-health-table .response-time {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.goreecloud-provider-detail {
+  min-width: 0;
+  color: var(--gc-muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .goreecloud-action { transition: none; }
   .goreecloud-action:active { transform: none; }
@@ -128,7 +278,8 @@
 
 @media (prefers-reduced-transparency: reduce) {
   .goreecloud-empty-state,
-  .goreecloud-not-found {
+  .goreecloud-not-found,
+  .goreecloud-provider-health-panel {
     background: var(--gc-surface-strong);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -138,7 +289,9 @@
 @media (prefers-contrast: more) {
   .goreecloud-empty-state-copy,
   .goreecloud-not-found-copy,
-  .goreecloud-empty-state-note { color: var(--gc-text); }
+  .goreecloud-empty-state-note,
+  .goreecloud-provider-health-copy,
+  .goreecloud-provider-detail { color: var(--gc-text); }
 }
 
 @media (max-width: 599px) {
@@ -156,12 +309,23 @@
   }
 
   .goreecloud-action { width: 100%; }
+
+  .goreecloud-provider-health-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .goreecloud-provider-health-badge { white-space: normal; }
 }
 
 @media (forced-colors: active) {
   .goreecloud-empty-state,
   .goreecloud-not-found,
-  .goreecloud-action {
+  .goreecloud-action,
+  .goreecloud-provider-health-panel,
+  .goreecloud-provider-health-table-wrap,
+  .goreecloud-provider-health-badge,
+  .goreecloud-provider-state {
     border: 1px solid CanvasText !important;
     background: Canvas !important;
     color: CanvasText !important;
@@ -182,5 +346,6 @@
 
 @supports not (backdrop-filter: blur(1px)) {
   .goreecloud-empty-state,
-  .goreecloud-not-found { background: var(--gc-surface-strong); }
+  .goreecloud-not-found,
+  .goreecloud-provider-health-panel { background: var(--gc-surface-strong); }
 }

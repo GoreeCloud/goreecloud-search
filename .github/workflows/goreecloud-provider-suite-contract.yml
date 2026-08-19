@@ -1,0 +1,107 @@
+---
+name: GoreeCloud provider suite contract
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-provider-suite-contract.yml'
+      - 'goreecloud/provider_acceptance.py'
+      - 'goreecloud/final_acceptance_evidence.py'
+      - 'tests/unit/test_goreecloud_final_acceptance_evidence.py'
+      - 'docs/goreecloud/FINAL-ACCEPTANCE.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
+      - 'docs/goreecloud/PRODUCTION-CHECKLIST.md'
+      - 'searx/settings.yml'
+  push:
+    branches:
+      - 'agent/**'
+    paths:
+      - '.github/workflows/goreecloud-provider-suite-contract.yml'
+      - 'goreecloud/provider_acceptance.py'
+      - 'goreecloud/final_acceptance_evidence.py'
+      - 'tests/unit/test_goreecloud_final_acceptance_evidence.py'
+      - 'docs/goreecloud/FINAL-ACCEPTANCE.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
+      - 'docs/goreecloud/PRODUCTION-CHECKLIST.md'
+      - 'searx/settings.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-suite-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate provider acceptance source
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/provider_acceptance.py \
+            goreecloud/final_acceptance_evidence.py \
+            tests/unit/test_goreecloud_final_acceptance_evidence.py
+          python - <<'PY'
+          from goreecloud.provider_acceptance import (
+              RELEASE_REQUIRED_CATEGORIES,
+              REPRESENTATIVE_SUITE,
+              validate_representative_suite,
+          )
+
+          validate_representative_suite()
+          categories = [case.category for case in REPRESENTATIVE_SUITE]
+          queries = {case.category: case.query for case in REPRESENTATIVE_SUITE}
+
+          assert RELEASE_REQUIRED_CATEGORIES == {
+              'general',
+              'images',
+              'videos',
+              'news',
+              'files',
+          }
+          assert RELEASE_REQUIRED_CATEGORIES.issubset(categories)
+          assert categories.count('files') == 1
+          assert queries['files'].strip()
+          assert len(categories) == len(set(categories)), 'representative categories must be unique'
+          print('Representative provider categories:', ', '.join(categories))
+          PY
+
+      - name: Confirm candidate-bound provider runtime identity contract
+        run: |
+          set -euo pipefail
+          python goreecloud/provider_acceptance.py --help | grep -- '--container'
+          grep -F 'verified_before_and_after_requests' goreecloud/provider_acceptance.py
+          grep -F 'runtime_identity_verified_during_provider_requests' goreecloud/provider_acceptance.py
+          grep -F 'provider runtime_binding' goreecloud/final_acceptance_evidence.py
+          grep -F -- '--container goreecloud-search' docs/goreecloud/FINAL-ACCEPTANCE.md
+          grep -F -- '--base-url http://127.0.0.1:8888' docs/goreecloud/FINAL-ACCEPTANCE.md
+          grep -F 'same loopback-staged container' docs/goreecloud/PRODUCTION-CHECKLIST.md
+
+      - name: Validate final-candidate provider-binding evidence contract
+        run: python tests/unit/test_goreecloud_final_acceptance_evidence.py
+
+      - name: Confirm Files is a configured Search category
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          settings = Path('searx/settings.yml').read_text(encoding='utf-8')
+          marker = 'categories_as_tabs:'
+          start = settings.index(marker)
+          engines = settings.index('\nengines:', start)
+          categories = settings[start:engines]
+          assert '\n  files:' in categories, 'Files must remain a configured Search category'
+          PY
+
+      - name: Confirm CLI suite description includes Files
+        run: |
+          set -euo pipefail
+          python goreecloud/provider_acceptance.py --help \
+            | grep -qi 'files'

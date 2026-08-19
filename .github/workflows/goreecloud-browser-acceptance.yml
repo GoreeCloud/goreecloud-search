@@ -9,6 +9,8 @@ on:
   pull_request:
     branches:
       - master
+      - 'agent/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -33,6 +35,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt selenium==4.47.0
+
+      - name: Validate GoreeCloud Glaze UI 1.1 source contract
+        run: python tests/unit/test_goreecloud_glaze_ui_11.py
+
+      - name: Validate GoreeCloud search shell contract
+        run: python tests/unit/test_goreecloud_search_shell.py
+
+      - name: Validate GoreeCloud result card contract
+        run: python tests/unit/test_goreecloud_result_cards.py
+
+      - name: Validate GoreeCloud landing and preferences contract
+        run: python tests/unit/test_goreecloud_page_polish.py
 
       - name: Prepare GoreeCloud runtime settings
         shell: bash
@@ -71,6 +85,11 @@ jobs:
         env:
           GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
         run: python goreecloud/browser_acceptance.py
+
+      - name: Run Preferences keyboard and all-tab acceptance
+        env:
+          GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
+        run: python goreecloud/preferences_acceptance.py
 
       - name: Print application log on failure
         if: failure()

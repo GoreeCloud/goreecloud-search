@@ -7,13 +7,14 @@
   <meta name="keywords" content="GoreeCloud Search, private search, metasearch, research, SearXNG">
   <meta name="generator" content="searxng/{{ searxng_version }}; goreecloud-search">
   <meta name="application-name" content="GoreeCloud Search">
+  <meta name="goreecloud-glaze-ui" content="1.1.0">
   <meta name="apple-mobile-web-app-title" content="GoreeCloud Search">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#eef3f9" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d1119" media="(prefers-color-scheme: dark)">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}{% endblock %}GoreeCloud Search</title>
   <script type="module" src="{{ url_for('static', filename='sxng-core.min.js') }}" client_settings="{{ client_settings }}"></script>
   {% block meta %}{% endblock %}
@@ -24,6 +25,15 @@
   {% endif %}
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-states.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-results.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-mobile.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-search-shell.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-search-interactions.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-result-polish.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-page-polish.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-provider-diagnostics.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-page-compact.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-glaze-1.1.css') }}" type="text/css" media="screen">
   {% if get_setting('server.limiter') or get_setting('server.public_instance') %}
   <link rel="stylesheet" href="{{ url_for('client_token', token=link_token) }}" type="text/css">
   {% endif %}
@@ -76,7 +86,7 @@
       <br>
       <a href="https://github.com/GoreeCloud/goreecloud-search">{{ _('Source code') }}</a>
       | <a href="https://github.com/searxng/searxng">Upstream</a>
-      {% if enable_metrics %}| <a href="{{ url_for('stats') }}">{{ _('Engine stats') }}</a>{% endif %}
+      {% if enable_metrics %}| <a href="{{ url_for('stats') }}">{{ _('Provider diagnostics') }}</a>{% endif %}
       {% if get_setting('general.privacypolicy_url') %}
       | <a href="{{ get_setting('general.privacypolicy_url') }}">{{ _('Privacy policy') }}</a>
       {% endif %}

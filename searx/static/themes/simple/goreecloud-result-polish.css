@@ -1,0 +1,386 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — Glaze UI visual polish for filters, file results, and video results. */
+
+/* Search filters are compact controls that belong to the masthead rather than
+   three unrelated native selects floating across the page. */
+.search_endpoint .goreecloud-search-filters {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.48rem;
+}
+
+.search_endpoint .goreecloud-filter-control {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  min-width: 0;
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  padding: 0.28rem 0.42rem 0.28rem 0.72rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gc-surface-strong) 90%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 42%, transparent);
+}
+
+.search_endpoint .goreecloud-filter-language {
+  flex: 0 1 19rem;
+}
+
+.search_endpoint .goreecloud-filter-time {
+  flex: 0 1 10rem;
+}
+
+.search_endpoint .goreecloud-filter-safe {
+  flex: 0 1 13rem;
+}
+
+.search_endpoint .goreecloud-filter-label {
+  flex: 0 0 auto;
+  color: var(--gc-muted);
+  font-size: 0.68rem;
+  font-weight: 720;
+  letter-spacing: 0.035em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.search_endpoint .goreecloud-filter-control select {
+  flex: 1 1 auto;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100%;
+  min-height: calc(var(--gc-target-min) - 0.56rem);
+  margin: 0 !important;
+  padding: 0.32rem 0.4rem !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--gc-text) !important;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 620;
+  line-height: 1.2;
+  box-shadow: none !important;
+}
+
+.search_endpoint .goreecloud-filter-control:focus-within,
+.search_endpoint .goreecloud-filter-control:hover {
+  border-color: color-mix(in srgb, var(--gc-accent) 28%, var(--gc-border));
+  background: var(--gc-surface-strong);
+}
+
+/* Shared action treatment for result-specific controls. */
+.goreecloud-result-action {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.48rem 0.78rem;
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 22%, var(--gc-border)) !important;
+  border-radius: 0.8rem !important;
+  background: color-mix(in srgb, var(--gc-accent) 8%, var(--gc-surface-strong)) !important;
+  color: var(--gc-accent) !important;
+  font-size: 0.8rem;
+  font-weight: 680;
+  line-height: 1.1;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+.goreecloud-result-action:hover,
+.goreecloud-result-action:focus-visible {
+  border-color: color-mix(in srgb, var(--gc-accent) 46%, var(--gc-border)) !important;
+  background: color-mix(in srgb, var(--gc-accent) 14%, var(--gc-surface-strong)) !important;
+  color: var(--gc-accent) !important;
+}
+
+.goreecloud-result-action svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+}
+
+/* File results: preserve the document preview but stop raw metadata from reading
+   like an unformatted data dump. */
+#urls .result-file .thumbnail_link {
+  float: inline-start;
+  width: clamp(5.5rem, 16vw, 8.25rem);
+  margin: 0 0.9rem 0.72rem 0 !important;
+}
+
+#urls .result-file .thumbnail {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 9rem;
+  object-fit: contain;
+  box-sizing: border-box;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.78rem;
+  background: var(--gc-surface-muted);
+}
+
+#urls .result-file .goreecloud-file-summary {
+  min-width: 0;
+}
+
+#urls .result-file .goreecloud-file-abstract,
+#urls .result-file .goreecloud-file-description {
+  max-width: 74ch;
+  margin: 0.35rem 0 0.58rem !important;
+  color: var(--gc-text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+#urls .result-file .goreecloud-file-attributes {
+  clear: both;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  margin: 0.72rem 0 0.62rem;
+}
+
+#urls .result-file .goreecloud-file-attributes > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.34rem;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0.34rem 0.52rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.68rem;
+  background: var(--gc-surface-muted);
+}
+
+#urls .result-file .goreecloud-file-attributes dt,
+#urls .result-file .goreecloud-file-attributes dd {
+  margin: 0;
+}
+
+#urls .result-file .goreecloud-file-attributes dt {
+  flex: 0 0 auto;
+  color: var(--gc-muted);
+  font-size: 0.68rem;
+  font-weight: 720;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+#urls .result-file .goreecloud-file-attributes dd {
+  min-width: 0;
+  color: var(--gc-text);
+  font-size: 0.78rem;
+  font-weight: 590;
+  overflow-wrap: anywhere;
+}
+
+#urls .result-file .goreecloud-file-actions {
+  clear: both;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0.72rem;
+}
+
+/* Video results: use a real media-card layout instead of squeezing a large
+   thumbnail and a long text block into inherited float geometry. */
+#urls .result-videos {
+  display: grid;
+  grid-template-columns: minmax(12rem, 17.5rem) minmax(0, 1fr);
+  grid-template-areas:
+    "source source"
+    "thumb title"
+    "thumb metadata"
+    "thumb action"
+    "thumb content"
+    "sources sources"
+    "media media";
+  column-gap: 1rem;
+  row-gap: 0.26rem;
+  align-items: start;
+}
+
+#urls .result-videos > .goreecloud-result-source-row {
+  grid-area: source;
+  margin-bottom: 0.28rem;
+}
+
+#urls .result-videos > .thumbnail_link {
+  grid-area: thumb;
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+#urls .result-videos > .thumbnail_link .thumbnail {
+  display: block;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.9rem;
+  background: var(--gc-surface-muted);
+}
+
+#urls .result-videos > .thumbnail_link .thumbnail_length {
+  inset-inline-end: 0.45rem;
+  inset-block-end: 0.45rem;
+  border-radius: 0.45rem;
+  padding: 0.18rem 0.35rem;
+  background: color-mix(in srgb, black 78%, transparent);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+#urls .result-videos > .goreecloud-result-title {
+  grid-area: title;
+  margin: 0 !important;
+  min-width: 0;
+}
+
+#urls .result-videos > .goreecloud-result-metadata {
+  grid-area: metadata;
+  margin: 0.12rem 0 0 !important;
+}
+
+#urls .result-videos > .goreecloud-video-action-row {
+  grid-area: action;
+  margin: 0.32rem 0 0.14rem !important;
+}
+
+#urls .result-videos > .goreecloud-video-description {
+  grid-area: content;
+  max-width: 62ch;
+  margin: 0.18rem 0 0 !important;
+  font-size: 0.9rem;
+  line-height: 1.48;
+}
+
+#urls .result-videos > .goreecloud-result-sources {
+  grid-area: sources;
+  margin-top: 0.72rem !important;
+}
+
+#urls .result-videos > .embedded-video {
+  grid-area: media;
+  margin-top: 0.65rem;
+  overflow: hidden;
+  border-radius: 0.9rem;
+}
+
+#urls .result-videos > .break {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .search_endpoint .goreecloud-search-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-padding-inline: 0.25rem;
+    scrollbar-width: thin;
+  }
+
+  .search_endpoint .goreecloud-filter-control {
+    flex: 0 0 auto;
+  }
+
+  .search_endpoint .goreecloud-filter-language {
+    width: min(18rem, calc(100vw - 2rem));
+  }
+
+  #urls .result-videos {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "source"
+      "thumb"
+      "title"
+      "metadata"
+      "action"
+      "content"
+      "sources"
+      "media";
+    row-gap: 0.4rem;
+  }
+
+  #urls .result-videos > .thumbnail_link {
+    max-width: 34rem !important;
+  }
+}
+
+@media (max-width: 599px) {
+  .search_endpoint .goreecloud-filter-control {
+    min-height: var(--gc-target-min);
+  }
+
+  .search_endpoint .goreecloud-filter-label {
+    font-size: 0.64rem;
+  }
+
+  #urls .result-file .thumbnail_link {
+    width: 5.25rem;
+    margin-inline-end: 0.72rem !important;
+  }
+
+  #urls .result-file .goreecloud-file-attributes {
+    gap: 0.34rem;
+  }
+
+  #urls .result-file .goreecloud-file-attributes > div {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  #urls .result-file .goreecloud-file-actions,
+  #urls .result-videos > .goreecloud-video-action-row {
+    width: 100%;
+  }
+
+  #urls .result-file .goreecloud-result-action,
+  #urls .result-videos .goreecloud-result-action {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .search_endpoint .goreecloud-filter-control,
+  .goreecloud-result-action {
+    background: var(--gc-surface-strong) !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .search_endpoint .goreecloud-filter-control,
+  #urls .result-file .goreecloud-file-attributes > div,
+  .goreecloud-result-action,
+  #urls .result-videos > .thumbnail_link .thumbnail,
+  #urls .result-file .thumbnail {
+    border-color: var(--gc-border-strong) !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .search_endpoint .goreecloud-filter-control,
+  #urls .result-file .goreecloud-file-attributes > div,
+  .goreecloud-result-action,
+  #urls .result-videos > .thumbnail_link .thumbnail,
+  #urls .result-file .thumbnail {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+    box-shadow: none !important;
+  }
+}

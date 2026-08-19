@@ -49,10 +49,12 @@ class Search:
 
     def __init__(self, search_query: "SearchQuery"):
         """Initialize the Search"""
-        # init vars
         super().__init__()
         self.search_query: "SearchQuery" = search_query
-        self.result_container: ResultContainer = ResultContainer()
+        # GoreeCloud ranking receives only the current in-memory query. The query is
+        # used locally for deterministic lexical relevance and is not persisted by
+        # the ranking layer or sent to any additional service.
+        self.result_container: ResultContainer = ResultContainer(query=search_query.query)
         self.start_time: float | None = None
         self.actual_timeout: float | None = None
 
@@ -61,68 +63,43 @@ class Search:
         self.result_container and return True."""
         if self.search_query.external_bang:
             self.result_container.redirect_url = get_bang_url(self.search_query)
-
-            # This means there was a valid bang and the rest of the search does
-            # not need to be continued
             if isinstance(self.result_container.redirect_url, str):
                 return True
         return False
 
     def search_answerers(self):
-
         results = searx.answerers.STORAGE.ask(self.search_query.query)
         self.result_container.extend(None, results)  # pyright: ignore[reportArgumentType]
         return bool(results)
 
-    # do search-request
     def _get_requests(self) -> tuple[list[tuple[str, str, RequestParams]], float]:
-        # init vars
         requests: list[tuple[str, str, RequestParams]] = []
-
-        # max of all selected engine timeout
         default_timeout = 0
 
-        # start search-request for all selected engines
         for engineref in self.search_query.engineref_list:
             processor = PROCESSORS.get(engineref.name)
             if not processor:
-                # engine does not exists; not yet or the 'init' method of the
-                # engine has been failed and the engine has not been registered.
                 continue
-
-            # stop the request now if the engine is suspend
             if processor.extend_container_if_suspended(self.result_container):
                 continue
-
-            # set default request parameters
             request_params = processor.get_params(self.search_query, engineref.category)
             if request_params is None:
                 continue
-
             counter_inc('engine', engineref.name, 'search', 'count', 'sent')
-
-            # append request to list
             requests.append((engineref.name, self.search_query.query, request_params))
-
-            # update default_timeout
             default_timeout = max(default_timeout, processor.engine.timeout)
 
-        # adjust timeout
         max_request_timeout = settings['outgoing']['max_request_timeout']
         actual_timeout = default_timeout
         query_timeout = self.search_query.timeout_limit
 
         if max_request_timeout is None and query_timeout is None:
-            # No max, no user query: default_timeout
             pass
         elif max_request_timeout is None and query_timeout is not None:
-            # No max, but user query: From user query except if above default
             actual_timeout = min(default_timeout, query_timeout)
         elif max_request_timeout is not None and query_timeout is None:
-            # Max, no user query: Default except if above max
             actual_timeout = min(default_timeout, max_request_timeout)
         elif max_request_timeout is not None and query_timeout is not None:
-            # Max & user query: From user query except if above max
             actual_timeout = min(query_timeout, max_request_timeout)
 
         logger.debug(
@@ -130,7 +107,6 @@ class Search:
                 actual_timeout, default_timeout, query_timeout, max_request_timeout
             )
         )
-
         return requests, actual_timeout
 
     def search_multiple_requests(self, requests: list[tuple[str, str, RequestParams]]):
@@ -158,19 +134,12 @@ class Search:
                     PROCESSORS[th._engine_name].logger.error('engine timeout')
 
     def search_standard(self):
-        """
-        Update self.result_container, self.actual_timeout
-        """
+        """Update self.result_container and self.actual_timeout."""
         requests, self.actual_timeout = self._get_requests()
-
-        # send all search-request
         if requests:
             self.search_multiple_requests(requests)
-
-        # return results, suggestions, answers and infoboxes
         return True
 
-    # do search-request
     def search(self) -> ResultContainer:
         self.start_time = default_timer()
         if not self.search_external_bang():
@@ -199,11 +168,8 @@ class SearchWithPlugins(Search):
         return searx.plugins.STORAGE.on_result(self.request, self, result)
 
     def search(self) -> ResultContainer:
-
         if searx.plugins.STORAGE.pre_search(self.request, self):
             super().search()
-
         searx.plugins.STORAGE.post_search(self.request, self)
         self.result_container.close()
-
         return self.result_container

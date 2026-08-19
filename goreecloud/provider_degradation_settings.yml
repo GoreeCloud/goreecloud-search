@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Deterministic CI-only runtime for provider-failure degradation acceptance.
+# This file intentionally defines one healthy offline provider and one failing
+# local online provider so the Search failure boundary can be proven without
+# relying on external networks or third-party provider behavior.
+
+use_default_settings:
+  engines:
+    keep_only: []
+
+general:
+  instance_name: "GoreeCloud Search"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+  enable_metrics: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "auto"
+  formats:
+    - html
+
+server:
+  bind_address: "127.0.0.1"
+  limiter: false
+  public_instance: false
+  image_proxy: true
+  method: "GET"
+  default_http_headers:
+    X-Content-Type-Options: nosniff
+    X-Download-Options: noopen
+    X-Frame-Options: DENY
+    X-Robots-Tag: noindex, nofollow
+    Referrer-Policy: no-referrer
+    Permissions-Policy: "camera=(), microphone=(), geolocation=()"
+
+ui:
+  default_theme: simple
+  query_in_title: false
+  center_alignment: false
+  default_locale: ""
+  search_on_category_select: true
+  hotkeys: default
+  url_formatting: pretty
+
+engines:
+  - name: goreecloud acceptance healthy
+    engine: goreecloud_acceptance
+    categories: [general]
+    shortcut: gcah
+    disabled: false
+
+  - name: goreecloud acceptance failing
+    engine: json_engine
+    categories: [general]
+    shortcut: gcaf
+    disabled: false
+    timeout: 1.0
+    search_url: "http://127.0.0.1:8898/search?q={query}"
+    results_query: results
+    url_query: url
+    title_query: title
+    content_query: content

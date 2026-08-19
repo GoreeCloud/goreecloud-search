@@ -1,0 +1,203 @@
+---
+name: GoreeCloud stabilization candidate request
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - goreecloud/candidate_request.json
+
+permissions:
+  contents: read
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact candidate revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate explicit candidate publication request
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent="$(git rev-parse "${GITHUB_SHA}^")"
+          python goreecloud/candidate_request.py \
+            goreecloud/candidate_request.json \
+            --candidate-source "$GITHUB_SHA" \
+            --candidate-parent "$parent"
+
+  candidate-image:
+    needs: validate-request
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/goreecloud-candidate-image.yml
+
+  candidate-outcome-receipt:
+    if: ${{ always() }}
+    needs:
+      - validate-request
+      - candidate-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      statuses: write
+    steps:
+      - name: Publish first-Stable candidate commit status
+        id: candidate-status
+        if: ${{ always() }}
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATION_RESULT: ${{ needs.validate-request.result }}
+          CANDIDATE_RESULT: ${{ needs.candidate-image.result }}
+        run: |
+          set -euo pipefail
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          if [ "$VALIDATION_RESULT" = 'success' ] && [ "$CANDIDATE_RESULT" = 'success' ]; then
+            state='success'
+            description='Candidate publication and isolated rehearsal succeeded.'
+          else
+            state='failure'
+            description='Candidate validation, publication, or isolated rehearsal failed.'
+          fi
+
+          export STATUS_STATE="$state"
+          export STATUS_DESCRIPTION="$description"
+          export RUN_URL="$run_url"
+          python - <<'PY' >/tmp/candidate-status.json
+          import json
+          import os
+
+          print(
+              json.dumps(
+                  {
+                      'state': os.environ['STATUS_STATE'],
+                      'target_url': os.environ['RUN_URL'],
+                      'description': os.environ['STATUS_DESCRIPTION'],
+                      'context': 'goreecloud/first-stable-candidate',
+                  }
+              )
+          )
+          PY
+          curl --fail-with-body --silent --show-error --location \
+            --request POST \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'X-GitHub-Api-Version: 2026-03-10' \
+            --header 'Content-Type: application/json' \
+            --data-binary @/tmp/candidate-status.json \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            >/tmp/candidate-status-response.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          response = json.loads(Path('/tmp/candidate-status-response.json').read_text())
+          assert response.get('state') == os.environ['STATUS_STATE']
+          assert response.get('context') == 'goreecloud/first-stable-candidate'
+          assert response.get('target_url') == os.environ['RUN_URL']
+          print(f"Published candidate commit status {response['state']}.")
+          PY
+
+      - name: Publish sanitized first-Stable candidate outcome receipt
+        id: candidate-receipt
+        if: ${{ always() }}
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIRST_STABLE_PR: '3'
+          VALIDATION_RESULT: ${{ needs.validate-request.result }}
+          CANDIDATE_RESULT: ${{ needs.candidate-image.result }}
+        run: |
+          set -euo pipefail
+          artifact="goreecloud-search-candidate-${GITHUB_SHA}"
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          if [ "$VALIDATION_RESULT" = 'success' ] && [ "$CANDIDATE_RESULT" = 'success' ]; then
+            outcome='success'
+            artifact_line="\`${artifact}\`"
+            rehearsal='passed'
+          else
+            outcome='failure'
+            artifact_line='not verified or expected unless the candidate-image job succeeded'
+            rehearsal='not proven by this workflow run'
+          fi
+
+          body="$(cat <<EOF
+          ### First-Stable candidate workflow outcome receipt
+
+          - Candidate source revision: \`${GITHUB_SHA}\`
+          - Candidate workflow run: ${run_url}
+          - Candidate commit status: \`goreecloud/first-stable-candidate\`
+          - Request validation job: **${VALIDATION_RESULT}**
+          - Candidate image/evidence job: **${CANDIDATE_RESULT}**
+          - Overall candidate workflow outcome: **${outcome}**
+          - Candidate evidence artifact: ${artifact_line}
+          - Candidate/rollback isolated rehearsal: **${rehearsal}**
+          - Production cutover authorized: **no**
+          - Stable promotion authorized: **no**
+
+          This sanitized receipt is a durable status and artifact locator, not a substitute for inspecting the release-evidence artifact. It contains no registry credentials, application secrets, query content, production configuration, or production authorization.
+          EOF
+          )"
+          BODY="$body" python - <<'PY' >/tmp/candidate-receipt.json
+          import json
+          import os
+
+          print(json.dumps({'body': os.environ['BODY']}))
+          PY
+          curl --fail-with-body --silent --show-error --location \
+            --request POST \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'X-GitHub-Api-Version: 2026-03-10' \
+            --header 'Content-Type: application/json' \
+            --data-binary @/tmp/candidate-receipt.json \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${FIRST_STABLE_PR}/comments" \
+            >/tmp/candidate-receipt-response.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          response = json.loads(Path('/tmp/candidate-receipt-response.json').read_text())
+          assert isinstance(response.get('id'), int)
+          assert response.get('html_url')
+          print(f"Published candidate outcome receipt comment {response['id']}.")
+          PY
+
+      - name: Enforce redundant candidate outcome observability
+        if: ${{ always() }}
+        shell: bash
+        env:
+          STATUS_SINK_OUTCOME: ${{ steps.candidate-status.outcome }}
+          RECEIPT_SINK_OUTCOME: ${{ steps.candidate-receipt.outcome }}
+        run: |
+          set -euo pipefail
+          printf 'Candidate status sink: %s\n' "$STATUS_SINK_OUTCOME"
+          printf 'Candidate receipt sink: %s\n' "$RECEIPT_SINK_OUTCOME"
+          if [ "$STATUS_SINK_OUTCOME" != 'success' ] && [ "$RECEIPT_SINK_OUTCOME" != 'success' ]; then
+            echo 'Both candidate outcome reporting sinks failed.' >&2
+            exit 1
+          fi
+          echo 'At least one candidate outcome reporting sink succeeded.'

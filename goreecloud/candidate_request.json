@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "product": "GoreeCloud Search",
+  "request_id": "first-stable-2026-08-19-07",
+  "requested_at": "2026-08-19T15:25:14-05:00",
+  "request": "publish-and-rehearse-final-candidate",
+  "reviewed_base_revision": "4a1d27e113f927472b36542afb9dbb62e7b77e4d",
+  "production_cutover_authorized": false,
+  "stable_release_authorized": false,
+  "target_host_change_authorized": false,
+  "statement": "This request authorizes immutable candidate publication and isolated image-level rehearsal only after first-Stable final acceptance was upgraded to schema version 2 and all six evidence artifacts—release, target runtime, recovery, provider, visual/device review, and actual GoreeCloud Browser runtime—became cryptographically bound, and after all eight source/evidence-contract gates passed on the exact reviewed base. It does not authorize production cutover, Stable promotion, target-host changes, compatibility-name retirement, or rollback-material deletion."
+}

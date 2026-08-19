@@ -1,0 +1,197 @@
+---
+name: GoreeCloud target runtime evidence
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-target-runtime-evidence.yml'
+      - 'goreecloud/target_acceptance.sh'
+      - 'docs/goreecloud/STABLE-CUTOVER.md'
+  push:
+    branches:
+      - 'agent/**'
+    paths:
+      - '.github/workflows/goreecloud-target-runtime-evidence.yml'
+      - 'goreecloud/target_acceptance.sh'
+      - 'docs/goreecloud/STABLE-CUTOVER.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  target-runtime-evidence-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate shell syntax and help contract
+        run: |
+          set -euo pipefail
+          bash -n goreecloud/target_acceptance.sh
+          bash goreecloud/target_acceptance.sh --help | grep -q -- '--expected-image'
+          bash goreecloud/target_acceptance.sh --help | grep -q -- '--expected-source'
+          bash goreecloud/target_acceptance.sh --help | grep -q -- '--evidence-json'
+
+      - name: Install deterministic mock target commands
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/goreecloud-target-mocks
+          cat >/tmp/goreecloud-target-mocks/curl <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          output=''
+          url=''
+          while (($#)); do
+            case "$1" in
+              -o)
+                output="$2"
+                shift 2
+                ;;
+              http://*|https://*)
+                url="$1"
+                shift
+                ;;
+              *)
+                shift
+                ;;
+            esac
+          done
+          test -n "$output"
+          case "$url" in
+            */preferences)
+              printf '%s\n' '<html><title>Preferences</title>GoreeCloud Search</html>' >"$output"
+              ;;
+            */about)
+              printf '%s\n' '<html><title>About GoreeCloud Search</title>About GoreeCloud Search</html>' >"$output"
+              ;;
+            */healthz)
+              printf '%s\n' 'OK' >"$output"
+              ;;
+            */)
+              cat >"$output" <<'EOF'
+          <html><head><title>GoreeCloud Search</title><link href="/static/themes/simple/css/goreecloud.css"></head></html>
+          EOF
+              ;;
+            *)
+              exit 2
+              ;;
+          esac
+          if [[ "$output" == *headers.txt ]]; then
+            cat >"$output" <<'EOF'
+          HTTP/1.1 200 OK
+          X-Robots-Tag: noindex, nofollow
+          Referrer-Policy: no-referrer
+          X-Frame-Options: DENY
+          Permissions-Policy: camera=(), microphone=(), geolocation=()
+          EOF
+          fi
+          SH
+          chmod +x /tmp/goreecloud-target-mocks/curl
+
+          cat >/tmp/goreecloud-target-mocks/docker <<'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          image_id='sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+          case "${1:-}" in
+            inspect)
+              if [[ "${2:-}" == '-f' ]]; then
+                format="${3:-}"
+                case "$format" in
+                  *State.Running*) printf '%s\n' 'true' ;;
+                  *State.Health*) printf '%s\n' 'healthy' ;;
+                  *Config.Image*) printf '%s\n' "$MOCK_EXPECTED_IMAGE" ;;
+                  *'.Image'*) printf '%s\n' "$image_id" ;;
+                  *) exit 3 ;;
+                esac
+              else
+                printf '%s\n' '{}'
+              fi
+              ;;
+            image)
+              test "${2:-}" = 'inspect'
+              test "${3:-}" = '-f'
+              format="${4:-}"
+              case "$format" in
+                *'.Id'*) printf '%s\n' "$image_id" ;;
+                *image.title*) printf '%s\n' 'GoreeCloud Search' ;;
+                *image.source*) printf '%s\n' 'https://github.com/GoreeCloud/goreecloud-search' ;;
+                *image.revision*) printf '%s\n' "$MOCK_EXPECTED_SOURCE" ;;
+                *image.version*) printf '%s\n' 'target-evidence-ci' ;;
+                *image.licenses*) printf '%s\n' 'AGPL-3.0-or-later' ;;
+                *) exit 4 ;;
+              esac
+              ;;
+            port)
+              printf '%s\n' '8080/tcp -> 127.0.0.1:8888'
+              ;;
+            *)
+              exit 5
+              ;;
+          esac
+          SH
+          chmod +x /tmp/goreecloud-target-mocks/docker
+
+      - name: Validate immutable target runtime evidence
+        env:
+          MOCK_EXPECTED_IMAGE: ghcr.io/goreecloud/goreecloud-search@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          MOCK_EXPECTED_SOURCE: '1111111111111111111111111111111111111111'
+        run: |
+          set -euo pipefail
+          PATH="/tmp/goreecloud-target-mocks:$PATH" \
+            bash goreecloud/target_acceptance.sh \
+              --base-url http://127.0.0.1:8888 \
+              --container goreecloud-search \
+              --expected-image "$MOCK_EXPECTED_IMAGE" \
+              --expected-source "$MOCK_EXPECTED_SOURCE" \
+              --evidence-json /tmp/target-evidence.json \
+              --skip-providers
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(Path('/tmp/target-evidence.json').read_text())
+          assert evidence['product'] == 'GoreeCloud Search'
+          runtime = evidence['container_runtime']
+          assert runtime['identity_status'] == 'verified'
+          assert runtime['expected_image'].startswith('ghcr.io/goreecloud/goreecloud-search@sha256:')
+          assert runtime['expected_source_revision'] == '1111111111111111111111111111111111111111'
+          assert runtime['observed_image_reference'] == runtime['expected_image']
+          assert runtime['oci']['revision'] == runtime['expected_source_revision']
+          assert runtime['oci']['licenses'] == 'AGPL-3.0-or-later'
+          assert evidence['providers'] == 'skipped'
+          scope = evidence['scope']
+          assert scope['target_runtime_identity_verified'] is True
+          assert scope['target_environment_configuration_rollback_tested'] is False
+          assert scope['target_environment_data_restore_tested'] is False
+          assert scope['backup_restore_tested'] is False
+          assert scope['production_cutover_authorized'] is False
+          PY
+
+      - name: Reject mutable image identity
+        run: |
+          set -euo pipefail
+          if PATH="/tmp/goreecloud-target-mocks:$PATH" \
+            bash goreecloud/target_acceptance.sh \
+              --expected-image ghcr.io/goreecloud/goreecloud-search:latest \
+              --expected-source 1111111111111111111111111111111111111111 \
+              --skip-providers; then
+            echo 'Mutable candidate image was incorrectly accepted.' >&2
+            exit 1
+          fi
+
+      - name: Reject incomplete identity binding
+        run: |
+          set -euo pipefail
+          if PATH="/tmp/goreecloud-target-mocks:$PATH" \
+            bash goreecloud/target_acceptance.sh \
+              --expected-source 1111111111111111111111111111111111111111 \
+              --skip-providers; then
+            echo 'Source-only runtime identity was incorrectly accepted.' >&2
+            exit 1
+          fi

@@ -1,0 +1,42 @@
+---
+name: GoreeCloud candidate observability contract
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - '.github/workflows/goreecloud-stabilization-candidate.yml'
+      - '.github/workflows/goreecloud-candidate-observability-contract.yml'
+      - 'docs/goreecloud/CANDIDATE-OBSERVABILITY.md'
+      - 'tests/unit/test_goreecloud_candidate_observability.py'
+  push:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - '.github/workflows/goreecloud-stabilization-candidate.yml'
+      - '.github/workflows/goreecloud-candidate-observability-contract.yml'
+      - 'docs/goreecloud/CANDIDATE-OBSERVABILITY.md'
+      - 'tests/unit/test_goreecloud_candidate_observability.py'
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-observability-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate candidate outcome observability contract
+        run: python tests/unit/test_goreecloud_candidate_observability.py

@@ -121,7 +121,7 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
             result.data,
         )
         self.assertIn(
-            b'<p class="content">\n    second <span class="highlight">test</span> ',
+            b'<p class="content goreecloud-result-snippet">\n    second <span class="highlight">test</span> ',
             result.data,
         )
 
@@ -183,8 +183,10 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_preferences(self):
         result = self.client.get('/preferences')
         self.assertEqual(result.status_code, 200)
-        self.assertIn(b'<form id="search_form" method="post" action="/preferences"', result.data)
-        self.assertIn(b'<div id="categories_container">', result.data)
+        self.assertIn(b'<form id="search_form" class="goreecloud-preferences-form"', result.data)
+        self.assertIn(b'method="post" action="/preferences"', result.data)
+        self.assertIn(b'id="categories_container"', result.data)
+        self.assertIn(b'class="goreecloud-category-strip"', result.data)
         self.assertIn(b'<legend id="pref_ui_locale">Interface language</legend>', result.data)
 
     def test_browser_locale(self):
@@ -218,7 +220,10 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_stats(self):
         result = self.client.get('/stats')
         self.assertEqual(result.status_code, 200)
-        self.assertIn(b'<h1>Engine stats</h1>', result.data)
+        self.assertIn(b'Provider diagnostics', result.data)
+        self.assertIn(b'No provider metrics yet', result.data)
+        self.assertIn(b'Sanitized provider performance metrics', result.data)
+        self.assertNotIn(b'<h1>Engine stats</h1>', result.data)
 
     def test_robots_txt(self):
         result = self.client.get('/robots.txt')

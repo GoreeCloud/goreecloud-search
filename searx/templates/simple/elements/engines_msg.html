@@ -1,34 +1,62 @@
-<div id="engines_msg">
-  {% if (not results and not answers) or not max_response_time %}
-  <details class="sidebar-collapsible" open>
-    <summary class="title" id="engines_msg-title">{{ _('Messages from the search engines') }}</summary>
-  {% else %}
-  <details class="sidebar-collapsible">
-    <summary class="title" id="engines_msg-title">{{ _('Response time') }}: {{ max_response_time | round(1) }} {{ _('seconds') }}</summary>
-  {% endif %}
-    <table class="engine-stats" id="engines_msg-table">
-      {%- for engine_name, error_type in unresponsive_engines -%}
-      <tr>
-        <td class="engine-name">
-          <a href="{{ url_for('stats', engine=engine_name|e) }}"
-             title="{{ _('View error logs and submit a bug report') }}">
-             {{- engine_name -}}
-          </a>
-        </td>
-        <td class="response-error">{{- error_type -}}</td>
-      </tr>
-      {%- endfor -%}
-      {%- for engine_name, response_time in timings -%}
-      <tr>
-        <td class="engine-name"><a href="{{ url_for('stats', engine=engine_name|e) }}">{{ engine_name }}</a></td>
-        <td class="response-time">
-          <div class="bar-chart-value">{{- response_time | round(1) -}}</div>
-          <div class="bar-chart-graph" aria-labelledby="{{engine_name}}_time" aria-hidden="true">
-            <div class="bar-chart-bar bar{{ (100 * response_time / max_response_time) | round | int }}"></div>
-          </div>
-        </td>
-      </tr>
-      {%- endfor -%}
-    </table>
+<aside id="engines_msg" class="goreecloud-provider-health" aria-labelledby="engines_msg-title">
+  {% set has_provider_errors = unresponsive_engines|length > 0 %}
+  <details class="sidebar-collapsible goreecloud-provider-health-panel"{% if (not results and not answers) or has_provider_errors or not max_response_time %} open{% endif %}>
+    <summary class="title goreecloud-provider-health-summary" id="engines_msg-title">
+      <span>{{ _('Provider status') }}</span>
+      {% if has_provider_errors %}
+        <span class="goreecloud-provider-health-badge" data-state="degraded">{{ unresponsive_engines|length }} {{ _('unavailable') }}</span>
+      {% elif timings %}
+        <span class="goreecloud-provider-health-badge" data-state="available">{{ _('Available') }}</span>
+      {% endif %}
+    </summary>
+
+    <div class="goreecloud-provider-health-body">
+      {% if has_provider_errors %}
+        <p class="goreecloud-provider-health-copy">{{ _('Some search providers did not respond. Results from available providers are still shown when possible.') }}</p>
+      {% elif timings %}
+        <p class="goreecloud-provider-health-copy">{{ _('Search providers responded normally for this request.') }}</p>
+      {% endif %}
+
+      {% if unresponsive_engines or timings %}
+      <div class="goreecloud-provider-health-table-wrap">
+        <table class="engine-stats goreecloud-provider-health-table" id="engines_msg-table">
+          <caption>{{ _('Search provider diagnostics') }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ _('Provider') }}</th>
+              <th scope="col">{{ _('Status') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {%- for engine_name, error_type in unresponsive_engines -%}
+            <tr data-provider-state="degraded">
+              <th scope="row" class="engine-name">
+                <a href="{{ url_for('stats', engine=engine_name|e) }}"
+                   title="{{ _('View provider diagnostics') }}">
+                  {{- engine_name -}}
+                </a>
+              </th>
+              <td class="response-error">
+                <span class="goreecloud-provider-state" data-state="degraded">{{ _('Unavailable') }}</span>
+                <span class="goreecloud-provider-detail">{{- error_type -}}</span>
+              </td>
+            </tr>
+            {%- endfor -%}
+            {%- for engine_name, response_time in timings -%}
+            <tr data-provider-state="available">
+              <th scope="row" class="engine-name">
+                <a href="{{ url_for('stats', engine=engine_name|e) }}" title="{{ _('View provider diagnostics') }}">{{ engine_name }}</a>
+              </th>
+              <td class="response-time">
+                <span class="goreecloud-provider-state" data-state="available">{{ _('Available') }}</span>
+                <span class="goreecloud-provider-detail">{{- response_time | round(1) -}} {{ _('seconds') }}</span>
+              </td>
+            </tr>
+            {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
   </details>
-</div>
+</aside>

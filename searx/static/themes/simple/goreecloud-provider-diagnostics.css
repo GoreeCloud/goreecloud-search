@@ -1,0 +1,179 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — sanitized provider diagnostics in Glaze UI. */
+
+.goreecloud-provider-diagnostics {
+  width: min(100%, 76rem);
+  margin: 0 auto;
+  padding: 1rem clamp(0.75rem, 2vw, 1.5rem) 2rem;
+  box-sizing: border-box;
+}
+
+.goreecloud-provider-diagnostics-header,
+.goreecloud-provider-diagnostics-summary {
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-lg);
+  background: var(--gc-surface);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--gc-text) 7%, transparent);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.goreecloud-provider-diagnostics-header {
+  margin-bottom: 1rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.goreecloud-provider-diagnostics-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--gc-accent);
+  font-size: 0.76rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goreecloud-provider-diagnostics h1,
+.goreecloud-provider-diagnostics h2 {
+  margin-top: 0;
+  color: var(--gc-text);
+}
+
+.goreecloud-provider-diagnostics-copy {
+  max-width: 68ch;
+  margin: 0.5rem 0 0;
+  color: var(--gc-muted);
+  line-height: 1.55;
+}
+
+.goreecloud-provider-diagnostics-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--gc-target-min);
+  margin-top: 0.75rem;
+  color: var(--gc-accent);
+  font-weight: 750;
+}
+
+.goreecloud-provider-diagnostics-back:focus-visible,
+.goreecloud-provider-diagnostics-table-wrap:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 72%, transparent);
+  outline-offset: 3px;
+}
+
+.goreecloud-provider-diagnostics-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--gc-border);
+  border-radius: var(--gc-radius-lg);
+  background: var(--gc-surface);
+}
+
+.goreecloud-provider-diagnostics-table {
+  width: 100%;
+  min-width: 42rem;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  background: transparent;
+}
+
+.goreecloud-provider-diagnostics-table caption {
+  padding: 0.8rem 0.9rem;
+  color: var(--gc-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: start;
+}
+
+.goreecloud-provider-diagnostics-table th,
+.goreecloud-provider-diagnostics-table td {
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--gc-border);
+  color: var(--gc-text);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.goreecloud-provider-diagnostics-table thead th {
+  color: var(--gc-muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.goreecloud-provider-diagnostics-table tbody th {
+  font-weight: 800;
+}
+
+.goreecloud-provider-diagnostics-table a {
+  color: var(--gc-text);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.goreecloud-provider-diagnostics-table a:hover {
+  color: var(--gc-accent);
+}
+
+.goreecloud-provider-diagnostics-summary {
+  margin-top: 1rem;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+}
+
+.goreecloud-provider-diagnostics-summary dl {
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.65rem 1rem;
+  margin: 1rem 0 0;
+}
+
+.goreecloud-provider-diagnostics-summary dt {
+  color: var(--gc-muted);
+  font-weight: 750;
+}
+
+.goreecloud-provider-diagnostics-summary dd {
+  margin: 0;
+  color: var(--gc-text);
+  font-weight: 800;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .goreecloud-provider-diagnostics-header,
+  .goreecloud-provider-diagnostics-summary {
+    background: var(--gc-surface-strong);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .goreecloud-provider-diagnostics-copy,
+  .goreecloud-provider-diagnostics-table caption,
+  .goreecloud-provider-diagnostics-table thead th,
+  .goreecloud-provider-diagnostics-summary dt {
+    color: var(--gc-text);
+  }
+}
+
+@media (max-width: 599px) {
+  .goreecloud-provider-diagnostics { padding-inline: 0.65rem; }
+  .goreecloud-provider-diagnostics-summary dl { grid-template-columns: 1fr; }
+  .goreecloud-provider-diagnostics-summary dd { margin-bottom: 0.35rem; }
+}
+
+@media (forced-colors: active) {
+  .goreecloud-provider-diagnostics-header,
+  .goreecloud-provider-diagnostics-summary,
+  .goreecloud-provider-diagnostics-table-wrap {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .goreecloud-provider-diagnostics-header,
+  .goreecloud-provider-diagnostics-summary { background: var(--gc-surface-strong); }
+}

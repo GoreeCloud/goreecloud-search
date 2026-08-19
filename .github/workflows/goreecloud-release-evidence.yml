@@ -1,0 +1,135 @@
+---
+name: GoreeCloud release evidence
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-candidate-image.yml'
+      - '.github/workflows/goreecloud-stabilization-candidate.yml'
+      - '.github/workflows/goreecloud-release-evidence.yml'
+      - 'goreecloud/candidate_request.json'
+      - 'goreecloud/candidate_request.py'
+      - 'goreecloud/release_baseline.json'
+      - 'goreecloud/release_evidence.py'
+      - 'goreecloud/settings.yml.example'
+      - 'tests/unit/test_goreecloud_candidate_request.py'
+      - 'docs/goreecloud/STABLE-CUTOVER.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
+  push:
+    branches:
+      - 'agent/**'
+    paths:
+      - '.github/workflows/goreecloud-candidate-image.yml'
+      - '.github/workflows/goreecloud-stabilization-candidate.yml'
+      - '.github/workflows/goreecloud-release-evidence.yml'
+      - 'goreecloud/candidate_request.json'
+      - 'goreecloud/candidate_request.py'
+      - 'goreecloud/release_baseline.json'
+      - 'goreecloud/release_evidence.py'
+      - 'goreecloud/settings.yml.example'
+      - 'tests/unit/test_goreecloud_candidate_request.py'
+      - 'docs/goreecloud/STABLE-CUTOVER.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-evidence-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Validate Python source and rollback baseline
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/candidate_request.py \
+            goreecloud/release_evidence.py \
+            tests/unit/test_goreecloud_candidate_request.py
+          python goreecloud/release_evidence.py validate-baseline \
+            goreecloud/release_baseline.json
+          python goreecloud/candidate_request.py \
+            goreecloud/candidate_request.json
+          python tests/unit/test_goreecloud_candidate_request.py
+
+      - name: Bind changed candidate request to reviewed stabilization PR base
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'agent/mobile-stabilization'
+        run: |
+          set -euo pipefail
+          if git diff --quiet HEAD^1 -- goreecloud/candidate_request.json; then
+            echo 'Candidate request marker is unchanged in this pull request; reviewed-base binding is not applicable.'
+            exit 0
+          fi
+          python goreecloud/candidate_request.py \
+            goreecloud/candidate_request.json \
+            --expected-reviewed-base '${{ github.event.pull_request.base.sha }}'
+
+      - name: Validate evidence generation contract
+        run: |
+          set -euo pipefail
+          source_sha='1111111111111111111111111111111111111111'
+          candidate='ghcr.io/goreecloud/goreecloud-search@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+          python goreecloud/release_evidence.py write \
+            --rollback-baseline goreecloud/release_baseline.json \
+            --source-sha "$source_sha" \
+            --candidate-image "$candidate" \
+            --candidate-oci-revision "$source_sha" \
+            --candidate-oci-version 'ci-contract-test' \
+            --output /tmp/release-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(Path('/tmp/release-evidence.json').read_text())
+          assert evidence['product'] == 'GoreeCloud Search'
+          assert evidence['candidate']['registry_digest_pull_verified'] is True
+          assert evidence['candidate']['isolated_runtime_acceptance'] == 'passed'
+          assert evidence['rollback_baseline']['registry_digest_pull_verified'] is True
+          assert evidence['rollback_baseline']['isolated_runtime_acceptance'] == 'passed'
+          scope = evidence['rollback_scope']
+          assert scope['image_level_rehearsal'] == 'passed'
+          assert scope['target_environment_configuration_rollback_tested'] is False
+          assert scope['target_environment_data_restore_tested'] is False
+          assert scope['production_cutover_authorized'] is False
+          PY
+
+      - name: Reject mutable rollback identity
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          baseline = json.loads(Path('goreecloud/release_baseline.json').read_text())
+          baseline['image'] = 'ghcr.io/goreecloud/goreecloud-search:latest'
+          Path('/tmp/mutable-baseline.json').write_text(json.dumps(baseline))
+          PY
+          if python goreecloud/release_evidence.py validate-baseline \
+            /tmp/mutable-baseline.json; then
+            echo 'Mutable rollback image was incorrectly accepted.' >&2
+            exit 1
+          fi
+
+      - name: Reject source and OCI revision mismatch
+        run: |
+          set -euo pipefail
+          if python goreecloud/release_evidence.py write \
+            --rollback-baseline goreecloud/release_baseline.json \
+            --source-sha 1111111111111111111111111111111111111111 \
+            --candidate-image ghcr.io/goreecloud/goreecloud-search@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            --candidate-oci-revision 2222222222222222222222222222222222222222 \
+            --candidate-oci-version ci-contract-test \
+            --output /tmp/mismatch.json; then
+            echo 'Mismatched OCI revision was incorrectly accepted.' >&2
+            exit 1
+          fi
