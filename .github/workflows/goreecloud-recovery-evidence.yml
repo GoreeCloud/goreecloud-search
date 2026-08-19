@@ -1,0 +1,200 @@
+---
+name: GoreeCloud recovery evidence
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-recovery-evidence.yml'
+      - 'goreecloud/recovery_evidence.py'
+      - 'goreecloud/release_baseline.json'
+      - 'docs/goreecloud/RECOVERY-ACCEPTANCE.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
+  push:
+    branches:
+      - 'agent/**'
+    paths:
+      - '.github/workflows/goreecloud-recovery-evidence.yml'
+      - 'goreecloud/recovery_evidence.py'
+      - 'goreecloud/release_baseline.json'
+      - 'docs/goreecloud/RECOVERY-ACCEPTANCE.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery-evidence-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate recovery-evidence source
+        run: |
+          set -euo pipefail
+          python -m py_compile goreecloud/recovery_evidence.py
+          python goreecloud/release_evidence.py validate-baseline \
+            goreecloud/release_baseline.json
+
+      - name: Create synthetic bound companion evidence
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          source = '1111111111111111111111111111111111111111'
+          image = 'ghcr.io/goreecloud/goreecloud-search@sha256:' + ('a' * 64)
+          release = {
+              'schema_version': 1,
+              'product': 'GoreeCloud Search',
+              'candidate': {
+                  'source_revision': source,
+                  'image': image,
+                  'isolated_runtime_acceptance': 'passed',
+              },
+              'rollback_scope': {
+                  'image_level_rehearsal': 'passed',
+                  'production_cutover_authorized': False,
+              },
+          }
+          runtime = {
+              'schema_version': 1,
+              'product': 'GoreeCloud Search',
+              'container_runtime': {
+                  'expected_source_revision': source,
+                  'expected_image': image,
+              },
+              'scope': {
+                  'target_runtime_identity_verified': True,
+                  'production_cutover_authorized': False,
+              },
+          }
+          Path('/tmp/release-evidence.json').write_text(json.dumps(release, indent=2) + '\n')
+          Path('/tmp/target-runtime-evidence.json').write_text(json.dumps(runtime, indent=2) + '\n')
+          PY
+
+      - name: Generate incomplete recovery template
+        run: |
+          set -euo pipefail
+          python goreecloud/recovery_evidence.py template \
+            --release-evidence /tmp/release-evidence.json \
+            --target-runtime-evidence /tmp/target-runtime-evidence.json \
+            --rollback-baseline goreecloud/release_baseline.json \
+            --output /tmp/recovery-evidence.json
+          if python goreecloud/recovery_evidence.py validate \
+            --evidence /tmp/recovery-evidence.json \
+            --release-evidence /tmp/release-evidence.json \
+            --target-runtime-evidence /tmp/target-runtime-evidence.json \
+            --rollback-baseline goreecloud/release_baseline.json; then
+            echo 'Incomplete recovery template was incorrectly accepted.' >&2
+            exit 1
+          fi
+
+      - name: Complete synthetic contract evidence
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/recovery-evidence.json')
+          evidence = json.loads(path.read_text())
+          evidence['backup'].update({
+              'system': 'contract-test-backup',
+              'snapshot_reference': 'synthetic-snapshot-001',
+              'captured_at': '2026-08-18T20:00:00-05:00',
+          })
+          for key in evidence['backup']['scope']:
+              evidence['backup']['scope'][key] = True
+          evidence['restore'].update({
+              'isolated_location': '/tmp/goreecloud-search-recovery-acceptance',
+              'stack_definition_restored': True,
+              'search_settings_restored': True,
+              'protected_runtime_configuration_recovery_verified': True,
+              'caddy_search_route_copy_restored': True,
+              'compose_validation_passed': True,
+              'runtime_recreated': True,
+              'runtime_health_passed': True,
+              'runtime_identity_passed': True,
+              'target_acceptance_passed': True,
+          })
+          evidence['rollback'].update({
+              'mode': 'equivalent-verified-evidence',
+              'known_good_image_available': True,
+              'previous_runtime_configuration_preserved': True,
+              'previous_caddy_route_preserved': True,
+              'rollback_procedure_documented': True,
+              'isolated_rollback_rehearsal_passed': True,
+              'equivalent_verified_rollback_evidence': True,
+          })
+          evidence['monitoring'].update({
+              'monitor_identity': 'GoreeCloud Search',
+              'availability_monitor_verified': True,
+              'alert_delivery_verified': True,
+          })
+          evidence['scope'].update({
+              'application_level_restore_tested': True,
+              'monitoring_and_alerting_verified': True,
+              'rollback_evidence_verified': True,
+          })
+          path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + '\n')
+          PY
+
+      - name: Validate completed synthetic contract
+        run: |
+          set -euo pipefail
+          python goreecloud/recovery_evidence.py validate \
+            --evidence /tmp/recovery-evidence.json \
+            --release-evidence /tmp/release-evidence.json \
+            --target-runtime-evidence /tmp/target-runtime-evidence.json \
+            --rollback-baseline goreecloud/release_baseline.json
+
+      - name: Reject artifact-binding mismatch
+        run: |
+          set -euo pipefail
+          cp /tmp/recovery-evidence.json /tmp/recovery-bad-hash.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/recovery-bad-hash.json')
+          evidence = json.loads(path.read_text())
+          evidence['artifact_bindings']['release_evidence_sha256'] = '0' * 64
+          path.write_text(json.dumps(evidence))
+          PY
+          if python goreecloud/recovery_evidence.py validate \
+            --evidence /tmp/recovery-bad-hash.json \
+            --release-evidence /tmp/release-evidence.json \
+            --target-runtime-evidence /tmp/target-runtime-evidence.json \
+            --rollback-baseline goreecloud/release_baseline.json; then
+            echo 'Mismatched companion evidence hash was incorrectly accepted.' >&2
+            exit 1
+          fi
+
+      - name: Reject secret-bearing evidence fields
+        run: |
+          set -euo pipefail
+          cp /tmp/recovery-evidence.json /tmp/recovery-secret.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/recovery-secret.json')
+          evidence = json.loads(path.read_text())
+          evidence['backup']['password'] = 'must-not-be-recorded'
+          path.write_text(json.dumps(evidence))
+          PY
+          if python goreecloud/recovery_evidence.py validate \
+            --evidence /tmp/recovery-secret.json \
+            --release-evidence /tmp/release-evidence.json \
+            --target-runtime-evidence /tmp/target-runtime-evidence.json \
+            --rollback-baseline goreecloud/release_baseline.json; then
+            echo 'Secret-bearing recovery evidence was incorrectly accepted.' >&2
+            exit 1
+          fi
