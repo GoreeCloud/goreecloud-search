@@ -4,7 +4,7 @@
 
 - Target design-system version: **Glaze UI 1.1.0**
 - Canonical Glaze UI source revision: `5c8320de4f770614a3e2bcf9de2a27f7fcfd920c`
-- Source-conformance status: Implemented — exact-head CI pending
+- Source-conformance status: Enforced by exact-head CI before integration
 - Stable conformance status: Pending visual acceptance
 - Product: GoreeCloud Search
 - Maintained-fork foundation: SearXNG
@@ -71,7 +71,7 @@ The current source contract preserves and extends the established Search require
 - absence of remote UI dependencies in the 1.1 layer;
 - this version-specific conformance record.
 
-The browser-acceptance workflow executes that source contract before application startup and adaptive browser acceptance.
+The browser-acceptance workflow executes that source contract before application startup and adaptive browser acceptance. Integration is permitted only after the exact pull-request head satisfies the required Search checks; the durable status above records that governance rule rather than a transient workflow state.
 
 ## Stable visual acceptance gate
 
