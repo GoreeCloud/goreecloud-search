@@ -3,7 +3,12 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 import tempfile
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from goreecloud.candidate_request import CandidateRequestError, validate_request
 
