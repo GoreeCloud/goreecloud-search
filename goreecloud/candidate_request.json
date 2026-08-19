@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "product": "GoreeCloud Search",
-  "request_id": "first-stable-2026-08-19-02",
-  "requested_at": "2026-08-19T08:04:55-05:00",
+  "request_id": "first-stable-2026-08-19-03",
+  "requested_at": "2026-08-19T08:13:11-05:00",
   "request": "publish-and-rehearse-final-candidate",
-  "reviewed_base_revision": "2a172d0c91adba7981ab1f8d6a862a3fe3ce440f",
+  "reviewed_base_revision": "01a193a15a4b6e80506a45d9664a3f44b444e669",
   "production_cutover_authorized": false,
   "stable_release_authorized": false,
   "target_host_change_authorized": false,
