@@ -6,6 +6,7 @@ GoreeCloud-owned documentation for the maintained SearXNG fork.
 - `API.md` — governed machine-interface boundary.
 - `DEPLOYMENT.md` — deployment model and production boundary.
 - `READINESS.md` — source-versus-production readiness contract.
+- `GLAZE-UI-CONFORMANCE.md` — exact Glaze UI 1.1 source binding, semantic mapping, automated evidence, and Stable visual-acceptance boundary.
 - `BROWSER-INTEGRATION.md` — GoreeCloud Browser search-provider and failure-boundary contract.
 - `STABLE-CUTOVER.md` — first-Stable evidence gates, immutable release identity, runtime binding, and cutover/retirement controls.
 - `TARGET-ACCEPTANCE.md` — controlled `goreecloud-vps-01` staging, validation, cutover, recovery, and rollback procedure.
