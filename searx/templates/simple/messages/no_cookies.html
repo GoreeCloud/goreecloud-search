@@ -1,5 +1,6 @@
 {% from 'simple/icons.html' import icon %}
-<div class="alert alert-info fade in" role="alert">
-    <strong class="lead">{{ icon('info-sign') }} {{ _('Information!') }}</strong>
-    {{ _('currently, there are no cookies defined.') }}
-</div>
+<section class="goreecloud-feedback goreecloud-preferences-empty" role="status" aria-live="polite" aria-labelledby="goreecloud-no-cookies-title">
+  <strong id="goreecloud-no-cookies-title" class="lead">{{ icon('info-sign') }} {{ _('No saved preference cookies') }}</strong>
+  <p>{{ _('GoreeCloud Search has no saved preference cookies to display for this browser.') }}</p>
+  <p class="small_font">{{ _('You can still use the preference URL and restore tools below to move or recover your current settings.') }}</p>
+</section>
