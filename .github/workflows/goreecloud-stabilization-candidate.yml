@@ -47,7 +47,8 @@ jobs:
       packages: write
     uses: ./.github/workflows/goreecloud-candidate-image.yml
 
-  publication-receipt:
+  candidate-outcome-receipt:
+    if: ${{ always() }}
     needs:
       - validate-request
       - candidate-image
@@ -57,26 +58,42 @@ jobs:
       contents: read
       issues: write
     steps:
-      - name: Publish sanitized first-Stable candidate receipt
+      - name: Publish sanitized first-Stable candidate outcome receipt
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           FIRST_STABLE_PR: '3'
+          VALIDATION_RESULT: ${{ needs.validate-request.result }}
+          CANDIDATE_RESULT: ${{ needs.candidate-image.result }}
         run: |
           set -euo pipefail
           artifact="goreecloud-search-candidate-${GITHUB_SHA}"
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          if [ "$VALIDATION_RESULT" = 'success' ] && [ "$CANDIDATE_RESULT" = 'success' ]; then
+            outcome='success'
+            artifact_line="\`${artifact}\`"
+            rehearsal='passed'
+          else
+            outcome='failure'
+            artifact_line='not verified or expected unless the candidate-image job succeeded'
+            rehearsal='not proven by this workflow run'
+          fi
+
           body="$(cat <<EOF
-          ### First-Stable candidate publication receipt
+          ### First-Stable candidate workflow outcome receipt
 
           - Candidate source revision: \`${GITHUB_SHA}\`
           - Candidate workflow run: ${run_url}
-          - Candidate evidence artifact: \`${artifact}\`
-          - Candidate/rollback isolated rehearsal: completed by the candidate-image job before this receipt
+          - Request validation job: **${VALIDATION_RESULT}**
+          - Candidate image/evidence job: **${CANDIDATE_RESULT}**
+          - Overall candidate workflow outcome: **${outcome}**
+          - Candidate evidence artifact: ${artifact_line}
+          - Candidate/rollback isolated rehearsal: **${rehearsal}**
           - Production cutover authorized: **no**
           - Stable promotion authorized: **no**
 
-          This sanitized receipt exists so the immutable candidate evidence can be located and independently inspected. It contains no registry credentials, application secrets, query content, or production authorization.
+          This sanitized receipt is a durable status and artifact locator, not a substitute for inspecting the release-evidence artifact. It contains no registry credentials, application secrets, query content, production configuration, or production authorization.
           EOF
           )"
           BODY="$body" python - <<'PY' >/tmp/candidate-receipt.json
@@ -101,5 +118,5 @@ jobs:
           response = json.loads(Path('/tmp/candidate-receipt-response.json').read_text())
           assert isinstance(response.get('id'), int)
           assert response.get('html_url')
-          print(f"Published candidate receipt comment {response['id']}.")
+          print(f"Published candidate outcome receipt comment {response['id']}.")
           PY
