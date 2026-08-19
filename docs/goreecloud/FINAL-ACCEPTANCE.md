@@ -2,27 +2,30 @@
 
 ## Purpose
 
-This procedure closes the first-Stable evidence gap between deterministic source/runtime checks and the manual final-candidate reviews that must be performed on real devices and the actual GoreeCloud Browser runtime.
+This procedure closes the first-Stable evidence gap between deterministic source/runtime checks and the final reviews that must be performed on real devices and the actual GoreeCloud Browser runtime.
 
-It creates one candidate-bound evidence set without allowing any evidence artifact to authorize production cutover by itself.
+The final manifest is an integrity record, not an authorization record. It binds six completed evidence artifacts to one exact immutable GoreeCloud Search candidate and always keeps production cutover unauthorized.
 
 ## Evidence boundary
 
-Final-candidate acceptance uses five evidence inputs for one exact GoreeCloud Search candidate:
+Final-candidate acceptance requires **six independently completed evidence artifacts** for one exact GoreeCloud Search candidate:
 
 1. immutable release evidence;
 2. target-runtime identity evidence;
 3. completed recovery/monitoring/rollback evidence;
 4. runtime-bound real-provider acceptance evidence;
-5. the final manual Glaze UI and GoreeCloud Browser runtime acceptance record.
+5. completed visual/device review evidence; and
+6. completed actual GoreeCloud Browser runtime evidence.
 
-The final record hashes and binds the first four artifacts. They must all refer to the same exact source revision and immutable GoreeCloud Search image as the release candidate.
+The final schema-version 2 manifest hashes and binds all six JSON artifacts. The visual and Browser JSON artifacts also contain the immutable digest of the retained underlying review/runtime artifact that was actually inspected. A free-text issue URL or evidence-reference string by itself is not sufficient final-candidate evidence.
 
-Provider evidence is not candidate-bound merely because an operator supplies a candidate SHA and image digest on the command line. The provider requests themselves must execute against the same identity-verified staged candidate runtime.
+All six inputs must refer to the same exact Search source revision and immutable GHCR image as the release candidate. Visual or Browser evidence from a development preview, older candidate, mutable tag, or previous production image is rejected.
+
+No evidence artifact may set `production_cutover_authorized` to true.
 
 ## Real-provider evidence
 
-Run the representative suite on the target host against the intentionally staged final candidate, **not** against the still-authoritative production hostname before cutover. The candidate source and image values must come from the release evidence, not from a mutable tag or an operator assumption.
+Run the representative suite on the target host against the intentionally staged final candidate, **not** against the still-authoritative production hostname before cutover. Candidate source and image values must come from release evidence rather than a mutable tag or operator assumption.
 
 The preferred pre-cutover staging topology is the loopback-only instance defined by `TARGET-ACCEPTANCE.md`:
 
@@ -39,18 +42,16 @@ python goreecloud/provider_acceptance.py \
 When `--evidence-json` is requested, the provider runner fails closed unless it can verify that:
 
 - the base URL is loopback-only;
-- the named Docker container is actually published on that loopback port;
+- the named container is actually published on that loopback port;
 - the container is running and healthy;
 - its configured image reference is the exact immutable candidate image;
 - its running image ID matches that digest image;
 - the candidate OCI title, source, revision, version, and license metadata are valid; and
 - the exact runtime identity remains unchanged before and after the provider requests.
 
-The generated artifact records the sanitized runtime binding plus category, HTTP status, GoreeCloud Search identity, result-card count, engine-message count, pass/fail state, and the exact candidate identity. It intentionally does **not** retain query text, response content, cookies, credentials, provider tokens, or reusable secrets.
+The generated artifact records only sanitized runtime binding and category-level acceptance information. It intentionally does **not** retain query text, response content, cookies, credentials, provider tokens, or reusable secrets.
 
-`https://search.goreecloud.com` remains the production path until a separately authorized cutover. It may be used for post-cutover production rechecks, but it must not be used to create pre-cutover final-candidate provider evidence while it still routes to the previous known-good runtime.
-
-The first-Stable required provider categories are:
+The first-Stable mandatory provider categories are:
 
 - General
 - Images
@@ -58,57 +59,117 @@ The first-Stable required provider categories are:
 - News
 - Files
 
-IT and Science remain useful diagnostics. A diagnostic provider failure must be investigated and classified, but it does not silently remove any of the five mandatory first-Stable categories.
+IT and Science remain diagnostics; neither may replace a required category.
 
-## Create the final acceptance template
+## Visual/device evidence artifact
 
-After release, target-runtime, recovery, and provider evidence all refer to the same candidate, create the final record:
+Create `visual-evidence.json` only after the final candidate has been reviewed. It must use this shape:
+
+```json
+{
+  "schema_version": 1,
+  "product": "GoreeCloud Search",
+  "generated_at": "2026-08-19T20:00:00Z",
+  "candidate": {
+    "source_revision": "<40-character-candidate-source-sha>",
+    "image": "ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>"
+  },
+  "glaze_ui_version": "1.1.0",
+  "review_artifact": {
+    "reference": "<retained-screenshot-or-review-artifact-locator>",
+    "digest": "sha256:<immutable-artifact-digest>"
+  },
+  "reviews": {
+    "compact_light": {"passed": true, "evidence_reference": "<reference>"},
+    "compact_dark": {"passed": true, "evidence_reference": "<reference>"},
+    "expanded_light": {"passed": true, "evidence_reference": "<reference>"},
+    "expanded_dark": {"passed": true, "evidence_reference": "<reference>"}
+  },
+  "physical_android_preferences_review": {
+    "passed": true,
+    "evidence_reference": "<physical-device-session-reference>"
+  },
+  "desktop_regression_review": {
+    "passed": true,
+    "evidence_reference": "<desktop-session-reference>"
+  },
+  "persisted_theme_preference_review": {
+    "passed": true,
+    "evidence_reference": "<theme-persistence-session-reference>"
+  },
+  "scope": {
+    "exact_candidate_visual_artifact_verified": true,
+    "manual_visual_acceptance_verified": true,
+    "production_cutover_authorized": false,
+    "statement": "<sanitized review statement>"
+  }
+}
+```
+
+The retained review artifact digest must be the immutable digest of the actual artifact that was reviewed. For a GitHub Actions artifact, use the returned `sha256:<digest>` value. The four required visual cases are not substitutes for physical Android Preferences review, desktop regression review, or persisted theme-preference behavior; all seven review records must be complete.
+
+Do not mark a visual review complete solely because a screenshot workflow generated files. An operator must actually review the exact candidate artifact and record the physical/device/runtime evidence truthfully.
+
+## GoreeCloud Browser runtime evidence artifact
+
+Create `browser-evidence.json` only after acceptance has run on the actual GoreeCloud Browser runtime against the exact Search candidate. It must use this shape:
+
+```json
+{
+  "schema_version": 1,
+  "product": "GoreeCloud Search",
+  "generated_at": "2026-08-19T20:05:00Z",
+  "search_candidate": {
+    "source_revision": "<40-character-search-candidate-sha>",
+    "image": "ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>"
+  },
+  "browser_source_revision": "<40-character-goreecloud-browser-sha>",
+  "runtime_artifact": {
+    "reference": "<retained-browser-runtime-artifact-locator>",
+    "digest": "sha256:<immutable-artifact-digest>"
+  },
+  "behaviors": {
+    "search_only_default_provider": true,
+    "address_bar_routed_through_search": true,
+    "new_tab_routed_through_search": true,
+    "dedicated_search_field_routed_through_search": true,
+    "no_external_browser_fallback": true,
+    "search_unavailability_state_verified": true,
+    "recovery_after_search_reachability_verified": true
+  },
+  "scope": {
+    "actual_browser_runtime_verified": true,
+    "search_candidate_runtime_verified": true,
+    "production_cutover_authorized": false,
+    "statement": "<sanitized runtime-acceptance statement>"
+  }
+}
+```
+
+A source-code policy claim is insufficient. The retained artifact must represent the actual Browser runtime session and must have an immutable digest. Acceptance must prove the Search-only/default-provider policy, address-bar/new-tab/dedicated-field routing, no silent external fallback, the Search-unavailable state, and recovery when Search becomes reachable again.
+
+## Assemble the final manifest
+
+Only after **all six** artifacts are complete, assemble the final manifest:
 
 ```bash
-python goreecloud/final_acceptance_evidence.py template \
+python goreecloud/final_acceptance_evidence.py assemble \
   --release-evidence release-evidence.json \
   --target-runtime-evidence target-runtime-evidence.json \
   --recovery-evidence recovery-evidence.json \
   --provider-evidence provider-evidence.json \
+  --visual-evidence visual-evidence.json \
+  --browser-evidence browser-evidence.json \
   --output final-acceptance-evidence.json
 ```
 
-The final-evidence validator rejects provider artifacts that lack the staged runtime binding, that do not prove runtime identity before and after the provider requests, or that refer to a different source/image.
+Assembly fails closed if any input is incomplete, unsafe, refers to another candidate, lacks its required immutable review/runtime artifact digest, or violates a mandatory acceptance requirement.
 
-The generated template is intentionally incomplete. Its manual fields default to false and must not be changed until the corresponding review is actually performed against that same final candidate.
+The output is schema version 2. Its `artifact_bindings` contains the SHA-256 hash of all six supplied JSON artifacts. Visual and Browser summaries are copied from those verified bound inputs rather than manually edited into the final manifest.
 
-## Required Glaze UI 1.1 review
+## Validate the completed final manifest
 
-The completed final record must contain evidence references for all of these exact final-candidate reviews:
-
-- Compact light appearance;
-- Compact dark appearance;
-- Expanded light appearance;
-- Expanded dark appearance;
-- physical Android/mobile Preferences review;
-- desktop regression/final visual review.
-
-An evidence reference should identify the retained review record, screenshot set, test-session record, issue, or other approved artifact. Do not store credentials, private keys, tokens, cookies, or secret values in the JSON record.
-
-The review must confirm the integrated candidate rather than a development branch preview or an older production image.
-
-## Required GoreeCloud Browser runtime review
-
-Record the exact GoreeCloud Browser source revision used for acceptance and an evidence reference for the runtime session. The review must prove:
-
-- GoreeCloud Search is the only/default browser search provider;
-- address-bar searches route through GoreeCloud Search;
-- new-tab searches route through GoreeCloud Search;
-- the dedicated browser search field routes through GoreeCloud Search;
-- no external browser-level fallback is used when Search is unavailable;
-- Search unavailability is shown as a GoreeCloud service/connectivity state;
-- Browser recovers correctly when GoreeCloud Search becomes reachable again.
-
-This is runtime acceptance. A source-code configuration claim by itself is insufficient.
-
-## Validate the completed final record
-
-After the manual fields are completed truthfully, validate the record against the exact artifacts it binds:
+Validate the manifest against the **same exact six files**:
 
 ```bash
 python goreecloud/final_acceptance_evidence.py validate \
@@ -116,26 +177,31 @@ python goreecloud/final_acceptance_evidence.py validate \
   --target-runtime-evidence target-runtime-evidence.json \
   --recovery-evidence recovery-evidence.json \
   --provider-evidence provider-evidence.json \
+  --visual-evidence visual-evidence.json \
+  --browser-evidence browser-evidence.json \
   --evidence final-acceptance-evidence.json
 ```
 
 Validation fails closed if:
 
-- any bound artifact refers to another candidate;
-- any bound artifact has changed since the final template was created;
+- any supplied artifact refers to another Search candidate;
+- any of the six JSON artifacts changed after the manifest was assembled;
+- the final manifest is an older unbound schema version;
 - provider evidence lacks verified before/after staged runtime identity binding;
-- provider evidence does not identify the exact immutable candidate image and source revision;
-- any required provider category lacks a passing result;
-- the completed recovery artifact does not prove restore, monitoring/alerting, and rollback evidence;
-- any of the four required Glaze UI 1.1 appearance reviews is incomplete;
-- Android Preferences or desktop regression review is incomplete;
-- Browser source identity or runtime evidence reference is missing;
-- any required Browser/Search integration behavior is unverified;
-- the final record contains prohibited sensitive/unnecessary field names;
+- any mandatory provider category lacks a passing result;
+- recovery evidence does not prove application-level restore, monitoring/alerting, and rollback evidence;
+- the visual review artifact lacks an immutable artifact digest;
+- any Compact/Expanded light/dark review is incomplete;
+- physical Android Preferences, desktop regression, or persisted-theme review is incomplete;
+- the Browser runtime artifact lacks an immutable artifact digest;
+- the Browser source identity or exact Search candidate identity is missing/mismatched;
+- any required Browser/Search runtime behavior is unverified;
+- the final visual or Browser summary differs from its bound evidence artifact;
+- the final record contains prohibited sensitive/unnecessary field names; or
 - `production_cutover_authorized` is anything other than false.
 
 ## Stable decision boundary
 
-A passing final-candidate evidence artifact means the defined first-Stable acceptance evidence set is complete and internally consistent for one exact candidate.
+A passing schema-version 2 final-candidate manifest means the defined first-Stable evidence set is complete, cryptographically bound, and internally consistent for one exact candidate.
 
-It does **not** independently authorize production cutover, runtime-name retirement, rollback-material deletion, or Stable release publication. Those actions still require the explicit GoreeCloud release decision and the applicable `STABLE-CUTOVER.md` procedure.
+It does **not** independently authorize production cutover, runtime-name retirement, rollback-material deletion, or Stable publication. Those actions still require the explicit GoreeCloud release decision and the applicable `STABLE-CUTOVER.md` procedure.
