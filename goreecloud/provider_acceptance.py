@@ -22,14 +22,39 @@ class AcceptanceCase:
     query: str
 
 
+# These categories are mandatory for first-Stable representative provider
+# acceptance because they cover the primary GoreeCloud Search result surfaces
+# that received product-specific stabilization work.
+RELEASE_REQUIRED_CATEGORIES = frozenset(
+    {
+        "general",
+        "images",
+        "videos",
+        "news",
+        "files",
+    }
+)
+
+
 REPRESENTATIVE_SUITE = (
     AcceptanceCase("general", "GoreeCloud private search"),
     AcceptanceCase("images", "open source personal cloud"),
     AcceptanceCase("news", "privacy technology"),
     AcceptanceCase("videos", "self hosted search"),
+    AcceptanceCase("files", "open source privacy whitepaper pdf"),
     AcceptanceCase("it", "Python metasearch engine"),
     AcceptanceCase("science", "information retrieval privacy research"),
 )
+
+
+def validate_representative_suite() -> None:
+    categories = {case.category for case in REPRESENTATIVE_SUITE}
+    missing = sorted(RELEASE_REQUIRED_CATEGORIES - categories)
+    if missing:
+        raise RuntimeError(
+            "Representative provider suite is missing first-Stable category coverage: "
+            + ", ".join(missing)
+        )
 
 
 class ResultCounter(html.parser.HTMLParser):
@@ -118,6 +143,7 @@ def run_case(base_url: str, case: AcceptanceCase, minimum_results: int, timeout:
 
 
 def run_suite(base_url: str, minimum_results: int, timeout: float) -> int:
+    validate_representative_suite()
     failures: list[tuple[str, int]] = []
     for case in REPRESENTATIVE_SUITE:
         result = run_case(base_url, case, minimum_results, timeout)
@@ -141,6 +167,7 @@ def run_suite(base_url: str, minimum_results: int, timeout: float) -> int:
 
 
 def main() -> int:
+    validate_representative_suite()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="http://127.0.0.1:8888")
     parser.add_argument("--query", default="GoreeCloud private search")
@@ -150,7 +177,10 @@ def main() -> int:
     parser.add_argument(
         "--suite",
         action="store_true",
-        help="Run the representative general/images/news/videos/IT/science acceptance suite.",
+        help=(
+            "Run the representative general/images/news/videos/files/IT/science "
+            "real-provider acceptance suite."
+        ),
     )
     args = parser.parse_args()
 
