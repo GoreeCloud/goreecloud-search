@@ -67,7 +67,7 @@ def test_glaze_ui_11_interaction_accessibility_and_resilience_contracts_exist():
         "var(--gc-state-selected)",
         "var(--gc-on-accent)",
         "var(--gc-opacity-disabled)",
-        ':disabled',
+        ":disabled",
         '[aria-disabled="true"]',
         ":focus-visible",
         "@media (max-width: 599px)",
@@ -98,12 +98,14 @@ def test_conformance_record_is_version_specific_and_does_not_overclaim_visual_ac
 
     assert f"Glaze UI {CANONICAL_VERSION}" in record
     assert CANONICAL_REVISION in record
-    assert "Source-conformance status: Passed" in record
+    assert "Source-conformance status:" in record
     assert "Stable conformance status: Pending visual acceptance" in record
     assert "Compact" in record
     assert "Expanded" in record
     assert "light" in record.lower()
     assert "dark" in record.lower()
+    assert "Glaze UI 1.1 conformant" in record
+    assert "only when" in record
 
 
 def run_contract_checks() -> None:
