@@ -220,7 +220,10 @@ class ViewsTestCase(SearxTestCase):  # pylint: disable=too-many-public-methods
     def test_stats(self):
         result = self.client.get('/stats')
         self.assertEqual(result.status_code, 200)
-        self.assertIn(b'<h1>Engine stats</h1>', result.data)
+        self.assertIn(b'Provider diagnostics', result.data)
+        self.assertIn(b'No provider metrics yet', result.data)
+        self.assertIn(b'Sanitized provider performance metrics', result.data)
+        self.assertNotIn(b'<h1>Engine stats</h1>', result.data)
 
     def test_robots_txt(self):
         result = self.client.get('/robots.txt')
