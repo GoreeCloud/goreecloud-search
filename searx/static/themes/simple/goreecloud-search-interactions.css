@@ -1,0 +1,9 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — query-control interaction states. */
+
+/* Do not reserve or expose a clear/reset control when the query is empty.
+   :placeholder-shown updates as the user types, so the control appears only
+   when there is content to clear without requiring a parallel JavaScript state. */
+.search_box #q:placeholder-shown + #clear_search {
+  display: none !important;
+}
