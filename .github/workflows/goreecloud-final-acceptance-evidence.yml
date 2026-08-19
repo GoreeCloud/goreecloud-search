@@ -38,8 +38,16 @@ jobs:
             goreecloud/final_acceptance_evidence.py \
             tests/unit/test_goreecloud_final_acceptance_evidence.py
 
-      - name: Validate final-candidate evidence contract
+      - name: Validate six-artifact final-candidate evidence contract
         run: python tests/unit/test_goreecloud_final_acceptance_evidence.py
+
+      - name: Confirm final evidence requires visual and Browser artifact binding
+        run: |
+          python goreecloud/final_acceptance_evidence.py assemble --help | grep -- '--visual-evidence'
+          python goreecloud/final_acceptance_evidence.py assemble --help | grep -- '--browser-evidence'
+          grep -F 'visual_evidence_sha256' goreecloud/final_acceptance_evidence.py
+          grep -F 'browser_evidence_sha256' goreecloud/final_acceptance_evidence.py
+          grep -F 'schema_version": 2' goreecloud/final_acceptance_evidence.py
 
       - name: Confirm provider evidence remains explicit manual acceptance
         run: |
