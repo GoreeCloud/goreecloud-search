@@ -1,0 +1,44 @@
+---
+name: GoreeCloud stabilization candidate request
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - goreecloud/candidate_request.json
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact candidate revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate explicit candidate publication request
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent="$(git rev-parse "${GITHUB_SHA}^")"
+          python goreecloud/candidate_request.py \
+            goreecloud/candidate_request.json \
+            --candidate-source "$GITHUB_SHA" \
+            --candidate-parent "$parent"
+
+  candidate-image:
+    needs: validate-request
+    uses: ./.github/workflows/goreecloud-candidate-image.yml
