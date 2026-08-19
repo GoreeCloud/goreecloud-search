@@ -1,0 +1,94 @@
+---
+name: GoreeCloud provider degradation
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-provider-degradation.yml'
+      - 'goreecloud/provider_degradation_acceptance.py'
+      - 'goreecloud/provider_degradation_settings.yml'
+      - 'searx/engines/goreecloud_acceptance.py'
+      - 'searx/**'
+      - 'requirements.txt'
+  push:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - '.github/workflows/goreecloud-provider-degradation.yml'
+      - 'goreecloud/provider_degradation_acceptance.py'
+      - 'goreecloud/provider_degradation_settings.yml'
+      - 'searx/engines/goreecloud_acceptance.py'
+      - 'searx/**'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-provider-degradation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install application dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Validate acceptance source
+        run: |
+          python -m py_compile \
+            goreecloud/provider_degradation_acceptance.py \
+            searx/engines/goreecloud_acceptance.py
+
+      - name: Prove failing fixture endpoint is unavailable
+        run: |
+          set -euo pipefail
+          if curl --fail --silent --show-error --max-time 1 \
+            http://127.0.0.1:8898/search >/dev/null 2>&1; then
+            echo 'Port 8898 unexpectedly has a listening provider.' >&2
+            exit 1
+          fi
+
+      - name: Start GoreeCloud Search degradation runtime
+        env:
+          SEARXNG_SETTINGS_PATH: ${{ github.workspace }}/goreecloud/provider_degradation_settings.yml
+          SEARXNG_SECRET: goreecloud-provider-degradation-acceptance-only-secret
+          SEARXNG_BIND_ADDRESS: 127.0.0.1
+          SEARXNG_PORT: '8888'
+          SEARXNG_DISABLE_ETC_SETTINGS: 'true'
+        run: |
+          set -euo pipefail
+          nohup python -m searx.webapp >/tmp/goreecloud-provider-degradation.log 2>&1 &
+          echo $! >/tmp/goreecloud-provider-degradation.pid
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8888/healthz >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/goreecloud-provider-degradation.pid)" 2>/dev/null; then
+              cat /tmp/goreecloud-provider-degradation.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/goreecloud-provider-degradation.log
+          exit 1
+
+      - name: Run deterministic provider-failure degradation acceptance
+        run: python goreecloud/provider_degradation_acceptance.py
+
+      - name: Print application log on failure
+        if: failure()
+        run: cat /tmp/goreecloud-provider-degradation.log || true
