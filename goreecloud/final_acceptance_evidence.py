@@ -23,6 +23,7 @@ from typing import Any
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
 IMAGE_RE = re.compile(r"^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$")
+LOOPBACK_URL_RE = re.compile(r"^https?://(?:127\.0\.0\.1|localhost|\[::1\])(?::[0-9]{1,5})?$")
 REQUIRED_PROVIDER_CATEGORIES = frozenset({"general", "images", "videos", "news", "files"})
 REQUIRED_VISUAL_CASES = (
     "compact_light",
@@ -204,6 +205,27 @@ def _verify_provider(provider: dict[str, Any], source: str, image: str) -> None:
     if _image(candidate.get("image"), "provider image") != image:
         raise EvidenceError("Provider evidence refers to a different image")
 
+    runtime_binding = _mapping(provider.get("runtime_binding"), "provider runtime_binding")
+    _true(
+        runtime_binding.get("verified_before_and_after_requests"),
+        "provider runtime_binding.verified_before_and_after_requests",
+    )
+    base_url = _nonempty(runtime_binding.get("base_url"), "provider runtime_binding.base_url")
+    if not LOOPBACK_URL_RE.fullmatch(base_url):
+        raise EvidenceError("Provider evidence base_url must identify the loopback-staged candidate")
+    _nonempty(runtime_binding.get("container"), "provider runtime_binding.container")
+    published_port = _nonempty(runtime_binding.get("published_port"), "provider runtime_binding.published_port")
+    if "127.0.0.1:" not in published_port and "[::1]:" not in published_port:
+        raise EvidenceError("Provider evidence published_port must be loopback-only")
+    if _image(
+        runtime_binding.get("observed_image_reference"),
+        "provider runtime_binding.observed_image_reference",
+    ) != image:
+        raise EvidenceError("Provider runtime binding refers to a different image")
+    _nonempty(runtime_binding.get("observed_image_id"), "provider runtime_binding.observed_image_id")
+    if _sha(runtime_binding.get("oci_revision"), "provider runtime_binding.oci_revision") != source:
+        raise EvidenceError("Provider runtime binding refers to a different source revision")
+
     required_categories = set(_list(provider.get("required_categories"), "provider required_categories"))
     if not REQUIRED_PROVIDER_CATEGORIES.issubset(required_categories):
         missing = sorted(REQUIRED_PROVIDER_CATEGORIES - required_categories)
@@ -225,6 +247,10 @@ def _verify_provider(provider: dict[str, Any], source: str, image: str) -> None:
 
     scope = _mapping(provider.get("scope"), "provider scope")
     _true(scope.get("real_provider_requests_performed"), "provider real_provider_requests_performed")
+    _true(
+        scope.get("runtime_identity_verified_during_provider_requests"),
+        "provider runtime_identity_verified_during_provider_requests",
+    )
     _true(scope.get("all_required_categories_passed"), "provider all_required_categories_passed")
     _false(scope.get("query_text_persisted"), "provider query_text_persisted")
     _false(scope.get("response_content_persisted"), "provider response_content_persisted")
