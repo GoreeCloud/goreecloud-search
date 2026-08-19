@@ -4,7 +4,7 @@
 
 Production-acceptance procedure. This document does not authorize cutover merely because a container starts.
 
-The current target is `goreecloud-vps-01`. The existing SearXNG runtime remains the production rollback source until GoreeCloud Search completes every mandatory gate below.
+The current target is `goreecloud-vps-01`. The current known-good GoreeCloud Search production image and preserved pre-Stable compatibility configuration remain rollback material until the final candidate completes every mandatory gate below.
 
 ## Governing deployment model
 
@@ -29,22 +29,27 @@ Only the directories actually required by the runtime should be created. Secrets
 
 The production backend must not publish an unnecessary host port. Caddy should reach `goreecloud-search:8080` through the approved external `proxy` Docker network. `goreecloud/compose.production.yml.example` records this production topology. The existing loopback-only `goreecloud/compose.yml.example` remains the preferred isolated staging topology.
 
+The Search cache is rebuildable, non-authoritative runtime state for recovery acceptance. The deployment definition, reviewed Search settings, protected runtime-configuration recovery path, Search-specific Caddy route/backend material, and immutable image identities are the application-level recovery scope that must remain reproducible.
+
 ## Phase 1 — Record rollback state before change
 
-Before modifying the current runtime, record enough evidence to recreate or restore it:
+Before modifying the current runtime, inspect the live host and record enough evidence to recreate or restore the verified pre-change state. Do not guess the current container name from historical documentation.
+
+Example inspection after identifying the actual production container:
 
 ```bash
+current_container='<verified-current-search-container>'
 sudo docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
-sudo docker inspect searxng > /tmp/searxng-pre-cutover-inspect.json
-sudo docker image inspect "$(sudo docker inspect -f '{{.Config.Image}}' searxng)" \
-  > /tmp/searxng-pre-cutover-image.json
+sudo docker inspect "$current_container" > /tmp/goreecloud-search-pre-cutover-inspect.json
+sudo docker image inspect "$(sudo docker inspect -f '{{.Config.Image}}' "$current_container")" \
+  > /tmp/goreecloud-search-pre-cutover-image.json
 ```
 
-If the current container uses another name, inspect the live runtime and substitute the verified name rather than guessing.
-
-Inspect and record the active SearXNG Compose file, settings/configuration path, environment source, Docker networks, mounts, image reference, health state, and current Caddy backend. Do not print secret values into logs or documentation.
+Inspect and record the active Compose file, settings/configuration path, protected environment source, Docker networks, mounts, immutable or resolved image reference, health state, and current Caddy backend. Do not print secret values into logs or documentation.
 
 Back up the active Caddyfile before any material route change. The currently documented active path on `goreecloud-vps-01` is `/srv/docker/caddy/Caddyfile`; inspect the live host first and use the active path actually present.
+
+The source-controlled known-good image identity is recorded in `goreecloud/release_baseline.json`. Target-host inspection must confirm the actual pre-change state before relying on any documented baseline.
 
 ## Phase 2 — Select an immutable GoreeCloud Search candidate
 
@@ -52,11 +57,13 @@ Production acceptance must identify:
 
 - exact Git commit SHA;
 - exact OCI image reference;
-- immutable image digest when a registry image is used;
-- build/CI evidence for that source revision;
+- immutable image digest;
+- build/CI and release-evidence artifacts for that source revision;
 - the GoreeCloud runtime settings derived from `goreecloud/settings.yml.example`.
 
 Do not use an unreviewed mutable `latest` tag as production provenance.
+
+The candidate-image workflow must produce `release-evidence.json` and bind the candidate source revision to the immutable GHCR digest before target acceptance begins.
 
 ## Phase 3 — Stage without replacing production
 
@@ -80,30 +87,38 @@ sudo docker compose up -d
 sudo docker compose ps
 ```
 
-The staged service must remain separate from the existing SearXNG production container and route.
+The staged service must remain separate from the current production Search runtime and route.
 
-## Phase 4 — Run target-environment acceptance
+## Phase 4 — Run candidate-bound target-environment acceptance
 
-From the exact reviewed source checkout, run:
+From the exact reviewed source checkout, run the read-only acceptance harness with the exact candidate digest and source revision. Invoke the script explicitly through Bash so the procedure does not depend on checkout executable-mode metadata:
 
 ```bash
-./goreecloud/target_acceptance.sh \
+bash goreecloud/target_acceptance.sh \
   --base-url http://127.0.0.1:8888 \
-  --container goreecloud-search
+  --container goreecloud-search \
+  --expected-image 'ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>' \
+  --expected-source '<40-character-release-source-sha>' \
+  --evidence-json target-runtime-evidence.json
 ```
 
-The harness is read-only. It validates the application identity, Preferences/About surfaces, health endpoint, privacy/security headers, Docker running/health state when Docker is available, absence of non-loopback published ports, and the representative provider suite.
+The harness validates application identity, Preferences/About surfaces, the health endpoint, privacy/security headers, Docker running/health state, loopback-only direct published ports, exact running-container image identity, OCI source/revision/license metadata, and the representative provider suite.
 
-Provider acceptance covers:
+Provider acceptance covers seven representative categories:
 
 - `general`;
 - `images`;
 - `news`;
 - `videos`;
+- `files`;
 - `it`;
 - `science`.
 
+The first-Stable required set is General, Images, Videos, News, and Files. IT and Science remain additional diagnostics.
+
 Provider failures must be classified. A rate limit, captcha, provider block, engine initialization failure, or provider-specific empty result is not automatically an application failure, but it must be recorded and evaluated before acceptance.
+
+The generated target-runtime artifact is sanitized. It proves which candidate runtime was tested but does not prove backup restoration, persistent-data recovery, route rollback, or cutover authorization.
 
 ## Phase 5 — Validate production network topology before cutover
 
@@ -146,7 +161,7 @@ An approved NetBird client must resolve `search.goreecloud.com` to the documente
 
 ## Phase 6 — Prepare the permanent production stack
 
-Use `/srv/docker/stacks/goreecloud-search/` as the stable stack name and `/srv/docker/appdata/goreecloud-search/` for required application-controlled persistent state. Use `goreecloud/compose.production.yml.example` as the reviewed production starting point.
+Use `/srv/docker/stacks/goreecloud-search/` as the stable stack name and `/srv/docker/appdata/goreecloud-search/` for required application-controlled runtime state. Use `goreecloud/compose.production.yml.example` as the reviewed production starting point.
 
 The active production Compose file must identify the immutable candidate image and join only networks required for its role. Do not attach GoreeCloud Search to unrelated Docker networks.
 
@@ -157,7 +172,7 @@ Before Caddy cutover:
 3. back up the active Caddyfile;
 4. edit only the verified Search route/backend;
 5. validate the complete Caddyfile before reload or recreation;
-6. preserve the previous SearXNG route/configuration as rollback evidence.
+6. preserve the previous verified Search route/configuration as rollback evidence.
 
 Caddy validation is mandatory:
 
@@ -172,20 +187,43 @@ Do not proceed if validation fails.
 
 Before cutover is considered complete:
 
-- update the existing Search availability monitor to identify GoreeCloud Search rather than legacy SearXNG only after the new runtime becomes authoritative;
+- update the existing Search availability monitor to identify GoreeCloud Search only at the appropriate migration point when the new runtime becomes authoritative;
 - verify alert delivery through the approved GoreeCloud monitoring/notification path;
 - include authoritative GoreeCloud Search deployment/configuration in the approved backup scope;
-- perform a representative restore into an isolated location;
+- perform a representative application-level restore into an isolated location;
 - verify the restored configuration can recreate a healthy GoreeCloud Search instance;
-- record the restore evidence and rollback procedure.
+- preserve known-good image, previous runtime configuration, and previous Search route material for rollback;
+- record the restore and rollback evidence without including reusable secrets.
 
 A provider-managed VPS backup is useful disaster-recovery protection but does not substitute for an application-level restore test.
 
+Follow `docs/goreecloud/RECOVERY-ACCEPTANCE.md`. After candidate release evidence and target-runtime evidence exist, create the candidate-bound incomplete template:
+
+```bash
+python goreecloud/recovery_evidence.py template \
+  --release-evidence release-evidence.json \
+  --target-runtime-evidence target-runtime-evidence.json \
+  --rollback-baseline goreecloud/release_baseline.json \
+  --output recovery-evidence.json
+```
+
+Only after the actual isolated restore, monitoring check, and rollback-evidence work is complete should the filled artifact pass:
+
+```bash
+python goreecloud/recovery_evidence.py validate \
+  --evidence recovery-evidence.json \
+  --release-evidence release-evidence.json \
+  --target-runtime-evidence target-runtime-evidence.json \
+  --rollback-baseline goreecloud/release_baseline.json
+```
+
+A successful recovery-evidence validation still does not authorize cutover by itself.
+
 ## Phase 8 — Controlled cutover
 
-Cutover is permitted only when all mandatory gates are green.
+Cutover is permitted only when all mandatory gates are green and the separate release decision explicitly approves the transition.
 
-After changing the Caddy backend to GoreeCloud Search, validate from an approved NetBird client:
+After changing the Caddy backend to the accepted GoreeCloud Search candidate, validate from an approved NetBird client:
 
 ```bash
 dig +short search.goreecloud.com
@@ -199,31 +237,33 @@ Repeat representative searches through the real production hostname. Check Caddy
 
 Rollback must remain possible until post-cutover acceptance is complete.
 
-If GoreeCloud Search fails a mandatory production check:
+If the candidate fails a mandatory production check:
 
 1. restore the previous verified Caddy Search backend/route;
 2. validate the complete Caddyfile;
 3. reload/recreate Caddy only as required by the actual change;
-4. confirm `https://search.goreecloud.com` reaches the previous SearXNG runtime;
-5. keep the failed GoreeCloud Search candidate isolated for diagnosis;
+4. confirm `https://search.goreecloud.com` reaches the previous verified Search runtime;
+5. keep the failed candidate isolated for diagnosis;
 6. do not delete previous configuration or recovery artifacts until the failure is understood and documented.
+
+The rollback mode recorded in recovery evidence may be an actual controlled production-route rehearsal or equivalent verified rollback evidence, as defined by `RECOVERY-ACCEPTANCE.md`. The final acceptance decision must evaluate whether the selected evidence is sufficient for the planned cutover.
 
 ## Completion criteria
 
 Production acceptance is complete only when all of the following are recorded as successful:
 
 - immutable source/image provenance;
-- healthy target-host runtime;
-- six-category representative provider suite;
+- candidate-bound healthy target-host runtime identity;
+- seven-category representative provider suite, including all five first-Stable required categories;
 - Glaze UI/browser acceptance against the deployed service;
 - private DNS, HTTPS, NetBird and Caddy behavior;
 - authorized success and unauthorized denial;
 - no unnecessary public backend port;
 - privacy/security headers and logging behavior;
 - monitoring and alert delivery;
-- backup scope and representative restore;
+- backup scope and representative isolated application restore;
 - rollback test or equivalent verified rollback evidence;
-- post-cutover production-hostname validation;
+- post-cutover production-hostname validation when cutover is actually performed;
 - authoritative GoreeCloud documentation/inventory updates.
 
-Until then, the existing SearXNG production runtime remains the rollback authority.
+Until every applicable gate is complete, the current known-good production image and preserved rollback material remain authoritative for recovery.
