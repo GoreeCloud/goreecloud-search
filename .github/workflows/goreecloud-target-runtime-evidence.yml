@@ -34,9 +34,9 @@ jobs:
         run: |
           set -euo pipefail
           bash -n goreecloud/target_acceptance.sh
-          goreecloud/target_acceptance.sh --help | grep -q -- '--expected-image'
-          goreecloud/target_acceptance.sh --help | grep -q -- '--expected-source'
-          goreecloud/target_acceptance.sh --help | grep -q -- '--evidence-json'
+          bash goreecloud/target_acceptance.sh --help | grep -q -- '--expected-image'
+          bash goreecloud/target_acceptance.sh --help | grep -q -- '--expected-source'
+          bash goreecloud/target_acceptance.sh --help | grep -q -- '--evidence-json'
 
       - name: Install deterministic mock target commands
         run: |
@@ -74,9 +74,6 @@ jobs:
               printf '%s\n' 'OK' >"$output"
               ;;
             */)
-              if printf '%s\n' "$*" | grep -q -- '--head'; then
-                :
-              fi
               cat >"$output" <<'EOF'
           <html><head><title>GoreeCloud Search</title><link href="/static/themes/simple/css/goreecloud.css"></head></html>
           EOF
@@ -147,7 +144,7 @@ jobs:
         run: |
           set -euo pipefail
           PATH="/tmp/goreecloud-target-mocks:$PATH" \
-            goreecloud/target_acceptance.sh \
+            bash goreecloud/target_acceptance.sh \
               --base-url http://127.0.0.1:8888 \
               --container goreecloud-search \
               --expected-image "$MOCK_EXPECTED_IMAGE" \
@@ -180,7 +177,7 @@ jobs:
         run: |
           set -euo pipefail
           if PATH="/tmp/goreecloud-target-mocks:$PATH" \
-            goreecloud/target_acceptance.sh \
+            bash goreecloud/target_acceptance.sh \
               --expected-image ghcr.io/goreecloud/goreecloud-search:latest \
               --expected-source 1111111111111111111111111111111111111111 \
               --skip-providers; then
@@ -192,7 +189,7 @@ jobs:
         run: |
           set -euo pipefail
           if PATH="/tmp/goreecloud-target-mocks:$PATH" \
-            goreecloud/target_acceptance.sh \
+            bash goreecloud/target_acceptance.sh \
               --expected-source 1111111111111111111111111111111111111111 \
               --skip-providers; then
             echo 'Source-only runtime identity was incorrectly accepted.' >&2
