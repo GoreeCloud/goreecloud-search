@@ -87,7 +87,7 @@ sudo docker compose up -d
 sudo docker compose ps
 ```
 
-The staged service must remain separate from the current production Search runtime and route.
+The staged service must remain separate from the current production Search runtime and route. Before first-Stable acceptance, confirm the staging container is the expected `goreecloud-search` instance and that its direct host publication is loopback-only, normally `127.0.0.1:8888`.
 
 ## Phase 4 — Run candidate-bound target-environment acceptance
 
@@ -104,6 +104,22 @@ bash goreecloud/target_acceptance.sh \
 
 The harness validates application identity, Preferences/About surfaces, the health endpoint, privacy/security headers, Docker running/health state, loopback-only direct published ports, exact running-container image identity, OCI source/revision/license metadata, and the representative provider suite.
 
+After target-runtime identity succeeds, create the separately retained first-Stable provider artifact against that **same staged container**:
+
+```bash
+python goreecloud/provider_acceptance.py \
+  --base-url http://127.0.0.1:8888 \
+  --container goreecloud-search \
+  --suite \
+  --expected-image 'ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>' \
+  --expected-source '<40-character-release-source-sha>' \
+  --evidence-json provider-evidence.json
+```
+
+Candidate-bound provider evidence fails closed unless the loopback URL and named container resolve to the exact immutable candidate. It verifies the running/healthy container, configured image reference, image ID, and OCI revision before the provider requests, repeats the identity check after the suite, and rejects the artifact if the runtime changed during acceptance.
+
+Do not use `https://search.goreecloud.com` to create pre-cutover provider evidence while that hostname still routes to the previous known-good production runtime. The production hostname is reserved for post-cutover rechecks after a separately authorized release decision.
+
 Provider acceptance covers seven representative categories:
 
 - `general`;
@@ -118,7 +134,7 @@ The first-Stable required set is General, Images, Videos, News, and Files. IT an
 
 Provider failures must be classified. A rate limit, captcha, provider block, engine initialization failure, or provider-specific empty result is not automatically an application failure, but it must be recorded and evaluated before acceptance.
 
-The generated target-runtime artifact is sanitized. It proves which candidate runtime was tested but does not prove backup restoration, persistent-data recovery, route rollback, or cutover authorization.
+The generated target-runtime and provider artifacts are sanitized. They prove which staged candidate runtime was tested, but they do not prove backup restoration, persistent-data recovery, route rollback, or cutover authorization.
 
 ## Phase 5 — Validate production network topology before cutover
 
@@ -254,7 +270,7 @@ Production acceptance is complete only when all of the following are recorded as
 
 - immutable source/image provenance;
 - candidate-bound healthy target-host runtime identity;
-- seven-category representative provider suite, including all five first-Stable required categories;
+- runtime-bound seven-category representative provider suite, including all five first-Stable required categories;
 - Glaze UI/browser acceptance against the deployed service;
 - private DNS, HTTPS, NetBird and Caddy behavior;
 - authorized success and unauthorized denial;

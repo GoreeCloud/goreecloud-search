@@ -6,6 +6,10 @@ search providers can throttle or block shared CI runners. It is intended for
 explicit acceptance runs and target-environment testing. When requested, the
 suite writes sanitized candidate-bound JSON evidence without storing query text,
 response content, cookies, credentials, or provider tokens.
+
+Candidate-bound evidence is fail-closed: the provider requests must be sent to a
+loopback-published staged container whose running image, image ID, and OCI
+revision match the exact candidate before and after the provider suite.
 """
 
 from __future__ import annotations
@@ -16,6 +20,7 @@ import html.parser
 import json
 import pathlib
 import re
+import subprocess
 import sys
 import urllib.parse
 import urllib.request
@@ -24,6 +29,7 @@ from dataclasses import asdict, dataclass
 
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 IMAGE_RE = re.compile(r"^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$")
+LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
 @dataclass(frozen=True)
@@ -41,6 +47,20 @@ class AcceptanceResult:
     result_cards: int
     engine_messages: int
     passed: bool
+
+
+@dataclass(frozen=True)
+class RuntimeIdentity:
+    container: str
+    base_url: str
+    published_port: str
+    image_reference: str
+    image_id: str
+    oci_title: str
+    oci_source: str
+    oci_revision: str
+    oci_version: str
+    oci_licenses: str
 
 
 # These categories are mandatory for first-Stable representative provider
@@ -134,7 +154,7 @@ def run_case(base_url: str, case: AcceptanceCase, minimum_results: int, timeout:
     request = urllib.request.Request(
         url,
         headers={
-            "User-Agent": "GoreeCloud-Search-Provider-Acceptance/1.1",
+            "User-Agent": "GoreeCloud-Search-Provider-Acceptance/1.2",
             "Accept": "text/html,application/xhtml+xml",
         },
     )
@@ -245,6 +265,108 @@ def _require_candidate_identity(source: str, image: str) -> tuple[str, str]:
     return source, image
 
 
+def _docker_output(*args: str) -> str:
+    try:
+        result = subprocess.run(
+            ["docker", *args],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise ValueError("Docker is required for candidate-bound provider evidence") from exc
+    except subprocess.CalledProcessError as exc:
+        detail = (exc.stderr or exc.stdout or "docker command failed").strip()
+        raise ValueError(f"Docker runtime identity check failed: {detail}") from exc
+    return result.stdout.strip()
+
+
+def _loopback_binding(base_url: str, container: str) -> str:
+    parsed = urllib.parse.urlparse(base_url)
+    if parsed.scheme not in {"http", "https"} or parsed.hostname not in LOOPBACK_HOSTS:
+        raise ValueError(
+            "candidate-bound provider evidence requires a loopback staging base URL "
+            "(127.0.0.1, localhost, or ::1)"
+        )
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    published = _docker_output("port", container)
+    accepted = {
+        f"127.0.0.1:{port}",
+        f"[::1]:{port}",
+    }
+    matching_lines = [line.strip() for line in published.splitlines() if any(item in line for item in accepted)]
+    if not matching_lines:
+        raise ValueError(
+            f"container {container!r} is not loopback-published on the provider evidence port {port}"
+        )
+    return matching_lines[0]
+
+
+def verify_runtime_identity(
+    base_url: str,
+    container: str,
+    expected_source: str,
+    expected_image: str,
+) -> RuntimeIdentity:
+    source, image = _require_candidate_identity(expected_source, expected_image)
+    if not container.strip():
+        raise ValueError("--container is required for candidate-bound provider evidence")
+
+    published_port = _loopback_binding(base_url, container)
+    running = _docker_output("inspect", "-f", "{{.State.Running}}", container)
+    health = _docker_output(
+        "inspect",
+        "-f",
+        "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}",
+        container,
+    )
+    if running != "true":
+        raise ValueError(f"provider evidence container {container!r} is not running")
+    if health != "healthy":
+        raise ValueError(f"provider evidence container {container!r} is not healthy")
+
+    observed_ref = _docker_output("inspect", "-f", "{{.Config.Image}}", container)
+    observed_id = _docker_output("inspect", "-f", "{{.Image}}", container)
+    expected_id = _docker_output("image", "inspect", "-f", "{{.Id}}", image)
+    if observed_ref != image:
+        raise ValueError("provider evidence container image reference is not the immutable expected image")
+    if observed_id != expected_id:
+        raise ValueError("provider evidence container image ID does not match the expected digest image")
+
+    def label(name: str) -> str:
+        return _docker_output("image", "inspect", "-f", f'{{{{ index .Config.Labels "{name}" }}}}', image)
+
+    title = label("org.opencontainers.image.title")
+    source_url = label("org.opencontainers.image.source")
+    revision = label("org.opencontainers.image.revision")
+    version = label("org.opencontainers.image.version")
+    licenses = label("org.opencontainers.image.licenses")
+
+    if title != "GoreeCloud Search":
+        raise ValueError("provider evidence candidate OCI title is not GoreeCloud Search")
+    if source_url != "https://github.com/GoreeCloud/goreecloud-search":
+        raise ValueError("provider evidence candidate OCI source is not the GoreeCloud Search repository")
+    if revision != source:
+        raise ValueError("provider evidence candidate OCI revision does not match the expected source")
+    if not version:
+        raise ValueError("provider evidence candidate OCI version is empty")
+    if licenses != "AGPL-3.0-or-later":
+        raise ValueError("provider evidence candidate OCI license is not AGPL-3.0-or-later")
+
+    return RuntimeIdentity(
+        container=container,
+        base_url=base_url.rstrip("/"),
+        published_port=published_port,
+        image_reference=observed_ref,
+        image_id=observed_id,
+        oci_title=title,
+        oci_source=source_url,
+        oci_revision=revision,
+        oci_version=version,
+        oci_licenses=licenses,
+    )
+
+
 def write_evidence(
     path: str,
     expected_source: str,
@@ -252,6 +374,7 @@ def write_evidence(
     minimum_results: int,
     suite_code: int,
     results: list[AcceptanceResult],
+    runtime_identity: RuntimeIdentity,
 ) -> None:
     source, image = _require_candidate_identity(expected_source, expected_image)
     result_by_category = {result.category: result for result in results}
@@ -267,20 +390,31 @@ def write_evidence(
             "source_revision": source,
             "image": image,
         },
+        "runtime_binding": {
+            "verified_before_and_after_requests": True,
+            "base_url": runtime_identity.base_url,
+            "container": runtime_identity.container,
+            "published_port": runtime_identity.published_port,
+            "observed_image_reference": runtime_identity.image_reference,
+            "observed_image_id": runtime_identity.image_id,
+            "oci_revision": runtime_identity.oci_revision,
+        },
         "minimum_results": minimum_results,
         "required_categories": sorted(RELEASE_REQUIRED_CATEGORIES),
         "results": [asdict(result) for result in results],
         "scope": {
             "real_provider_requests_performed": True,
+            "runtime_identity_verified_during_provider_requests": True,
             "all_required_categories_passed": required_passed,
             "full_diagnostic_suite_passed": suite_code == 0,
             "query_text_persisted": False,
             "response_content_persisted": False,
             "production_cutover_authorized": False,
             "statement": (
-                "This artifact records sanitized real-provider acceptance for one exact GoreeCloud Search "
-                "candidate. Provider availability can change after capture, and this artifact does not "
-                "independently authorize production cutover."
+                "This artifact records sanitized real-provider acceptance against one loopback-staged, "
+                "identity-verified GoreeCloud Search candidate. Runtime identity is checked before and after "
+                "the provider requests. Provider availability can change after capture, and this artifact "
+                "does not independently authorize production cutover."
             ),
         },
     }
@@ -306,6 +440,11 @@ def main() -> int:
     parser.add_argument("--expected-source", default="")
     parser.add_argument("--expected-image", default="")
     parser.add_argument(
+        "--container",
+        default="",
+        help="Running loopback-staged Docker container to bind candidate provider evidence to.",
+    )
+    parser.add_argument(
         "--evidence-json",
         default="",
         help="Write sanitized candidate-bound suite evidence to this JSON path.",
@@ -316,10 +455,37 @@ def main() -> int:
         parser.error("--evidence-json requires --suite")
     if args.evidence_json and (not args.expected_source or not args.expected_image):
         parser.error("--evidence-json requires --expected-source and --expected-image")
+    if args.evidence_json and not args.container:
+        parser.error("--evidence-json requires --container for runtime identity binding")
 
     if args.suite:
-        code, results = run_suite(args.base_url, args.minimum_results, args.timeout)
+        runtime_before: RuntimeIdentity | None = None
         if args.evidence_json:
+            try:
+                runtime_before = verify_runtime_identity(
+                    args.base_url,
+                    args.container,
+                    args.expected_source,
+                    args.expected_image,
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+
+        code, results = run_suite(args.base_url, args.minimum_results, args.timeout)
+
+        if args.evidence_json:
+            assert runtime_before is not None
+            try:
+                runtime_after = verify_runtime_identity(
+                    args.base_url,
+                    args.container,
+                    args.expected_source,
+                    args.expected_image,
+                )
+            except ValueError as exc:
+                parser.error(str(exc))
+            if runtime_after != runtime_before:
+                parser.error("provider evidence runtime identity changed during the provider suite")
             try:
                 write_evidence(
                     args.evidence_json,
@@ -328,6 +494,7 @@ def main() -> int:
                     args.minimum_results,
                     code,
                     results,
+                    runtime_after,
                 )
             except ValueError as exc:
                 parser.error(str(exc))

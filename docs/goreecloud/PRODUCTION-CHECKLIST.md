@@ -11,6 +11,8 @@ Use this as the short operational companion to `TARGET-ACCEPTANCE.md`, `STABLE-C
 - [ ] Candidate-bound `bash goreecloud/target_acceptance.sh` passes against the staged target-host instance with exact digest/source identity.
 - [ ] Sanitized target-runtime evidence is retained with the candidate evidence set.
 - [ ] Representative `general`, `images`, `news`, `videos`, `files`, `it`, and `science` searches are accepted or provider-specific failures are classified.
+- [ ] Candidate-bound real-provider evidence is generated against the same loopback-staged container rather than the pre-cutover production hostname.
+- [ ] Provider evidence proves the staged container is the exact immutable candidate before and after the provider requests, including matching image reference/image ID and OCI source revision.
 - [ ] Candidate-bound real-provider evidence JSON is retained for the exact final source/image.
 - [ ] All five first-Stable required provider categories—General, Images, Videos, News, and Files—have passing final-candidate evidence.
 - [ ] Glaze UI 1.1 is accepted on deployed Compact, Medium, Expanded and Wide layouts.
@@ -33,6 +35,7 @@ Use this as the short operational companion to `TARGET-ACCEPTANCE.md`, `STABLE-C
 - [ ] Protected runtime-configuration recovery path is verified without placing secret values in evidence.
 - [ ] Representative application-level restore/recreation succeeds in isolation.
 - [ ] Completed recovery evidence validates against the exact release evidence, target-runtime evidence, and rollback baseline.
+- [ ] Final-candidate evidence manifest rejects provider artifacts without verified staged runtime binding.
 - [ ] Final-candidate evidence manifest validates against the exact release, target-runtime, recovery, and provider artifacts.
 - [ ] Final-candidate evidence manifest records Glaze UI 1.1 and Browser runtime acceptance as complete while keeping `production_cutover_authorized` false.
 - [ ] Caddy validation succeeds before any route change.

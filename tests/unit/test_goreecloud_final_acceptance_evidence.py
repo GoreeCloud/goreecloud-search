@@ -78,6 +78,15 @@ def _artifacts(directory: Path) -> dict[str, Path]:
             "schema_version": 1,
             "product": "GoreeCloud Search",
             "candidate": {"source_revision": SOURCE, "image": IMAGE},
+            "runtime_binding": {
+                "verified_before_and_after_requests": True,
+                "base_url": "http://127.0.0.1:8888",
+                "container": "goreecloud-search",
+                "published_port": "8080/tcp -> 127.0.0.1:8888",
+                "observed_image_reference": IMAGE,
+                "observed_image_id": "sha256:" + "d" * 64,
+                "oci_revision": SOURCE,
+            },
             "required_categories": REQUIRED,
             "results": [
                 {
@@ -93,6 +102,7 @@ def _artifacts(directory: Path) -> dict[str, Path]:
             ],
             "scope": {
                 "real_provider_requests_performed": True,
+                "runtime_identity_verified_during_provider_requests": True,
                 "all_required_categories_passed": True,
                 "full_diagnostic_suite_passed": True,
                 "query_text_persisted": False,
@@ -194,7 +204,27 @@ def test_final_acceptance_template_and_validation() -> None:
         assert "production_cutover_authorized must remain false" in unsafe.stderr
 
 
-def test_provider_runner_advertises_candidate_bound_evidence_without_network_access() -> None:
+def test_final_acceptance_rejects_provider_evidence_without_runtime_binding() -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        directory = Path(temporary)
+        artifacts = _artifacts(directory)
+        provider = json.loads(artifacts["provider"].read_text(encoding="utf-8"))
+        provider.pop("runtime_binding")
+        _write(artifacts["provider"], provider)
+
+        final = directory / "final.json"
+        rejected = subprocess.run(
+            _command(artifacts, "template", "--output", str(final)),
+            check=False,
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert rejected.returncode != 0
+        assert "provider runtime_binding must be a JSON object" in rejected.stderr
+
+
+def test_provider_runner_advertises_runtime_bound_evidence_without_network_access() -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "goreecloud/provider_acceptance.py"), "--help"],
         check=True,
@@ -205,8 +235,11 @@ def test_provider_runner_advertises_candidate_bound_evidence_without_network_acc
     assert "--evidence-json" in result.stdout
     assert "--expected-source" in result.stdout
     assert "--expected-image" in result.stdout
+    assert "--container" in result.stdout
 
     source = (ROOT / "goreecloud/provider_acceptance.py").read_text(encoding="utf-8")
+    assert '"verified_before_and_after_requests": True' in source
+    assert '"runtime_identity_verified_during_provider_requests": True' in source
     assert '"query_text_persisted": False' in source
     assert '"response_content_persisted": False' in source
     assert '"production_cutover_authorized": False' in source
@@ -214,7 +247,8 @@ def test_provider_runner_advertises_candidate_bound_evidence_without_network_acc
 
 def run_contract_checks() -> None:
     test_final_acceptance_template_and_validation()
-    test_provider_runner_advertises_candidate_bound_evidence_without_network_access()
+    test_final_acceptance_rejects_provider_evidence_without_runtime_binding()
+    test_provider_runner_advertises_runtime_bound_evidence_without_network_access()
 
 
 if __name__ == "__main__":
