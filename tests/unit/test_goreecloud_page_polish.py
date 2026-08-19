@@ -43,6 +43,22 @@ def test_preferences_surface_uses_goreecloud_language_and_actions():
     assert 'Oscar layout' not in alignment
 
 
+def test_preferences_cookie_empty_state_is_clear_and_accessible():
+    cookies = _read("searx/templates/simple/preferences/cookies.html")
+    empty_state = _read("searx/templates/simple/messages/no_cookies.html")
+
+    assert "{% include 'simple/messages/no_cookies.html' %}" in cookies
+    assert 'goreecloud-feedback goreecloud-preferences-empty' in empty_state
+    assert 'role="status"' in empty_state
+    assert 'aria-live="polite"' in empty_state
+    assert 'aria-labelledby="goreecloud-no-cookies-title"' in empty_state
+    assert 'No saved preference cookies' in empty_state
+    assert 'GoreeCloud Search has no saved preference cookies to display for this browser.' in empty_state
+    assert 'preference URL and restore tools below' in empty_state
+    assert 'Information!' not in empty_state
+    assert 'currently, there are no cookies defined.' not in empty_state
+
+
 def test_preferences_tabs_keep_native_keyboard_semantics():
     preferences = _read("searx/templates/simple/preferences.html")
     compact = _read("searx/static/themes/simple/goreecloud-page-compact.css")
@@ -92,6 +108,7 @@ def run_contract_checks() -> None:
     """Allow this contract to run without adding a test-runner dependency."""
     test_landing_page_has_single_search_shell_and_product_principles()
     test_preferences_surface_uses_goreecloud_language_and_actions()
+    test_preferences_cookie_empty_state_is_clear_and_accessible()
     test_preferences_tabs_keep_native_keyboard_semantics()
     test_page_polish_stylesheet_is_last_goreecloud_visual_layer()
 
