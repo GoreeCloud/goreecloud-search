@@ -1,0 +1,44 @@
+---
+name: GoreeCloud provider diagnostics contract
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - 'searx/templates/simple/stats.html'
+      - 'searx/templates/simple/base.html'
+      - 'searx/static/themes/simple/goreecloud-provider-diagnostics.css'
+      - 'tests/unit/test_goreecloud_provider_diagnostics.py'
+      - '.github/workflows/goreecloud-provider-diagnostics-contract.yml'
+  push:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - 'searx/templates/simple/stats.html'
+      - 'searx/templates/simple/base.html'
+      - 'searx/static/themes/simple/goreecloud-provider-diagnostics.css'
+      - 'tests/unit/test_goreecloud_provider_diagnostics.py'
+      - '.github/workflows/goreecloud-provider-diagnostics-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  provider-diagnostics-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate sanitized provider diagnostics
+        run: python tests/unit/test_goreecloud_provider_diagnostics.py
