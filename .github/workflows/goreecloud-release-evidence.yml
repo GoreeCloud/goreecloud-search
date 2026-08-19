@@ -59,8 +59,10 @@ jobs:
             goreecloud/candidate_request.json
           python tests/unit/test_goreecloud_candidate_request.py
 
-      - name: Bind candidate request to reviewed pull-request base
-        if: github.event_name == 'pull_request'
+      - name: Bind candidate request to reviewed stabilization PR base
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.base_ref == 'agent/mobile-stabilization'
         run: |
           set -euo pipefail
           python goreecloud/candidate_request.py \
