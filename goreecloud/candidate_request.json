@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "product": "GoreeCloud Search",
+  "request_id": "first-stable-2026-08-19-01",
+  "requested_at": "2026-08-19T07:35:00-05:00",
+  "request": "publish-and-rehearse-final-candidate",
+  "reviewed_base_revision": "1bb26fba7a4b1658442e1dd872a0ea170abe141f",
+  "production_cutover_authorized": false,
+  "stable_release_authorized": false,
+  "target_host_change_authorized": false,
+  "statement": "This request authorizes immutable candidate publication and isolated image-level rehearsal only. It does not authorize production cutover, Stable promotion, target-host changes, compatibility-name retirement, or rollback-material deletion."
+}
