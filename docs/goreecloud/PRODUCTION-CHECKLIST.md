@@ -1,6 +1,6 @@
 # GoreeCloud Search Production Checklist
 
-Use this as the short operational companion to `TARGET-ACCEPTANCE.md`, `STABLE-CUTOVER.md`, and `RECOVERY-ACCEPTANCE.md`.
+Use this as the short operational companion to `TARGET-ACCEPTANCE.md`, `STABLE-CUTOVER.md`, `RECOVERY-ACCEPTANCE.md`, and `FINAL-ACCEPTANCE.md`.
 
 - [ ] Exact release source SHA recorded.
 - [ ] Exact immutable candidate image reference/digest recorded.
@@ -11,11 +11,17 @@ Use this as the short operational companion to `TARGET-ACCEPTANCE.md`, `STABLE-C
 - [ ] Candidate-bound `bash goreecloud/target_acceptance.sh` passes against the staged target-host instance with exact digest/source identity.
 - [ ] Sanitized target-runtime evidence is retained with the candidate evidence set.
 - [ ] Representative `general`, `images`, `news`, `videos`, `files`, `it`, and `science` searches are accepted or provider-specific failures are classified.
-- [ ] All five first-Stable required provider categories—General, Images, Videos, News, and Files—have acceptable final-candidate evidence.
-- [ ] Glaze UI is accepted on deployed Compact, Medium, Expanded and Wide layouts.
+- [ ] Candidate-bound real-provider evidence JSON is retained for the exact final source/image.
+- [ ] All five first-Stable required provider categories—General, Images, Videos, News, and Files—have passing final-candidate evidence.
+- [ ] Glaze UI 1.1 is accepted on deployed Compact, Medium, Expanded and Wide layouts.
+- [ ] Compact light and Compact dark final-candidate visual evidence is retained.
+- [ ] Expanded light and Expanded dark final-candidate visual evidence is retained.
 - [ ] Physical Android/mobile Preferences review is complete.
 - [ ] Desktop regression/final visual review is complete.
 - [ ] GoreeCloud Browser runtime integration uses GoreeCloud Search as the only/default browser search provider and has no silent external fallback.
+- [ ] Exact GoreeCloud Browser source revision and Browser runtime acceptance evidence reference are recorded.
+- [ ] Browser address-bar, new-tab, and dedicated search-field queries all route through GoreeCloud Search.
+- [ ] Browser Search-unavailability and recovery behavior is verified without external provider bypass.
 - [ ] Private DNS resolves the approved endpoint.
 - [ ] Caddy serves a trusted certificate for `search.goreecloud.com`.
 - [ ] Approved NetBird clients succeed and unapproved sources are denied.
@@ -27,6 +33,8 @@ Use this as the short operational companion to `TARGET-ACCEPTANCE.md`, `STABLE-C
 - [ ] Protected runtime-configuration recovery path is verified without placing secret values in evidence.
 - [ ] Representative application-level restore/recreation succeeds in isolation.
 - [ ] Completed recovery evidence validates against the exact release evidence, target-runtime evidence, and rollback baseline.
+- [ ] Final-candidate evidence manifest validates against the exact release, target-runtime, recovery, and provider artifacts.
+- [ ] Final-candidate evidence manifest records Glaze UI 1.1 and Browser runtime acceptance as complete while keeping `production_cutover_authorized` false.
 - [ ] Caddy validation succeeds before any route change.
 - [ ] Rollback procedure is verified and previous known-good Search state remains recoverable.
 - [ ] Production hostname passes post-cutover identity, health and representative-search checks when cutover is actually performed.
