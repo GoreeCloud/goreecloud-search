@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Deterministic provider-failure degradation acceptance for GoreeCloud Search.
 
-The paired CI runtime contains exactly two providers: one healthy local fixture
-and one intentionally unreachable local provider. This proves that a provider
-failure is contained inside GoreeCloud Search while healthy-provider results and
-the GoreeCloud product shell remain usable.
+The isolated CI runtime contains exactly two providers: one deterministic
+healthy offline provider and one intentionally unreachable online provider.
+This proves that an upstream-style provider failure is contained inside
+GoreeCloud Search while healthy-provider results and the GoreeCloud product
+shell remain usable. The healthy provider is deliberately offline so the test
+does not weaken Search's outbound-network protections just to create a fixture.
 """
 
 from __future__ import annotations
