@@ -13,25 +13,42 @@ Final-candidate acceptance uses five evidence inputs for one exact GoreeCloud Se
 1. immutable release evidence;
 2. target-runtime identity evidence;
 3. completed recovery/monitoring/rollback evidence;
-4. real-provider acceptance evidence;
+4. runtime-bound real-provider acceptance evidence;
 5. the final manual Glaze UI and GoreeCloud Browser runtime acceptance record.
 
-The final record hashes and binds the first four artifacts. It must refer to the same exact source revision and immutable GoreeCloud Search image as the release candidate.
+The final record hashes and binds the first four artifacts. They must all refer to the same exact source revision and immutable GoreeCloud Search image as the release candidate.
+
+Provider evidence is not candidate-bound merely because an operator supplies a candidate SHA and image digest on the command line. The provider requests themselves must execute against the same identity-verified staged candidate runtime.
 
 ## Real-provider evidence
 
-Run the representative suite against the intentionally staged final candidate. The candidate source and image values must come from the release evidence, not from a mutable tag or an operator assumption.
+Run the representative suite on the target host against the intentionally staged final candidate, **not** against the still-authoritative production hostname before cutover. The candidate source and image values must come from the release evidence, not from a mutable tag or an operator assumption.
+
+The preferred pre-cutover staging topology is the loopback-only instance defined by `TARGET-ACCEPTANCE.md`:
 
 ```bash
 python goreecloud/provider_acceptance.py \
-  --base-url https://search.goreecloud.com \
+  --base-url http://127.0.0.1:8888 \
+  --container goreecloud-search \
   --suite \
   --expected-source '<40-character-candidate-source-sha>' \
   --expected-image 'ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>' \
   --evidence-json provider-evidence.json
 ```
 
-The generated artifact records category, HTTP status, GoreeCloud Search identity, result-card count, engine-message count, pass/fail state, and the exact candidate identity. It intentionally does **not** retain query text, response content, cookies, credentials, provider tokens, or reusable secrets.
+When `--evidence-json` is requested, the provider runner fails closed unless it can verify that:
+
+- the base URL is loopback-only;
+- the named Docker container is actually published on that loopback port;
+- the container is running and healthy;
+- its configured image reference is the exact immutable candidate image;
+- its running image ID matches that digest image;
+- the candidate OCI title, source, revision, version, and license metadata are valid; and
+- the exact runtime identity remains unchanged before and after the provider requests.
+
+The generated artifact records the sanitized runtime binding plus category, HTTP status, GoreeCloud Search identity, result-card count, engine-message count, pass/fail state, and the exact candidate identity. It intentionally does **not** retain query text, response content, cookies, credentials, provider tokens, or reusable secrets.
+
+`https://search.goreecloud.com` remains the production path until a separately authorized cutover. It may be used for post-cutover production rechecks, but it must not be used to create pre-cutover final-candidate provider evidence while it still routes to the previous known-good runtime.
 
 The first-Stable required provider categories are:
 
@@ -55,6 +72,8 @@ python goreecloud/final_acceptance_evidence.py template \
   --provider-evidence provider-evidence.json \
   --output final-acceptance-evidence.json
 ```
+
+The final-evidence validator rejects provider artifacts that lack the staged runtime binding, that do not prove runtime identity before and after the provider requests, or that refer to a different source/image.
 
 The generated template is intentionally incomplete. Its manual fields default to false and must not be changed until the corresponding review is actually performed against that same final candidate.
 
@@ -104,6 +123,8 @@ Validation fails closed if:
 
 - any bound artifact refers to another candidate;
 - any bound artifact has changed since the final template was created;
+- provider evidence lacks verified before/after staged runtime identity binding;
+- provider evidence does not identify the exact immutable candidate image and source revision;
 - any required provider category lacks a passing result;
 - the completed recovery artifact does not prove restore, monitoring/alerting, and rollback evidence;
 - any of the four required Glaze UI 1.1 appearance reviews is incomplete;
