@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - agent/production-acceptance
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,7 +15,7 @@ permissions:
 jobs:
   candidate-image:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
 
     steps:
       - name: Check out exact revision
@@ -22,6 +23,21 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+
+      - name: Validate immutable rollback baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python goreecloud/release_evidence.py validate-baseline \
+            goreecloud/release_baseline.json
+          rollback_image="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path('goreecloud/release_baseline.json').read_text())
+          print(data['image'])
+          PY
+          )"
+          printf 'GOREECLOUD_ROLLBACK_IMAGE=%s\n' "$rollback_image" >> "$GITHUB_ENV"
 
       - name: Build GoreeCloud Search candidate
         shell: bash
@@ -34,15 +50,23 @@ jobs:
         run: |
           set -euo pipefail
           image='localhost/goreecloud/searxng:latest'
-          test "$(podman image inspect --format \
-            '{{ index .Labels "org.opencontainers.image.title" }}' "$image")" \
-            = 'GoreeCloud Search'
-          test "$(podman image inspect --format \
-            '{{ index .Labels "org.opencontainers.image.licenses" }}' "$image")" \
-            = 'AGPL-3.0-or-later'
-          test "$(podman image inspect --format \
-            '{{ index .Labels "org.opencontainers.image.source" }}' "$image")" \
-            = 'https://github.com/GoreeCloud/goreecloud-search'
+          title="$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.title" }}' "$image")"
+          licenses="$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.licenses" }}' "$image")"
+          source="$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.source" }}' "$image")"
+          revision="$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.revision" }}' "$image")"
+          version="$(podman image inspect --format \
+            '{{ index .Labels "org.opencontainers.image.version" }}' "$image")"
+          test "$title" = 'GoreeCloud Search'
+          test "$licenses" = 'AGPL-3.0-or-later'
+          test "$source" = 'https://github.com/GoreeCloud/goreecloud-search'
+          test "$revision" = "$GITHUB_SHA"
+          test -n "$version"
+          printf 'GOREECLOUD_CANDIDATE_OCI_REVISION=%s\n' "$revision" >> "$GITHUB_ENV"
+          printf 'GOREECLOUD_CANDIDATE_OCI_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
 
       - name: Authenticate to GHCR
         shell: bash
@@ -64,16 +88,117 @@ jobs:
           podman tag "$source_image" "$target"
           podman push --digestfile /tmp/candidate-digest "$target"
           digest="$(cat /tmp/candidate-digest)"
-          printf 'Published %s@%s\n' \
-            'ghcr.io/goreecloud/goreecloud-search' "$digest"
-          printf '%s@%s\n' \
-            'ghcr.io/goreecloud/goreecloud-search' "$digest" \
-            > candidate-image.txt
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          candidate="ghcr.io/goreecloud/goreecloud-search@${digest}"
+          printf 'Published %s\n' "$candidate"
+          printf '%s\n' "$candidate" > candidate-image.txt
+          printf 'GOREECLOUD_CANDIDATE_IMAGE=%s\n' "$candidate" >> "$GITHUB_ENV"
 
-      - name: Upload candidate identity
+      - name: Verify candidate and rollback registry retrieval
+        shell: bash
+        run: |
+          set -euo pipefail
+          podman pull "$GOREECLOUD_CANDIDATE_IMAGE"
+          podman image inspect "$GOREECLOUD_CANDIDATE_IMAGE" >/dev/null
+          podman pull "$GOREECLOUD_ROLLBACK_IMAGE"
+          podman image inspect "$GOREECLOUD_ROLLBACK_IMAGE" >/dev/null
+
+      - name: Prepare isolated runtime configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-release-searxng
+          cp goreecloud/settings.yml.example .ci-release-searxng/settings.yml
+
+      - name: Rehearse candidate and image-level rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          run_acceptance() {
+            name="$1"
+            port="$2"
+            image="$3"
+            log="/tmp/${name}.log"
+
+            podman run --detach \
+              --name "$name" \
+              --publish "127.0.0.1:${port}:8080" \
+              --env SEARXNG_SECRET=goreecloud-release-evidence-only-secret \
+              --env FORCE_OWNERSHIP=false \
+              --volume "$PWD/.ci-release-searxng:/etc/searxng:ro" \
+              "$image" >"$log"
+
+            ready=0
+            for attempt in $(seq 1 60); do
+              if curl --fail --silent --show-error \
+                "http://127.0.0.1:${port}/" >"/tmp/${name}-index.html" \
+                && curl --fail --silent --show-error \
+                "http://127.0.0.1:${port}/healthz" >"/tmp/${name}-healthz.txt"; then
+                ready=1
+                break
+              fi
+              if [ "$(podman inspect -f '{{.State.Running}}' "$name" 2>/dev/null || true)" != 'true' ]; then
+                podman logs "$name" || true
+                return 1
+              fi
+              sleep 1
+            done
+            test "$ready" = '1'
+            grep -q '<title>GoreeCloud Search</title>' "/tmp/${name}-index.html"
+            grep -q 'goreecloud.css' "/tmp/${name}-index.html"
+            podman rm --force "$name" >/dev/null
+          }
+
+          run_acceptance \
+            goreecloud-search-candidate-evidence 8888 \
+            "$GOREECLOUD_CANDIDATE_IMAGE"
+          run_acceptance \
+            goreecloud-search-rollback-evidence 8889 \
+            "$GOREECLOUD_ROLLBACK_IMAGE"
+
+      - name: Write release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python goreecloud/release_evidence.py write \
+            --rollback-baseline goreecloud/release_baseline.json \
+            --source-sha "$GITHUB_SHA" \
+            --candidate-image "$GOREECLOUD_CANDIDATE_IMAGE" \
+            --candidate-oci-revision "$GOREECLOUD_CANDIDATE_OCI_REVISION" \
+            --candidate-oci-version "$GOREECLOUD_CANDIDATE_OCI_VERSION" \
+            --output release-evidence.json
+          cp goreecloud/release_baseline.json release-baseline.json
+          sha256sum \
+            candidate-image.txt \
+            release-evidence.json \
+            release-baseline.json \
+            > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Show runtime diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          podman ps -a || true
+          podman logs goreecloud-search-candidate-evidence || true
+          podman logs goreecloud-search-rollback-evidence || true
+
+      - name: Clean isolated evidence containers
+        if: always()
+        shell: bash
+        run: |
+          podman rm --force goreecloud-search-candidate-evidence || true
+          podman rm --force goreecloud-search-rollback-evidence || true
+
+      - name: Upload candidate release evidence
         uses: actions/upload-artifact@v4
         with:
           name: goreecloud-search-candidate-${{ github.sha }}
-          path: candidate-image.txt
+          path: |
+            candidate-image.txt
+            release-evidence.json
+            release-baseline.json
+            SHA256SUMS
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
