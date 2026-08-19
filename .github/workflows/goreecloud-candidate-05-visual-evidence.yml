@@ -8,6 +8,11 @@ on:
       - agent/candidate-05-visual-evidence
     paths:
       - '.github/workflows/goreecloud-candidate-05-visual-evidence.yml'
+  pull_request:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - '.github/workflows/goreecloud-candidate-05-visual-evidence.yml'
   workflow_dispatch:
 
 permissions:
