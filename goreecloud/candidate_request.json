@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "product": "GoreeCloud Search",
-  "request_id": "first-stable-2026-08-19-03",
-  "requested_at": "2026-08-19T08:13:11-05:00",
+  "request_id": "first-stable-2026-08-19-04",
+  "requested_at": "2026-08-19T08:48:15-05:00",
   "request": "publish-and-rehearse-final-candidate",
-  "reviewed_base_revision": "01a193a15a4b6e80506a45d9664a3f44b444e669",
+  "reviewed_base_revision": "4e2847ee926c6ec20ecb6494093f57a764e6dbc9",
   "production_cutover_authorized": false,
   "stable_release_authorized": false,
   "target_host_change_authorized": false,
-  "statement": "This request authorizes immutable candidate publication and isolated image-level rehearsal only. It does not authorize production cutover, Stable promotion, target-host changes, compatibility-name retirement, or rollback-material deletion."
+  "statement": "This request authorizes immutable candidate publication and isolated image-level rehearsal only after runtime-bound provider evidence hardening. It does not authorize production cutover, Stable promotion, target-host changes, compatibility-name retirement, or rollback-material deletion."
 }
