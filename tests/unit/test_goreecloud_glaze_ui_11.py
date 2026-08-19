@@ -17,7 +17,7 @@ def test_runtime_records_exact_glaze_ui_version_and_viewport_contract():
     base = _read("searx/templates/simple/base.html")
 
     assert f'<meta name="goreecloud-glaze-ui" content="{CANONICAL_VERSION}">' in base
-    assert 'viewport-fit=cover' in base
+    assert "viewport-fit=cover" in base
     assert "goreecloud-glaze-1.1.css" in base
     assert base.index("goreecloud-glaze-1.1.css") > base.index("goreecloud-page-compact.css")
 
@@ -108,6 +108,15 @@ def test_conformance_record_is_version_specific_and_does_not_overclaim_visual_ac
     assert "only when" in record
 
 
+def test_first_stable_gate_requires_glaze_11_visuals_and_files_provider_acceptance():
+    stable = _read("docs/goreecloud/STABLE-CUTOVER.md")
+
+    assert "Glaze UI 1.1 acceptance" in stable
+    assert "Compact and Expanded" in stable
+    assert "light and dark" in stable
+    assert "General, Images, Videos, News, and Files" in stable
+
+
 def run_contract_checks() -> None:
     """Allow this contract to run without adding a test-runner dependency."""
     test_runtime_records_exact_glaze_ui_version_and_viewport_contract()
@@ -115,6 +124,7 @@ def run_contract_checks() -> None:
     test_glaze_ui_11_interaction_accessibility_and_resilience_contracts_exist()
     test_glaze_ui_11_layer_has_no_remote_ui_dependency()
     test_conformance_record_is_version_specific_and_does_not_overclaim_visual_acceptance()
+    test_first_stable_gate_requires_glaze_11_visuals_and_files_provider_acceptance()
 
 
 if __name__ == "__main__":
