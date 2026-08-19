@@ -107,6 +107,12 @@ body {
   padding-right: max(1rem, var(--gc-safe-right));
 }
 
+.goreecloud-page-header,
+.goreecloud-page.page_with_header,
+.goreecloud-results-context {
+  box-sizing: border-box;
+}
+
 #links_on_top a,
 .category label,
 .goreecloud-action,
@@ -145,12 +151,6 @@ body {
 .goreecloud-action-primary,
 .goreecloud-empty-state-mark {
   color: var(--gc-on-accent) !important;
-}
-
-.result .engines,
-.goreecloud-results-meta,
-.goreecloud-empty-state-note {
-  opacity: var(--gc-opacity-quiet);
 }
 
 button:disabled,
