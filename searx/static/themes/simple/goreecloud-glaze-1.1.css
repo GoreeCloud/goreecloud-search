@@ -1,0 +1,231 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/*
+ * GoreeCloud Search — Glaze UI 1.1 semantic conformance layer.
+ * Canonical Glaze UI version: 1.1.0
+ * Canonical Glaze UI source: 5c8320de4f770614a3e2bcf9de2a27f7fcfd920c
+ *
+ * This stylesheet intentionally augments the established Search-specific Glaze composition
+ * rather than replacing the previously accepted product layout. It maps the additional
+ * Glaze UI 1.1 semantic contract into the maintained SearXNG-derived web surface.
+ */
+
+:root {
+  --gc-glaze-version: "1.1.0";
+
+  /* Expanded semantic color roles. */
+  --gc-on-accent: #ffffff;
+  --gc-info: #2463d4;
+  --gc-scrim: rgba(8, 18, 34, 0.42);
+
+  /* Glaze UI 1.1 shared interaction state layers. */
+  --gc-state-hover: 8%;
+  --gc-state-pressed: 12%;
+  --gc-state-focus: 14%;
+  --gc-state-selected: 12%;
+
+  /* Shared spacing scale. */
+  --gc-space-1: 0.25rem;
+  --gc-space-2: 0.5rem;
+  --gc-space-3: 0.75rem;
+  --gc-space-4: 1rem;
+  --gc-space-5: 1.25rem;
+  --gc-space-6: 1.5rem;
+  --gc-space-8: 2rem;
+  --gc-space-10: 2.5rem;
+  --gc-space-12: 3rem;
+  --gc-space-16: 4rem;
+
+  /* Additional radius, icon, density, and elevation roles. */
+  --gc-radius-2xl: 32px;
+  --gc-radius-pill: 999px;
+  --gc-icon-sm: 16px;
+  --gc-icon-md: 20px;
+  --gc-icon-lg: 24px;
+  --gc-icon-xl: 32px;
+  --gc-density-control-compact: 12px;
+  --gc-density-control-comfortable: 16px;
+  --gc-density-gap-compact: 8px;
+  --gc-density-gap-comfortable: 12px;
+  --gc-blur-glaze: 22px;
+  --gc-blur-overlay: 28px;
+  --gc-opacity-disabled: 0.55;
+  --gc-opacity-quiet: 0.72;
+  --gc-shadow-overlay: 0 28px 80px rgba(0, 0, 0, 0.22);
+
+  /* Typography and layout semantics. */
+  --gc-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --gc-type-caption: 12px;
+  --gc-type-label: 13px;
+  --gc-type-small: 14px;
+  --gc-type-body: 16px;
+  --gc-type-body-large: 18px;
+  --gc-type-title-small: 20px;
+  --gc-type-title: 28px;
+  --gc-type-headline: 32px;
+  --gc-type-display: 38px;
+  --gc-line-body: 1.55;
+  --gc-line-tight: 1.1;
+  --gc-weight-regular: 400;
+  --gc-weight-medium: 600;
+  --gc-weight-strong: 700;
+  --gc-weight-emphasis: 800;
+  --gc-content-max: 1180px;
+  --gc-reading-max: 760px;
+  --gc-gutter-compact: 16px;
+  --gc-gutter-medium: 24px;
+  --gc-gutter-expanded: 32px;
+  --gc-gutter-wide: 40px;
+
+  /* Layering and safe-area semantics. */
+  --gc-z-base: 0;
+  --gc-z-raised: 10;
+  --gc-z-navigation: 100;
+  --gc-z-scrim: 900;
+  --gc-z-overlay: 1000;
+  --gc-z-toast: 1100;
+  --gc-safe-top: env(safe-area-inset-top, 0px);
+  --gc-safe-right: env(safe-area-inset-right, 0px);
+  --gc-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --gc-safe-left: env(safe-area-inset-left, 0px);
+}
+
+html.theme-dark,
+html.theme-black {
+  --gc-on-accent: #0b1020;
+  --gc-info: #8ab4ff;
+  --gc-scrim: rgba(0, 0, 0, 0.62);
+}
+
+body {
+  font-family: var(--gc-font-family);
+  padding-bottom: var(--gc-safe-bottom);
+}
+
+#links_on_top {
+  z-index: var(--gc-z-navigation);
+  padding-left: max(1rem, var(--gc-safe-left));
+  padding-right: max(1rem, var(--gc-safe-right));
+}
+
+#links_on_top a,
+.category label,
+.goreecloud-action,
+#send_search,
+#clear_search,
+#pagination button,
+#pagination input[type="submit"],
+#pagination input[type="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+#links_on_top a:hover,
+#links_on_top a:focus-visible {
+  background: color-mix(in srgb, var(--gc-accent) var(--gc-state-hover), transparent);
+}
+
+#links_on_top a:active {
+  background: color-mix(in srgb, var(--gc-accent) var(--gc-state-pressed), transparent);
+}
+
+.category input:checked + label {
+  background: color-mix(in srgb, var(--gc-accent) var(--gc-state-selected), transparent);
+}
+
+.category label:hover {
+  background: color-mix(in srgb, var(--gc-accent) var(--gc-state-hover), transparent);
+}
+
+.category label:active {
+  background: color-mix(in srgb, var(--gc-accent) var(--gc-state-pressed), transparent);
+}
+
+.goreecloud-search-wordmark-mark,
+#send_search,
+#pagination .page_number_current,
+.goreecloud-action-primary,
+.goreecloud-empty-state-mark {
+  color: var(--gc-on-accent) !important;
+}
+
+.result .engines,
+.goreecloud-results-meta,
+.goreecloud-empty-state-note {
+  opacity: var(--gc-opacity-quiet);
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  opacity: var(--gc-opacity-disabled);
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline-width: 3px;
+  outline-offset: 2px;
+}
+
+.goreecloud-feedback[role="alert"] {
+  position: relative;
+  z-index: var(--gc-z-raised);
+}
+
+@media (max-width: 599px) {
+  #links_on_top {
+    padding-left: max(0.5rem, var(--gc-safe-left));
+    padding-right: max(0.5rem, var(--gc-safe-right));
+  }
+
+  .goreecloud-page-header,
+  .goreecloud-page.page_with_header,
+  .goreecloud-results-context {
+    padding-left: max(var(--gc-gutter-compact), var(--gc-safe-left));
+    padding-right: max(var(--gc-gutter-compact), var(--gc-safe-right));
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .goreecloud-page-header,
+  .goreecloud-page.page_with_header,
+  .goreecloud-results-context {
+    padding-left: var(--gc-gutter-medium);
+    padding-right: var(--gc-gutter-medium);
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .goreecloud-page-header,
+  .goreecloud-page.page_with_header,
+  .goreecloud-results-context {
+    padding-left: var(--gc-gutter-expanded);
+    padding-right: var(--gc-gutter-expanded);
+  }
+}
+
+@media (min-width: 1440px) {
+  .goreecloud-page-header,
+  .goreecloud-page.page_with_header,
+  .goreecloud-results-context {
+    padding-left: var(--gc-gutter-wide);
+    padding-right: var(--gc-gutter-wide);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  html.theme-dark,
+  html.theme-black {
+    --gc-scrim: Canvas;
+  }
+}
+
+@media (forced-colors: active) {
+  :root,
+  html.theme-dark,
+  html.theme-black {
+    --gc-on-accent: HighlightText;
+    --gc-info: LinkText;
+    --gc-scrim: Canvas;
+  }
+}
