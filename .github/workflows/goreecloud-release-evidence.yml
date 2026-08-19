@@ -6,21 +6,31 @@ on:
   pull_request:
     paths:
       - '.github/workflows/goreecloud-candidate-image.yml'
+      - '.github/workflows/goreecloud-stabilization-candidate.yml'
       - '.github/workflows/goreecloud-release-evidence.yml'
+      - 'goreecloud/candidate_request.json'
+      - 'goreecloud/candidate_request.py'
       - 'goreecloud/release_baseline.json'
       - 'goreecloud/release_evidence.py'
       - 'goreecloud/settings.yml.example'
+      - 'tests/unit/test_goreecloud_candidate_request.py'
       - 'docs/goreecloud/STABLE-CUTOVER.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
   push:
     branches:
       - 'agent/**'
     paths:
       - '.github/workflows/goreecloud-candidate-image.yml'
+      - '.github/workflows/goreecloud-stabilization-candidate.yml'
       - '.github/workflows/goreecloud-release-evidence.yml'
+      - 'goreecloud/candidate_request.json'
+      - 'goreecloud/candidate_request.py'
       - 'goreecloud/release_baseline.json'
       - 'goreecloud/release_evidence.py'
       - 'goreecloud/settings.yml.example'
+      - 'tests/unit/test_goreecloud_candidate_request.py'
       - 'docs/goreecloud/STABLE-CUTOVER.md'
+      - 'docs/goreecloud/TARGET-ACCEPTANCE.md'
   workflow_dispatch:
 
 permissions:
@@ -39,9 +49,23 @@ jobs:
       - name: Validate Python source and rollback baseline
         run: |
           set -euo pipefail
-          python -m py_compile goreecloud/release_evidence.py
+          python -m py_compile \
+            goreecloud/candidate_request.py \
+            goreecloud/release_evidence.py \
+            tests/unit/test_goreecloud_candidate_request.py
           python goreecloud/release_evidence.py validate-baseline \
             goreecloud/release_baseline.json
+          python goreecloud/candidate_request.py \
+            goreecloud/candidate_request.json
+          python tests/unit/test_goreecloud_candidate_request.py
+
+      - name: Bind candidate request to reviewed pull-request base
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          python goreecloud/candidate_request.py \
+            goreecloud/candidate_request.json \
+            --expected-reviewed-base '${{ github.event.pull_request.base.sha }}'
 
       - name: Validate evidence generation contract
         run: |
