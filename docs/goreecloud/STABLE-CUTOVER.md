@@ -17,6 +17,7 @@ Stable approval requires all of the following evidence:
 - Target-host backup and rollback material is verified and a recovery path is documented.
 - The release image is pinned by immutable digest and can be retrieved and executed by that digest.
 - The recorded known-good production rollback image can be retrieved and executed by immutable digest in an isolated image-level rollback rehearsal.
+- Target-host runtime acceptance proves that the running Search container uses the exact candidate digest and carries OCI source metadata for the exact release revision.
 - GoreeCloud Browser integration passes with GoreeCloud Search configured as the only and default browser search engine.
 - Address-bar, new-tab, and browser search-field queries resolve through GoreeCloud Search without direct or silent fallback to an external browser-level search provider.
 - Browser failure handling surfaces GoreeCloud Search connectivity/service state instead of bypassing the private search service.
@@ -39,6 +40,39 @@ When an exact candidate reaches `agent/production-acceptance`, `.github/workflow
 The generated release evidence must explicitly record that production cutover is **not** authorized by the image rehearsal. Image-level rollback rehearsal proves image identity, registry availability, and isolated executability only. It does not prove that the production Compose configuration, protected environment, persistent Search configuration/cache/Valkey data, Caddy routing, DNS, monitoring, backups, or target-host rollback procedure has been restored successfully.
 
 Stable approval therefore requires both layers: immutable source/image evidence from the release workflow and separately verified target-environment recovery/rollback evidence. Neither layer substitutes for the other.
+
+## Target runtime identity evidence
+
+Before a staged or production candidate can be accepted as the exact release runtime, `goreecloud/target_acceptance.sh` must be run with both the candidate's immutable image reference and its exact source revision. A typical controlled invocation is:
+
+```bash
+goreecloud/target_acceptance.sh \
+  --base-url https://search.goreecloud.com \
+  --container goreecloud-search \
+  --expected-image 'ghcr.io/goreecloud/goreecloud-search@sha256:<candidate-digest>' \
+  --expected-source '<40-character-release-source-sha>' \
+  --evidence-json target-runtime-evidence.json
+```
+
+When immutable identity is requested, target acceptance must fail closed unless all of the following are true:
+
+- the expected image uses the GoreeCloud Search GHCR repository and an immutable SHA-256 digest;
+- the expected source is an exact lowercase 40-character Git revision;
+- the running Docker container reports the exact immutable image reference;
+- the running container image ID equals the image ID resolved from that expected digest;
+- OCI title is `GoreeCloud Search`;
+- OCI source is `https://github.com/GoreeCloud/goreecloud-search`;
+- OCI revision equals the expected source revision;
+- OCI version is present;
+- OCI license metadata is `AGPL-3.0-or-later`;
+- the container is running and healthy;
+- any directly published container port remains loopback-only;
+- GoreeCloud Search home, Preferences, About, health, and required privacy-header acceptance passes;
+- representative provider acceptance passes unless an explicitly documented acceptance step intentionally uses `--skip-providers`.
+
+The optional JSON artifact is sanitized and contains runtime identity and acceptance state only. It must not contain secrets, cookies, credentials, environment values, provider tokens, or response content. Its scope must explicitly keep backup restoration, persistent-data restoration, target configuration rollback, and production-cutover authorization false.
+
+Target runtime identity proves that the candidate actually under test is the release image. It still does not prove that backup restoration or target-host rollback succeeds. Those remain separate Stable gates.
 
 ## Stable cutover scope
 
