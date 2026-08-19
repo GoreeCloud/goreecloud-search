@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-search-shell.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-result-polish.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-page-polish.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-provider-diagnostics.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-page-compact.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-glaze-1.1.css') }}" type="text/css" media="screen">
   {% if get_setting('server.limiter') or get_setting('server.public_instance') %}
@@ -84,7 +85,7 @@
       <br>
       <a href="https://github.com/GoreeCloud/goreecloud-search">{{ _('Source code') }}</a>
       | <a href="https://github.com/searxng/searxng">Upstream</a>
-      {% if enable_metrics %}| <a href="{{ url_for('stats') }}">{{ _('Engine stats') }}</a>{% endif %}
+      {% if enable_metrics %}| <a href="{{ url_for('stats') }}">{{ _('Provider diagnostics') }}</a>{% endif %}
       {% if get_setting('general.privacypolicy_url') %}
       | <a href="{{ get_setting('general.privacypolicy_url') }}">{{ _('Privacy policy') }}</a>
       {% endif %}
