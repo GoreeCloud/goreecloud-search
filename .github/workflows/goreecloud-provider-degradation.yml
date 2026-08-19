@@ -7,8 +7,18 @@ on:
     paths:
       - '.github/workflows/goreecloud-provider-degradation.yml'
       - 'goreecloud/provider_degradation_acceptance.py'
-      - 'goreecloud/provider_degradation_fixture.py'
       - 'goreecloud/provider_degradation_settings.yml'
+      - 'searx/engines/goreecloud_acceptance.py'
+      - 'searx/**'
+      - 'requirements.txt'
+  push:
+    branches:
+      - agent/mobile-stabilization
+    paths:
+      - '.github/workflows/goreecloud-provider-degradation.yml'
+      - 'goreecloud/provider_degradation_acceptance.py'
+      - 'goreecloud/provider_degradation_settings.yml'
+      - 'searx/engines/goreecloud_acceptance.py'
       - 'searx/**'
       - 'requirements.txt'
   workflow_dispatch:
@@ -39,28 +49,8 @@ jobs:
       - name: Validate acceptance source
         run: |
           python -m py_compile \
-            goreecloud/provider_degradation_fixture.py \
-            goreecloud/provider_degradation_acceptance.py
-
-      - name: Start healthy local provider fixture
-        run: |
-          set -euo pipefail
-          nohup python goreecloud/provider_degradation_fixture.py \
-            >/tmp/goreecloud-provider-fixture.log 2>&1 &
-          echo $! >/tmp/goreecloud-provider-fixture.pid
-          for attempt in $(seq 1 20); do
-            if curl --fail --silent --show-error \
-              http://127.0.0.1:8899/healthz >/dev/null; then
-              exit 0
-            fi
-            if ! kill -0 "$(cat /tmp/goreecloud-provider-fixture.pid)" 2>/dev/null; then
-              cat /tmp/goreecloud-provider-fixture.log
-              exit 1
-            fi
-            sleep 1
-          done
-          cat /tmp/goreecloud-provider-fixture.log
-          exit 1
+            goreecloud/provider_degradation_acceptance.py \
+            searx/engines/goreecloud_acceptance.py
 
       - name: Prove failing fixture endpoint is unavailable
         run: |
@@ -99,10 +89,6 @@ jobs:
       - name: Run deterministic provider-failure degradation acceptance
         run: python goreecloud/provider_degradation_acceptance.py
 
-      - name: Print fixture and application logs on failure
+      - name: Print application log on failure
         if: failure()
-        run: |
-          echo '--- healthy provider fixture ---'
-          cat /tmp/goreecloud-provider-fixture.log || true
-          echo '--- GoreeCloud Search ---'
-          cat /tmp/goreecloud-provider-degradation.log || true
+        run: cat /tmp/goreecloud-provider-degradation.log || true
