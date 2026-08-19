@@ -11,12 +11,13 @@ on:
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   validate-request:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Check out exact candidate revision
         uses: actions/checkout@v4
@@ -41,4 +42,64 @@ jobs:
 
   candidate-image:
     needs: validate-request
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/goreecloud-candidate-image.yml
+
+  publication-receipt:
+    needs:
+      - validate-request
+      - candidate-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Publish sanitized first-Stable candidate receipt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIRST_STABLE_PR: '3'
+        run: |
+          set -euo pipefail
+          artifact="goreecloud-search-candidate-${GITHUB_SHA}"
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          body="$(cat <<EOF
+          ### First-Stable candidate publication receipt
+
+          - Candidate source revision: \`${GITHUB_SHA}\`
+          - Candidate workflow run: ${run_url}
+          - Candidate evidence artifact: \`${artifact}\`
+          - Candidate/rollback isolated rehearsal: completed by the candidate-image job before this receipt
+          - Production cutover authorized: **no**
+          - Stable promotion authorized: **no**
+
+          This sanitized receipt exists so the immutable candidate evidence can be located and independently inspected. It contains no registry credentials, application secrets, query content, or production authorization.
+          EOF
+          )"
+          BODY="$body" python - <<'PY' >/tmp/candidate-receipt.json
+          import json
+          import os
+
+          print(json.dumps({'body': os.environ['BODY']}))
+          PY
+          curl --fail-with-body --silent --show-error --location \
+            --request POST \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header 'X-GitHub-Api-Version: 2026-03-10' \
+            --header 'Content-Type: application/json' \
+            --data-binary @/tmp/candidate-receipt.json \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${FIRST_STABLE_PR}/comments" \
+            >/tmp/candidate-receipt-response.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          response = json.loads(Path('/tmp/candidate-receipt-response.json').read_text())
+          assert isinstance(response.get('id'), int)
+          assert response.get('html_url')
+          print(f"Published candidate receipt comment {response['id']}.")
+          PY
