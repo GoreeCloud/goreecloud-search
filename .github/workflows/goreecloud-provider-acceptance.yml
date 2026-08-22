@@ -13,6 +13,7 @@ on:
       candidate_image:
         description: Exact immutable GoreeCloud Search GHCR image digest
         required: true
+        # yamllint disable-line rule:line-length
         default: ghcr.io/goreecloud/goreecloud-search@sha256:3ce3a509675ee396cba33b77ca429aaeea1b1d995f42c62778f9d24de40a09d8
         type: string
       mode:
