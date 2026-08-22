@@ -20,8 +20,10 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
         foundation = base.index("goreecloud.css")
         states = base.index("goreecloud-states.css")
         rebuild = base.index("goreecloud-home-preferences-v2.css")
+        containment = base.index("goreecloud-home-preferences-v2-containment.css")
         self.assertLess(foundation, states)
         self.assertLess(states, rebuild)
+        self.assertLess(rebuild, containment)
 
     def test_home_markup(self):
         index = _read("searx/templates/simple/index.html")
@@ -74,6 +76,7 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
 
     def test_adaptive_css(self):
         css = _read("searx/static/themes/simple/goreecloud-home-preferences-v2.css")
+        containment = _read("searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css")
         self.assertIn("@media (min-width: 1200px)", css)
         self.assertIn("@media (min-width: 600px) and (max-width: 999px)", css)
         self.assertIn("@media (max-width: 599px)", css)
@@ -81,6 +84,16 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
         self.assertIn("@media (prefers-reduced-transparency: reduce)", css)
         self.assertIn("@media (prefers-contrast: more)", css)
         self.assertIn("@media (forced-colors: active)", css)
+        self.assertIn("overflow-x: clip", containment)
+        self.assertIn("width: 44px", containment)
+        self.assertIn("overflow-x: auto", containment)
+
+    def test_browser_contract(self):
+        acceptance = _read("goreecloud/browser_acceptance.py")
+        self.assertIn('"Private search. Total control."', acceptance)
+        self.assertIn(".goreecloud-index-brand", acceptance)
+        self.assertIn("#categories_container input[type='checkbox']", acceptance)
+        self.assertIn("goreecloud-home-preferences-v2.css", acceptance)
 
     def test_footer_contract(self):
         base = _read("searx/templates/simple/base.html")
