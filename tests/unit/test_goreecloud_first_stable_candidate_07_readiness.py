@@ -45,10 +45,7 @@ def empty_args(**overrides: str | None) -> argparse.Namespace:
 
 def valid_artifacts(final_status: str) -> dict[str, dict[str, str]]:
     """Return synthetic status-only entries for readiness-state tests."""
-    artifacts = {
-        name: {"status": "valid"}
-        for name, _, _ in READINESS.REQUIRED_INPUTS
-    }
+    artifacts = {name: {"status": "valid"} for name, _, _ in READINESS.REQUIRED_INPUTS}
     artifacts["final_manifest"] = {"status": final_status}
     return artifacts
 
@@ -124,9 +121,7 @@ class Candidate07ReadinessTests(unittest.TestCase):
         self.assertIsNone(args.final_evidence)
 
     def test_governance_action(self) -> None:
-        action = READINESS._operator_action(  # pylint: disable=protected-access
-            "ready_for_governance_review"
-        )
+        action = READINESS._operator_action("ready_for_governance_review")  # pylint: disable=protected-access
         self.assertIn("does not authorize production cutover", action)
         self.assertIn("Stable promotion", action)
 
