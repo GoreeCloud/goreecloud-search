@@ -1,10 +1,36 @@
 {% extends "simple/base.html" %}
 {% from 'simple/icons.html' import icon_big %}
 {% block content %}
-<div class="index">
-    <div class="goreecloud-search-kicker" aria-label="GoreeCloud product">GoreeCloud · Private Search</div>
-    <div class="title"><h1>GoreeCloud Search</h1></div>
-    <p class="goreecloud-search-subtitle">Search the web through a privacy-first GoreeCloud interface while keeping provider choice visible and under your control.</p>
-    {% include 'simple/simple_search.html' %}
+<div class="goreecloud-index-shell">
+    <header class="goreecloud-index-masthead">
+        <a class="goreecloud-index-brand" href="{{ url_for('index') }}" aria-label="GoreeCloud Search home">
+            <span class="goreecloud-index-brand-mark" aria-hidden="true">G</span>
+            <span>GoreeCloud Search</span>
+        </a>
+    </header>
+
+    <section class="index" aria-labelledby="goreecloud-index-title">
+        <div class="goreecloud-search-kicker">Privacy-first by design</div>
+        <div class="title">
+            <h1 id="goreecloud-index-title">Private search.<span>Total control.</span></h1>
+        </div>
+        <p class="goreecloud-search-subtitle">Search the web through a GoreeCloud-controlled interface with provider choice, privacy preferences, and search behavior kept visible and configurable.</p>
+        {% include 'simple/simple_search.html' %}
+
+        <div class="goreecloud-index-principles" aria-label="GoreeCloud Search product principles">
+            <div class="goreecloud-index-principle">
+                <strong>Private by default</strong>
+                <span>GoreeCloud Search is designed to minimize unnecessary search-data exposure and profiling.</span>
+            </div>
+            <div class="goreecloud-index-principle">
+                <strong>You choose the sources</strong>
+                <span>Categories, engines, language, SafeSearch, and other search preferences remain under your control.</span>
+            </div>
+            <div class="goreecloud-index-principle">
+                <strong>Open and inspectable</strong>
+                <span>Built as a GoreeCloud-maintained open-source product on the SearXNG foundation.</span>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}
