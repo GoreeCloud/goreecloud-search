@@ -10,7 +10,7 @@ from flask import jsonify
 
 from searx.version import VERSION_STRING
 
-from . import Plugin, PluginInfo
+from ._core import Plugin, PluginInfo
 
 
 class GoreeCloudAPIPlugin(Plugin):
@@ -28,6 +28,7 @@ class GoreeCloudAPIPlugin(Plugin):
         )
 
     def init(self, app):
+        """Register the versioned read-only GoreeCloud API status endpoint."""
         app.add_url_rule(
             "/api/v1/status",
             endpoint="goreecloud_api_status",
