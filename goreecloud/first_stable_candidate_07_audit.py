@@ -23,6 +23,7 @@ FROZEN_IMAGE = (
     "ghcr.io/goreecloud/goreecloud-search@sha256:"
     "3ce3a509675ee396cba33b77ca429aaeea1b1d995f42c62778f9d24de40a09d8"
 )
+FROZEN_OCI_VERSION = "2026.8.19-b355aafe7"
 FROZEN_ROLLBACK_SOURCE = "3584da535f7ed7c3b4b8dc73cf0424fb4bdf1949"
 FROZEN_ROLLBACK_IMAGE = (
     "ghcr.io/goreecloud/goreecloud-search@sha256:"
@@ -70,6 +71,90 @@ def _audit_frozen_rollback_baseline(
         baseline.get("purpose"), "rollback baseline purpose"
     )
     return source, image
+
+
+def _audit_frozen_release(
+    release: dict[str, Any],
+    source: str,
+    image: str,
+    rollback_baseline: dict[str, Any],
+) -> None:
+    """Validate the complete release-evidence contract emitted by frozen candidate #07."""
+    base_audit._schema_one(release, "Release evidence")  # pylint: disable=protected-access
+    base_audit._iso_time(  # pylint: disable=protected-access
+        release.get("generated_at"), "release generated_at"
+    )
+
+    candidate = base_audit._mapping(  # pylint: disable=protected-access
+        release.get("candidate"), "release candidate"
+    )
+    if base_audit._sha(  # pylint: disable=protected-access
+        candidate.get("source_revision"), "release candidate.source_revision"
+    ) != source:
+        raise AuditError("release candidate source does not match frozen candidate #07")
+    if base_audit._image(  # pylint: disable=protected-access
+        candidate.get("image"), "release candidate.image"
+    ) != image:
+        raise AuditError("release candidate image does not match frozen candidate #07")
+    if base_audit._sha(  # pylint: disable=protected-access
+        candidate.get("oci_revision"), "release candidate.oci_revision"
+    ) != source:
+        raise AuditError("release candidate OCI revision does not match frozen candidate #07")
+    if base_audit._nonempty(  # pylint: disable=protected-access
+        candidate.get("oci_version"), "release candidate.oci_version"
+    ) != FROZEN_OCI_VERSION:
+        raise AuditError("release candidate OCI version does not match frozen candidate #07")
+    base_audit._true(  # pylint: disable=protected-access
+        candidate.get("registry_digest_pull_verified"), "release candidate registry digest pull"
+    )
+    if candidate.get("isolated_runtime_acceptance") != "passed":
+        raise AuditError("release candidate isolated_runtime_acceptance must be passed")
+
+    rollback = base_audit._mapping(  # pylint: disable=protected-access
+        release.get("rollback_baseline"), "release rollback_baseline"
+    )
+    if rollback.get("environment") != rollback_baseline.get("environment"):
+        raise AuditError("release rollback environment does not match the supplied rollback baseline")
+    release_recorded_at = base_audit._iso_time(  # pylint: disable=protected-access
+        rollback.get("recorded_at"), "release rollback_baseline.recorded_at"
+    )
+    baseline_recorded_at = base_audit._iso_time(  # pylint: disable=protected-access
+        rollback_baseline.get("recorded_at"), "rollback baseline recorded_at"
+    )
+    if release_recorded_at != baseline_recorded_at:
+        raise AuditError("release rollback timestamp does not match the supplied rollback baseline")
+    if base_audit._sha(  # pylint: disable=protected-access
+        rollback.get("source_revision"), "release rollback_baseline.source_revision"
+    ) != FROZEN_ROLLBACK_SOURCE:
+        raise AuditError("release rollback source does not match the frozen known-good source")
+    if base_audit._image(  # pylint: disable=protected-access
+        rollback.get("image"), "release rollback_baseline.image"
+    ) != FROZEN_ROLLBACK_IMAGE:
+        raise AuditError("release rollback image does not match the frozen known-good image")
+    base_audit._true(  # pylint: disable=protected-access
+        rollback.get("registry_digest_pull_verified"), "release rollback registry digest pull"
+    )
+    if rollback.get("isolated_runtime_acceptance") != "passed":
+        raise AuditError("release rollback isolated_runtime_acceptance must be passed")
+
+    scope = base_audit._mapping(  # pylint: disable=protected-access
+        release.get("rollback_scope"), "release rollback_scope"
+    )
+    if scope.get("image_level_rehearsal") != "passed":
+        raise AuditError("release rollback_scope.image_level_rehearsal must be passed")
+    base_audit._false(  # pylint: disable=protected-access
+        scope.get("target_environment_configuration_rollback_tested"),
+        "release target configuration rollback",
+    )
+    base_audit._false(  # pylint: disable=protected-access
+        scope.get("target_environment_data_restore_tested"), "release target data restore"
+    )
+    base_audit._false(  # pylint: disable=protected-access
+        scope.get("production_cutover_authorized"), "release production_cutover_authorized"
+    )
+    base_audit._nonempty(  # pylint: disable=protected-access
+        scope.get("statement"), "release rollback_scope.statement"
+    )
 
 
 def _audit_recovery_baseline_binding(
@@ -176,9 +261,10 @@ def _audit_frozen_runtime(runtime: dict[str, Any], source: str, image: str) -> N
         oci.get("revision"), "target-runtime OCI revision"
     ) != source:
         raise AuditError("target-runtime OCI revision does not match release evidence")
-    base_audit._nonempty(  # pylint: disable=protected-access
+    if base_audit._nonempty(  # pylint: disable=protected-access
         oci.get("version"), "target-runtime OCI version"
-    )
+    ) != FROZEN_OCI_VERSION:
+        raise AuditError("target-runtime OCI version does not match frozen candidate #07")
     if oci.get("licenses") != "AGPL-3.0-or-later":
         raise AuditError("target-runtime OCI licenses must be AGPL-3.0-or-later")
 
@@ -238,6 +324,7 @@ def audit(args: argparse.Namespace) -> dict[str, Any]:
     rollback_source, rollback_image = _audit_frozen_rollback_baseline(
         rollback_baseline, rollback_sha256
     )
+    _audit_frozen_release(artifacts["release"], source, image, rollback_baseline)
     release_sha256 = base_audit._sha256(paths["release"])  # pylint: disable=protected-access
     runtime_sha256 = base_audit._sha256(paths["runtime"])  # pylint: disable=protected-access
     _audit_frozen_runtime(artifacts["runtime"], source, image)
