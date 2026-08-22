@@ -188,7 +188,7 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
     def test_release_pull_rejected(self) -> None:
         evidence = copy.deepcopy(release_evidence())
         evidence["candidate"]["registry_digest_pull_verified"] = False
-        with self.assertRaises(AUDIT.AuditError):
+        with self.assertRaises(AUDIT.base_audit.AuditError):
             AUDIT._audit_frozen_release(  # pylint: disable=protected-access
                 evidence,
                 AUDIT.FROZEN_SOURCE,
