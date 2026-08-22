@@ -181,17 +181,26 @@ def _assert_browser_metadata(driver: webdriver.Chrome, viewport: Viewport) -> No
 def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewport) -> None:
     driver.get(f"{BASE_URL}/")
     wait.until(EC.title_is("GoreeCloud Search"))
+    brand = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".goreecloud-index-brand")))
+    if "GoreeCloud Search" not in brand.text:
+        raise AssertionError(f"{viewport.name}: GoreeCloud Search product identity is missing from the homepage")
     heading = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".index .title h1")))
-    if "GoreeCloud Search" not in heading.text:
-        raise AssertionError(f"{viewport.name}: expected GoreeCloud Search heading, got {heading.text!r}")
+    heading_text = " ".join(heading.text.split())
+    if heading_text != "Private search. Total control.":
+        raise AssertionError(f"{viewport.name}: rebuilt homepage heading is {heading.text!r}")
     query = wait.until(EC.visibility_of_element_located((By.ID, "q")))
     submit = wait.until(EC.element_to_be_clickable((By.ID, "send_search")))
-    if not query.get_attribute("placeholder"):
-        raise AssertionError(f"{viewport.name}: search input has no placeholder")
+    if "privately" not in (query.get_attribute("placeholder") or "").lower():
+        raise AssertionError(f"{viewport.name}: homepage search input lost its privacy-oriented placeholder")
+    if query.get_attribute("aria-label") != "Search query":
+        raise AssertionError(f"{viewport.name}: search input has no stable accessible label")
     if not submit.get_attribute("aria-label"):
         raise AssertionError(f"{viewport.name}: search button has no accessible label")
     _assert_target_size(query, f"{viewport.name} search input")
     _assert_target_size(submit, f"{viewport.name} search submit")
+    category_controls = driver.find_elements(By.CSS_SELECTOR, "#categories_container input[type='checkbox']")
+    if len(category_controls) < 3:
+        raise AssertionError(f"{viewport.name}: homepage does not expose functional category controls")
     query.click()
     if driver.switch_to.active_element.get_attribute("id") != "q":
         raise AssertionError(f"{viewport.name}: search input did not receive focus")
@@ -205,6 +214,8 @@ def _assert_home(driver: webdriver.Chrome, wait: WebDriverWait, viewport: Viewpo
         raise AssertionError(f"{viewport.name}: GoreeCloud Glaze UI stylesheet is not loaded")
     if not any(url and "goreecloud-states.css" in url for url in stylesheet_urls):
         raise AssertionError(f"{viewport.name}: GoreeCloud secondary-state stylesheet is not loaded")
+    if not any(url and "goreecloud-home-preferences-v2.css" in url for url in stylesheet_urls):
+        raise AssertionError(f"{viewport.name}: rebuilt homepage/Preferences stylesheet is not loaded")
     _assert_browser_metadata(driver, viewport)
     _assert_no_horizontal_overflow(driver, f"{viewport.name} home")
 
