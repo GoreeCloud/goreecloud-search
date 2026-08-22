@@ -8,6 +8,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 
@@ -34,7 +35,7 @@ def write_json(path: Path, value: dict) -> None:
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-class EvidenceFixture:
+class EvidenceFixture:  # pylint: disable=too-few-public-methods
     """Build one internally consistent synthetic six-artifact evidence set."""
 
     def __init__(self, root: Path):
@@ -289,46 +290,44 @@ class FirstStableEvidenceAuditTests(unittest.TestCase):
     """Exercise strict cross-artifact safety and identity binding."""
 
     def setUp(self) -> None:
-        self.tempdir = tempfile.TemporaryDirectory()
-        self.fixture = EvidenceFixture(Path(self.tempdir.name))
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root)
+        self.fixture = EvidenceFixture(self.root)
 
-    def tearDown(self) -> None:
-        self.tempdir.cleanup()
-
-    def test_complete_evidence_set_passes(self) -> None:
+    def test_complete_set_passes(self) -> None:
         result = AUDIT.audit(self.fixture.args())
         self.assertEqual(result["source_revision"], SOURCE)
         self.assertEqual(result["image"], IMAGE)
 
-    def test_release_secret_field_is_rejected(self) -> None:
+    def test_release_secret_rejected(self) -> None:
         release = json.loads(self.fixture.paths["release"].read_text())
         release["secret"] = "must-not-be-bound"
         write_json(self.fixture.paths["release"], release)
         with self.assertRaises(AUDIT.AuditError):
             AUDIT.audit(self.fixture.args())
 
-    def test_provider_query_field_is_rejected(self) -> None:
+    def test_provider_query_rejected(self) -> None:
         provider = json.loads(self.fixture.paths["provider"].read_text())
         provider["results"][0]["query"] = "must-not-be-bound"
         write_json(self.fixture.paths["provider"], provider)
         with self.assertRaises(AUDIT.AuditError):
             AUDIT.audit(self.fixture.args())
 
-    def test_runtime_observed_image_mismatch_is_rejected(self) -> None:
+    def test_runtime_image_mismatch(self) -> None:
         runtime = json.loads(self.fixture.paths["runtime"].read_text())
         runtime["container_runtime"]["observed_image_reference"] = ROLLBACK_IMAGE
         write_json(self.fixture.paths["runtime"], runtime)
         with self.assertRaises(AUDIT.AuditError):
             AUDIT.audit(self.fixture.args())
 
-    def test_recovery_binding_mismatch_is_rejected(self) -> None:
+    def test_recovery_hash_mismatch(self) -> None:
         recovery = json.loads(self.fixture.paths["recovery"].read_text())
         recovery["artifact_bindings"]["release_evidence_sha256"] = "0" * 64
         write_json(self.fixture.paths["recovery"], recovery)
         with self.assertRaises(AUDIT.AuditError):
             AUDIT.audit(self.fixture.args())
 
-    def test_final_binding_mismatch_is_rejected(self) -> None:
+    def test_final_hash_mismatch(self) -> None:
         final = json.loads(self.fixture.paths["final"].read_text())
         final["artifact_bindings"]["visual_evidence_sha256"] = "0" * 64
         write_json(self.fixture.paths["final"], final)
