@@ -1,0 +1,54 @@
+---
+name: GoreeCloud provider result integrity audit
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-provider-result-integrity-audit.yml'
+      - 'goreecloud/first_stable_candidate_07_integrity_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_candidate_07_integrity_audit.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-provider-result-integrity-audit.yml'
+      - 'goreecloud/first_stable_candidate_07_integrity_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_candidate_07_integrity_audit.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-result-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate integrity-audit source
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/first_stable_candidate_07_integrity_audit.py \
+            tests/unit/test_goreecloud_first_stable_candidate_07_integrity_audit.py
+          python goreecloud/first_stable_candidate_07_integrity_audit.py --help \
+            | grep -q -- '--provider-evidence'
+          python goreecloud/first_stable_candidate_07_integrity_audit.py --help \
+            | grep -q -- '--rollback-baseline'
+          python goreecloud/first_stable_candidate_07_integrity_audit.py --help \
+            | grep -q -- '--final-evidence'
+
+      - name: Run deterministic provider-result contract
+        run: |
+          set -euo pipefail
+          python tests/unit/test_goreecloud_first_stable_candidate_07_integrity_audit.py
