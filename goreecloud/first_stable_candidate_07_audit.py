@@ -29,6 +29,7 @@ FROZEN_ROLLBACK_IMAGE = (
     "30ec99e3311fa9dcc934ac267aef123bb2541e0cd0165b360c4a7dc4fa29e3d5"
 )
 FROZEN_ROLLBACK_ENVIRONMENT = "goreecloud-vps-01-production"
+FROZEN_ROLLBACK_SHA256 = "41341d322be9b8943da969ef1aac87ea07d664b1f4ea9fb8fc69085765453524"
 
 
 class AuditError(ValueError):
@@ -42,8 +43,12 @@ def _require_frozen_candidate(source: str, image: str) -> None:
         raise AuditError("release evidence does not identify frozen first-Stable candidate #07 image")
 
 
-def _audit_frozen_rollback_baseline(baseline: dict[str, Any]) -> tuple[str, str]:
-    """Validate the exact known-good rollback identity recorded with candidate #07."""
+def _audit_frozen_rollback_baseline(
+    baseline: dict[str, Any], baseline_sha256: str
+) -> tuple[str, str]:
+    """Validate the exact source-controlled known-good rollback baseline for candidate #07."""
+    if baseline_sha256 != FROZEN_ROLLBACK_SHA256:
+        raise AuditError("rollback baseline bytes do not match the frozen source-controlled artifact")
     if baseline.get("schema_version") != 1:
         raise AuditError("rollback baseline schema_version must be 1")
     if baseline.get("environment") != FROZEN_ROLLBACK_ENVIRONMENT:
@@ -229,8 +234,10 @@ def audit(args: argparse.Namespace) -> dict[str, Any]:
         artifacts["release"]
     )
     _require_frozen_candidate(source, image)
-    rollback_source, rollback_image = _audit_frozen_rollback_baseline(rollback_baseline)
     rollback_sha256 = base_audit._sha256(rollback_path)  # pylint: disable=protected-access
+    rollback_source, rollback_image = _audit_frozen_rollback_baseline(
+        rollback_baseline, rollback_sha256
+    )
     release_sha256 = base_audit._sha256(paths["release"])  # pylint: disable=protected-access
     runtime_sha256 = base_audit._sha256(paths["runtime"])  # pylint: disable=protected-access
     _audit_frozen_runtime(artifacts["runtime"], source, image)
