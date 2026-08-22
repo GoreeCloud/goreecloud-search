@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# pylint: disable=missing-class-docstring,invalid-name
 """Contracts for the manual GoreeCloud real-provider acceptance workflow."""
 
 from pathlib import Path
