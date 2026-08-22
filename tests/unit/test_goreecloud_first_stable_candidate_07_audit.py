@@ -112,7 +112,7 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
             (AUDIT.FROZEN_ROLLBACK_SOURCE, AUDIT.FROZEN_ROLLBACK_IMAGE),
         )
 
-    def test_recovery_baseline_binding_passes(self) -> None:
+    def test_recovery_binding_passes(self) -> None:
         AUDIT._audit_recovery_baseline_binding(  # pylint: disable=protected-access
             recovery_binding(),
             AUDIT.FROZEN_ROLLBACK_SOURCE,
@@ -160,19 +160,19 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
                 AUDIT.FROZEN_SOURCE, AUDIT.FROZEN_IMAGE[:-1] + "0"
             )
 
-    def test_wrong_rollback_image_rejected(self) -> None:
+    def test_wrong_rb_image_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["image"] = AUDIT.FROZEN_IMAGE
         with self.assertRaises(AUDIT.AuditError):
             AUDIT._audit_frozen_rollback_baseline(baseline)  # pylint: disable=protected-access
 
-    def test_wrong_rollback_environment_rejected(self) -> None:
+    def test_wrong_rb_env_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["environment"] = "staging"
         with self.assertRaises(AUDIT.AuditError):
             AUDIT._audit_frozen_rollback_baseline(baseline)  # pylint: disable=protected-access
 
-    def test_wrong_rollback_digest_rejected(self) -> None:
+    def test_wrong_rb_digest_rejected(self) -> None:
         recovery = copy.deepcopy(recovery_binding())
         recovery["artifact_bindings"]["rollback_baseline_sha256"] = "b" * 64
         with self.assertRaises(AUDIT.AuditError):
@@ -183,7 +183,7 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
                 BASELINE_DIGEST,
             )
 
-    def test_wrong_recovery_rollback_source_rejected(self) -> None:
+    def test_wrong_recovery_src(self) -> None:
         recovery = copy.deepcopy(recovery_binding())
         recovery["known_good_rollback"]["source_revision"] = "1" * 40
         with self.assertRaises(AUDIT.AuditError):
