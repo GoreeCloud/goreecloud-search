@@ -133,7 +133,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
     def test_duplicate_or_reordered_category_rejected(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["results"][1]["category"] = "general"
-        with self.assertRaises(AUDIT.AuditError):
+        with self.assertRaises((AUDIT.AuditError, AUDIT.base_audit.AuditError)):
             AUDIT._audit_frozen_provider(  # pylint: disable=protected-access
                 evidence,
                 AUDIT.candidate_audit.FROZEN_SOURCE,
