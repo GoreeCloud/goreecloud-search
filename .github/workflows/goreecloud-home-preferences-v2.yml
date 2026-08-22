@@ -15,6 +15,8 @@ on:
       - 'searx/static/themes/simple/goreecloud-home-preferences-v2.css'
       - 'searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css'
       - 'tests/unit/test_goreecloud_home_preferences_v2.py'
+      - 'tests/unit/test_webapp.py'
+      - 'tests/robot/test_webapp.py'
   push:
     branches:
       - master
@@ -29,6 +31,8 @@ on:
       - 'searx/static/themes/simple/goreecloud-home-preferences-v2.css'
       - 'searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css'
       - 'tests/unit/test_goreecloud_home_preferences_v2.py'
+      - 'tests/unit/test_webapp.py'
+      - 'tests/robot/test_webapp.py'
   workflow_dispatch:
 
 permissions:
@@ -54,7 +58,9 @@ jobs:
           set -euo pipefail
           python -m py_compile \
             goreecloud/browser_acceptance.py \
-            tests/unit/test_goreecloud_home_preferences_v2.py
+            tests/unit/test_goreecloud_home_preferences_v2.py \
+            tests/unit/test_webapp.py \
+            tests/robot/test_webapp.py
           python tests/unit/test_goreecloud_home_preferences_v2.py
 
       - name: Verify product and accessibility markers
@@ -68,3 +74,6 @@ jobs:
             searx/static/themes/simple/goreecloud-home-preferences-v2.css
           grep -q 'width: 44px' \
             searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css
+          grep -q "Private search\." tests/robot/test_webapp.py
+          grep -q "Total control\." tests/robot/test_webapp.py
+          grep -q "Cookies" tests/robot/test_webapp.py
