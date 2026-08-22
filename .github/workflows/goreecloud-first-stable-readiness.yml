@@ -1,0 +1,82 @@
+---
+name: GoreeCloud first-Stable readiness report
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-first-stable-readiness.yml'
+      - 'goreecloud/first_stable_candidate_07_readiness.py'
+      - 'goreecloud/first_stable_candidate_07_integrity_audit.py'
+      - 'goreecloud/first_stable_candidate_07_audit.py'
+      - 'goreecloud/first_stable_evidence_audit.py'
+      - 'goreecloud/final_review_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_candidate_07_readiness.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-first-stable-readiness.yml'
+      - 'goreecloud/first_stable_candidate_07_readiness.py'
+      - 'goreecloud/first_stable_candidate_07_integrity_audit.py'
+      - 'goreecloud/first_stable_candidate_07_audit.py'
+      - 'goreecloud/first_stable_evidence_audit.py'
+      - 'goreecloud/final_review_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_candidate_07_readiness.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  first-stable-readiness:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: 'false'
+
+      - name: Validate readiness source
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/first_stable_candidate_07_readiness.py \
+            tests/unit/test_goreecloud_first_stable_candidate_07_readiness.py
+          python goreecloud/first_stable_candidate_07_readiness.py --help \
+            | grep -q -- '--rollback-baseline'
+          python goreecloud/first_stable_candidate_07_readiness.py --help \
+            | grep -q -- '--final-evidence'
+          python goreecloud/first_stable_candidate_07_readiness.py --help \
+            | grep -q -- '--json'
+
+      - name: Run deterministic readiness contract
+        run: |
+          set -euo pipefail
+          python tests/unit/test_goreecloud_first_stable_candidate_07_readiness.py
+
+      - name: Verify missing evidence fails closed
+        run: |
+          set -euo pipefail
+          set +e
+          python goreecloud/first_stable_candidate_07_readiness.py --json \
+            > /tmp/goreecloud-search-readiness.json
+          status=$?
+          set -e
+          test "${status}" -eq 2
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path('/tmp/goreecloud-search-readiness.json').read_text(encoding='utf-8'))
+          assert report['status'] == 'blocked'
+          assert report['production_cutover_authorized'] is False
+          assert report['stable_promotion_authorized'] is False
+          assert report['artifacts']['final_manifest']['status'] == 'not_supplied'
+          PY
