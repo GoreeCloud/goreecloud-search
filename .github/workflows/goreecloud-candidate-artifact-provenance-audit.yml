@@ -1,0 +1,59 @@
+---
+name: GoreeCloud candidate artifact provenance audit
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-candidate-artifact-provenance-audit.yml'
+      - 'goreecloud/first_stable_candidate_07_provenance_audit.py'
+      - 'goreecloud/first_stable_candidate_07_integrity_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_candidate_07_provenance_audit.py'
+      - 'docs/FIRST-STABLE-INTEGRITY-AUDIT.md'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-candidate-artifact-provenance-audit.yml'
+      - 'goreecloud/first_stable_candidate_07_provenance_audit.py'
+      - 'goreecloud/first_stable_candidate_07_integrity_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_candidate_07_provenance_audit.py'
+      - 'docs/FIRST-STABLE-INTEGRITY-AUDIT.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-artifact-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate provenance-audit source
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/first_stable_candidate_07_provenance_audit.py \
+            goreecloud/first_stable_candidate_07_integrity_audit.py \
+            tests/unit/test_goreecloud_first_stable_candidate_07_provenance_audit.py
+          python goreecloud/first_stable_candidate_07_provenance_audit.py --help \
+            | grep -q -- '--release-evidence'
+          python goreecloud/first_stable_candidate_07_provenance_audit.py --help \
+            | grep -q -- '--visual-evidence'
+          python goreecloud/first_stable_candidate_07_integrity_audit.py --help \
+            | grep -q -- '--final-evidence'
+
+      - name: Run deterministic artifact-provenance contract
+        run: |
+          set -euo pipefail
+          python tests/unit/test_goreecloud_first_stable_candidate_07_provenance_audit.py

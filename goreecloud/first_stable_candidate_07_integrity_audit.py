@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Run the complete master-side integrity audit for frozen first-Stable candidate #07.
 
-This wrapper composes the established candidate-#07 evidence audit with additional
-candidate-specific consistency checks for the authentic real-provider artifact. It validates
-supplied evidence only and never authorizes production cutover or Stable promotion.
+This wrapper composes the established candidate-#07 evidence audit, immutable publication-
+provenance checks, and candidate-specific consistency checks for the authentic real-provider
+artifact. It validates supplied evidence only and never authorizes production cutover or Stable
+promotion.
 """
 
 from __future__ import annotations
@@ -13,9 +14,10 @@ import pathlib
 import sys
 from typing import Any
 
-import first_stable_candidate_07_audit as candidate_audit
+import first_stable_candidate_07_provenance_audit as provenance_audit
 
 
+candidate_audit = provenance_audit.candidate_audit
 base_audit = candidate_audit.base_audit
 FROZEN_PROVIDER_SUITE_CATEGORIES = (
     "general",
@@ -105,8 +107,8 @@ def _audit_frozen_provider(provider: dict[str, Any], source: str, image: str) ->
 
 
 def audit(args: argparse.Namespace) -> dict[str, Any]:
-    """Run the established candidate audit plus deep provider-result consistency checks."""
-    result = candidate_audit.audit(args)
+    """Run candidate, artifact-provenance, and deep provider-result integrity checks."""
+    result = provenance_audit.audit(args)
     provider = base_audit._load(pathlib.Path(args.provider_evidence))  # pylint: disable=protected-access
     base_audit._reject_sensitive_keys(provider, "provider_evidence")  # pylint: disable=protected-access
     _audit_frozen_provider(provider, result["source_revision"], result["image"])
@@ -125,6 +127,7 @@ def main() -> int:
         result = audit(args)
     except (
         AuditError,
+        provenance_audit.AuditError,
         candidate_audit.AuditError,
         base_audit.AuditError,
         candidate_audit.review_audit.AuditError,
@@ -134,6 +137,7 @@ def main() -> int:
     print("GoreeCloud Search first-Stable candidate #07 integrity audit passed.")
     print(f"Candidate source: {result['source_revision']}")
     print(f"Candidate image: {result['image']}")
+    print("Artifact provenance verified: true")
     print("Provider result integrity verified: true")
     print("Production cutover authorized by this audit: false")
     return 0
