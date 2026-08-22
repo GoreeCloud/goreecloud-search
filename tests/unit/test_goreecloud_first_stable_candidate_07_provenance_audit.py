@@ -10,15 +10,9 @@ import tempfile
 import unittest
 
 
-MODULE_PATH = (
-    Path(__file__).parents[2]
-    / "goreecloud"
-    / "first_stable_candidate_07_provenance_audit.py"
-)
+MODULE_PATH = Path(__file__).parents[2] / "goreecloud" / "first_stable_candidate_07_provenance_audit.py"
 MODULE_DIR = str(MODULE_PATH.parent)
-SPEC = importlib.util.spec_from_file_location(
-    "first_stable_candidate_07_provenance_audit", MODULE_PATH
-)
+SPEC = importlib.util.spec_from_file_location("first_stable_candidate_07_provenance_audit", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 AUDIT = importlib.util.module_from_spec(SPEC)
 sys.path.insert(0, MODULE_DIR)
