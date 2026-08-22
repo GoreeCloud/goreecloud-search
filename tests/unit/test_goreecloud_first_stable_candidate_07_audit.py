@@ -106,9 +106,7 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
         )
 
     def test_frozen_rollback_passes(self) -> None:
-        result = AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
-            rollback_baseline()
-        )
+        result = AUDIT._audit_frozen_rollback_baseline(rollback_baseline())  # pylint: disable=protected-access
         self.assertEqual(
             result,
             (AUDIT.FROZEN_ROLLBACK_SOURCE, AUDIT.FROZEN_ROLLBACK_IMAGE),
@@ -156,9 +154,7 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
 
     def test_wrong_candidate_rejected(self) -> None:
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._require_frozen_candidate(  # pylint: disable=protected-access
-                "1" * 40, AUDIT.FROZEN_IMAGE
-            )
+            AUDIT._require_frozen_candidate("1" * 40, AUDIT.FROZEN_IMAGE)  # pylint: disable=protected-access
         with self.assertRaises(AUDIT.AuditError):
             AUDIT._require_frozen_candidate(  # pylint: disable=protected-access
                 AUDIT.FROZEN_SOURCE, AUDIT.FROZEN_IMAGE[:-1] + "0"
@@ -168,17 +164,13 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
         baseline = copy.deepcopy(rollback_baseline())
         baseline["image"] = AUDIT.FROZEN_IMAGE
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
-                baseline
-            )
+            AUDIT._audit_frozen_rollback_baseline(baseline)  # pylint: disable=protected-access
 
     def test_wrong_rollback_environment_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["environment"] = "staging"
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
-                baseline
-            )
+            AUDIT._audit_frozen_rollback_baseline(baseline)  # pylint: disable=protected-access
 
     def test_wrong_rollback_digest_rejected(self) -> None:
         recovery = copy.deepcopy(recovery_binding())
