@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """GoreeCloud Search API status-contract tests."""
 
-import searx.webapp
+import searx.webapp  # pylint: disable=unused-import
 from tests import SearxTestCase
 
 
@@ -35,7 +35,7 @@ class GoreeCloudAPIPluginTestCase(SearxTestCase):
         self.assertNotIn("plugins", payload)
         self.assertNotIn("preferences", payload)
 
-    def test_status_never_echoes_query_input(self):
+    def test_status_ignores_query(self):
         marker = "goreecloud-private-query-marker"
         result = self.client.get(f"/api/v1/status?q={marker}")
 
