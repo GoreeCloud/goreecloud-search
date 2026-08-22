@@ -55,6 +55,7 @@ jobs:
             tests/unit/test_goreecloud_final_review_evidence_audit.py
           python goreecloud/first_stable_evidence_audit.py --help | grep -q -- '--final-evidence'
           python goreecloud/first_stable_candidate_07_audit.py --help | grep -q -- '--target-runtime-evidence'
+          python goreecloud/first_stable_candidate_07_audit.py --help | grep -q -- '--rollback-baseline'
           python goreecloud/first_stable_candidate_07_audit.py --help | grep -q -- '--final-evidence'
           python goreecloud/final_review_evidence_audit.py --help | grep -q -- '--final-evidence'
 
