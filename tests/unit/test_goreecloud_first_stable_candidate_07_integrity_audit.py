@@ -73,14 +73,14 @@ def provider_evidence() -> dict:
 class Candidate07ProviderIntegrityTests(unittest.TestCase):
     """Reject contradictory or incomplete provider result semantics."""
 
-    def test_authentic_provider_shape_passes(self) -> None:
+    def test_provider_shape_passes(self) -> None:
         AUDIT._audit_frozen_provider(  # pylint: disable=protected-access
             provider_evidence(),
             AUDIT.candidate_audit.FROZEN_SOURCE,
             AUDIT.candidate_audit.FROZEN_IMAGE,
         )
 
-    def test_passed_exit_code_conflict_rejected(self) -> None:
+    def test_exit_code_conflict(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["results"][0]["exit_code"] = 5
         with self.assertRaises(AUDIT.AuditError):
@@ -90,7 +90,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_passed_http_status_conflict_rejected(self) -> None:
+    def test_http_status_conflict(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["results"][1]["http_status"] = 503
         with self.assertRaises(AUDIT.AuditError):
@@ -100,7 +100,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_missing_product_identity_rejected(self) -> None:
+    def test_product_identity_conflict(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["results"][2]["product_identity"] = False
         with self.assertRaises(AUDIT.AuditError):
@@ -110,7 +110,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_result_count_below_threshold_rejected(self) -> None:
+    def test_result_threshold(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["minimum_results"] = 3
         with self.assertRaises(AUDIT.AuditError):
@@ -120,7 +120,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_incomplete_diagnostic_suite_rejected(self) -> None:
+    def test_diagnostic_suite(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["scope"]["full_diagnostic_suite_passed"] = False
         with self.assertRaises(AUDIT.base_audit.AuditError):
@@ -130,7 +130,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_duplicate_or_reordered_category_rejected(self) -> None:
+    def test_duplicate_category(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["results"][1]["category"] = "general"
         with self.assertRaises((AUDIT.AuditError, AUDIT.base_audit.AuditError)):
@@ -140,7 +140,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_noninteger_result_cards_rejected(self) -> None:
+    def test_noninteger_cards(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["results"][3]["result_cards"] = True
         with self.assertRaises(AUDIT.AuditError):
@@ -150,7 +150,7 @@ class Candidate07ProviderIntegrityTests(unittest.TestCase):
                 AUDIT.candidate_audit.FROZEN_IMAGE,
             )
 
-    def test_required_category_contract_is_exact(self) -> None:
+    def test_required_categories(self) -> None:
         evidence = copy.deepcopy(provider_evidence())
         evidence["required_categories"].append("science")
         with self.assertRaises(AUDIT.AuditError):
