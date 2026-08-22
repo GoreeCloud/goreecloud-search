@@ -190,7 +190,7 @@ class FinalReviewEvidenceAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             args = build_fixture(Path(tempdir))
             path = Path(args.visual_evidence)
-            visual = json.loads(path.read_text())
+            visual = json.loads(path.read_text(encoding="utf-8"))
             del visual["reviews"]["compact_dark"]
             write_json(path, visual)
             with self.assertRaises(AUDIT.AuditError):
@@ -200,7 +200,7 @@ class FinalReviewEvidenceAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             args = build_fixture(Path(tempdir))
             path = Path(args.visual_evidence)
-            visual = json.loads(path.read_text())
+            visual = json.loads(path.read_text(encoding="utf-8"))
             visual["physical_android_preferences_review"]["passed"] = False
             write_json(path, visual)
             with self.assertRaises(AUDIT.AuditError):
@@ -210,7 +210,7 @@ class FinalReviewEvidenceAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             args = build_fixture(Path(tempdir))
             path = Path(args.browser_evidence)
-            browser = json.loads(path.read_text())
+            browser = json.loads(path.read_text(encoding="utf-8"))
             browser["behaviors"]["no_external_browser_fallback"] = False
             write_json(path, browser)
             with self.assertRaises(AUDIT.AuditError):
@@ -220,7 +220,7 @@ class FinalReviewEvidenceAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             args = build_fixture(Path(tempdir))
             path = Path(args.final_evidence)
-            final = json.loads(path.read_text())
+            final = json.loads(path.read_text(encoding="utf-8"))
             final["visual_acceptance"]["reviews"]["compact_light"]["evidence_reference"] = "changed"
             write_json(path, final)
             with self.assertRaises(AUDIT.AuditError):
@@ -230,7 +230,7 @@ class FinalReviewEvidenceAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             args = build_fixture(Path(tempdir))
             path = Path(args.final_evidence)
-            final = json.loads(path.read_text())
+            final = json.loads(path.read_text(encoding="utf-8"))
             final["artifact_bindings"]["browser_evidence_sha256"] = "9" * 64
             write_json(path, final)
             with self.assertRaises(AUDIT.AuditError):
@@ -240,7 +240,7 @@ class FinalReviewEvidenceAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tempdir:
             args = build_fixture(Path(tempdir))
             path = Path(args.browser_evidence)
-            browser = json.loads(path.read_text())
+            browser = json.loads(path.read_text(encoding="utf-8"))
             browser["query"] = "must-not-be-bound"
             write_json(path, browser)
             with self.assertRaises(AUDIT.AuditError):
