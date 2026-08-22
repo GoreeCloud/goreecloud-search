@@ -9,7 +9,8 @@ url = "http://localhost:11111/"
 def test_index(browser):
     browser.visit(url)
     assert browser.is_text_present('GoreeCloud Search')
-    assert browser.is_text_present('Private Search')
+    assert browser.is_text_present('Private search.')
+    assert browser.is_text_present('Total control.')
 
 
 def test_404(browser):
