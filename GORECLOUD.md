@@ -8,9 +8,9 @@ GoreeCloud Search provides one controlled interface for searching approved exter
 
 ## Product boundary
 
-GoreeCloud Search does not replace a browser, GoreeCloud Research Library, a local knowledge base, retrieval-augmented generation, source verification, or independent research judgment.
+GoreeCloud Search does not replace a browser, a local knowledge base, retrieval-augmented generation, source verification, or independent research judgment.
 
-GoreeCloud Search provides discovery. GoreeCloud Research Library preserves and manages sources after discovery.
+GoreeCloud Search provides discovery and remains independent from downstream knowledge-management applications.
 
 ## Upstream relationship
 
