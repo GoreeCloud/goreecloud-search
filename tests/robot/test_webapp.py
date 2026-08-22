@@ -9,7 +9,8 @@ url = "http://localhost:11111/"
 def test_index(browser):
     browser.visit(url)
     assert browser.is_text_present('GoreeCloud Search')
-    assert browser.is_text_present('Private Search')
+    assert browser.is_text_present('Private search.')
+    assert browser.is_text_present('Total control.')
 
 
 def test_404(browser):
@@ -29,7 +30,7 @@ def test_preferences(browser):
     browser.visit(url)
     browser.links.find_by_href('/preferences').click()
     assert browser.is_text_present('Preferences')
-    assert browser.is_text_present('COOKIES')
+    assert browser.is_text_present('Cookies')
 
     assert browser.is_element_present_by_xpath('//label[@for="checkbox_dummy"]')
 

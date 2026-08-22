@@ -1,0 +1,79 @@
+---
+name: GoreeCloud home and Preferences UI
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-home-preferences-v2.yml'
+      - 'goreecloud/browser_acceptance.py'
+      - 'searx/templates/simple/base.html'
+      - 'searx/templates/simple/index.html'
+      - 'searx/templates/simple/simple_search.html'
+      - 'searx/templates/simple/preferences.html'
+      - 'searx/templates/simple/preferences/footer.html'
+      - 'searx/static/themes/simple/goreecloud-home-preferences-v2.css'
+      - 'searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css'
+      - 'tests/unit/test_goreecloud_home_preferences_v2.py'
+      - 'tests/unit/test_webapp.py'
+      - 'tests/robot/test_webapp.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-home-preferences-v2.yml'
+      - 'goreecloud/browser_acceptance.py'
+      - 'searx/templates/simple/base.html'
+      - 'searx/templates/simple/index.html'
+      - 'searx/templates/simple/simple_search.html'
+      - 'searx/templates/simple/preferences.html'
+      - 'searx/templates/simple/preferences/footer.html'
+      - 'searx/static/themes/simple/goreecloud-home-preferences-v2.css'
+      - 'searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css'
+      - 'tests/unit/test_goreecloud_home_preferences_v2.py'
+      - 'tests/unit/test_webapp.py'
+      - 'tests/robot/test_webapp.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  home-preferences-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate source contract
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/browser_acceptance.py \
+            tests/unit/test_goreecloud_home_preferences_v2.py \
+            tests/unit/test_webapp.py \
+            tests/robot/test_webapp.py
+          python tests/unit/test_goreecloud_home_preferences_v2.py
+
+      - name: Verify product and accessibility markers
+        run: |
+          set -euo pipefail
+          grep -q 'Private search.' searx/templates/simple/index.html
+          grep -q "simple/categories.html" searx/templates/simple/simple_search.html
+          grep -q 'role="tab"' searx/templates/simple/preferences.html
+          grep -q 'role="tabpanel"' searx/templates/simple/preferences.html
+          grep -q 'forced-colors: active' \
+            searx/static/themes/simple/goreecloud-home-preferences-v2.css
+          grep -q 'width: 44px' \
+            searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css
+          grep -q "Private search\." tests/robot/test_webapp.py
+          grep -q "Total control\." tests/robot/test_webapp.py
+          grep -q "Cookies" tests/robot/test_webapp.py
