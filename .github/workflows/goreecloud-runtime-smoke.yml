@@ -105,7 +105,7 @@ jobs:
           grep -q 'GoreeCloud Search' /tmp/search.html
           grep -q 'goreecloud.css' /tmp/search.html
 
-      - name: Validate GoreeCloud API v1 status
+      - name: Validate GoreeCloud API and health contracts
         shell: bash
         run: |
           set -euo pipefail
@@ -122,6 +122,14 @@ jobs:
             echo 'API status response echoed query input' >&2
             exit 1
           fi
+
+          curl --fail --silent --show-error \
+            --dump-header /tmp/healthz-headers.txt \
+            http://127.0.0.1:8888/healthz \
+            >/tmp/healthz.json
+          grep -qi '^cache-control: no-store' /tmp/healthz-headers.txt
+          grep -qi '^pragma: no-cache' /tmp/healthz-headers.txt
+          grep -qi '^x-goreecloud-health: ok' /tmp/healthz-headers.txt
 
           python - <<'PY'
           import json
@@ -144,6 +152,13 @@ jobs:
           }
           for forbidden in ('engines', 'plugins', 'preferences'):
               assert forbidden not in payload
+
+          health = json.loads(Path('/tmp/healthz.json').read_text(encoding='utf-8'))
+          assert health == {
+              'product': 'GoreeCloud Search',
+              'service': 'search',
+              'status': 'ok',
+          }
           PY
 
       - name: Validate privacy-facing headers
