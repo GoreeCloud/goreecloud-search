@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""GoreeCloud Search integration API.
+"""GoreeCloud Search integration API and health endpoints.
 
-This module exposes a deliberately small, versioned machine-readable service
-contract for GoreeCloud clients. It does not expose search queries, results,
-provider configuration, credentials, or user preferences.
+This module exposes deliberately small, machine-readable service contracts for
+GoreeCloud clients and health monitors. It does not expose search queries,
+results, provider configuration, credentials, or user preferences.
 """
 
 from flask import jsonify
@@ -14,7 +14,7 @@ from ._core import Plugin, PluginInfo
 
 
 class GoreeCloudAPIPlugin(Plugin):
-    """Always-on first-party API boundary for GoreeCloud integrations."""
+    """Always-on first-party API and health boundary for GoreeCloud."""
 
     id = "goreecloud_api"
 
@@ -23,22 +23,34 @@ class GoreeCloudAPIPlugin(Plugin):
         self.info = PluginInfo(
             id=self.id,
             name="GoreeCloud API",
-            description="Versioned integration status contract for GoreeCloud clients.",
+            description="Versioned integration and health contracts for GoreeCloud clients.",
             preference_section=None,
         )
 
     def init(self, app):
-        """Register the versioned read-only GoreeCloud API status endpoint."""
+        """Register the read-only GoreeCloud API and health endpoints."""
         app.add_url_rule(
             "/api/v1/status",
             endpoint="goreecloud_api_status",
             view_func=self.status,
             methods=["GET"],
         )
+        app.add_url_rule(
+            "/healthz",
+            endpoint="goreecloud_healthz",
+            view_func=self.healthz,
+            methods=["GET"],
+        )
         return True
 
     @staticmethod
-    def status():
+    def _no_store(response):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Pragma"] = "no-cache"
+        return response
+
+    @classmethod
+    def status(cls):
         """Return non-sensitive service identity and capability metadata."""
         response = jsonify(
             {
@@ -62,7 +74,20 @@ class GoreeCloudAPIPlugin(Plugin):
                 },
             }
         )
-        response.headers["Cache-Control"] = "no-store"
-        response.headers["Pragma"] = "no-cache"
+        cls._no_store(response)
         response.headers["X-GoreeCloud-API-Version"] = "1"
+        return response
+
+    @classmethod
+    def healthz(cls):
+        """Return the minimal application-process health contract."""
+        response = jsonify(
+            {
+                "product": "GoreeCloud Search",
+                "service": "search",
+                "status": "ok",
+            }
+        )
+        cls._no_store(response)
+        response.headers["X-GoreeCloud-Health"] = "ok"
         return response
