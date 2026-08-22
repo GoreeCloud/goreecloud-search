@@ -5,6 +5,17 @@ name: GoreeCloud provider acceptance
 on:
   workflow_dispatch:
     inputs:
+      candidate_source:
+        description: Exact lowercase 40-character candidate source revision
+        required: true
+        default: b355aafe769176acebfc938b15a6f7b5b9a2db87
+        type: string
+      candidate_image:
+        description: Exact immutable GoreeCloud Search GHCR image digest
+        required: true
+        # yamllint disable-line rule:line-length
+        default: ghcr.io/goreecloud/goreecloud-search@sha256:3ce3a509675ee396cba33b77ca429aaeea1b1d995f42c62778f9d24de40a09d8
+        type: string
       mode:
         description: Run the representative suite or one diagnostic category
         required: true
@@ -14,12 +25,12 @@ on:
           - suite
           - single
       query:
-        description: Search query used in single-category mode
+        description: Search query used only in single-category diagnostic mode
         required: true
         default: GoreeCloud private search
         type: string
       category:
-        description: SearXNG category used in single-category mode
+        description: Search category used only in single-category diagnostic mode
         required: true
         default: general
         type: string
@@ -31,70 +42,185 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   provider-acceptance:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    env:
+      GC_CANDIDATE_SOURCE: ${{ inputs.candidate_source }}
+      GC_CANDIDATE_IMAGE: ${{ inputs.candidate_image }}
+      GC_MODE: ${{ inputs.mode }}
+      GC_QUERY: ${{ inputs.query }}
+      GC_CATEGORY: ${{ inputs.category }}
+      GC_MINIMUM_RESULTS: ${{ inputs.minimum_results }}
+      GC_CONTAINER: goreecloud-search-provider-evidence
+      GC_BASE_URL: http://127.0.0.1:8888
+
     steps:
-      - name: Check out exact revision
+      - name: Validate immutable candidate inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GC_CANDIDATE_SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$GC_CANDIDATE_IMAGE" =~ ^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$ ]]
+          [[ "$GC_MINIMUM_RESULTS" =~ ^[0-9]+$ ]]
+          test "$GC_MINIMUM_RESULTS" -ge 1
+
+      - name: Check out exact candidate source
         uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.candidate_source }}
+          path: candidate-source
           persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify checked-out candidate identity and evidence contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          observed_source="$(git -C candidate-source rev-parse HEAD)"
+          test "$observed_source" = "$GC_CANDIDATE_SOURCE"
+          test -f candidate-source/goreecloud/provider_acceptance.py
+          test -f candidate-source/goreecloud/settings.yml.example
+          grep -q -- '--expected-source' candidate-source/goreecloud/provider_acceptance.py
+          grep -q -- '--expected-image' candidate-source/goreecloud/provider_acceptance.py
+          grep -q -- '--container' candidate-source/goreecloud/provider_acceptance.py
+          grep -q -- '--evidence-json' candidate-source/goreecloud/provider_acceptance.py
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
-      - name: Install application dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-
-      - name: Prepare GoreeCloud runtime settings
-        run: cp goreecloud/settings.yml.example /tmp/goreecloud-search-provider-settings.yml
-
-      - name: Start GoreeCloud Search
+      - name: Authenticate to GHCR
+        shell: bash
         env:
-          SEARXNG_SETTINGS_PATH: /tmp/goreecloud-search-provider-settings.yml
-          SEARXNG_SECRET: goreecloud-provider-acceptance-only-secret
-          SEARXNG_BIND_ADDRESS: 127.0.0.1
-          SEARXNG_PORT: '8888'
-          SEARXNG_DISABLE_ETC_SETTINGS: 'true'
+          GHCR_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          nohup python -m searx.webapp >/tmp/goreecloud-search-provider.log 2>&1 &
-          echo $! >/tmp/goreecloud-search-provider.pid
-          for attempt in $(seq 1 45); do
-            if curl --fail --silent --show-error \
-              http://127.0.0.1:8888/healthz >/dev/null; then
-              exit 0
+          printf '%s' "$GHCR_TOKEN" \
+            | docker login ghcr.io \
+                --username "$GITHUB_ACTOR" \
+                --password-stdin
+
+      - name: Pull exact immutable candidate image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull "$GC_CANDIDATE_IMAGE"
+          docker image inspect "$GC_CANDIDATE_IMAGE" >/dev/null
+
+      - name: Prepare isolated candidate runtime configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-provider-searxng
+          cp candidate-source/goreecloud/settings.yml.example \
+            .ci-provider-searxng/settings.yml
+
+      - name: Start exact candidate on loopback only
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach \
+            --name "$GC_CONTAINER" \
+            --publish 127.0.0.1:8888:8080 \
+            --env SEARXNG_SECRET=goreecloud-provider-acceptance-only-secret \
+            --env FORCE_OWNERSHIP=false \
+            --volume "$PWD/.ci-provider-searxng:/etc/searxng:ro" \
+            "$GC_CANDIDATE_IMAGE"
+
+          ready=0
+          for attempt in $(seq 1 60); do
+            running="$(docker inspect -f '{{.State.Running}}' "$GC_CONTAINER" 2>/dev/null || true)"
+            health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
+              "$GC_CONTAINER" 2>/dev/null || true)"
+            if [ "$running" = 'true' ] \
+              && [ "$health" = 'healthy' ] \
+              && curl --fail --silent --show-error "$GC_BASE_URL/healthz" >/dev/null; then
+              ready=1
+              break
             fi
-            if ! kill -0 "$(cat /tmp/goreecloud-search-provider.pid)" 2>/dev/null; then
-              cat /tmp/goreecloud-search-provider.log
+            if [ "$running" = 'false' ]; then
+              docker logs "$GC_CONTAINER" || true
               exit 1
             fi
             sleep 1
           done
-          cat /tmp/goreecloud-search-provider.log
-          exit 1
+          test "$ready" = '1'
 
-      - name: Run explicit real-provider acceptance
+      - name: Run candidate-bound real-provider acceptance
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${{ inputs.mode }}" = "suite" ]; then
-            python goreecloud/provider_acceptance.py \
+          if [ "$GC_MODE" = 'suite' ]; then
+            python candidate-source/goreecloud/provider_acceptance.py \
               --suite \
-              --minimum-results "${{ inputs.minimum_results }}"
+              --base-url "$GC_BASE_URL" \
+              --minimum-results "$GC_MINIMUM_RESULTS" \
+              --expected-source "$GC_CANDIDATE_SOURCE" \
+              --expected-image "$GC_CANDIDATE_IMAGE" \
+              --container "$GC_CONTAINER" \
+              --evidence-json provider-evidence.json
           else
-            python goreecloud/provider_acceptance.py \
-              --query "${{ inputs.query }}" \
-              --category "${{ inputs.category }}" \
-              --minimum-results "${{ inputs.minimum_results }}"
+            python candidate-source/goreecloud/provider_acceptance.py \
+              --base-url "$GC_BASE_URL" \
+              --query "$GC_QUERY" \
+              --category "$GC_CATEGORY" \
+              --minimum-results "$GC_MINIMUM_RESULTS"
           fi
 
-      - name: Print application log on failure
+      - name: Verify sanitized provider evidence
+        if: ${{ inputs.mode == 'suite' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s provider-evidence.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = json.loads(Path('provider-evidence.json').read_text(encoding='utf-8'))
+          assert evidence['product'] == 'GoreeCloud Search'
+          assert evidence['candidate']['source_revision'] == os.environ['GC_CANDIDATE_SOURCE']
+          assert evidence['candidate']['image'] == os.environ['GC_CANDIDATE_IMAGE']
+          assert evidence['runtime_binding']['verified_before_and_after_requests'] is True
+          assert evidence['scope']['real_provider_requests_performed'] is True
+          assert evidence['scope']['runtime_identity_verified_during_provider_requests'] is True
+          assert evidence['scope']['all_required_categories_passed'] is True
+          assert evidence['scope']['query_text_persisted'] is False
+          assert evidence['scope']['response_content_persisted'] is False
+          assert evidence['scope']['production_cutover_authorized'] is False
+          PY
+          printf 'source_revision=%s\nimage=%s\n' \
+            "$GC_CANDIDATE_SOURCE" "$GC_CANDIDATE_IMAGE" \
+            > provider-candidate.txt
+          sha256sum provider-evidence.json provider-candidate.txt > SHA256SUMS
+          sha256sum --check SHA256SUMS
+
+      - name: Upload candidate-bound provider evidence
+        if: ${{ inputs.mode == 'suite' && success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-search-provider-evidence-${{ inputs.candidate_source }}
+          path: |
+            provider-evidence.json
+            provider-candidate.txt
+            SHA256SUMS
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Show candidate runtime diagnostics on failure
         if: failure()
-        run: cat /tmp/goreecloud-search-provider.log || true
+        shell: bash
+        run: |
+          docker ps -a || true
+          docker logs "$GC_CONTAINER" || true
+
+      - name: Clean isolated provider-evidence runtime
+        if: always()
+        shell: bash
+        run: docker rm --force "$GC_CONTAINER" >/dev/null 2>&1 || true
