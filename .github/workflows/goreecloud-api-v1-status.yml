@@ -1,0 +1,59 @@
+---
+name: GoreeCloud API v1 status contract
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-api-v1-status.yml'
+      - 'searx/plugins/__init__.py'
+      - 'searx/plugins/goreecloud_api.py'
+      - 'docs/goreecloud/API.md'
+      - 'tests/unit/test_goreecloud_api_plugin.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-api-v1-status.yml'
+      - 'searx/plugins/__init__.py'
+      - 'searx/plugins/goreecloud_api.py'
+      - 'docs/goreecloud/API.md'
+      - 'tests/unit/test_goreecloud_api_plugin.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-v1-status-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate Python source
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            searx/plugins/__init__.py \
+            searx/plugins/goreecloud_api.py \
+            tests/unit/test_goreecloud_api_plugin.py
+
+      - name: Verify API contract markers
+        run: |
+          set -euo pipefail
+          grep -q '/api/v1/status' searx/plugins/goreecloud_api.py
+          grep -q 'machine_readable_search_api' searx/plugins/goreecloud_api.py
+          grep -q 'Cache-Control.*no-store' searx/plugins/goreecloud_api.py
+          grep -q 'X-GoreeCloud-API-Version' searx/plugins/goreecloud_api.py
+          grep -q 'GoreeCloudAPIPlugin' searx/plugins/__init__.py
+          grep -q 'Query-string input is ignored' docs/goreecloud/API.md
+          grep -q 'machine_readable_search_api.*false' docs/goreecloud/API.md
