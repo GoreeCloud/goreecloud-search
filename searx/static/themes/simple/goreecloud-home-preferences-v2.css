@@ -1,0 +1,1229 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — Glaze UI 1.1 homepage and Preferences rebuild. */
+
+/*
+ * This layer intentionally loads after goreecloud.css and goreecloud-states.css.
+ * It owns only the landing page, Preferences, and shared GoreeCloud footer so
+ * result rendering and ranking presentation remain isolated from this rebuild.
+ */
+
+:root {
+  --gc-v2-surface-glass: color-mix(in srgb, var(--gc-surface-strong) 82%, transparent);
+  --gc-v2-surface-soft: color-mix(in srgb, var(--gc-surface-muted) 88%, transparent);
+  --gc-v2-accent-soft: color-mix(in srgb, var(--gc-accent) 10%, transparent);
+  --gc-v2-accent-strong: color-mix(in srgb, var(--gc-accent) 24%, var(--gc-border));
+  --gc-v2-shadow-hero: 0 26px 72px rgba(37, 55, 82, 0.13);
+  --gc-v2-shadow-card: 0 14px 40px rgba(37, 55, 82, 0.075);
+}
+
+@media (prefers-color-scheme: dark) {
+  html.theme-auto {
+    --gc-canvas: #0d1119;
+    --gc-canvas-accent: #121824;
+    --gc-surface: rgba(25, 32, 45, 0.78);
+    --gc-surface-strong: rgba(24, 31, 44, 0.96);
+    --gc-surface-muted: rgba(31, 39, 54, 0.86);
+    --gc-text: #f3f6fb;
+    --gc-muted: #a1aec0;
+    --gc-border: rgba(193, 207, 229, 0.12);
+    --gc-border-strong: rgba(193, 207, 229, 0.36);
+    --gc-accent: #7aa2ff;
+    --gc-accent-secondary: #a594ff;
+    --gc-shadow: 0 18px 54px rgba(0, 0, 0, 0.24);
+    --gc-shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.18);
+    --gc-v2-shadow-hero: 0 28px 78px rgba(0, 0, 0, 0.32);
+    --gc-v2-shadow-card: 0 14px 42px rgba(0, 0, 0, 0.22);
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+/* Homepage                                                                  */
+/* ------------------------------------------------------------------------- */
+
+body.index_endpoint {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 8% 22%, color-mix(in srgb, var(--gc-accent) 13%, transparent), transparent 31rem),
+    radial-gradient(circle at 90% 30%, color-mix(in srgb, var(--gc-accent-secondary) 15%, transparent), transparent 34rem),
+    linear-gradient(180deg, var(--gc-canvas-accent), var(--gc-canvas));
+}
+
+#main_index {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 !important;
+  padding: 0 0 clamp(2rem, 5vw, 4.5rem);
+}
+
+.goreecloud-index-shell {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 96rem);
+  margin: 0 auto;
+  padding: 1.15rem clamp(1rem, 4vw, 3.5rem) 0;
+  box-sizing: border-box;
+}
+
+.goreecloud-index-shell::before,
+.goreecloud-index-shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(1px);
+}
+
+.goreecloud-index-shell::before {
+  width: clamp(15rem, 30vw, 28rem);
+  aspect-ratio: 1;
+  top: 7rem;
+  left: min(-11rem, -8vw);
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 15%, transparent);
+  box-shadow:
+    0 0 0 2.5rem color-mix(in srgb, var(--gc-accent) 3%, transparent),
+    0 0 0 5rem color-mix(in srgb, var(--gc-accent) 2%, transparent);
+  opacity: 0.72;
+}
+
+.goreecloud-index-shell::after {
+  width: clamp(12rem, 25vw, 24rem);
+  aspect-ratio: 1;
+  top: 9rem;
+  right: min(-8rem, -6vw);
+  background:
+    radial-gradient(circle at 36% 32%, color-mix(in srgb, white 28%, transparent), transparent 12%),
+    radial-gradient(circle, color-mix(in srgb, var(--gc-accent-secondary) 19%, transparent), transparent 68%);
+  border: 1px solid color-mix(in srgb, var(--gc-accent-secondary) 13%, transparent);
+  box-shadow: inset 0 0 5rem color-mix(in srgb, var(--gc-accent-secondary) 9%, transparent);
+  opacity: 0.78;
+}
+
+.goreecloud-index-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.25rem;
+  padding-right: min(18rem, 28vw);
+}
+
+.goreecloud-index-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.72rem;
+  min-height: var(--gc-target-min);
+  color: var(--gc-text) !important;
+  text-decoration: none !important;
+  font-size: 1rem;
+  font-weight: 760;
+  letter-spacing: -0.025em;
+}
+
+.goreecloud-index-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  color: white;
+  background: linear-gradient(145deg, var(--gc-accent), var(--gc-accent-secondary));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--gc-accent) 24%, transparent);
+  font-weight: 820;
+}
+
+#main_index #links_on_top {
+  top: 1.05rem;
+  right: max(1rem, calc((100vw - 96rem) / 2 + 3.5rem));
+  z-index: 5;
+  gap: 0.2rem;
+}
+
+#main_index #links_on_top a {
+  margin-left: 0.2rem;
+  padding-inline: 0.8rem;
+  border: 1px solid transparent;
+}
+
+#main_index #links_on_top a:hover,
+#main_index #links_on_top a:focus-visible {
+  border-color: var(--gc-border);
+  background: var(--gc-surface);
+  box-shadow: var(--gc-shadow-soft);
+}
+
+#main_index .index {
+  width: min(100%, 64rem);
+  margin: clamp(4.25rem, 10vh, 7rem) auto 0;
+  padding: 0;
+  text-align: center;
+}
+
+#main_index .goreecloud-search-kicker {
+  gap: 0.45rem;
+  margin-bottom: 1.15rem;
+  padding: 0.46rem 0.78rem;
+  border-color: color-mix(in srgb, var(--gc-accent) 20%, var(--gc-border));
+  background: var(--gc-v2-surface-glass);
+  color: var(--gc-accent);
+  font-size: 0.8rem;
+  font-weight: 780;
+  letter-spacing: 0.025em;
+  box-shadow: 0 8px 22px rgba(37, 55, 82, 0.045);
+}
+
+#main_index .goreecloud-search-kicker::before {
+  content: "";
+  width: 0.58rem;
+  height: 0.72rem;
+  border: 2px solid currentColor;
+  border-radius: 0.3rem 0.3rem 0.4rem 0.4rem;
+  box-sizing: border-box;
+}
+
+#main_index .title {
+  margin: 0;
+  min-height: 0;
+}
+
+#main_index .title h1 {
+  max-width: 15ch;
+  margin: 0 auto;
+  color: var(--gc-text);
+  font-size: clamp(3.2rem, 7vw, 6.25rem);
+  font-weight: 820;
+  line-height: 0.92;
+  letter-spacing: -0.065em;
+  text-wrap: balance;
+}
+
+#main_index .title h1 span {
+  display: block;
+  background: linear-gradient(105deg, var(--gc-text) 12%, color-mix(in srgb, var(--gc-accent) 68%, var(--gc-text)) 74%, var(--gc-accent-secondary));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+#main_index .goreecloud-search-subtitle {
+  max-width: 41rem;
+  margin: 1.15rem auto 2rem;
+  color: var(--gc-muted);
+  font-size: clamp(1.02rem, 1.7vw, 1.22rem);
+  line-height: 1.58;
+  text-wrap: balance;
+}
+
+#main_index .index #search {
+  width: min(100%, 60rem);
+  margin: 0 auto;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+#main_index .index #search_header {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.48rem !important;
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 14%, var(--gc-border)) !important;
+  border-radius: 1.55rem !important;
+  background: var(--gc-v2-surface-glass) !important;
+  box-shadow: var(--gc-v2-shadow-hero);
+  backdrop-filter: blur(26px) saturate(145%);
+  -webkit-backdrop-filter: blur(26px) saturate(145%);
+}
+
+#main_index #search_view {
+  padding: 0;
+}
+
+#main_index .search_box {
+  max-width: none;
+  min-height: 4.1rem;
+  align-items: center;
+  border: 1px solid color-mix(in srgb, var(--gc-border) 72%, transparent);
+  border-radius: 1.15rem;
+  background: var(--gc-surface-strong);
+  box-shadow: 0 8px 24px rgba(37, 55, 82, 0.07);
+  overflow: visible;
+}
+
+#main_index #q {
+  min-height: 4rem;
+  border-radius: 1.15rem 0 0 1.15rem !important;
+  padding-left: 1.15rem;
+  background: transparent;
+  color: var(--gc-text);
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+}
+
+#main_index #q::placeholder {
+  color: color-mix(in srgb, var(--gc-muted) 76%, transparent);
+}
+
+#main_index #clear_search {
+  width: 2.8rem;
+  min-width: 2.8rem;
+  min-height: 2.8rem;
+  padding: 0;
+  background: transparent;
+  color: var(--gc-muted);
+}
+
+#main_index #send_search {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  min-width: 3.2rem;
+  height: 3.2rem;
+  min-height: 3.2rem;
+  margin-right: 0.38rem;
+  padding: 0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary));
+  color: white;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--gc-accent) 26%, transparent);
+}
+
+#main_index #send_search:hover,
+#main_index #send_search:focus-visible {
+  color: white;
+  filter: saturate(1.08) brightness(1.04);
+}
+
+#main_index #categories {
+  width: 100%;
+  margin-top: 1.15rem;
+  overflow: hidden;
+}
+
+#main_index #categories_container {
+  display: flex;
+  align-items: stretch;
+  gap: 0.55rem;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0.2rem 0.2rem 0.55rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+#main_index .category_checkbox,
+#main_index .category_button {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+#main_index .category_checkbox label,
+#main_index button.category_button {
+  box-sizing: border-box;
+  gap: 0.4rem;
+  min-height: var(--gc-target-min);
+  margin: 0 !important;
+  padding: 0.64rem 0.88rem !important;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: 0.9rem !important;
+  background: var(--gc-v2-surface-glass);
+  color: var(--gc-text);
+  font-size: 0.86rem;
+  font-weight: 690;
+  box-shadow: 0 5px 18px rgba(37, 55, 82, 0.035);
+}
+
+#main_index .category_checkbox label svg,
+#main_index button.category_button svg {
+  padding-right: 0;
+  color: var(--gc-accent);
+}
+
+#main_index .category_checkbox input:checked + label,
+#main_index button.category_button.selected {
+  border-color: color-mix(in srgb, var(--gc-accent) 55%, var(--gc-border)) !important;
+  background: color-mix(in srgb, var(--gc-accent) 10%, var(--gc-surface-strong));
+  color: var(--gc-accent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--gc-accent) 9%, transparent);
+}
+
+.goreecloud-index-privacy-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.45rem auto 0;
+  color: var(--gc-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.goreecloud-index-privacy-note::before {
+  content: "";
+  width: 0.52rem;
+  height: 0.52rem;
+  border: 2px solid var(--gc-accent);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.goreecloud-index-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: min(100%, 58rem);
+  margin: 2.25rem auto 0;
+  text-align: left;
+}
+
+.goreecloud-index-principle {
+  min-height: 5.6rem;
+  box-sizing: border-box;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 1rem;
+  background: var(--gc-v2-surface-glass);
+  box-shadow: var(--gc-v2-shadow-card);
+  backdrop-filter: blur(18px) saturate(125%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+
+.goreecloud-index-principle strong {
+  display: block;
+  margin-bottom: 0.28rem;
+  color: var(--gc-text);
+  font-size: 0.88rem;
+  letter-spacing: -0.015em;
+}
+
+.goreecloud-index-principle span {
+  color: var(--gc-muted);
+  font-size: 0.79rem;
+  line-height: 1.48;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Preferences                                                               */
+/* ------------------------------------------------------------------------- */
+
+body.preferences_endpoint {
+  background:
+    radial-gradient(circle at 4% 20%, color-mix(in srgb, var(--gc-accent) 10%, transparent), transparent 26rem),
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--gc-accent-secondary) 11%, transparent), transparent 28rem),
+    linear-gradient(180deg, var(--gc-canvas-accent), var(--gc-canvas));
+}
+
+#main_preferences.goreecloud-page.page_with_header {
+  box-sizing: border-box;
+  width: min(94vw, 88rem);
+  margin: 0 auto;
+  padding: 1.2rem 0 2.5rem;
+}
+
+#main_preferences .goreecloud-page-header {
+  width: 100%;
+  margin: 0;
+  padding-right: min(16rem, 25vw);
+  box-sizing: border-box;
+}
+
+#main_preferences .goreecloud-search-wordmark-page {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+#main_preferences #links_on_top {
+  top: 1.2rem;
+  right: max(1rem, calc((100vw - 88rem) / 2));
+}
+
+#main_preferences > h1 {
+  margin: 2.2rem 0 1.65rem;
+  color: var(--gc-text);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+
+#main_preferences > h1::after {
+  content: "Customize how GoreeCloud Search works for you.";
+  display: block;
+  margin-top: 0.58rem;
+  color: var(--gc-muted);
+  font-size: 0.94rem;
+  font-weight: 450;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+#main_preferences #search_form {
+  width: 100%;
+  margin: 0;
+}
+
+#main_preferences #search_form > .tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(13.5rem, 16rem) minmax(0, 1fr);
+  grid-template-rows: repeat(6, minmax(3.65rem, auto));
+  align-items: start;
+  column-gap: clamp(1.25rem, 2.6vw, 2.25rem);
+  row-gap: 0.4rem;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+}
+
+/* Keep the native radio semantics keyboard reachable instead of display:none. */
+#main_preferences #search_form > .tabs > input[type="radio"] {
+  display: block;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#main_preferences #search_form > .tabs > label {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.65rem;
+  margin: 0;
+  padding: 0.72rem 0.9rem 0.72rem 2.65rem;
+  border: 1px solid transparent;
+  border-radius: 0.95rem;
+  background: transparent;
+  color: var(--gc-text);
+  letter-spacing: -0.01em;
+  text-transform: none;
+  font-size: 0.9rem;
+  font-weight: 720;
+  line-height: 1.2;
+  transition:
+    background-color var(--gc-motion-fast) var(--gc-ease-standard),
+    border-color var(--gc-motion-fast) var(--gc-ease-standard),
+    transform var(--gc-motion-fast) var(--gc-ease-standard),
+    box-shadow var(--gc-motion-fast) var(--gc-ease-standard);
+}
+
+#main_preferences #search_form > .tabs > label::before {
+  content: "";
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  width: 0.78rem;
+  height: 0.78rem;
+  border: 2px solid color-mix(in srgb, var(--gc-muted) 72%, transparent);
+  border-radius: 0.28rem;
+  transform: translateY(-50%) rotate(45deg);
+  box-sizing: border-box;
+}
+
+#main_preferences #tab-label-general::after { content: "Core search behavior"; }
+#main_preferences #tab-label-ui::after { content: "Appearance and interaction"; }
+#main_preferences #tab-label-privacy::after { content: "Privacy and requests"; }
+#main_preferences #tab-label-engines::after { content: "Sources and providers"; }
+#main_preferences #tab-label-query::after { content: "Advanced query tools"; }
+#main_preferences #tab-label-cookies::after { content: "Browser-stored settings"; }
+
+#main_preferences #search_form > .tabs > label::after {
+  margin-top: 0.18rem;
+  color: var(--gc-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+#main_preferences #search_form > .tabs > label:hover {
+  border-bottom-color: transparent;
+  background: var(--gc-v2-accent-soft);
+}
+
+#main_preferences #search_form > .tabs > input[type="radio"]:focus-visible + label {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 65%, white);
+  outline-offset: 2px;
+}
+
+#main_preferences #search_form > .tabs > input[type="radio"]:checked + label {
+  border: 1px solid color-mix(in srgb, var(--gc-accent) 24%, var(--gc-border));
+  border-bottom-color: color-mix(in srgb, var(--gc-accent) 24%, var(--gc-border));
+  background: color-mix(in srgb, var(--gc-accent) 10%, var(--gc-surface));
+  color: var(--gc-accent);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--gc-accent) 8%, transparent);
+  font-weight: 760;
+}
+
+#main_preferences #search_form > .tabs > input[type="radio"]:checked + label::before {
+  border-color: var(--gc-accent);
+  background: color-mix(in srgb, var(--gc-accent) 12%, transparent);
+}
+
+#main_preferences #tab-label-general { grid-column: 1; grid-row: 1; }
+#main_preferences #tab-label-ui { grid-column: 1; grid-row: 2; }
+#main_preferences #tab-label-privacy { grid-column: 1; grid-row: 3; }
+#main_preferences #tab-label-engines { grid-column: 1; grid-row: 4; }
+#main_preferences #tab-label-query { grid-column: 1; grid-row: 5; }
+#main_preferences #tab-label-cookies { grid-column: 1; grid-row: 6; }
+
+#main_preferences #search_form > .tabs > section {
+  grid-column: 2;
+  grid-row: 1 / span 6;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.65rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 1.25rem;
+  background: var(--gc-v2-surface-glass);
+  box-shadow: var(--gc-v2-shadow-card);
+  backdrop-filter: blur(22px) saturate(128%);
+  -webkit-backdrop-filter: blur(22px) saturate(128%);
+  overflow: hidden;
+}
+
+#main_preferences #search_form > .tabs > section > p:first-child {
+  margin: 0.55rem 0.7rem 1rem;
+  color: var(--gc-muted);
+  font-size: 0.86rem;
+}
+
+#main_preferences #search_form > .tabs > section > fieldset {
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.9fr) minmax(12rem, 0.95fr) minmax(14rem, 1.35fr);
+  align-items: center;
+  gap: 0.85rem 1rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 4.55rem;
+  margin: 0;
+  padding: 0.85rem 0.95rem;
+  border: 0;
+  border-bottom: 1px solid var(--gc-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+#main_preferences #search_form > .tabs > section > fieldset:last-child {
+  border-bottom: 0;
+}
+
+#main_preferences #search_form > .tabs > section > fieldset:hover {
+  background: color-mix(in srgb, var(--gc-accent) 3%, transparent);
+}
+
+#main_preferences #search_form > .tabs > section > fieldset > legend {
+  float: none;
+  width: auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--gc-text);
+  font-size: 0.88rem;
+  font-weight: 730;
+  line-height: 1.35;
+}
+
+#main_preferences #search_form > .tabs > section > fieldset > .value {
+  float: none;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+#main_preferences #search_form > .tabs > section > fieldset > .description {
+  float: none;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--gc-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+#main_preferences #search_form > .tabs > section > fieldset select,
+#main_preferences #search_form > .tabs > section > fieldset input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: var(--gc-target-min);
+  margin: 0;
+  padding-left: 0.85rem !important;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.8rem;
+  background-color: var(--gc-surface-strong);
+  color: var(--gc-text);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 35%, transparent);
+}
+
+#main_preferences #search_form > .tabs > section > fieldset select:hover,
+#main_preferences #search_form > .tabs > section > fieldset select:focus,
+#main_preferences #search_form > .tabs > section > fieldset input[type="text"]:hover,
+#main_preferences #search_form > .tabs > section > fieldset input[type="text"]:focus {
+  border-color: color-mix(in srgb, var(--gc-accent) 44%, var(--gc-border));
+  background-color: var(--gc-surface-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gc-accent) 9%, transparent);
+}
+
+#main_preferences input.checkbox-onoff[type="checkbox"] {
+  width: 2.8rem;
+  height: 1.45rem;
+  margin: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gc-muted) 25%, transparent);
+  vertical-align: middle;
+}
+
+#main_preferences input.checkbox-onoff[type="checkbox"]::before {
+  top: 0.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  font-size: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+#main_preferences input.checkbox-onoff[type="checkbox"]:before,
+#main_preferences input.checkbox-onoff.reversed-checkbox[type="checkbox"]:checked:before {
+  left: 0.17rem;
+  background: color-mix(in srgb, var(--gc-muted) 68%, white);
+}
+
+#main_preferences input.checkbox-onoff[type="checkbox"]:checked:before,
+#main_preferences input.checkbox-onoff.reversed-checkbox[type="checkbox"]:before {
+  left: calc(100% - 1.32rem);
+  background: white;
+}
+
+#main_preferences input.checkbox-onoff[type="checkbox"]:checked,
+#main_preferences input.checkbox-onoff.reversed-checkbox[type="checkbox"] {
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary));
+}
+
+#main_preferences input.checkbox-onoff[type="checkbox"]:focus::after {
+  inset: -0.32rem;
+  width: auto;
+  height: auto;
+  border: 2px solid color-mix(in srgb, var(--gc-accent) 70%, white);
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+/* The category chooser is a real preference control rather than a table row. */
+#main_preferences #tab-content-general > fieldset:first-of-type {
+  display: block;
+  padding: 0.95rem;
+}
+
+#main_preferences #tab-content-general > fieldset:first-of-type > legend {
+  margin-bottom: 0.72rem;
+}
+
+#main_preferences #tab-content-general #categories_container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0;
+}
+
+#main_preferences #tab-content-general .category {
+  margin: 0;
+}
+
+#main_preferences #tab-content-general .category label {
+  gap: 0.35rem;
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.75rem;
+  background: var(--gc-surface-strong);
+  color: var(--gc-text);
+}
+
+#main_preferences #tab-content-general .category input:checked + label {
+  border-color: color-mix(in srgb, var(--gc-accent) 55%, var(--gc-border));
+  background: var(--gc-v2-accent-soft);
+  color: var(--gc-accent);
+}
+
+/* Preserve the nested engine/category tabs while improving their container. */
+#main_preferences #tab-content-engines > .tabs {
+  min-width: 0;
+  margin-top: 0.5rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.9rem;
+  background: var(--gc-surface-strong);
+  overflow: hidden;
+}
+
+#main_preferences #tab-content-engines > .tabs > label,
+#main_preferences #tab-content-engines > .tabs > li > a {
+  min-height: var(--gc-target-min);
+  box-sizing: border-box;
+  margin: 0 0.15rem;
+  padding: 0.75rem;
+  border-radius: 0.6rem 0.6rem 0 0;
+  text-transform: none;
+}
+
+#main_preferences table {
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+}
+
+#main_preferences table th,
+#main_preferences table td {
+  padding: 0.72rem 0.58rem;
+  border-bottom: 1px solid var(--gc-border);
+}
+
+#main_preferences table tr:hover {
+  background: var(--gc-v2-accent-soft) !important;
+}
+
+/* Preferences footer/action surface. */
+.goreecloud-preferences-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--gc-border);
+}
+
+.goreecloud-preferences-note {
+  max-width: 38rem;
+  margin: 0;
+  color: var(--gc-muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.goreecloud-preferences-note strong {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--gc-text);
+  font-size: 0.82rem;
+}
+
+.goreecloud-preferences-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+#main_preferences .goreecloud-preferences-buttons .preferences_back,
+#main_preferences .goreecloud-preferences-save {
+  float: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: var(--gc-target-min);
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 0.8rem;
+  background: var(--gc-surface-strong);
+  color: var(--gc-text);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+#main_preferences .goreecloud-preferences-buttons .preferences_back a {
+  color: var(--gc-text) !important;
+  text-decoration: none;
+}
+
+#main_preferences .goreecloud-preferences-save {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary));
+  color: white;
+  box-shadow: 0 9px 22px color-mix(in srgb, var(--gc-accent) 20%, transparent);
+}
+
+#main_preferences .goreecloud-preferences-buttons .preferences_back:hover,
+#main_preferences .goreecloud-preferences-buttons .preferences_back:focus-within {
+  border-color: color-mix(in srgb, var(--gc-accent) 35%, var(--gc-border));
+  background: var(--gc-v2-accent-soft);
+}
+
+/* ------------------------------------------------------------------------- */
+/* Shared footer                                                             */
+/* ------------------------------------------------------------------------- */
+
+footer.goreecloud-footer {
+  box-sizing: border-box;
+  width: calc(100% - clamp(1rem, 4vw, 3rem));
+  max-width: 94rem;
+  min-height: 0;
+  margin: 0 auto 1rem;
+  padding: 0;
+  border: 1px solid var(--gc-border);
+  border-radius: 1.35rem;
+  background: var(--gc-v2-surface-glass);
+  box-shadow: var(--gc-v2-shadow-card);
+  color: var(--gc-text);
+  overflow: hidden;
+  backdrop-filter: blur(20px) saturate(125%);
+  -webkit-backdrop-filter: blur(20px) saturate(125%);
+}
+
+.goreecloud-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(13rem, 1.15fr) minmax(18rem, 2fr) minmax(13rem, 1fr);
+  gap: 1rem;
+  align-items: center;
+  max-width: none;
+  padding: 1rem 1.2rem;
+  text-align: left;
+}
+
+.goreecloud-footer-brand strong {
+  display: block;
+  margin-bottom: 0.18rem;
+  font-size: 0.86rem;
+}
+
+.goreecloud-footer-brand span,
+.goreecloud-footer-meta,
+.goreecloud-footer-meta a {
+  color: var(--gc-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.goreecloud-footer-principles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.goreecloud-footer-principle {
+  min-width: 0;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--gc-border);
+}
+
+.goreecloud-footer-principle strong {
+  display: block;
+  color: var(--gc-text);
+  font-size: 0.76rem;
+}
+
+.goreecloud-footer-principle span {
+  display: block;
+  margin-top: 0.12rem;
+  color: var(--gc-muted);
+  font-size: 0.69rem;
+  line-height: 1.4;
+}
+
+.goreecloud-footer-meta {
+  text-align: right;
+}
+
+.goreecloud-footer-links {
+  margin-top: 0.25rem;
+}
+
+.goreecloud-footer-links a {
+  color: var(--gc-accent) !important;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Adaptive behavior                                                         */
+/* ------------------------------------------------------------------------- */
+
+/* Glaze UI Wide / Expanded refinement. */
+@media (min-width: 1200px) {
+  #main_index .index { margin-top: clamp(4.75rem, 9vh, 6.75rem); }
+  #main_preferences #search_form > .tabs > section { min-height: 31rem; }
+}
+
+/* Glaze UI Medium. */
+@media (min-width: 600px) and (max-width: 999px) {
+  .goreecloud-index-masthead { padding-right: 8rem; }
+  #main_index #links_on_top a span { display: none; }
+  #main_index #links_on_top { right: 1rem; }
+  #main_index .index { margin-top: 4.5rem; }
+  .goreecloud-index-principles { grid-template-columns: 1fr; max-width: 38rem; }
+
+  #main_preferences #search_form > .tabs {
+    grid-template-columns: minmax(11rem, 13rem) minmax(0, 1fr);
+    column-gap: 1rem;
+  }
+
+  #main_preferences #search_form > .tabs > section > fieldset {
+    grid-template-columns: minmax(9rem, 0.8fr) minmax(11rem, 1fr);
+  }
+
+  #main_preferences #search_form > .tabs > section > fieldset > .description {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Glaze UI Compact. */
+@media (max-width: 599px) {
+  .goreecloud-index-shell {
+    width: 100%;
+    padding: 0.7rem 0.75rem 0;
+    overflow: hidden;
+  }
+
+  .goreecloud-index-shell::before,
+  .goreecloud-index-shell::after { opacity: 0.42; }
+
+  .goreecloud-index-masthead {
+    min-height: 3rem;
+    padding-right: 7rem;
+  }
+
+  .goreecloud-index-brand { font-size: 0.88rem; }
+  .goreecloud-index-brand-mark { width: 2rem; height: 2rem; }
+
+  #main_index #links_on_top {
+    top: 0.65rem;
+    right: 0.65rem;
+  }
+
+  #main_index #links_on_top a {
+    width: var(--gc-target-min);
+    padding: 0;
+    justify-content: center;
+  }
+
+  #main_index #links_on_top a span { display: none; }
+  #main_index #links_on_top a svg { margin: 0; }
+
+  #main_index .index {
+    width: 100%;
+    margin-top: 3.35rem;
+    padding-inline: 0.2rem;
+  }
+
+  #main_index .title h1 {
+    max-width: 10ch;
+    font-size: clamp(3rem, 15vw, 4.25rem);
+  }
+
+  #main_index .goreecloud-search-subtitle {
+    max-width: 31rem;
+    margin-bottom: 1.45rem;
+    padding-inline: 0.4rem;
+    font-size: 0.97rem;
+  }
+
+  #main_index .index #search_header {
+    border-radius: 1.2rem !important;
+    padding: 0.35rem !important;
+  }
+
+  #main_index .search_box {
+    min-height: 3.65rem;
+    border-radius: 0.9rem;
+  }
+
+  #main_index #q {
+    min-height: 3.55rem;
+    padding-left: 0.85rem;
+    border-radius: 0.9rem 0 0 0.9rem !important;
+  }
+
+  #main_index #send_search {
+    width: 2.9rem;
+    min-width: 2.9rem;
+    height: 2.9rem;
+    min-height: 2.9rem;
+    margin-right: 0.25rem;
+    border-radius: 0.82rem;
+  }
+
+  #main_index #categories { margin-top: 0.85rem; }
+  #main_index #categories_container { justify-content: flex-start; margin: 0; }
+  .goreecloud-index-principles { grid-template-columns: 1fr; margin-top: 1.4rem; }
+
+  #main_preferences.goreecloud-page.page_with_header {
+    width: calc(100% - 1rem);
+    margin: 0 0.5rem;
+    padding-top: 0.7rem;
+  }
+
+  #main_preferences .goreecloud-page-header { padding-right: 5.5rem; }
+  #main_preferences #links_on_top { top: 0.7rem; right: 0.5rem; }
+  #main_preferences #links_on_top a { width: var(--gc-target-min); justify-content: center; padding: 0; }
+  #main_preferences #links_on_top a span { display: none; }
+  #main_preferences > h1 { margin-top: 1.45rem; }
+
+  #main_preferences #search_form > .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem;
+  }
+
+  #main_preferences #search_form > .tabs > label {
+    flex: 1 1 calc(50% - 0.42rem);
+    width: auto;
+    min-width: 8.5rem;
+    min-height: var(--gc-target-comfortable);
+    padding: 0.6rem 0.65rem 0.6rem 2.15rem;
+    background: var(--gc-v2-surface-glass);
+  }
+
+  #main_preferences #search_form > .tabs > label::before { left: 0.72rem; }
+  #main_preferences #search_form > .tabs > label::after { display: none; }
+
+  #main_preferences #search_form > .tabs > section {
+    flex: 1 0 100%;
+    width: 100%;
+    margin-top: 0.45rem;
+    padding: 0.35rem;
+    border-radius: 1rem;
+  }
+
+  #main_preferences #search_form > .tabs > section > fieldset {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    min-height: 0;
+    padding: 0.85rem 0.75rem;
+  }
+
+  #main_preferences #search_form > .tabs > section > fieldset > legend,
+  #main_preferences #search_form > .tabs > section > fieldset > .value,
+  #main_preferences #search_form > .tabs > section > fieldset > .description {
+    grid-column: 1;
+    width: 100%;
+  }
+
+  #main_preferences #tab-content-general #categories_container {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 0.35rem;
+  }
+
+  #main_preferences #tab-content-general .category { flex: 0 0 auto; }
+
+  .goreecloud-preferences-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .goreecloud-preferences-note { max-width: none; }
+  .goreecloud-preferences-buttons { justify-content: stretch; }
+  #main_preferences .goreecloud-preferences-buttons .preferences_back,
+  #main_preferences .goreecloud-preferences-save { flex: 1 1 auto; }
+
+  footer.goreecloud-footer {
+    width: calc(100% - 1rem);
+    margin: 0 0.5rem 0.5rem;
+    border-radius: 1rem;
+  }
+
+  .goreecloud-footer-inner {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    padding: 0.9rem;
+  }
+
+  .goreecloud-footer-principles { grid-template-columns: 1fr; }
+  .goreecloud-footer-principle { padding-left: 0; border-left: 0; }
+  .goreecloud-footer-meta { text-align: left; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #main_preferences #search_form > .tabs > label,
+  #main_index #links_on_top a { transition: none; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  #main_index .index #search_header,
+  .goreecloud-index-principle,
+  #main_preferences #search_form > .tabs > section,
+  footer.goreecloud-footer {
+    background: var(--gc-surface-strong) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .goreecloud-index-principle span,
+  .goreecloud-index-privacy-note,
+  #main_preferences #search_form > .tabs > label::after,
+  #main_preferences #search_form > .tabs > section > fieldset > .description,
+  .goreecloud-preferences-note,
+  .goreecloud-footer-brand span,
+  .goreecloud-footer-principle span,
+  .goreecloud-footer-meta { color: var(--gc-text); }
+
+  #main_preferences #search_form > .tabs > label,
+  #main_preferences #search_form > .tabs > section,
+  #main_index .category_checkbox label,
+  footer.goreecloud-footer { border-color: var(--gc-border-strong); }
+}
+
+@media (forced-colors: active) {
+  #main_index .title h1 span {
+    background: none;
+    color: CanvasText;
+  }
+
+  #main_index .index #search_header,
+  #main_index .search_box,
+  #main_index .category_checkbox label,
+  #main_index button.category_button,
+  .goreecloud-index-principle,
+  #main_preferences #search_form > .tabs > label,
+  #main_preferences #search_form > .tabs > section,
+  #main_preferences #search_form > .tabs > section > fieldset select,
+  #main_preferences #search_form > .tabs > section > fieldset input[type="text"],
+  footer.goreecloud-footer {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  #main_index #send_search,
+  #main_preferences .goreecloud-preferences-save {
+    background: Highlight !important;
+    color: HighlightText !important;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  #main_index .index #search_header,
+  .goreecloud-index-principle,
+  #main_preferences #search_form > .tabs > section,
+  footer.goreecloud-footer { background: var(--gc-surface-strong) !important; }
+}
