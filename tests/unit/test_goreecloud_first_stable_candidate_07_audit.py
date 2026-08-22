@@ -22,7 +22,7 @@ finally:
     sys.path.remove(MODULE_DIR)
 
 NOW = "2026-08-22T17:00:00Z"
-BASELINE_DIGEST = "a" * 64
+BASELINE_DIGEST = AUDIT.FROZEN_ROLLBACK_SHA256
 
 
 def runtime_evidence() -> dict:
@@ -106,7 +106,9 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
         )
 
     def test_frozen_rollback_passes(self) -> None:
-        result = AUDIT._audit_frozen_rollback_baseline(rollback_baseline())  # pylint: disable=protected-access
+        result = AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
+            rollback_baseline(), BASELINE_DIGEST
+        )
         self.assertEqual(
             result,
             (AUDIT.FROZEN_ROLLBACK_SOURCE, AUDIT.FROZEN_ROLLBACK_IMAGE),
@@ -160,17 +162,27 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
                 AUDIT.FROZEN_SOURCE, AUDIT.FROZEN_IMAGE[:-1] + "0"
             )
 
+    def test_wrong_rb_bytes_rejected(self) -> None:
+        with self.assertRaises(AUDIT.AuditError):
+            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
+                rollback_baseline(), "b" * 64
+            )
+
     def test_wrong_rb_image_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["image"] = AUDIT.FROZEN_IMAGE
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(baseline)  # pylint: disable=protected-access
+            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
+                baseline, BASELINE_DIGEST
+            )
 
     def test_wrong_rb_env_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["environment"] = "staging"
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(baseline)  # pylint: disable=protected-access
+            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
+                baseline, BASELINE_DIGEST
+            )
 
     def test_wrong_rb_digest_rejected(self) -> None:
         recovery = copy.deepcopy(recovery_binding())
