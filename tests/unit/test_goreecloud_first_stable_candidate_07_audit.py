@@ -74,7 +74,7 @@ def runtime_evidence() -> dict:
 class Candidate07EvidenceAuditTests(unittest.TestCase):
     """Keep the master audit compatible with the immutable candidate #07 evidence schema."""
 
-    def test_frozen_runtime_contract_passes(self) -> None:
+    def test_frozen_runtime_passes(self) -> None:
         AUDIT._audit_frozen_runtime(  # pylint: disable=protected-access
             runtime_evidence(), AUDIT.FROZEN_SOURCE, AUDIT.FROZEN_IMAGE
         )
@@ -95,7 +95,7 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
                 evidence, AUDIT.FROZEN_SOURCE, AUDIT.FROZEN_IMAGE
             )
 
-    def test_non_loopback_target_rejected(self) -> None:
+    def test_nonloopback_rejected(self) -> None:
         evidence = copy.deepcopy(runtime_evidence())
         evidence["target"]["base_url"] = "https://search.goreecloud.com"
         with self.assertRaises(AUDIT.AuditError):
