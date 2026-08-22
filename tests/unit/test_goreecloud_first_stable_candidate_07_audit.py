@@ -164,25 +164,19 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
 
     def test_wrong_rb_bytes_rejected(self) -> None:
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
-                rollback_baseline(), "b" * 64
-            )
+            AUDIT._audit_frozen_rollback_baseline(rollback_baseline(), "b" * 64)  # pylint: disable=protected-access
 
     def test_wrong_rb_image_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["image"] = AUDIT.FROZEN_IMAGE
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
-                baseline, BASELINE_DIGEST
-            )
+            AUDIT._audit_frozen_rollback_baseline(baseline, BASELINE_DIGEST)  # pylint: disable=protected-access
 
     def test_wrong_rb_env_rejected(self) -> None:
         baseline = copy.deepcopy(rollback_baseline())
         baseline["environment"] = "staging"
         with self.assertRaises(AUDIT.AuditError):
-            AUDIT._audit_frozen_rollback_baseline(  # pylint: disable=protected-access
-                baseline, BASELINE_DIGEST
-            )
+            AUDIT._audit_frozen_rollback_baseline(baseline, BASELINE_DIGEST)  # pylint: disable=protected-access
 
     def test_wrong_rb_digest_rejected(self) -> None:
         recovery = copy.deepcopy(recovery_binding())
