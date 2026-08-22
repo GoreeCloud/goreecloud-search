@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""GoreeCloud Search API status-contract tests."""
+"""GoreeCloud Search API and health-contract tests."""
 
 import searx.webapp  # pylint: disable=unused-import
 from tests import SearxTestCase
 
 
 class GoreeCloudAPIPluginTestCase(SearxTestCase):
-    """Validate the first-party, read-only integration status contract."""
+    """Validate the first-party, read-only integration contracts."""
 
     def test_status_contract(self):
         result = self.client.get("/api/v1/status")
@@ -41,3 +41,20 @@ class GoreeCloudAPIPluginTestCase(SearxTestCase):
 
         self.assertEqual(result.status_code, 200)
         self.assertNotIn(marker, result.get_data(as_text=True))
+
+    def test_health_contract(self):
+        result = self.client.get("/healthz")
+
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.mimetype, "application/json")
+        self.assertEqual(result.headers["Cache-Control"], "no-store")
+        self.assertEqual(result.headers["Pragma"], "no-cache")
+        self.assertEqual(result.headers["X-GoreeCloud-Health"], "ok")
+        self.assertEqual(
+            result.get_json(),
+            {
+                "product": "GoreeCloud Search",
+                "service": "search",
+                "status": "ok",
+            },
+        )
