@@ -105,5 +105,12 @@ STORAGE: PluginStorage = PluginStorage()
 
 
 def initialize(app):
+    # GoreeCloud's versioned integration API is a first-party product boundary,
+    # not a user-selectable search plugin. Register it independently from the
+    # upstream plugin preference list so it remains available across settings
+    # overrides and upstream synchronization.
+    from .goreecloud_api import GoreeCloudAPIPlugin  # pylint: disable=import-outside-toplevel
+
     STORAGE.load_settings(searx.get_setting("plugins"))
+    STORAGE.register(GoreeCloudAPIPlugin(PluginCfg(active=True)))
     STORAGE.init(app)
