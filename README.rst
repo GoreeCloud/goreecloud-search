@@ -5,10 +5,12 @@ GoreeCloud Search
 
 GoreeCloud Search is the privacy-first metasearch and research gateway for the GoreeCloud personal cloud platform.
 
-This repository is a GoreeCloud-maintained fork of `SearXNG <https://github.com/searxng/searxng>`_. It keeps SearXNG's mature metasearch engine foundation while establishing a distinct GoreeCloud product experience, canonical Glaze UI 1.0 presentation layer, privacy-oriented defaults, operational contract, and future GoreeCloud integrations.
+This repository is a GoreeCloud-maintained fork of `SearXNG <https://github.com/searxng/searxng>`_. It keeps SearXNG's mature metasearch engine foundation while establishing a distinct GoreeCloud product experience, canonical Glaze UI presentation layer, privacy-oriented defaults, operational contract, and future GoreeCloud integrations.
 
 Project status
 --------------
+
+GoreeCloud Search is active in production while the first-Stable line remains a Release Candidate under final acceptance. Production use, source integration, candidate publication, production acceptance, and Stable lifecycle promotion are intentionally treated as separate states.
 
 The maintained fork includes GoreeCloud-specific source validation, direct application runtime smoke testing, custom container build/runtime acceptance, retained upstream integration testing, and Chromium acceptance across the Glaze UI Compact, Medium, Expanded, and Wide adaptive layout classes.
 
@@ -35,7 +37,7 @@ Product direction
 GoreeCloud Search is intended to provide:
 
 - Private and self-hosted metasearch.
-- A GoreeCloud-owned search experience using canonical Glaze UI 1.0 semantics.
+- A GoreeCloud-owned search experience using the approved Glaze UI baseline.
 - Web, image, video, news, technical, academic, software, and other supported search categories.
 - Clear engine and source visibility.
 - Privacy-oriented search defaults with minimal retained user data.
@@ -43,6 +45,15 @@ GoreeCloud Search is intended to provide:
 - A governed GoreeCloud-facing search API for approved applications and local AI research workflows when its access contract is accepted.
 - Failure isolation when individual external search providers are unavailable.
 - Documented backup, restore, upgrade, rollback, and upstream-maintenance procedures.
+
+Product records
+---------------
+
+The maintained product-development records are:
+
+- ``COMPETITIVE-OBJECTIVES.md`` — benchmark products, capabilities to match or exceed, rejected behaviors, and GoreeCloud differentiators.
+- ``FEATURES.md`` — current capabilities, Release Candidate capabilities, and features that remain planned or unaccepted.
+- ``BENEFITS.md`` — user, administrative, platform, privacy, resilience, and ownership benefits.
 
 Architecture principle
 ----------------------
@@ -78,7 +89,7 @@ Development boundaries
 
 The project intentionally preserves upstream provenance and minimizes unnecessary divergence. Changes should be isolated, documented, testable, and reviewable so that relevant upstream security fixes and engine improvements can continue to be incorporated safely.
 
-Production deployment, DNS changes, Caddy changes, NetBird policy changes, firewall changes, and migration of the existing SearXNG service require separate validation and acceptance.
+Future production image promotion, DNS changes, Caddy changes, NetBird policy changes, firewall changes, compatibility-name retirement, and Stable lifecycle promotion require separate validation and acceptance. A documentation or source merge does not authorize those runtime transitions.
 
 Upstream SearXNG
 ----------------
