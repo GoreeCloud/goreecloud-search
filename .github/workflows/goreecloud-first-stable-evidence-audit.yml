@@ -7,14 +7,18 @@ on:
     paths:
       - '.github/workflows/goreecloud-first-stable-evidence-audit.yml'
       - 'goreecloud/first_stable_evidence_audit.py'
+      - 'goreecloud/final_review_evidence_audit.py'
       - 'tests/unit/test_goreecloud_first_stable_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_final_review_evidence_audit.py'
   push:
     branches:
       - master
     paths:
       - '.github/workflows/goreecloud-first-stable-evidence-audit.yml'
       - 'goreecloud/first_stable_evidence_audit.py'
+      - 'goreecloud/final_review_evidence_audit.py'
       - 'tests/unit/test_goreecloud_first_stable_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_final_review_evidence_audit.py'
   workflow_dispatch:
 
 permissions:
@@ -40,10 +44,14 @@ jobs:
           set -euo pipefail
           python -m py_compile \
             goreecloud/first_stable_evidence_audit.py \
-            tests/unit/test_goreecloud_first_stable_evidence_audit.py
+            goreecloud/final_review_evidence_audit.py \
+            tests/unit/test_goreecloud_first_stable_evidence_audit.py \
+            tests/unit/test_goreecloud_final_review_evidence_audit.py
           python goreecloud/first_stable_evidence_audit.py --help | grep -q -- '--final-evidence'
+          python goreecloud/final_review_evidence_audit.py --help | grep -q -- '--final-evidence'
 
       - name: Run deterministic evidence-safety contract
         run: |
           set -euo pipefail
           python tests/unit/test_goreecloud_first_stable_evidence_audit.py
+          python tests/unit/test_goreecloud_final_review_evidence_audit.py
