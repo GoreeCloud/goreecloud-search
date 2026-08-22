@@ -2,15 +2,15 @@
 
 ## Status
 
-Phase 1 source contract implemented on the current development line through `GET /api/v1/status`.
+Phase 1 source contracts are implemented on the current development line through `GET /api/v1/status` and `GET /healthz`.
 
-The general GoreeCloud-facing machine-readable Search API remains planned and unaccepted. This status endpoint does not enable JSON, RSS, or CSV search-result formats and does not promote the current first-Stable candidate or production runtime to Stable.
+The general GoreeCloud-facing machine-readable Search API remains planned and unaccepted. These service/status endpoints do not enable JSON, RSS, or CSV search-result formats and do not promote the current first-Stable candidate or production runtime to Stable.
 
 ## Purpose
 
 GoreeCloud Search will provide stable, documented interfaces for approved GoreeCloud applications, Browser integration, local AI systems, research agents, and approved automation workflows. Consumers should depend on a GoreeCloud-owned versioned contract rather than on incidental SearXNG internals.
 
-The first implemented boundary is intentionally narrow: clients can verify GoreeCloud Search identity, API-contract version, basic capabilities, implementation-foundation transparency, and canonical service paths without receiving query, result, preference, engine, plugin, or secret data.
+The first implemented boundaries are intentionally narrow: clients can verify GoreeCloud Search identity, API-contract version, basic capabilities, implementation-foundation transparency, canonical service paths, and application-process health without receiving query, result, preference, engine, plugin, or secret data.
 
 ## Phase 1 — `GET /api/v1/status`
 
@@ -60,11 +60,31 @@ The response uses `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeClo
 }
 ```
 
+## Phase 1 — `GET /healthz`
+
+`/healthz` is the first-party application-process health endpoint advertised by the API status contract. It exists in GoreeCloud Search source rather than depending on an undocumented reverse-proxy or deployment-only route.
+
+A successful response is HTTP 200 with the minimal JSON body:
+
+```json
+{
+  "product": "GoreeCloud Search",
+  "service": "search",
+  "status": "ok"
+}
+```
+
+The response uses `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeCloud-Health: ok`.
+
+This endpoint proves that the GoreeCloud Search application process is running and able to serve the first-party health contract. It does **not** by itself prove that external search providers, DNS, Caddy, monitoring, backups, or every dependency are healthy. Deeper readiness and production monitoring remain separate operational concerns.
+
 ## Versioning rule
 
 Clients must use the versioned `/api/v1/` namespace rather than treating upstream internal JSON surfaces such as `/config` as a permanent GoreeCloud application contract.
 
 Compatible additive changes may be made within API version 1. Breaking field or semantic changes require a new API version or an explicit migration contract.
+
+The unversioned `/healthz` path is intentionally limited to the stable minimal process-health meaning above. Any richer readiness or dependency-diagnostic contract should use a separately governed endpoint rather than silently changing `/healthz` semantics.
 
 ## Future machine-readable Search contract
 
@@ -96,7 +116,7 @@ Before `machine_readable_search_api` can become `true`, GoreeCloud Search must s
 
 The current GoreeCloud runtime example exposes HTML search only. JSON, RSS, and CSV search-result formats remain disabled until the API access model, authentication or network restriction, rate limiting, versioning, abuse controls, privacy boundaries, monitoring expectations, and lifecycle acceptance are approved.
 
-The Phase 1 status endpoint is intentionally non-sensitive and read-only. It is not an administrative API and must not grow secret-bearing configuration fields merely for convenience.
+The Phase 1 status and health endpoints are intentionally non-sensitive and read-only. They are not administrative APIs and must not grow secret-bearing configuration fields merely for convenience.
 
 ## Compatibility
 
