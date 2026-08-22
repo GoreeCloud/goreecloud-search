@@ -57,7 +57,7 @@ def runtime_evidence() -> dict:
                 "title": "GoreeCloud Search",
                 "source": "https://github.com/GoreeCloud/goreecloud-search",
                 "revision": AUDIT.FROZEN_SOURCE,
-                "version": "2026.8.19-b355aafe7",
+                "version": AUDIT.FROZEN_OCI_VERSION,
                 "licenses": "AGPL-3.0-or-later",
             },
         },
@@ -84,6 +84,39 @@ def rollback_baseline() -> dict:
     }
 
 
+def release_evidence() -> dict:
+    """Return the release evidence shape emitted by frozen candidate #07 release_evidence.py."""
+    baseline = rollback_baseline()
+    return {
+        "schema_version": 1,
+        "product": "GoreeCloud Search",
+        "generated_at": NOW,
+        "candidate": {
+            "source_revision": AUDIT.FROZEN_SOURCE,
+            "image": AUDIT.FROZEN_IMAGE,
+            "oci_revision": AUDIT.FROZEN_SOURCE,
+            "oci_version": AUDIT.FROZEN_OCI_VERSION,
+            "registry_digest_pull_verified": True,
+            "isolated_runtime_acceptance": "passed",
+        },
+        "rollback_baseline": {
+            "environment": baseline["environment"],
+            "recorded_at": baseline["recorded_at"],
+            "source_revision": baseline["source_revision"],
+            "image": baseline["image"],
+            "registry_digest_pull_verified": True,
+            "isolated_runtime_acceptance": "passed",
+        },
+        "rollback_scope": {
+            "image_level_rehearsal": "passed",
+            "target_environment_configuration_rollback_tested": False,
+            "target_environment_data_restore_tested": False,
+            "production_cutover_authorized": False,
+            "statement": "Immutable image-level rollback rehearsal only.",
+        },
+    }
+
+
 def recovery_binding() -> dict:
     """Return the recovery fields that bind to the frozen rollback baseline."""
     return {
@@ -99,6 +132,14 @@ def recovery_binding() -> dict:
 
 class Candidate07EvidenceAuditTests(unittest.TestCase):
     """Keep the master audit compatible with immutable candidate #07 evidence."""
+
+    def test_frozen_release_passes(self) -> None:
+        AUDIT._audit_frozen_release(  # pylint: disable=protected-access
+            release_evidence(),
+            AUDIT.FROZEN_SOURCE,
+            AUDIT.FROZEN_IMAGE,
+            rollback_baseline(),
+        )
 
     def test_frozen_runtime_passes(self) -> None:
         AUDIT._audit_frozen_runtime(  # pylint: disable=protected-access
@@ -121,6 +162,47 @@ class Candidate07EvidenceAuditTests(unittest.TestCase):
             AUDIT.FROZEN_ROLLBACK_IMAGE,
             BASELINE_DIGEST,
         )
+
+    def test_release_oci_rejected(self) -> None:
+        evidence = copy.deepcopy(release_evidence())
+        evidence["candidate"]["oci_version"] = "wrong-version"
+        with self.assertRaises(AUDIT.AuditError):
+            AUDIT._audit_frozen_release(  # pylint: disable=protected-access
+                evidence,
+                AUDIT.FROZEN_SOURCE,
+                AUDIT.FROZEN_IMAGE,
+                rollback_baseline(),
+            )
+
+    def test_release_rb_rejected(self) -> None:
+        evidence = copy.deepcopy(release_evidence())
+        evidence["rollback_baseline"]["recorded_at"] = "2026-08-18T18:10:00-05:00"
+        with self.assertRaises(AUDIT.AuditError):
+            AUDIT._audit_frozen_release(  # pylint: disable=protected-access
+                evidence,
+                AUDIT.FROZEN_SOURCE,
+                AUDIT.FROZEN_IMAGE,
+                rollback_baseline(),
+            )
+
+    def test_release_pull_rejected(self) -> None:
+        evidence = copy.deepcopy(release_evidence())
+        evidence["candidate"]["registry_digest_pull_verified"] = False
+        with self.assertRaises(AUDIT.AuditError):
+            AUDIT._audit_frozen_release(  # pylint: disable=protected-access
+                evidence,
+                AUDIT.FROZEN_SOURCE,
+                AUDIT.FROZEN_IMAGE,
+                rollback_baseline(),
+            )
+
+    def test_runtime_version_rejected(self) -> None:
+        evidence = copy.deepcopy(runtime_evidence())
+        evidence["container_runtime"]["oci"]["version"] = "wrong-version"
+        with self.assertRaises(AUDIT.AuditError):
+            AUDIT._audit_frozen_runtime(  # pylint: disable=protected-access
+                evidence, AUDIT.FROZEN_SOURCE, AUDIT.FROZEN_IMAGE
+            )
 
     def test_synthetic_status_rejected(self) -> None:
         evidence = copy.deepcopy(runtime_evidence())
