@@ -1,0 +1,50 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — final adaptive containment for the homepage rebuild. */
+
+/* Decorative artwork must never enlarge the document canvas. */
+#main_index .goreecloud-index-shell {
+  overflow-x: clip;
+}
+
+/*
+ * Keep the real category controls scrollable inside their own surface instead
+ * of allowing their intrinsic row width to become page-level overflow.
+ */
+#main_index #categories {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+#main_index #categories_container {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-inline: 0;
+  justify-content: flex-start;
+  overflow-x: auto;
+}
+
+#main_index .category,
+#main_index .category_checkbox,
+#main_index .category_button {
+  min-width: 0;
+}
+
+@media (max-width: 599px) {
+  #main_index #send_search {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (forced-colors: active) {
+  #main_index #categories {
+    border-inline: 0;
+  }
+}
