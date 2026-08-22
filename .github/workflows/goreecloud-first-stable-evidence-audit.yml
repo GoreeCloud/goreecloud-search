@@ -1,0 +1,49 @@
+---
+name: GoreeCloud first-Stable evidence audit
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-first-stable-evidence-audit.yml'
+      - 'goreecloud/first_stable_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_evidence_audit.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-first-stable-evidence-audit.yml'
+      - 'goreecloud/first_stable_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_first_stable_evidence_audit.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-safety-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Validate audit source
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/first_stable_evidence_audit.py \
+            tests/unit/test_goreecloud_first_stable_evidence_audit.py
+          python goreecloud/first_stable_evidence_audit.py --help | grep -q -- '--final-evidence'
+
+      - name: Run deterministic evidence-safety contract
+        run: |
+          set -euo pipefail
+          python tests/unit/test_goreecloud_first_stable_evidence_audit.py
