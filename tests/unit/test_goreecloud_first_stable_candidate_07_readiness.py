@@ -18,10 +18,12 @@ SPEC = importlib.util.spec_from_file_location("first_stable_candidate_07_readine
 assert SPEC is not None and SPEC.loader is not None
 READINESS = importlib.util.module_from_spec(SPEC)
 sys.path.insert(0, MODULE_DIR)
+sys.modules[SPEC.name] = READINESS
 try:
     SPEC.loader.exec_module(READINESS)
 finally:
     sys.path.remove(MODULE_DIR)
+    sys.modules.pop(SPEC.name, None)
 
 
 def empty_args(**overrides: str | None) -> argparse.Namespace:
