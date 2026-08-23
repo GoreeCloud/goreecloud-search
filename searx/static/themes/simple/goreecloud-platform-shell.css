@@ -1,0 +1,475 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — platform-integrated Glaze UI shell. */
+
+:root {
+  --gc-platform-max: 84rem;
+  --gc-platform-panel: color-mix(in srgb, var(--gc-surface-strong) 88%, transparent);
+  --gc-platform-soft: color-mix(in srgb, var(--gc-surface-muted) 84%, transparent);
+  --gc-platform-line: color-mix(in srgb, var(--gc-border-strong) 55%, var(--gc-border));
+}
+
+/* Global application chrome ------------------------------------------------ */
+
+#links_on_top {
+  gap: 0.35rem;
+}
+
+#links_on_top a {
+  box-sizing: border-box;
+  min-height: var(--gc-target-min);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--gc-muted);
+  text-decoration: none;
+}
+
+#links_on_top a:hover,
+#links_on_top a:focus-visible {
+  border-color: var(--gc-border);
+  background: var(--gc-platform-panel);
+  color: var(--gc-text);
+}
+
+.goreecloud-platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.34rem 0.62rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: var(--gc-platform-panel);
+  color: var(--gc-muted);
+  font-size: 0.76rem;
+  font-weight: 720;
+  line-height: 1.2;
+}
+
+.goreecloud-platform-badge img,
+.goreecloud-platform-card-icon img {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.goreecloud-platform-badge--wardveil img {
+  color: var(--gc-accent);
+}
+
+/* Homepage ----------------------------------------------------------------- */
+
+#main_index .index {
+  width: min(100%, 66rem);
+  margin-top: clamp(3.2rem, 8vh, 5.5rem);
+}
+
+#main_index .title h1 {
+  max-width: 13ch;
+  font-size: clamp(3rem, 6.8vw, 5.8rem);
+  line-height: 0.94;
+}
+
+#main_index .goreecloud-search-subtitle {
+  max-width: 38rem;
+  margin-bottom: 1.55rem;
+}
+
+.goreecloud-platform-eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0 auto 1.1rem;
+}
+
+.goreecloud-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  width: min(100%, 58rem);
+  margin: 1.55rem auto 0;
+  text-align: left;
+}
+
+.goreecloud-platform-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--gc-platform-line);
+  border-radius: 1.15rem;
+  background: var(--gc-platform-panel);
+  box-shadow: var(--gc-shadow-soft);
+  overflow: hidden;
+}
+
+.goreecloud-platform-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -18% -55% 42%;
+  height: 9rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--gc-accent) 11%, transparent), transparent 67%);
+  pointer-events: none;
+}
+
+.goreecloud-platform-card--privacy::after {
+  background: radial-gradient(circle, color-mix(in srgb, #5b8cff 15%, transparent), transparent 68%);
+}
+
+.goreecloud-platform-card-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 1rem;
+  background: var(--gc-surface-strong);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 35%, transparent);
+}
+
+.goreecloud-platform-card-icon img {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.goreecloud-platform-card--wardveil .goreecloud-platform-card-icon {
+  color: var(--gc-accent);
+}
+
+.goreecloud-platform-card-copy {
+  min-width: 0;
+}
+
+.goreecloud-platform-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.3rem;
+}
+
+.goreecloud-platform-card-heading strong {
+  color: var(--gc-text);
+  font-size: 0.95rem;
+}
+
+.goreecloud-platform-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.18rem 0.48rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gc-accent) 10%, var(--gc-surface-strong));
+  color: var(--gc-accent);
+  font-size: 0.68rem;
+  font-weight: 780;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.goreecloud-platform-state--unknown {
+  background: var(--gc-platform-soft);
+  color: var(--gc-muted);
+}
+
+.goreecloud-platform-card p {
+  margin: 0;
+  color: var(--gc-muted);
+  font-size: 0.84rem;
+  line-height: 1.52;
+}
+
+.goreecloud-platform-card small {
+  display: block;
+  margin-top: 0.48rem;
+  color: color-mix(in srgb, var(--gc-muted) 82%, transparent);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+#main_index .goreecloud-index-principles {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 58rem);
+  margin-top: 0.85rem;
+}
+
+#main_index .goreecloud-index-principle {
+  min-height: auto;
+  padding: 0.85rem 1rem;
+  background: color-mix(in srgb, var(--gc-surface-strong) 72%, transparent);
+}
+
+/* Privacy preferences ------------------------------------------------------- */
+
+.goreecloud-privacy-shield-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, #5b8cff 26%, var(--gc-border));
+  border-radius: 1rem;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, #5b8cff 7%, var(--gc-platform-panel)), var(--gc-platform-panel));
+}
+
+.goreecloud-privacy-shield-panel > img {
+  width: 2.8rem;
+  height: 2.8rem;
+}
+
+.goreecloud-privacy-shield-panel h2 {
+  margin: 0;
+  color: var(--gc-text);
+  font-size: 1rem;
+}
+
+.goreecloud-privacy-shield-panel p {
+  margin: 0.32rem 0 0;
+  color: var(--gc-muted);
+  line-height: 1.5;
+}
+
+.goreecloud-privacy-shield-panel ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.goreecloud-privacy-shield-panel li {
+  padding: 0.28rem 0.52rem;
+  border: 1px solid var(--gc-border);
+  border-radius: 999px;
+  background: var(--gc-surface-strong);
+  color: var(--gc-muted);
+  font-size: 0.72rem;
+  font-weight: 680;
+}
+
+/* Compact footer ------------------------------------------------------------ */
+
+.goreecloud-footer {
+  margin-top: clamp(1.6rem, 4vw, 3rem);
+  border-top: 1px solid var(--gc-border);
+  background: color-mix(in srgb, var(--gc-canvas) 88%, transparent);
+}
+
+.goreecloud-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.9rem 1.4rem;
+  align-items: center;
+  width: min(calc(100% - 2rem), var(--gc-platform-max));
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.goreecloud-footer-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.7rem;
+  min-width: 0;
+}
+
+.goreecloud-footer-brand strong {
+  color: var(--gc-text);
+}
+
+.goreecloud-footer-brand span,
+.goreecloud-footer-meta {
+  color: var(--gc-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.goreecloud-footer-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.goreecloud-footer-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.65rem;
+  align-items: center;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--gc-border);
+}
+
+.goreecloud-footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.45rem;
+}
+
+.goreecloud-footer a {
+  min-height: 2rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Form-factor fidelity ------------------------------------------------------ */
+
+@media (max-width: 599px) {
+  .goreecloud-index-shell {
+    padding-inline: 0.85rem;
+  }
+
+  .goreecloud-index-masthead {
+    padding-right: 5.6rem;
+  }
+
+  .goreecloud-index-brand {
+    gap: 0.5rem;
+    font-size: 0.84rem;
+  }
+
+  .goreecloud-index-brand-mark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.68rem;
+  }
+
+  #main_index #links_on_top {
+    right: 0.8rem;
+  }
+
+  #main_index #links_on_top a {
+    width: var(--gc-target-min);
+    min-width: var(--gc-target-min);
+    padding: 0;
+    justify-content: center;
+  }
+
+  #main_index #links_on_top a span:not(.icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  #main_index .index {
+    margin-top: 2.6rem;
+  }
+
+  #main_index .title h1 {
+    max-width: 10ch;
+    font-size: clamp(3rem, 15vw, 4.45rem);
+  }
+
+  #main_index .goreecloud-search-subtitle {
+    max-width: 31ch;
+    margin-bottom: 1.2rem;
+    font-size: 0.98rem;
+  }
+
+  .goreecloud-platform-grid,
+  #main_index .goreecloud-index-principles {
+    grid-template-columns: 1fr;
+  }
+
+  .goreecloud-platform-grid {
+    margin-top: 1rem;
+  }
+
+  .goreecloud-platform-card {
+    padding: 0.9rem;
+  }
+
+  #main_index .goreecloud-index-principles {
+    margin-top: 0.65rem;
+  }
+
+  .goreecloud-privacy-shield-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .goreecloud-footer-inner {
+    grid-template-columns: 1fr;
+    width: min(calc(100% - 1.5rem), var(--gc-platform-max));
+  }
+
+  .goreecloud-footer-platforms {
+    justify-content: flex-start;
+  }
+
+  .goreecloud-footer-meta {
+    grid-column: auto;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .goreecloud-platform-grid {
+    width: min(100%, 46rem);
+  }
+}
+
+@media (min-width: 1440px) {
+  #main_index .index {
+    width: min(100%, 72rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goreecloud-platform-card,
+  .goreecloud-platform-badge {
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .goreecloud-platform-card,
+  .goreecloud-platform-badge,
+  .goreecloud-privacy-shield-panel,
+  .goreecloud-footer {
+    background: var(--gc-surface-strong) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .goreecloud-platform-card,
+  .goreecloud-platform-badge,
+  .goreecloud-privacy-shield-panel {
+    border-color: var(--gc-border-strong);
+  }
+}
+
+@media (forced-colors: active) {
+  .goreecloud-platform-card,
+  .goreecloud-platform-badge,
+  .goreecloud-privacy-shield-panel,
+  .goreecloud-platform-state {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .goreecloud-platform-card::after {
+    display: none;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .goreecloud-platform-card,
+  .goreecloud-platform-badge,
+  .goreecloud-privacy-shield-panel,
+  .goreecloud-footer {
+    background: var(--gc-surface-strong);
+  }
+}
