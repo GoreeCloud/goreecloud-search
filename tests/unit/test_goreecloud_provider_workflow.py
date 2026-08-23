@@ -49,7 +49,11 @@ class GoreeCloudProviderWorkflowTest(SearxTestCase):
         self.assertIn("query_text_persisted", self.workflow)
         self.assertIn("response_content_persisted", self.workflow)
         self.assertIn("production_cutover_authorized", self.workflow)
-        self.assertIn("actions/upload-artifact@v4", self.workflow)
+        self.assertIn(
+            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            self.workflow,
+        )
+        self.assertNotIn("actions/upload-artifact@v4", self.workflow)
         self.assertIn("sha256sum --check SHA256SUMS", self.workflow)
 
     def test_untrusted_diagnostic_inputs_are_passed_through_environment(self):
