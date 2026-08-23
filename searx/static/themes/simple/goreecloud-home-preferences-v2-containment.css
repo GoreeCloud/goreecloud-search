@@ -34,6 +34,21 @@
   min-width: 0;
 }
 
+/*
+ * Upstream expands the focused mobile search view into an absolute overlay.
+ * The GoreeCloud categories live outside that grid, so retaining the overlay
+ * collapses the header and makes those controls intersect. Keep the rebuilt
+ * search surface in normal flow for both pointer and keyboard focus.
+ */
+#main_index #search_view:focus-within {
+  position: static;
+  z-index: auto;
+  display: block;
+  width: auto;
+  height: auto;
+  background: transparent;
+}
+
 @media (max-width: 599px) {
   #main_index #send_search {
     width: 44px;
