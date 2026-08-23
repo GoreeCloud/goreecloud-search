@@ -22,14 +22,14 @@ class GoreeCloudRcPublicationTest(unittest.TestCase):
         cls.supply_chain = SUPPLY_CHAIN.read_text(encoding="utf-8")
         cls.helper = EVIDENCE_HELPER.read_text(encoding="utf-8")
 
-    def test_rc08_request(self):
+    def test_rc09_request(self):
         self.assertEqual(self.request["product"], "GoreeCloud Search")
-        self.assertEqual(self.request["request_id"], "first-stable-2026-08-23-08")
-        self.assertEqual(self.request["candidate_sequence"], 8)
+        self.assertEqual(self.request["request_id"], "first-stable-2026-08-23-09")
+        self.assertEqual(self.request["candidate_sequence"], 9)
         self.assertEqual(self.request["lifecycle"], "Release Candidate")
         self.assertEqual(
             self.request["reviewed_base_revision"],
-            "3ccbc04d1433c743ede2d04f6449f40b88c60d25",
+            "61027b05ad8fef33d68078f6ec4498e1ac675112",
         )
         self.assertFalse(self.request["production_cutover_authorized"])
         self.assertFalse(self.request["stable_release_authorized"])
