@@ -35,7 +35,7 @@ class GoreeCloudRc08ReceiptTest(unittest.TestCase):
         receipt = self.workflow.index("Post connector-visible RC08 receipt")
         self.assertLess(pull, runtime)
         self.assertLess(runtime, receipt)
-        self.assertIn("production cutover authorized: **false**", self.workflow)
+        self.assertIn("Production cutover authorized: **false**", self.workflow)
         self.assertIn("Stable promotion authorized: **false**", self.workflow)
 
     def test_supply_chain_exception(self):
