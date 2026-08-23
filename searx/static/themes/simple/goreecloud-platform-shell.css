@@ -314,7 +314,7 @@
 }
 
 .goreecloud-footer a {
-  min-height: 2rem;
+  min-height: var(--gc-target-min);
   display: inline-flex;
   align-items: center;
 }
