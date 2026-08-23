@@ -57,6 +57,7 @@ jobs:
               'goreecloud-provider-result-integrity-audit.yml',
               'goreecloud-rc-publication.yml',
               'goreecloud-rc08-publication-receipt.yml',
+              'goreecloud-rc09-publication-receipt.yml',
               'goreecloud-runtime-smoke.yml',
               'goreecloud-workflow-supply-chain.yml',
           }
@@ -84,6 +85,11 @@ jobs:
                   'packages': 'write',
               },
               'goreecloud-rc08-publication-receipt.yml': {
+                  'contents': 'read',
+                  'packages': 'read',
+                  'issues': 'write',
+              },
+              'goreecloud-rc09-publication-receipt.yml': {
                   'contents': 'read',
                   'packages': 'read',
                   'issues': 'write',
