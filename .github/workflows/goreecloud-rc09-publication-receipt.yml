@@ -1,0 +1,136 @@
+---
+name: GoreeCloud RC09 publication receipt
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-rc09-publication-receipt.yml'
+      - '.github/workflows/goreecloud-workflow-supply-chain.yml'
+      - 'tests/unit/test_goreecloud_rc09_receipt.py'
+
+permissions:
+  contents: read
+  packages: read
+  issues: write
+
+jobs:
+  verify-rc09:
+    if: github.repository_owner == 'GoreeCloud' && github.ref_name == 'master'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Require exact RC09 verification boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          parent="$(git rev-parse "${GITHUB_SHA}^")"
+          test "$parent" = 'ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e'
+
+      - name: Authenticate read-only to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" \
+            | podman login ghcr.io --username '${{ github.actor }}' --password-stdin
+
+      - name: Pull and verify immutable RC09 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag='ghcr.io/goreecloud/goreecloud-search:rc-09-ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e'
+          podman pull "$tag"
+          digest_ref="$(podman image inspect --format '{{ index .RepoDigests 0 }}' "$tag")"
+          [[ "$digest_ref" =~ ^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$ ]]
+          title="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.title" }}' "$tag")"
+          source="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.source" }}' "$tag")"
+          revision="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.revision" }}' "$tag")"
+          version="$(podman image inspect --format '{{ index .Labels "org.opencontainers.image.version" }}' "$tag")"
+          test "$title" = 'GoreeCloud Search'
+          test "$source" = 'https://github.com/GoreeCloud/goreecloud-search'
+          test "$revision" = 'ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e'
+          test -n "$version"
+          printf 'GOREECLOUD_RC09_IMAGE=%s\n' "$digest_ref" >> "$GITHUB_ENV"
+          printf 'GOREECLOUD_RC09_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+
+      - name: Rehearse immutable RC09 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-rc09-searxng
+          cp goreecloud/settings.yml.example .ci-rc09-searxng/settings.yml
+          podman run --detach \
+            --name goreecloud-search-rc09-receipt \
+            --publish 127.0.0.1:8892:8080 \
+            --env SEARXNG_SECRET=goreecloud-rc09-receipt-only-secret \
+            --env FORCE_OWNERSHIP=false \
+            --volume "$PWD/.ci-rc09-searxng:/etc/searxng:ro" \
+            "$GOREECLOUD_RC09_IMAGE" >/dev/null
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:8892/ >/tmp/rc09-index.html \
+              && curl --fail --silent --show-error http://127.0.0.1:8892/healthz >/tmp/rc09-healthz.txt; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" = '1'
+          grep -q '<title>GoreeCloud Search</title>' /tmp/rc09-index.html
+          grep -q 'goreecloud.css' /tmp/rc09-index.html
+
+      - name: Post connector-visible RC09 receipt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY' >/tmp/comment.json
+          import json
+          import os
+
+          lines = [
+              '## RC #09 publication verified',
+              '',
+              '- Source: `ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e`',
+              f"- Image: `{os.environ['GOREECLOUD_RC09_IMAGE']}`",
+              f"- OCI version: `{os.environ['GOREECLOUD_RC09_VERSION']}`",
+              '- Registry digest pull: **passed**',
+              '- OCI source/revision identity: **passed**',
+              '- Isolated runtime identity/health: **passed**',
+              '- Lifecycle: **Release Candidate**',
+              '- Production cutover authorized: **false**',
+              '- Stable promotion authorized: **false**',
+              '',
+              'This verifies the published RC image only. Target-host, real-provider,',
+              'monitoring/alert-delivery, application-level recovery, physical Android,',
+              'desktop/persisted-theme, actual compiled GoreeCloud Browser, Privacy Shield',
+              'production-boundary, and Wardveil production-runtime acceptance remain',
+              'pending separate evidence.',
+          ]
+          print(json.dumps({'body': '\n'.join(lines)}))
+          PY
+          curl --fail --silent --show-error \
+            --request POST \
+            --header 'Accept: application/vnd.github+json' \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            https://api.github.com/repos/GoreeCloud/goreecloud-search/issues/66/comments \
+            --data-binary @/tmp/comment.json >/tmp/comment-response.json
+
+      - name: Diagnostics and cleanup
+        if: always()
+        shell: bash
+        run: |
+          podman logs goreecloud-search-rc09-receipt || true
+          podman rm --force goreecloud-search-rc09-receipt || true
