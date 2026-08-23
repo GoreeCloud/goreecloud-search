@@ -8,13 +8,13 @@ on:
       candidate_source:
         description: Exact lowercase 40-character candidate source revision
         required: true
-        default: b355aafe769176acebfc938b15a6f7b5b9a2db87
+        default: ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e
         type: string
       candidate_image:
         description: Exact immutable GoreeCloud Search GHCR image digest
         required: true
         # yamllint disable-line rule:line-length
-        default: ghcr.io/goreecloud/goreecloud-search@sha256:3ce3a509675ee396cba33b77ca429aaeea1b1d995f42c62778f9d24de40a09d8
+        default: ghcr.io/goreecloud/goreecloud-search@sha256:1d6f7e9cc2b10dc4babf5a40f281b588f29aa12ba26307583ae74a1655971560
         type: string
       mode:
         description: Run the representative suite or one diagnostic category
@@ -39,6 +39,11 @@ on:
         required: true
         default: '1'
         type: string
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-provider-acceptance.yml'
 
 permissions:
   contents: read
@@ -49,12 +54,12 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     env:
-      GC_CANDIDATE_SOURCE: ${{ inputs.candidate_source }}
-      GC_CANDIDATE_IMAGE: ${{ inputs.candidate_image }}
-      GC_MODE: ${{ inputs.mode }}
-      GC_QUERY: ${{ inputs.query }}
-      GC_CATEGORY: ${{ inputs.category }}
-      GC_MINIMUM_RESULTS: ${{ inputs.minimum_results }}
+      GC_CANDIDATE_SOURCE: ${{ inputs.candidate_source || 'ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e' }}
+      GC_CANDIDATE_IMAGE: ${{ inputs.candidate_image || 'ghcr.io/goreecloud/goreecloud-search@sha256:1d6f7e9cc2b10dc4babf5a40f281b588f29aa12ba26307583ae74a1655971560' }}
+      GC_MODE: ${{ inputs.mode || 'suite' }}
+      GC_QUERY: ${{ inputs.query || 'GoreeCloud private search' }}
+      GC_CATEGORY: ${{ inputs.category || 'general' }}
+      GC_MINIMUM_RESULTS: ${{ inputs.minimum_results || '1' }}
       GC_CONTAINER: goreecloud-search-provider-evidence
       GC_BASE_URL: http://127.0.0.1:8888
 
@@ -67,11 +72,17 @@ jobs:
           [[ "$GC_CANDIDATE_IMAGE" =~ ^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$ ]]
           [[ "$GC_MINIMUM_RESULTS" =~ ^[0-9]+$ ]]
           test "$GC_MINIMUM_RESULTS" -ge 1
+          if [ "$GITHUB_EVENT_NAME" = 'pull_request' ]; then
+            test "$GC_CANDIDATE_SOURCE" = 'ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e'
+            test "$GC_CANDIDATE_IMAGE" = 'ghcr.io/goreecloud/goreecloud-search@sha256:1d6f7e9cc2b10dc4babf5a40f281b588f29aa12ba26307583ae74a1655971560'
+            test "$GC_MODE" = 'suite'
+            test "$GC_MINIMUM_RESULTS" = '1'
+          fi
 
       - name: Check out exact candidate source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          ref: ${{ inputs.candidate_source }}
+          ref: ${{ env.GC_CANDIDATE_SOURCE }}
           path: candidate-source
           persist-credentials: false
           fetch-depth: 1
@@ -173,7 +184,7 @@ jobs:
           fi
 
       - name: Verify sanitized provider evidence
-        if: ${{ inputs.mode == 'suite' }}
+        if: ${{ env.GC_MODE == 'suite' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -202,10 +213,10 @@ jobs:
           sha256sum --check SHA256SUMS
 
       - name: Upload candidate-bound provider evidence
-        if: ${{ inputs.mode == 'suite' && success() }}
+        if: ${{ env.GC_MODE == 'suite' && success() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: goreecloud-search-provider-evidence-${{ inputs.candidate_source }}
+          name: goreecloud-search-provider-evidence-${{ env.GC_CANDIDATE_SOURCE }}
           path: |
             provider-evidence.json
             provider-candidate.txt
