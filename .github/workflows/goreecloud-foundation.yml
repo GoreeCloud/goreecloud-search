@@ -218,7 +218,7 @@ jobs:
           assert required <= suite
           provider_acceptance.validate_representative_suite()
           PY
-          python tests/unit/test_goreecloud_provider_contract.py
+          PYTHONPATH=. python tests/unit/test_goreecloud_provider_contract.py
 
       - name: Validate container naming compatibility
         shell: bash
