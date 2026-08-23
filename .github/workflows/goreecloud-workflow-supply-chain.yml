@@ -67,30 +67,92 @@ jobs:
           runner_ref = re.compile(r'^\s*runs-on:\s*([^\s#]+)')
           action_ref = re.compile(r'^\s*uses:\s*([^\s#]+)')
           immutable_ref = re.compile(r'^[^@]+@[0-9a-f]{40}$')
+          permission_ref = re.compile(r'^  ([a-z-]+):\s*(read|write|none)\s*(?:#.*)?$')
+          persist_credentials_ref = re.compile(
+              r'^\s+persist-credentials:\s*[\"\']?false[\"\']?\s*(?:#.*)?$'
+          )
+          expected_permissions = {
+              'goreecloud-provider-acceptance.yml': {
+                  'contents': 'read',
+                  'packages': 'read',
+              },
+          }
+
+          def read_top_level_permissions(lines, workflow_name):
+              try:
+                  start = lines.index('permissions:')
+              except ValueError as exc:
+                  raise AssertionError(f'missing top-level permissions block in {workflow_name}') from exc
+
+              permissions = {}
+              for line in lines[start + 1:]:
+                  if line and not line.startswith((' ', '#')):
+                      break
+                  if not line.strip() or line.lstrip().startswith('#'):
+                      continue
+                  match = permission_ref.fullmatch(line)
+                  assert match, f'unrecognized top-level permission entry {line!r} in {workflow_name}'
+                  scope, access = match.groups()
+                  permissions[scope] = access
+              assert permissions, f'empty top-level permissions block in {workflow_name}'
+              return permissions
+
+          def checkout_persists_no_credentials(lines, checkout_index):
+              checkout_indent = len(lines[checkout_index]) - len(lines[checkout_index].lstrip())
+              for line in lines[checkout_index + 1:]:
+                  if line.strip():
+                      indent = len(line) - len(line.lstrip())
+                      if indent < checkout_indent:
+                          break
+                      if indent == checkout_indent and line.lstrip().startswith('uses:'):
+                          break
+                  if persist_credentials_ref.fullmatch(line):
+                      return True
+              return False
 
           for name in workflows:
               path = root / name
               text = path.read_text(encoding='utf-8')
+              lines = text.splitlines()
               runner_values = [
                   match.group(1)
-                  for line in text.splitlines()
+                  for line in lines
                   if (match := runner_ref.match(line))
               ]
               assert runner_values, f'missing runner directive in {name}'
               assert all(value == 'ubuntu-26.04' for value in runner_values), (
                   f'unapproved runner directive(s) in {name}: {runner_values}'
               )
+
+              observed_permissions = read_top_level_permissions(lines, name)
+              allowed_permissions = expected_permissions.get(name, {'contents': 'read'})
+              assert observed_permissions == allowed_permissions, (
+                  f'unapproved workflow permissions in {name}: '
+                  f'observed={observed_permissions}, expected={allowed_permissions}'
+              )
+
               assert exact_checkout in text, f'checkout is not on the approved immutable pin in {name}'
               if 'actions/setup-python@' in text:
                   assert exact_python in text, f'setup-python is not on the approved immutable pin in {name}'
               if 'actions/upload-artifact@' in text:
                   assert exact_upload in text, f'upload-artifact is not on the approved immutable pin in {name}'
 
-              for line in text.splitlines():
+              checkout_count = 0
+              for index, line in enumerate(lines):
                   match = action_ref.match(line)
-                  if match:
-                      ref = match.group(1)
-                      assert immutable_ref.fullmatch(ref), f'mutable action reference {ref!r} in {name}'
+                  if not match:
+                      continue
+                  ref = match.group(1)
+                  assert immutable_ref.fullmatch(ref), f'mutable action reference {ref!r} in {name}'
+                  if ref == exact_checkout:
+                      checkout_count += 1
+                      assert checkout_persists_no_credentials(lines, index), (
+                          f'checkout must set persist-credentials: false in {name}'
+                      )
+              assert checkout_count, f'missing checkout step in {name}'
 
-          print(f'Validated all {len(workflows)} GoreeCloud workflows with immutable dependencies.')
+          print(
+              f'Validated all {len(workflows)} GoreeCloud workflows with immutable dependencies, '
+              'least-privilege token permissions, and non-persisted checkout credentials.'
+          )
           PY
