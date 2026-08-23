@@ -11,6 +11,18 @@ from tests import SearxTestCase
 class GoreeCloudAPIPluginTestCase(SearxTestCase):
     """Validate first-party, read-only integration service contracts."""
 
+    @staticmethod
+    def _setting_override(instance_name):
+        """Return a settings lookup with an explicit test instance identity."""
+        real_get_setting = searx.get_setting
+
+        def get_setting(name, default=None):
+            if name == "general.instance_name":
+                return instance_name
+            return real_get_setting(name, default)
+
+        return get_setting
+
     def test_status_contract(self):
         result = self.client.get("/api/v1/status")
 
@@ -47,7 +59,11 @@ class GoreeCloudAPIPluginTestCase(SearxTestCase):
         self.assertNotIn(marker, result.get_data(as_text=True))
 
     def test_readiness_contract(self):
-        result = self.client.get("/api/v1/readiness")
+        with mock.patch(
+            "searx.plugins.goreecloud_api.searx.get_setting",
+            side_effect=self._setting_override("GoreeCloud Search"),
+        ):
+            result = self.client.get("/api/v1/readiness")
 
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.mimetype, "application/json")
@@ -77,16 +93,9 @@ class GoreeCloudAPIPluginTestCase(SearxTestCase):
             self.assertNotIn(forbidden, payload)
 
     def test_readiness_failure(self):
-        real_get_setting = searx.get_setting
-
-        def altered_setting(name, default=None):
-            if name == "general.instance_name":
-                return "Unexpected Search"
-            return real_get_setting(name, default)
-
         with mock.patch(
             "searx.plugins.goreecloud_api.searx.get_setting",
-            side_effect=altered_setting,
+            side_effect=self._setting_override("Unexpected Search"),
         ):
             result = self.client.get("/api/v1/readiness")
 
@@ -98,7 +107,11 @@ class GoreeCloudAPIPluginTestCase(SearxTestCase):
 
     def test_readiness_ignores_query(self):
         marker = "goreecloud-private-query-marker"
-        result = self.client.get(f"/api/v1/readiness?q={marker}")
+        with mock.patch(
+            "searx.plugins.goreecloud_api.searx.get_setting",
+            side_effect=self._setting_override("GoreeCloud Search"),
+        ):
+            result = self.client.get(f"/api/v1/readiness?q={marker}")
 
         self.assertEqual(result.status_code, 200)
         self.assertNotIn(marker, result.get_data(as_text=True))
