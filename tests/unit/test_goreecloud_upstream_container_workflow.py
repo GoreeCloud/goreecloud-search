@@ -32,17 +32,23 @@ class GoreeCloudUpstreamContainerWorkflowTest(unittest.TestCase):
         self.assertLess(owner_check, dispatch_check)
 
     def test_manual_dispatch_no_longer_bypasses_owner_gate(self):
-        self.assertNotIn(
-            "github.event_name == 'workflow_dispatch'\n" "      || (github.repository_owner == 'searxng'",
-            self.upstream,
+        old_bypass = "".join(
+            [
+                "github.event_name == 'workflow_dispatch'\n",
+                "      || (github.repository_owner == 'searxng'",
+            ]
         )
+        self.assertNotIn(old_bypass, self.upstream)
 
     def test_inherited_helper_pushes_cache_when_actions_mode_is_enabled(self):
         self.assertIn('if [ "$GITHUB_ACTIONS" = "true" ]; then', self.helper)
-        self.assertIn(
-            '"$container_engine" push "ghcr.io/$CONTAINER_IMAGE_ORGANIZATION/cache:$CONTAINER_IMAGE_NAME-$arch$variant"',
-            self.helper,
+        cache_push = "".join(
+            [
+                '"$container_engine" push "ghcr.io/$CONTAINER_IMAGE_ORGANIZATION/cache:',
+                '$CONTAINER_IMAGE_NAME-$arch$variant"',
+            ]
         )
+        self.assertIn(cache_push, self.helper)
 
     def test_goreecloud_acceptance_build_remains_local_only(self):
         self.assertIn("permissions:\n  contents: read", self.goreecloud)
