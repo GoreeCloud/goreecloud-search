@@ -41,7 +41,9 @@ jobs:
           from pathlib import Path
           import re
 
-          workflows = (
+          root = Path('.github/workflows')
+          workflows = tuple(sorted(path.name for path in root.glob('goreecloud-*.yml')))
+          required_workflows = {
               'goreecloud-api-v1-status.yml',
               'goreecloud-browser-acceptance.yml',
               'goreecloud-candidate-artifact-provenance-audit.yml',
@@ -49,11 +51,16 @@ jobs:
               'goreecloud-first-stable-evidence-audit.yml',
               'goreecloud-first-stable-readiness.yml',
               'goreecloud-foundation.yml',
+              'goreecloud-home-preferences-v2.yml',
               'goreecloud-provider-acceptance.yml',
+              'goreecloud-provider-result-integrity-audit.yml',
               'goreecloud-runtime-smoke.yml',
               'goreecloud-workflow-supply-chain.yml',
+          }
+          assert required_workflows <= set(workflows), (
+              f'missing required GoreeCloud workflow(s): {sorted(required_workflows - set(workflows))}'
           )
-          root = Path('.github/workflows')
+
           exact_checkout = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
           exact_python = 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97'
           exact_upload = 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02'
@@ -63,7 +70,6 @@ jobs:
 
           for name in workflows:
               path = root / name
-              assert path.is_file(), f'missing critical workflow: {path}'
               text = path.read_text(encoding='utf-8')
               runner_values = [
                   match.group(1)
@@ -86,5 +92,5 @@ jobs:
                       ref = match.group(1)
                       assert immutable_ref.fullmatch(ref), f'mutable action reference {ref!r} in {name}'
 
-          print(f'Validated {len(workflows)} critical GoreeCloud workflows with immutable dependencies.')
+          print(f'Validated all {len(workflows)} GoreeCloud workflows with immutable dependencies.')
           PY
