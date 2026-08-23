@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "product": "GoreeCloud Search",
+  "integration_version": "0.1.0",
+  "privacy_shield": {
+    "name": "GoreeCloud Privacy Shield",
+    "authority_repository": "GoreeCloud/goreecloud-privacy-shield",
+    "authority_revision": "1edb768336591e0656226f555c57d32537de9274",
+    "canonical_asset_source": "branding/privacy-shield/privacy-shield-icon.svg",
+    "consumer_asset": "searx/static/themes/simple/img/privacy-shield.svg",
+    "consumer_asset_sha256": "459d2e7b0427bb17b25c6440a6388461d8ade3b52033601cdb02970ea99db29d",
+    "adapter_state": "integrated",
+    "runtime_acceptance": "application-specific",
+    "capabilities": [
+      {
+        "id": "search-data-minimization",
+        "evidence": [
+          "general.enable_metrics=false",
+          "ui.query_in_title=false",
+          "no GoreeCloud query-history feature"
+        ]
+      },
+      {
+        "id": "request-privacy",
+        "evidence": [
+          "server.image_proxy=true",
+          "Referrer-Policy=no-referrer",
+          "X-Robots-Tag=noindex,nofollow"
+        ]
+      },
+      {
+        "id": "privacy-control",
+        "evidence": [
+          "native Search Privacy preferences remain available",
+          "provider and engine choices remain visible and configurable"
+        ]
+      }
+    ],
+    "boundary": "Privacy Shield governs declared Search privacy capabilities only. External search providers remain separate data processors with their own policies."
+  },
+  "wardveil_security": {
+    "name": "Wardveil Security by GoreeCloud",
+    "authority_repository": "GoreeCloud/goreecloud-wardveil-security",
+    "authority_revision": "d044e04f35fc09d623dc2ee55810a0e1453b6c01",
+    "canonical_asset_source": "branding/wardveil-security-icon.svg",
+    "consumer_asset": "searx/static/themes/simple/img/wardveil-security.svg",
+    "consumer_asset_sha256": "179fd15b6f2e7097ba0d9af79914a840fd305c2d44e8e859d12572c2d82b6f55",
+    "adapter_state": "integrated",
+    "status_contract": "Wardveil 0.7",
+    "runtime_status": "unknown",
+    "protected_by_wardveil": false,
+    "source_scope_controls": [
+      "loopback-only application bind baseline",
+      "runtime secret separation",
+      "security response-header baseline",
+      "HTML-only default output boundary",
+      "no direct production-port exposure requirement"
+    ],
+    "boundary": "Search does not claim an overall Protected by Wardveil state from source integration alone. Production network, reverse-proxy, host, monitoring, vulnerability, and recovery evidence remain authoritative outside this UI adapter."
+  }
+}
