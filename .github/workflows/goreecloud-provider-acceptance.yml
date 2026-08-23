@@ -55,6 +55,7 @@ jobs:
     timeout-minutes: 30
     env:
       GC_CANDIDATE_SOURCE: ${{ inputs.candidate_source || 'ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e' }}
+      # yamllint disable-line rule:line-length
       GC_CANDIDATE_IMAGE: ${{ inputs.candidate_image || 'ghcr.io/goreecloud/goreecloud-search@sha256:1d6f7e9cc2b10dc4babf5a40f281b588f29aa12ba26307583ae74a1655971560' }}
       GC_MODE: ${{ inputs.mode || 'suite' }}
       GC_QUERY: ${{ inputs.query || 'GoreeCloud private search' }}
@@ -74,7 +75,9 @@ jobs:
           test "$GC_MINIMUM_RESULTS" -ge 1
           if [ "$GITHUB_EVENT_NAME" = 'pull_request' ]; then
             test "$GC_CANDIDATE_SOURCE" = 'ef2a7fb4e96e1f28bef53fb8bc766a1bed96b45e'
-            test "$GC_CANDIDATE_IMAGE" = 'ghcr.io/goreecloud/goreecloud-search@sha256:1d6f7e9cc2b10dc4babf5a40f281b588f29aa12ba26307583ae74a1655971560'
+            expected_digest='1d6f7e9cc2b10dc4babf5a40f281b588f29aa12ba26307583ae74a1655971560'
+            test "$GC_CANDIDATE_IMAGE" = \
+              "ghcr.io/goreecloud/goreecloud-search@sha256:${expected_digest}"
             test "$GC_MODE" = 'suite'
             test "$GC_MINIMUM_RESULTS" = '1'
           fi
