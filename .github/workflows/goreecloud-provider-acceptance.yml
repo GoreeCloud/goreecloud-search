@@ -146,10 +146,7 @@ jobs:
           ready=0
           for attempt in $(seq 1 60); do
             running="$(docker inspect -f '{{.State.Running}}' "$GC_CONTAINER" 2>/dev/null || true)"
-            health="$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' \
-              "$GC_CONTAINER" 2>/dev/null || true)"
             if [ "$running" = 'true' ] \
-              && [ "$health" = 'healthy' ] \
               && curl --fail --silent --show-error "$GC_BASE_URL/healthz" >/dev/null; then
               ready=1
               break
