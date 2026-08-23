@@ -56,6 +56,7 @@ jobs:
               'goreecloud-provider-acceptance.yml',
               'goreecloud-provider-result-integrity-audit.yml',
               'goreecloud-rc-publication.yml',
+              'goreecloud-rc08-publication-receipt.yml',
               'goreecloud-runtime-smoke.yml',
               'goreecloud-workflow-supply-chain.yml',
           }
@@ -82,6 +83,11 @@ jobs:
                   'contents': 'read',
                   'packages': 'write',
               },
+              'goreecloud-rc08-publication-receipt.yml': {
+                  'contents': 'read',
+                  'packages': 'read',
+                  'issues': 'write',
+              },
           }
 
           def read_top_level_permissions(lines, workflow_name):
@@ -89,7 +95,6 @@ jobs:
                   start = lines.index('permissions:')
               except ValueError as exc:
                   raise AssertionError(f'missing top-level permissions block in {workflow_name}') from exc
-
               permissions = {}
               for line in lines[start + 1:]:
                   if line and not line.startswith((' ', '#')):
@@ -120,29 +125,22 @@ jobs:
               path = root / name
               text = path.read_text(encoding='utf-8')
               lines = text.splitlines()
-              runner_values = [
-                  match.group(1)
-                  for line in lines
-                  if (match := runner_ref.match(line))
-              ]
+              runner_values = [match.group(1) for line in lines if (match := runner_ref.match(line))]
               assert runner_values, f'missing runner directive in {name}'
               assert all(value == 'ubuntu-26.04' for value in runner_values), (
                   f'unapproved runner directive(s) in {name}: {runner_values}'
               )
-
               observed_permissions = read_top_level_permissions(lines, name)
               allowed_permissions = expected_permissions.get(name, {'contents': 'read'})
               assert observed_permissions == allowed_permissions, (
-                  f'unapproved workflow permissions in {name}: '
-                  f'observed={observed_permissions}, expected={allowed_permissions}'
+                  f'unapproved workflow permissions in {name}: observed={observed_permissions}, '
+                  f'expected={allowed_permissions}'
               )
-
               assert exact_checkout in text, f'checkout is not on the approved immutable pin in {name}'
               if 'actions/setup-python@' in text:
                   assert exact_python in text, f'setup-python is not on the approved immutable pin in {name}'
               if 'actions/upload-artifact@' in text:
                   assert exact_upload in text, f'upload-artifact is not on the approved immutable pin in {name}'
-
               checkout_count = 0
               for index, line in enumerate(lines):
                   match = action_ref.match(line)
