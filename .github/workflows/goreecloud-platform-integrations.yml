@@ -47,7 +47,7 @@ jobs:
           grep -q 'Privacy Shield integrated' searx/templates/simple/index.html
           grep -q 'Wardveil integrated' searx/templates/simple/index.html
           grep -q 'Protected by Wardveil' searx/templates/simple/index.html
-          grep -q 'source integration alone' docs/goreecloud/PLATFORM-INTEGRATIONS.md
+          grep -qi 'source integration alone' docs/goreecloud/PLATFORM-INTEGRATIONS.md
           grep -q 'prefers-reduced-transparency: reduce' searx/static/themes/simple/goreecloud-platform-shell.css
           grep -q 'forced-colors: active' searx/static/themes/simple/goreecloud-platform-shell.css
 
