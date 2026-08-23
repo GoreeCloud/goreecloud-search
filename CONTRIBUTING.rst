@@ -101,11 +101,13 @@ other sensitive GoreeCloud infrastructure details.
 Glaze UI
 ========
 
-Glaze UI 1.0 is mandatory for GoreeCloud-controlled user-facing surfaces.
-Changes to the web interface must preserve the semantic token contract,
+Glaze UI 1.1.0 is mandatory for GoreeCloud-controlled user-facing surfaces.
+Changes to the web interface must preserve the current semantic token contract,
 intentional surface hierarchy, light and dark behavior, accessible focus and
 practical target sizes, reduced-motion and contrast/transparency resilience,
-and Compact/Medium/Expanded/Wide adaptive behavior.
+and Compact/Medium/Expanded/Wide adaptive behavior. Final Stable conformance
+remains candidate-bound and requires the physical/mobile, desktop, persisted-
+theme, and visual review evidence defined by ``docs/goreecloud/READINESS.md``.
 
 A visual change is not complete merely because it renders. It should remain
 coherent, usable, accessible, privacy-conscious, and recognizably GoreeCloud.
@@ -123,8 +125,13 @@ A material pull request should keep the applicable deterministic gates green:
 
 Run the manual ``GoreeCloud provider acceptance`` workflow when the change can
 affect real search-provider behavior, category routing, result parsing, engine
-configuration, or target-environment provider readiness. External throttling or
-blocking must be classified separately from an application defect.
+configuration, or target-environment provider readiness. The first-Stable
+representative suite must preserve General, Images, Videos, News, and Files as
+release-required categories, with any additional categories treated as
+supplemental diagnostics. Candidate-bound evidence must remain tied to the
+exact immutable staged Search image/source before and after provider requests.
+External throttling or blocking must be classified separately from an
+application defect.
 
 Passing CI establishes source confidence; it does not by itself authorize a
 production deployment. Production promotion remains subject to the readiness
