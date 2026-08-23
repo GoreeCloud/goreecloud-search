@@ -55,6 +55,7 @@ jobs:
               'goreecloud-home-preferences-v2.yml',
               'goreecloud-provider-acceptance.yml',
               'goreecloud-provider-result-integrity-audit.yml',
+              'goreecloud-rc-publication.yml',
               'goreecloud-runtime-smoke.yml',
               'goreecloud-workflow-supply-chain.yml',
           }
@@ -70,12 +71,16 @@ jobs:
           immutable_ref = re.compile(r'^[^@]+@[0-9a-f]{40}$')
           permission_ref = re.compile(r'^  ([a-z-]+):\s*(read|write|none)\s*(?:#.*)?$')
           persist_credentials_ref = re.compile(
-              r'^\s+persist-credentials:\s*[\"\']?false[\"\']?\s*(?:#.*)?$'
+              r'^\s+persist-credentials:\s*["\']?false["\']?\s*(?:#.*)?$'
           )
           expected_permissions = {
               'goreecloud-provider-acceptance.yml': {
                   'contents': 'read',
                   'packages': 'read',
+              },
+              'goreecloud-rc-publication.yml': {
+                  'contents': 'read',
+                  'packages': 'write',
               },
           }
 

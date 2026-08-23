@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "environment": "goreecloud-vps-01-production",
+  "recorded_at": "2026-08-17T18:10:00-05:00",
+  "source_revision": "3584da535f7ed7c3b4b8dc73cf0424fb4bdf1949",
+  "image": "ghcr.io/goreecloud/goreecloud-search@sha256:30ec99e3311fa9dcc934ac267aef123bb2541e0cd0165b360c4a7dc4fa29e3d5",
+  "purpose": "Known-good production image baseline for isolated candidate rollback rehearsal. This record does not replace target-host configuration, data, or backup rollback evidence."
+}
