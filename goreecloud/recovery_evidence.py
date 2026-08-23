@@ -20,6 +20,7 @@ from typing import Any
 import first_stable_evidence_audit as base_audit
 import release_candidate_09_audit as rc09_audit
 
+# pylint: disable=protected-access
 
 RC09_SOURCE = rc09_audit.RC09_SOURCE
 RC09_IMAGE = rc09_audit.RC09_IMAGE
