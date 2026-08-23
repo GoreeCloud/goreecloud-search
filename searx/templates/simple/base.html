@@ -13,7 +13,7 @@
   <meta name="theme-color" content="#0d1119" media="(prefers-color-scheme: dark)">
   <meta name="referrer" content="no-referrer">
   <meta name="robots" content="noindex, nofollow, noarchive">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}{% endblock %}GoreeCloud Search</title>
   <script type="module" src="{{ url_for('static', filename='sxng-core.min.js') }}" client_settings="{{ client_settings }}"></script>
   {% block meta %}{% endblock %}
@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-states.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-home-preferences-v2.css') }}" type="text/css" media="screen">
   <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-home-preferences-v2-containment.css') }}" type="text/css" media="screen">
+  <link rel="stylesheet" href="{{ url_for('static', filename='goreecloud-platform-shell.css') }}" type="text/css" media="screen">
   {% if get_setting('server.limiter') or get_setting('server.public_instance') %}
   <link rel="stylesheet" href="{{ url_for('client_token', token=link_token) }}" type="text/css">
   {% endif %}
@@ -77,36 +78,32 @@
         <strong>GoreeCloud Search</strong>
         <span>Private metasearch and research gateway for GoreeCloud.</span>
       </div>
-      <div class="goreecloud-footer-principles" aria-label="GoreeCloud Search principles">
-        <div class="goreecloud-footer-principle">
-          <strong>Privacy-first</strong>
-          <span>Search without building a GoreeCloud advertising profile.</span>
-        </div>
-        <div class="goreecloud-footer-principle">
-          <strong>Your sources</strong>
-          <span>Provider and engine choices stay visible and configurable.</span>
-        </div>
-        <div class="goreecloud-footer-principle">
-          <strong>Open foundation</strong>
-          <span>GoreeCloud product experience on an auditable open-source base.</span>
-        </div>
+      <div class="goreecloud-footer-platforms" aria-label="GoreeCloud platform integrations">
+        <span class="goreecloud-platform-badge goreecloud-platform-badge--privacy">
+          <img src="{{ url_for('static', filename='img/privacy-shield.svg') }}" alt="" aria-hidden="true">
+          <span>Privacy Shield</span>
+        </span>
+        <span class="goreecloud-platform-badge goreecloud-platform-badge--wardveil">
+          <img src="{{ url_for('static', filename='img/wardveil-security.svg') }}" alt="" aria-hidden="true">
+          <span>Wardveil Security</span>
+        </span>
       </div>
       <div class="goreecloud-footer-meta">
-        Powered by <a href="https://github.com/searxng/searxng">SearXNG</a> {{ searxng_version }} under the GNU AGPL.
-        <div class="goreecloud-footer-links">
+        <span>Powered by <a href="https://github.com/searxng/searxng">SearXNG</a> {{ searxng_version }} under the GNU AGPL.</span>
+        <span class="goreecloud-footer-links">
           <a href="https://github.com/GoreeCloud/goreecloud-search">{{ _('Source code') }}</a>
-          · <a href="https://github.com/searxng/searxng">Upstream</a>
-          {% if enable_metrics %} · <a href="{{ url_for('stats') }}">{{ _('Engine stats') }}</a>{% endif %}
+          <a href="https://github.com/searxng/searxng">Upstream</a>
+          {% if enable_metrics %}<a href="{{ url_for('stats') }}">{{ _('Engine stats') }}</a>{% endif %}
           {% if get_setting('general.privacypolicy_url') %}
-          · <a href="{{ get_setting('general.privacypolicy_url') }}">{{ _('Privacy policy') }}</a>
+          <a href="{{ get_setting('general.privacypolicy_url') }}">{{ _('Privacy policy') }}</a>
           {% endif %}
           {% if get_setting('general.contact_url') %}
-          · <a href="{{ get_setting('general.contact_url') }}">{{ _('Contact instance maintainer') }}</a>
+          <a href="{{ get_setting('general.contact_url') }}">{{ _('Contact instance maintainer') }}</a>
           {% endif %}
           {% for title, link in get_setting('brand.custom.links').items() %}
-          · <a href="{{ link }}">{{ _(title) }}</a>
+          <a href="{{ link }}">{{ _(title) }}</a>
           {% endfor %}
-        </div>
+        </span>
       </div>
     </div>
   </footer>
