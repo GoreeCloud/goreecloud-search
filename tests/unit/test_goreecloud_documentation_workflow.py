@@ -29,7 +29,9 @@ class GoreeCloudDocumentationWorkflowTest(unittest.TestCase):
         self.assertIn("github.ref_name == 'master'", self.release)
         self.assertIn("contents: write", self.release)
         self.assertIn("github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445", self.release)
-        self.assertNotIn("github.repository_owner == 'searxng' || github.event_name == 'workflow_dispatch'", self.workflow)
+        self.assertNotIn(
+            "github.repository_owner == 'searxng' || github.event_name == 'workflow_dispatch'", self.workflow
+        )
 
     def test_manual_dispatch_does_not_bypass_owner_gate(self):
         self.assertIn("workflow_dispatch:", self.workflow)
