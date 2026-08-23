@@ -53,8 +53,21 @@
   height: 1.25rem;
 }
 
-.goreecloud-platform-badge--wardveil img {
-  color: var(--gc-accent);
+.goreecloud-platform-badge--wardveil img,
+.goreecloud-platform-card--wardveil .goreecloud-platform-card-icon img {
+  opacity: 0.82;
+}
+
+.theme-dark .goreecloud-platform-badge--wardveil img,
+.theme-dark .goreecloud-platform-card--wardveil .goreecloud-platform-card-icon img {
+  filter: invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  .theme-auto .goreecloud-platform-badge--wardveil img,
+  .theme-auto .goreecloud-platform-card--wardveil .goreecloud-platform-card-icon img {
+    filter: invert(1);
+  }
 }
 
 /* Homepage ----------------------------------------------------------------- */
@@ -134,10 +147,6 @@
 .goreecloud-platform-card-icon img {
   width: 1.85rem;
   height: 1.85rem;
-}
-
-.goreecloud-platform-card--wardveil .goreecloud-platform-card-icon {
-  color: var(--gc-accent);
 }
 
 .goreecloud-platform-card-copy {
