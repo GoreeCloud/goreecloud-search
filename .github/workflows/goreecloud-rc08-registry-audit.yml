@@ -1,0 +1,121 @@
+---
+name: GoreeCloud RC08 registry audit
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-rc08-registry-audit.yml'
+      - '.github/workflows/goreecloud-workflow-supply-chain.yml'
+      - 'tests/unit/test_goreecloud_rc08_registry_audit.py'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  audit-rc08-registry:
+    if: github.repository_owner == 'GoreeCloud'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Authenticate read-only to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$GHCR_TOKEN" \
+            | podman login ghcr.io \
+                --username '${{ github.actor }}' \
+                --password-stdin
+
+      - name: Pull and verify immutable RC08 identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_sha='2e04d650aac7a457c594f64ba704218c168c71a8'
+          tag="ghcr.io/goreecloud/goreecloud-search:rc-08-${source_sha}"
+          podman pull "$tag"
+          digest_ref="$(
+            podman image inspect \
+              --format '{{ index .RepoDigests 0 }}' \
+              "$tag"
+          )"
+          [[ "$digest_ref" =~ \
+            ^ghcr\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$ ]]
+          title="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.title" }}' \
+              "$tag"
+          )"
+          source="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.source" }}' \
+              "$tag"
+          )"
+          revision="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.revision" }}' \
+              "$tag"
+          )"
+          version="$(
+            podman image inspect \
+              --format '{{ index .Labels "org.opencontainers.image.version" }}' \
+              "$tag"
+          )"
+          test "$title" = 'GoreeCloud Search'
+          test "$source" = 'https://github.com/GoreeCloud/goreecloud-search'
+          test "$revision" = "$source_sha"
+          test -n "$version"
+          printf 'GOREECLOUD_RC08_IMAGE=%s\n' "$digest_ref" >> "$GITHUB_ENV"
+          printf 'GOREECLOUD_RC08_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+          printf 'RC08 immutable image: %s\n' "$digest_ref"
+          printf 'RC08 OCI version: %s\n' "$version"
+
+      - name: Rehearse immutable RC08 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-rc08-registry-audit
+          cp goreecloud/settings.yml.example \
+            .ci-rc08-registry-audit/settings.yml
+          podman run --detach \
+            --name goreecloud-search-rc08-registry-audit \
+            --publish 127.0.0.1:8892:8080 \
+            --env SEARXNG_SECRET=goreecloud-rc08-audit-only-secret \
+            --env FORCE_OWNERSHIP=false \
+            --volume \
+              "$PWD/.ci-rc08-registry-audit:/etc/searxng:ro" \
+            "$GOREECLOUD_RC08_IMAGE" >/dev/null
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:8892/ >/tmp/rc08-audit-index.html \
+              && curl --fail --silent --show-error \
+                http://127.0.0.1:8892/healthz \
+                >/tmp/rc08-audit-healthz.txt; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" = '1'
+          grep -q '<title>GoreeCloud Search</title>' \
+            /tmp/rc08-audit-index.html
+          grep -q 'goreecloud.css' /tmp/rc08-audit-index.html
+          printf 'RC08 registry audit: passed\n'
+
+      - name: Diagnostics and cleanup
+        if: always()
+        shell: bash
+        run: |
+          podman logs goreecloud-search-rc08-registry-audit || true
+          podman rm --force goreecloud-search-rc08-registry-audit || true
