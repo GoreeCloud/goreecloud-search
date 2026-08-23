@@ -188,7 +188,7 @@ def complete(evidence: dict) -> dict:
 class RecoveryEvidenceTests(unittest.TestCase):
     """Keep recovery evidence exact, sanitized, explicit, and non-authorizing."""
 
-    def test_template_is_incomplete_and_non_authorizing(self) -> None:
+    def test_template_incomplete(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             evidence = RECOVERY.build_template(args)
@@ -208,7 +208,7 @@ class RecoveryEvidenceTests(unittest.TestCase):
             self.assertTrue(validated["monitoring"]["alert_delivery_verified"])
             self.assertFalse(validated["scope"]["production_cutover_authorized"])
 
-    def test_wrong_candidate_source_rejected(self) -> None:
+    def test_wrong_source(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             release = Path(args.release_evidence)
@@ -218,7 +218,7 @@ class RecoveryEvidenceTests(unittest.TestCase):
             with self.assertRaises(RECOVERY.EvidenceError):
                 RECOVERY.build_template(args)
 
-    def test_release_authorization_rejected(self) -> None:
+    def test_release_authorization(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             release = Path(args.release_evidence)
@@ -228,7 +228,7 @@ class RecoveryEvidenceTests(unittest.TestCase):
             with self.assertRaises(RECOVERY.EvidenceError):
                 RECOVERY.build_template(args)
 
-    def test_production_modified_rejected(self) -> None:
+    def test_production_modified(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             evidence = complete(RECOVERY.build_template(args))
@@ -237,7 +237,7 @@ class RecoveryEvidenceTests(unittest.TestCase):
             with self.assertRaises(RECOVERY.EvidenceError):
                 RECOVERY.validate_evidence(args)
 
-    def test_production_cutover_authorization_rejected(self) -> None:
+    def test_cutover_authorization(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             evidence = complete(RECOVERY.build_template(args))
@@ -265,7 +265,7 @@ class RecoveryEvidenceTests(unittest.TestCase):
                 with self.assertRaises(RECOVERY.EvidenceError):
                     RECOVERY.validate_evidence(args)
 
-    def test_rollback_modes_are_unambiguous(self) -> None:
+    def test_rollback_mode(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             evidence = complete(RECOVERY.build_template(args))
@@ -274,7 +274,7 @@ class RecoveryEvidenceTests(unittest.TestCase):
             with self.assertRaises(RECOVERY.EvidenceError):
                 RECOVERY.validate_evidence(args)
 
-    def test_template_contains_no_sensitive_fields(self) -> None:
+    def test_template_sanitized(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             args = companion_args(Path(tempdir))
             serialized = json.dumps(RECOVERY.build_template(args), sort_keys=True)
