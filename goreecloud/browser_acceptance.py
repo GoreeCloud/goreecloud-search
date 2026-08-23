@@ -8,10 +8,12 @@ workflow against a locally started application instance.
 
 from __future__ import annotations
 
+import base64
 import os
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -23,6 +25,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 BASE_URL = os.environ.get("GOREECLOUD_SEARCH_TEST_URL", "http://127.0.0.1:8888").rstrip("/")
+SCREENSHOT_DIR = os.environ.get("GOREECLOUD_SEARCH_SCREENSHOT_DIR")
 MIN_TARGET_SIZE = 44
 
 
@@ -41,6 +44,18 @@ VIEWPORTS = (
 )
 
 
+@dataclass(frozen=True)
+class Appearance:
+    name: str
+    color_scheme: str
+
+
+APPEARANCES = (
+    Appearance("light", "light"),
+    Appearance("dark", "dark"),
+)
+
+
 def _driver(viewport: Viewport) -> webdriver.Chrome:
     options = webdriver.ChromeOptions()
     options.add_argument("--headless=new")
@@ -49,6 +64,47 @@ def _driver(viewport: Viewport) -> webdriver.Chrome:
     options.add_argument(f"--window-size={viewport.width},{viewport.height}")
     options.add_argument("--force-device-scale-factor=1")
     return webdriver.Chrome(options=options)
+
+
+def _set_appearance(driver: webdriver.Chrome, appearance: Appearance) -> None:
+    driver.execute_cdp_cmd(
+        "Emulation.setEmulatedMedia",
+        {
+            "media": "screen",
+            "features": [
+                {"name": "prefers-color-scheme", "value": appearance.color_scheme},
+                {"name": "prefers-reduced-motion", "value": "no-preference"},
+            ],
+        },
+    )
+
+
+def _capture(
+    driver: webdriver.Chrome,
+    viewport: Viewport,
+    appearance: Appearance,
+    surface: str,
+) -> None:
+    if not SCREENSHOT_DIR:
+        return
+
+    output_dir = Path(SCREENSHOT_DIR)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    metrics = driver.execute_cdp_cmd("Page.getLayoutMetrics", {})
+    content_size = metrics["cssContentSize"]
+    width = max(1, min(int(content_size["width"]), 4096))
+    height = max(1, min(int(content_size["height"]), 16384))
+    screenshot = driver.execute_cdp_cmd(
+        "Page.captureScreenshot",
+        {
+            "format": "png",
+            "captureBeyondViewport": True,
+            "fromSurface": True,
+            "clip": {"x": 0, "y": 0, "width": width, "height": height, "scale": 1},
+        },
+    )
+    filename = f"{viewport.name}-{appearance.name}-{surface}.png"
+    (output_dir / filename).write_bytes(base64.b64decode(screenshot["data"]))
 
 
 def _fetch_text(driver: webdriver.Chrome, url: str) -> dict[str, object]:
@@ -274,23 +330,29 @@ def _assert_not_found(driver: webdriver.Chrome, wait: WebDriverWait, viewport: V
 def run() -> None:
     errors: list[str] = []
     for viewport in VIEWPORTS:
-        driver: webdriver.Chrome | None = None
-        try:
-            driver = _driver(viewport)
-            driver.set_page_load_timeout(30)
-            driver.set_script_timeout(20)
-            driver.set_window_size(viewport.width, viewport.height)
-            wait = WebDriverWait(driver, 20)
-            _assert_home(driver, wait, viewport)
-            _assert_preferences(driver, wait, viewport)
-            _assert_about(driver, wait, viewport)
-            _assert_not_found(driver, wait, viewport)
-        except (AssertionError, WebDriverException) as exc:
-            errors.append(f"{viewport.name}: {exc}")
-        finally:
-            if driver is not None:
-                driver.quit()
-            time.sleep(0.25)
+        for appearance in APPEARANCES:
+            driver: webdriver.Chrome | None = None
+            try:
+                driver = _driver(viewport)
+                driver.set_page_load_timeout(30)
+                driver.set_script_timeout(20)
+                driver.set_window_size(viewport.width, viewport.height)
+                _set_appearance(driver, appearance)
+                wait = WebDriverWait(driver, 20)
+                _assert_home(driver, wait, viewport)
+                _capture(driver, viewport, appearance, "home")
+                _assert_preferences(driver, wait, viewport)
+                _capture(driver, viewport, appearance, "preferences")
+                _assert_about(driver, wait, viewport)
+                _capture(driver, viewport, appearance, "localized-about")
+                _assert_not_found(driver, wait, viewport)
+                _capture(driver, viewport, appearance, "not-found")
+            except (AssertionError, WebDriverException) as exc:
+                errors.append(f"{viewport.name}/{appearance.name}: {exc}")
+            finally:
+                if driver is not None:
+                    driver.quit()
+                time.sleep(0.25)
     if errors:
         for error in errors:
             print(error, file=sys.stderr)

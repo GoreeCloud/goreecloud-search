@@ -70,7 +70,17 @@ jobs:
       - name: Run Glaze UI adaptive browser acceptance
         env:
           GOREECLOUD_SEARCH_TEST_URL: http://127.0.0.1:8888
+          GOREECLOUD_SEARCH_SCREENSHOT_DIR: /tmp/goreecloud-search-ui-screenshots
         run: python goreecloud/browser_acceptance.py
+
+      - name: Preserve exact-head UI evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: goreecloud-search-ui-${{ github.sha }}
+          path: /tmp/goreecloud-search-ui-screenshots
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Print application log on failure
         if: failure()

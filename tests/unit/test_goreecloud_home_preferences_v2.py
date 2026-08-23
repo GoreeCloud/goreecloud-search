@@ -94,6 +94,9 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
         self.assertIn(".goreecloud-index-brand", acceptance)
         self.assertIn("#categories_container input[type='checkbox']", acceptance)
         self.assertIn("goreecloud-home-preferences-v2.css", acceptance)
+        self.assertIn('Appearance("light", "light")', acceptance)
+        self.assertIn('Appearance("dark", "dark")', acceptance)
+        self.assertIn("Page.captureScreenshot", acceptance)
 
     def test_footer_contract(self):
         base = _read("searx/templates/simple/base.html")
