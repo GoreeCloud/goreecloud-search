@@ -23,16 +23,12 @@ class GoreeCloudAIPolicyContractTest(unittest.TestCase):
         cls.supply_chain = SUPPLY_CHAIN.read_text(encoding="utf-8")
 
     def test_policy_allows_agent_authorship(self):
-        self.assertIn(
-            "AI-assisted and agent-authored contributions are permitted", self.policy
-        )
+        self.assertIn("AI-assisted and agent-authored contributions are permitted", self.policy)
         self.assertIn("AI agents may be the primary implementation author", self.policy)
         self.assertIn("Quality, evidence,", self.policy)
         self.assertIn("Upstream SearXNG Boundary", self.policy)
         self.assertNotIn("AI should never be the main author", self.policy)
-        self.assertNotIn(
-            "Issues and PR descriptions must be fully human-written", self.policy
-        )
+        self.assertNotIn("Issues and PR descriptions must be fully human-written", self.policy)
         self.assertNotIn("invalid:slop", self.policy)
 
     def test_contributing_uses_goreecloud_ai_policy(self):
@@ -41,9 +37,7 @@ class GoreeCloudAIPolicyContractTest(unittest.TestCase):
             "AI-assisted and agent-authored contributions are permitted",
             self.contributing,
         )
-        self.assertIn(
-            "does not impose a human-written-majority requirement", self.contributing
-        )
+        self.assertIn("does not impose a human-written-majority requirement", self.contributing)
         self.assertIn(
             "upstream SearXNG project controls its own contribution and AI policies",
             self.contributing,
