@@ -1,5 +1,5 @@
 ---
-name: GoreeCloud API v1 status contract
+name: GoreeCloud API v1 service contract
 
 # yamllint disable-line rule:truthy
 on:
@@ -11,6 +11,7 @@ on:
       - 'searx/plugins/goreecloud_api.py'
       - 'searx/webapp.py'
       - 'docs/goreecloud/API.md'
+      - 'docs/goreecloud/READINESS.md'
       - 'tests/unit/test_goreecloud_api_plugin.py'
   push:
     branches:
@@ -22,6 +23,7 @@ on:
       - 'searx/plugins/goreecloud_api.py'
       - 'searx/webapp.py'
       - 'docs/goreecloud/API.md'
+      - 'docs/goreecloud/READINESS.md'
       - 'tests/unit/test_goreecloud_api_plugin.py'
   workflow_dispatch:
 
@@ -29,7 +31,7 @@ permissions:
   contents: read
 
 jobs:
-  api-v1-status-contract:
+  api-v1-service-contract:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -51,11 +53,15 @@ jobs:
             searx/plugins/goreecloud_api.py \
             tests/unit/test_goreecloud_api_plugin.py
 
-      - name: Verify API status contract markers
+      - name: Verify API v1 service contract markers
         run: |
           set -euo pipefail
           grep -q '/api/v1/status' searx/plugins/goreecloud_api.py
+          grep -q '/api/v1/readiness' searx/plugins/goreecloud_api.py
           grep -q 'machine_readable_search_api' searx/plugins/goreecloud_api.py
+          grep -q 'readiness_scope' searx/plugins/goreecloud_api.py
+          grep -q 'response.status_code = 200 if ready else 503' \
+            searx/plugins/goreecloud_api.py
           grep -q 'Cache-Control.*no-store' searx/plugins/goreecloud_api.py
           grep -q 'X-GoreeCloud-API-Version' searx/plugins/goreecloud_api.py
           grep -q 'GoreeCloudAPIPlugin' searx/plugins/__init__.py
@@ -63,4 +69,12 @@ jobs:
           grep -q "Response('OK', mimetype='text/plain')" searx/webapp.py
           grep -q 'Query-string input is ignored' docs/goreecloud/API.md
           grep -q 'machine_readable_search_api.*false' docs/goreecloud/API.md
+          grep -q 'GET /api/v1/readiness' docs/goreecloud/API.md
+          grep -q 'HTTP 503' docs/goreecloud/API.md
+          grep -q 'readiness_scope.*local_application' docs/goreecloud/API.md
           grep -q 'Existing process health.*GET /healthz' docs/goreecloud/API.md
+          grep -q 'Local application readiness.*GET /api/v1/readiness' \
+            docs/goreecloud/READINESS.md
+          grep -q 'Neither `/healthz` nor `/api/v1/readiness`' \
+            docs/goreecloud/READINESS.md
+          grep -q 'Glaze UI 1.1.0' docs/goreecloud/READINESS.md

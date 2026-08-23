@@ -2,17 +2,20 @@
 
 ## Status
 
-Phase 1 of the GoreeCloud-owned integration API is implemented on the current development line through `GET /api/v1/status`.
+Phase 1 of the GoreeCloud-owned integration API is implemented on the current development line through two read-only endpoints:
 
-GoreeCloud Search already provides `GET /healthz` through the SearXNG-derived web application. This work preserves that established health endpoint and its `text/plain` `OK` response rather than replacing or silently changing its semantics.
+- `GET /api/v1/status` for stable service identity, capabilities, and canonical paths;
+- `GET /api/v1/readiness` for bounded local-application readiness.
 
-The general GoreeCloud-facing machine-readable Search API remains planned and unaccepted. The status contract does not enable JSON, RSS, or CSV search-result formats and does not promote the current first-Stable candidate or production runtime to Stable.
+GoreeCloud Search also provides `GET /healthz` through the SearXNG-derived web application. This work preserves that established health endpoint and its `text/plain` `OK` response rather than replacing or silently changing its semantics.
+
+The general GoreeCloud-facing machine-readable Search API remains planned and unaccepted. The Phase 1 service contracts do not enable JSON, RSS, or CSV search-result formats and do not promote the current first-Stable candidate or production runtime to Stable.
 
 ## Purpose
 
-GoreeCloud Search will provide stable, documented interfaces for approved GoreeCloud applications, Browser integration, local AI systems, research agents, and approved automation workflows. Consumers should depend on a GoreeCloud-owned versioned contract rather than on incidental SearXNG internals.
+GoreeCloud Search will provide stable, documented interfaces for approved GoreeCloud applications, Browser integration, local AI systems, research agents, monitoring, and approved automation workflows. Consumers should depend on a GoreeCloud-owned versioned contract rather than on incidental SearXNG internals.
 
-The first implemented GoreeCloud-owned API boundary is intentionally narrow: clients can verify GoreeCloud Search identity, API-contract version, basic capabilities, implementation-foundation transparency, and canonical service paths without receiving query, result, preference, engine, plugin, or secret data.
+The first implemented GoreeCloud-owned API boundary is intentionally narrow. Clients can verify GoreeCloud Search identity, API-contract version, basic capabilities, implementation-foundation transparency, canonical service paths, and bounded local-application readiness without receiving query, result, preference, engine, plugin, provider-response, or secret data.
 
 ## Phase 1 — `GET /api/v1/status`
 
@@ -23,7 +26,7 @@ The versioned read-only status endpoint returns:
 - basic service status;
 - the SearXNG foundation name and runtime version for implementation transparency;
 - capability flags for HTML search, OpenSearch, and the future machine-readable Search API;
-- canonical paths for health, OpenSearch, and interactive search.
+- canonical paths for health, readiness, OpenSearch, and interactive search.
 
 The endpoint deliberately excludes:
 
@@ -57,10 +60,70 @@ The response uses `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeClo
   "endpoints": {
     "health": "/healthz",
     "opensearch": "/opensearch.xml",
+    "readiness": "/api/v1/readiness",
     "search": "/search"
   }
 }
 ```
+
+## Phase 1 — `GET /api/v1/readiness`
+
+The readiness endpoint answers one deliberately narrow question: **is the local GoreeCloud Search application configured and wired well enough to accept approved local application traffic?**
+
+It verifies only deterministic local application conditions:
+
+- the configured instance identity is `GoreeCloud Search`;
+- HTML search remains enabled;
+- the existing `/healthz` route is registered;
+- the OpenSearch route is registered;
+- the interactive `/search` route is registered;
+- the versioned `/api/v1/status` route is registered.
+
+When every local check passes, the endpoint returns HTTP 200 with `status: "ready"` and `ready: true`. If any local check fails, it returns HTTP 503 with `status: "not_ready"` and `ready: false`.
+
+The readiness response uses the same `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeCloud-API-Version: 1` controls as the status response. Query-string input is ignored and is not echoed.
+
+### Example ready response shape
+
+```json
+{
+  "api_version": "1",
+  "product": "GoreeCloud Search",
+  "service": "search",
+  "status": "ready",
+  "ready": true,
+  "readiness_scope": "local_application",
+  "checks": {
+    "service_identity": true,
+    "html_search_enabled": true,
+    "health_route_registered": true,
+    "opensearch_route_registered": true,
+    "search_route_registered": true,
+    "status_route_registered": true
+  },
+  "not_evaluated": [
+    "external_search_providers",
+    "dns",
+    "reverse_proxy",
+    "monitoring_and_alert_delivery",
+    "backup_restore_and_rollback"
+  ]
+}
+```
+
+### Readiness boundary
+
+`/api/v1/readiness` is intentionally **not** a substitute for final-candidate, production, or Stable acceptance. It does not contact external search providers and does not prove:
+
+- representative General, Images, Videos, News, or Files provider success;
+- DNS or private-network reachability;
+- Caddy or other reverse-proxy behavior;
+- monitoring or approved alert delivery;
+- backup, restore, or rollback capability;
+- GoreeCloud Browser runtime integration;
+- production cutover or Stable authorization.
+
+Those remain separate evidence and governance requirements. A consumer may use this endpoint to decide whether the local application itself is ready, but release governance must continue to evaluate the broader system independently.
 
 ## Existing process health — `GET /healthz`
 
@@ -72,9 +135,9 @@ A successful response is HTTP 200, `text/plain`, with body:
 OK
 ```
 
-This PR deliberately preserves that established contract. It does not add a duplicate health route and does not reinterpret process health as full dependency readiness.
+The Phase 1 API deliberately preserves that established contract. It does not add a duplicate health route and does not reinterpret process health as application readiness or full dependency readiness.
 
-`/healthz` proves that the GoreeCloud Search application process can serve its health response. It does **not** by itself prove that external search providers, DNS, Caddy, monitoring, backups, or every dependency are healthy. Any richer readiness or dependency-diagnostic contract should use a separately governed endpoint rather than silently changing `/healthz` semantics.
+`/healthz` proves that the GoreeCloud Search application process can serve its health response. `/api/v1/readiness` adds bounded local application/configuration checks. Neither endpoint by itself proves that external search providers, DNS, Caddy, monitoring, backups, recovery, or every dependency are healthy.
 
 ## Versioning rule
 
@@ -112,7 +175,7 @@ Before `machine_readable_search_api` can become `true`, GoreeCloud Search must s
 
 The current GoreeCloud runtime example exposes HTML search only. JSON, RSS, and CSV search-result formats remain disabled until the API access model, authentication or network restriction, rate limiting, versioning, abuse controls, privacy boundaries, monitoring expectations, and lifecycle acceptance are approved.
 
-The Phase 1 status endpoint is intentionally non-sensitive and read-only. It is not an administrative API and must not grow secret-bearing configuration fields merely for convenience.
+The Phase 1 status and readiness endpoints are intentionally non-sensitive and read-only. They are not administrative APIs and must not grow secret-bearing configuration, provider inventories, query data, or response content merely for convenience.
 
 ## Compatibility
 
