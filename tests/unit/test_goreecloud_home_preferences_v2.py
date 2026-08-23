@@ -143,7 +143,7 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
         self.assertIn("_assert_search_category_separation", acceptance)
         self.assertIn("_assert_footer", acceptance)
 
-    def test_exact_head_browser_evidence(self):
+    def test_exact_head_evidence(self):
         workflow = _read(".github/workflows/goreecloud-browser-acceptance.yml")
         exact_head = "${{ github.event.pull_request.head.sha || github.sha }}"
         self.assertIn(f"ref: {exact_head}", workflow)
