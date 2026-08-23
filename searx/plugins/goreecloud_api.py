@@ -6,9 +6,9 @@ contracts for GoreeCloud clients. It does not expose search queries, results,
 provider configuration, credentials, or user preferences.
 """
 
-import searx
 from flask import current_app, jsonify
 
+import searx
 from searx.version import VERSION_STRING
 
 from ._core import Plugin, PluginInfo
