@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "product": "GoreeCloud Search",
-  "request_id": "first-stable-2026-08-23-08",
-  "candidate_sequence": 8,
-  "requested_at": "2026-08-23T02:37:00-05:00",
+  "request_id": "first-stable-2026-08-23-09",
+  "candidate_sequence": 9,
+  "requested_at": "2026-08-23T14:02:00-05:00",
   "request": "publish-and-rehearse-release-candidate",
   "lifecycle": "Release Candidate",
-  "reviewed_base_revision": "3ccbc04d1433c743ede2d04f6449f40b88c60d25",
+  "reviewed_base_revision": "61027b05ad8fef33d68078f6ec4498e1ac675112",
   "production_cutover_authorized": false,
   "stable_release_authorized": false,
   "target_host_change_authorized": false,
-  "statement": "This request authorizes GoreeCloud Search Release Candidate #08 publication and isolated image-level candidate/rollback rehearsal from the exact reviewed source boundary only. It does not authorize production cutover, target-host changes, Stable promotion, compatibility-name retirement, or rollback-material deletion. Final target-runtime, real-provider, monitoring and alert-delivery, application-level recovery, physical Android, desktop/persisted-theme, and actual compiled GoreeCloud Browser acceptance remain separate required evidence."
+  "statement": "This request authorizes GoreeCloud Search Release Candidate #09 publication and isolated image-level candidate/rollback rehearsal from the exact reviewed source boundary that includes the merged UI rebuild plus Search-specific Privacy Shield and Wardveil Security integrations. It does not authorize production cutover, target-host changes, Stable promotion, compatibility-name retirement, or rollback-material deletion. Final target-runtime, real-provider, monitoring and alert-delivery, application-level recovery, physical Android, desktop/persisted-theme, actual compiled GoreeCloud Browser, Privacy Shield production-boundary, and Wardveil production-runtime acceptance remain separate required evidence."
 }
