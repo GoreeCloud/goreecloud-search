@@ -30,7 +30,10 @@ jobs:
           python-version: '3.13'
 
       - name: Validate Python source syntax
-        run: python -m compileall -q searx goreecloud tests/unit/test_goreecloud_provider_contract.py
+        run: >-
+          python -m compileall -q searx goreecloud
+          tests/unit/test_goreecloud_provider_contract.py
+          tests/unit/test_goreecloud_documentation_workflow.py
 
       - name: Validate GoreeCloud product markers
         shell: bash
@@ -48,6 +51,7 @@ jobs:
           test -f goreecloud/browser_acceptance.py
           test -f goreecloud/provider_acceptance.py
           test -f tests/unit/test_goreecloud_provider_contract.py
+          test -f tests/unit/test_goreecloud_documentation_workflow.py
           test -f .github/workflows/goreecloud-runtime-smoke.yml
           test -f .github/workflows/goreecloud-container-build.yml
           test -f .github/workflows/goreecloud-browser-acceptance.yml
@@ -89,6 +93,12 @@ jobs:
           grep -q 'Request a search engine/provider for GoreeCloud Search' \
             .github/ISSUE_TEMPLATE/engine-request.md
           grep -q 'Upstream SearXNG project' .github/ISSUE_TEMPLATE/config.yml
+
+      - name: Validate documentation publication boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python tests/unit/test_goreecloud_documentation_workflow.py
 
       - name: Validate browser product contract
         shell: bash
