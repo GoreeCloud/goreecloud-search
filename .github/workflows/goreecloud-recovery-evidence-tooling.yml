@@ -1,0 +1,56 @@
+---
+name: GoreeCloud RC 09 recovery evidence tooling
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-recovery-evidence-tooling.yml'
+      - 'goreecloud/recovery_evidence.py'
+      - 'goreecloud/release_baseline.json'
+      - 'goreecloud/release_candidate_09_audit.py'
+      - 'goreecloud/first_stable_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_recovery_evidence.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-recovery-evidence-tooling.yml'
+      - 'goreecloud/recovery_evidence.py'
+      - 'goreecloud/release_baseline.json'
+      - 'goreecloud/release_candidate_09_audit.py'
+      - 'goreecloud/first_stable_evidence_audit.py'
+      - 'tests/unit/test_goreecloud_recovery_evidence.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Validate RC 09 recovery-evidence tooling
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/recovery_evidence.py \
+            tests/unit/test_goreecloud_recovery_evidence.py
+          python goreecloud/recovery_evidence.py --help | grep -q -- 'template'
+          python goreecloud/recovery_evidence.py --help | grep -q -- 'validate'
+          python goreecloud/recovery_evidence.py template --help | grep -q -- '--release-evidence'
+          python goreecloud/recovery_evidence.py template --help | grep -q -- '--target-runtime-evidence'
+          python goreecloud/recovery_evidence.py template --help | grep -q -- '--rollback-baseline'
+          python goreecloud/recovery_evidence.py validate --help | grep -q -- '--evidence'
+          python tests/unit/test_goreecloud_recovery_evidence.py
