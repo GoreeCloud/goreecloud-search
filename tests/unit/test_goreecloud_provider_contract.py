@@ -75,9 +75,7 @@ class ProviderContractTestCase(TestCase):
         self.assertNotIn("response_content", evidence)
 
     def test_workflow_cli_binding(self):
-        workflow = Path(".github/workflows/goreecloud-provider-acceptance.yml").read_text(
-            encoding="utf-8"
-        )
+        workflow = Path(".github/workflows/goreecloud-provider-acceptance.yml").read_text(encoding="utf-8")
         for argument in (
             "--expected-source",
             "--expected-image",
