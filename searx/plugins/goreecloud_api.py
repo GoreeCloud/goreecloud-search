@@ -29,12 +29,13 @@ class GoreeCloudAPIPlugin(Plugin):
 
     def init(self, app):
         """Register the versioned read-only GoreeCloud API status endpoint."""
-        app.add_url_rule(
-            "/api/v1/status",
-            endpoint="goreecloud_api_status",
-            view_func=self.status,
-            methods=["GET"],
-        )
+        if "goreecloud_api_status" not in app.view_functions:
+            app.add_url_rule(
+                "/api/v1/status",
+                endpoint="goreecloud_api_status",
+                view_func=self.status,
+                methods=["GET"],
+            )
         return True
 
     @staticmethod
