@@ -44,6 +44,7 @@ jobs:
           root = Path('.github/workflows')
           workflows = tuple(sorted(path.name for path in root.glob('goreecloud-*.yml')))
           required_workflows = {
+              'goreecloud-ai-policy.yml',
               'goreecloud-api-v1-status.yml',
               'goreecloud-browser-acceptance.yml',
               'goreecloud-candidate-artifact-provenance-audit.yml',

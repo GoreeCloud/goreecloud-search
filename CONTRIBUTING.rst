@@ -14,8 +14,8 @@ GoreeCloud Search is a GoreeCloud-maintained fork of SearXNG. Contributions
 should preserve the fork's upstream maintainability while respecting the
 GoreeCloud product, privacy, security, documentation, and Glaze UI contracts.
 See ``GORECLOUD.md``, ``docs/goreecloud/UPSTREAM.md``,
-``docs/goreecloud/READINESS.md``, and ``SECURITY.md`` before making material
-changes.
+``docs/goreecloud/READINESS.md``, ``AI_POLICY.rst``, and ``SECURITY.md`` before
+making material changes.
 
 Where should a change go?
 =========================
@@ -48,6 +48,10 @@ If a GoreeCloud release needs an urgent fix before an upstream change is
 accepted, the fix may be carried here with clear provenance and an upstream-sync
 note in the relevant documentation.
 
+The upstream SearXNG project controls its own contribution and AI policies.
+GoreeCloud's ``AI_POLICY.rst`` applies to this repository and does not override
+requirements that upstream SearXNG may apply to a contribution submitted there.
+
 Translations
 ============
 
@@ -74,6 +78,21 @@ The retained SearXNG development tooling and conventions remain useful for the
 shared engine foundation. Refer to the `SearXNG development guide`_ and
 `SearXNG commit guide`_ when working in inherited code, unless a GoreeCloud rule
 or project-specific contract is stricter.
+
+AI-assisted and agent-authored contributions
+--------------------------------------------
+
+AI-assisted and agent-authored contributions are permitted under
+``AI_POLICY.rst``. An AI agent may be the primary implementation author and may
+also help prepare tests, documentation, pull-request descriptions, and review
+responses. GoreeCloud does not impose a human-written-majority requirement.
+
+Material AI or agent involvement should be identified in the pull request or
+another repository record when useful for auditability. More importantly, all
+claims about tests, review, release state, deployment, and acceptance must remain
+truthful and evidence-backed. AI involvement never bypasses the normal branch,
+pull-request, validation, security, privacy, licensing, release, or production
+boundaries.
 
 Commit messages
 ---------------

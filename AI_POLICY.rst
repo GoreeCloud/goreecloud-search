@@ -1,20 +1,121 @@
 .. SPDX-License-Identifier: AGPL-3.0-or-later
 
-AI Policy
-=========
+GoreeCloud AI Contribution Policy
+=================================
 
-Restrictions on Generative AI Usage
------------------------------------
-- **All AI usage in any form must be disclosed.** You must state the tool you used (e.g. Claude Code, Cursor, Amp) along with the extent that the work was AI-assisted.
-- **The human-in-the-loop must fully understand all code.** If you use generative AI tools as an aid in developing code or documentation changes, ensure that you fully understand the proposed changes and can explain why they are the correct approach.
-- **AI should never be the main author of the PR.** AI may be used as a tool to help with developing, but the human contribution to the code changes should always be reasonably larger than the part written by AI. For example, you should be the one that decides about the structure of the PR, not the LLM.
-- **Issues and PR descriptions must be fully human-written.** Do not post output from Large Language Models or similar generative AI as comments on any of our discussion forums (e.g. GitHub Issues, Matrix, ...), as such comments tend to be formulaic and low content. If you're a not a native English speaker, using AI for translating self-written issue texts to English is okay, but please keep the wording as close as possible to the original wording.
-- **Bad AI drivers will be denounced.** People who produce bad contributions that are clearly AI (slop) will be blocked for all future contributions.
+Purpose
+-------
 
-There are Humans Here
----------------------
-Every discussion, issue, and pull request is read and reviewed by humans. It is a boundary point at which people interact with each other and the work done. It is rude and disrespectful to approach this boundary with low-effort, unqualified work, since it puts the burden of validation on the maintainer.
+GoreeCloud Search is developed in an environment where artificial-intelligence
+agents and AI-assisted engineering are intentional parts of the software
+lifecycle. This policy defines how AI-assisted and agent-authored contributions
+are accepted in this GoreeCloud-maintained fork without weakening correctness,
+security, privacy, review, provenance, licensing, recovery, or production
+controls.
 
-It takes a lot of maintainer time and energy to review AI-generated contributions! Sending the output of an LLM to open source project maintainers extracts work from them in the form of design and code review, so we call this kind of contribution an "extractive contribution".
+Governing principle: AI participation is permitted. Quality, evidence,
+accountability, and authorization determine whether a contribution is
+acceptable; AI authorship by itself does not make a contribution invalid.
 
-The *golden rule* is that a contribution should be worth more to the project than the time it takes to review it, which is usually not the case if large parts of your PR were written by LLMs.
+Permitted AI and Agent Use
+--------------------------
+
+- **AI-assisted and agent-authored contributions are permitted.** Contributors
+  may use coding assistants, language models, autonomous development agents,
+  local models, hosted models, or other AI-supported engineering tools.
+- **AI agents may be the primary implementation author.** GoreeCloud does not
+  require a human-written majority of the code, documentation, tests, pull
+  request description, or review discussion merely because AI was involved.
+- **Agent work must use the normal repository workflow.** Material changes
+  should remain attributable to branches, commits, pull requests, automated
+  validation, review records, and other applicable source-control evidence.
+- **The same engineering requirements apply regardless of authorship.** Human,
+  AI-assisted, and agent-authored changes remain subject to the same applicable
+  product, security, privacy, testing, documentation, upstream-maintenance,
+  licensing, release, and recovery controls.
+
+Transparency and Accountability
+-------------------------------
+
+Material AI or agent involvement should be identified in the pull request or
+other repository record when that information is useful for auditability. A
+concise statement naming the tool, agent, or type of assistance is sufficient
+when the exact system is known.
+
+A disclosure is not a substitute for technical evidence. Contributors and
+agents remain responsible for ensuring that claims in a pull request are
+accurate and supported. Do not fabricate test results, reviews, deployment
+results, release state, security findings, runtime evidence, or other completed
+work.
+
+No contribution may be automatically rejected or closed solely because AI was
+the primary author, because an AI system helped write the pull request
+description or discussion, or because a particular AI-policy checkbox was not
+present. Review should evaluate the contribution itself and the evidence that
+supports it.
+
+Quality and Review
+------------------
+
+AI use does not lower the review bar. Contributions should be coherent,
+maintainable, scoped to the intended change, and supported by the applicable
+validation. Low-quality, misleading, unreviewable, unsafe, or unvalidated work
+may be rejected for those substantive reasons regardless of whether it was
+written by a person or an AI system.
+
+When a change materially affects security, privacy, shared architecture,
+integrations, release state, or production behavior, the applicable specialized
+review and acceptance gates remain required. An implementation agent must not
+silently treat its own successful code generation or local test result as
+production approval.
+
+Security, Privacy, and Credentials
+----------------------------------
+
+AI-assisted development must preserve GoreeCloud security and privacy
+boundaries.
+
+- Do not place secrets, private keys, reusable credentials, protected user data,
+  private infrastructure information, or other sensitive GoreeCloud material in
+  source, public discussions, ordinary documentation, CI logs, or unapproved AI
+  prompts and services.
+- Repository, workflow, environment, package, deployment, and agent permissions
+  must follow least privilege.
+- Untrusted pull-request code must not automatically receive privileged
+  production credentials.
+- Security-sensitive automation must fail closed when repository identity,
+  permissions, exact revision, or required evidence is materially ambiguous.
+
+Lifecycle and Production Authority
+----------------------------------
+
+AI agents may implement changes, write tests, run validation, create pull
+requests, respond to review, update documentation, build artifacts, and prepare
+release candidates when authorized. Those activities do not automatically grant
+production authority.
+
+Source implementation, CI success, pull-request merge, release-candidate
+creation, release publication, deployment, production acceptance, and Stable
+lifecycle approval are separate states. High-risk or production-impacting
+decisions remain subject to the applicable GoreeCloud approval and acceptance
+requirements.
+
+Upstream SearXNG Boundary
+-------------------------
+
+GoreeCloud Search is a maintained fork of SearXNG. This policy governs
+contributions to the GoreeCloud repository. It does not override the contribution
+or AI policies of the upstream SearXNG project.
+
+When a change is submitted directly to upstream SearXNG, contributors must
+follow the current upstream project's rules for that upstream submission. A
+GoreeCloud agent may prepare an upstream-capable change, but the upstream project
+retains authority over whether and how it accepts that contribution.
+
+Final Policy
+------------
+
+GoreeCloud welcomes disciplined AI-assisted and agent-authored engineering.
+Automation should reduce repetitive work while keeping the repository more
+understandable, testable, auditable, secure, private, recoverable, and under
+GoreeCloud control.
