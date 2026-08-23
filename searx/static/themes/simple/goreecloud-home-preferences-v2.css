@@ -730,12 +730,12 @@ body.preferences_endpoint {
 }
 
 /* The category chooser is a real preference control rather than a table row. */
-#main_preferences #tab-content-general > fieldset:first-of-type {
+#main_preferences #search_form > .tabs > #tab-content-general > fieldset:first-of-type {
   display: block;
   padding: 0.95rem;
 }
 
-#main_preferences #tab-content-general > fieldset:first-of-type > legend {
+#main_preferences #search_form > .tabs > #tab-content-general > fieldset:first-of-type > legend {
   float: none;
   width: auto;
   margin-bottom: 0.72rem;
