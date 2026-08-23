@@ -1,0 +1,66 @@
+---
+name: GoreeCloud platform integrations
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches:
+      - master
+      - 'agent/**'
+      - 'ui/**'
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  platform-integrations:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 8
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Validate Privacy Shield and Wardveil contracts
+        run: PYTHONPATH=. python tests/unit/test_goreecloud_platform_integrations.py
+
+      - name: Validate UI integration markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f goreecloud/platform-integrations.json
+          test -f docs/goreecloud/PLATFORM-INTEGRATIONS.md
+          test -f searx/static/themes/simple/goreecloud-platform-shell.css
+          test -f searx/static/themes/simple/img/privacy-shield.svg
+          test -f searx/static/themes/simple/img/wardveil-security.svg
+          grep -q 'goreecloud-platform-shell.css' searx/templates/simple/base.html
+          grep -q 'Privacy Shield integrated' searx/templates/simple/index.html
+          grep -q 'Wardveil integrated' searx/templates/simple/index.html
+          grep -q 'Protected by Wardveil' searx/templates/simple/index.html
+          grep -q 'source integration alone' docs/goreecloud/PLATFORM-INTEGRATIONS.md
+          grep -q 'prefers-reduced-transparency: reduce' searx/static/themes/simple/goreecloud-platform-shell.css
+          grep -q 'forced-colors: active' searx/static/themes/simple/goreecloud-platform-shell.css
+
+      - name: Reject false overall Wardveil protection claim
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          contract = json.loads(Path('goreecloud/platform-integrations.json').read_text())
+          wardveil = contract['wardveil_security']
+          assert wardveil['protected_by_wardveil'] is False
+          assert wardveil['runtime_status'] == 'unknown'
+          PY
