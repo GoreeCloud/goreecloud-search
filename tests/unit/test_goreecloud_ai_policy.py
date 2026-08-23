@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# pylint: disable=missing-class-docstring,invalid-name
 """Regression contract for GoreeCloud AI contribution governance."""
 
 import unittest
