@@ -44,6 +44,9 @@ on:
       - master
     paths:
       - '.github/workflows/goreecloud-provider-acceptance.yml'
+      - 'goreecloud/provider_evidence_harness.py'
+      - 'tests/unit/test_goreecloud_provider_contract.py'
+      - 'tests/unit/test_goreecloud_provider_workflow.py'
 
 permissions:
   contents: read
@@ -90,7 +93,15 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Verify checked-out candidate identity and evidence contract
+      - name: Check out evidence harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence-tool
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Verify candidate and evidence-tool boundaries
         shell: bash
         run: |
           set -euo pipefail
@@ -98,10 +109,12 @@ jobs:
           test "$observed_source" = "$GC_CANDIDATE_SOURCE"
           test -f candidate-source/goreecloud/provider_acceptance.py
           test -f candidate-source/goreecloud/settings.yml.example
-          grep -q -- '--expected-source' candidate-source/goreecloud/provider_acceptance.py
-          grep -q -- '--expected-image' candidate-source/goreecloud/provider_acceptance.py
-          grep -q -- '--container' candidate-source/goreecloud/provider_acceptance.py
-          grep -q -- '--evidence-json' candidate-source/goreecloud/provider_acceptance.py
+          test -f evidence-tool/goreecloud/provider_evidence_harness.py
+          cmp \
+            candidate-source/goreecloud/provider_acceptance.py \
+            evidence-tool/goreecloud/provider_acceptance.py
+          grep -q -- '/healthz' evidence-tool/goreecloud/provider_evidence_harness.py
+          ! grep -q -- '.State.Health' evidence-tool/goreecloud/provider_evidence_harness.py
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
@@ -167,14 +180,14 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$GC_MODE" = 'suite' ]; then
-            python candidate-source/goreecloud/provider_acceptance.py \
-              --suite \
-              --base-url "$GC_BASE_URL" \
-              --minimum-results "$GC_MINIMUM_RESULTS" \
-              --expected-source "$GC_CANDIDATE_SOURCE" \
-              --expected-image "$GC_CANDIDATE_IMAGE" \
-              --container "$GC_CONTAINER" \
-              --evidence-json provider-evidence.json
+            PYTHONPATH=evidence-tool \
+              python -m goreecloud.provider_evidence_harness \
+                --base-url "$GC_BASE_URL" \
+                --minimum-results "$GC_MINIMUM_RESULTS" \
+                --expected-source "$GC_CANDIDATE_SOURCE" \
+                --expected-image "$GC_CANDIDATE_IMAGE" \
+                --container "$GC_CONTAINER" \
+                --evidence-json provider-evidence.json
           else
             python candidate-source/goreecloud/provider_acceptance.py \
               --base-url "$GC_BASE_URL" \
@@ -198,13 +211,19 @@ jobs:
           assert evidence['product'] == 'GoreeCloud Search'
           assert evidence['candidate']['source_revision'] == os.environ['GC_CANDIDATE_SOURCE']
           assert evidence['candidate']['image'] == os.environ['GC_CANDIDATE_IMAGE']
-          assert evidence['runtime_binding']['verified_before_and_after_requests'] is True
-          assert evidence['scope']['real_provider_requests_performed'] is True
-          assert evidence['scope']['runtime_identity_verified_during_provider_requests'] is True
-          assert evidence['scope']['all_required_categories_passed'] is True
-          assert evidence['scope']['query_text_persisted'] is False
-          assert evidence['scope']['response_content_persisted'] is False
-          assert evidence['scope']['production_cutover_authorized'] is False
+          binding = evidence['runtime_binding']
+          assert binding['verified_before_and_after_requests'] is True
+          assert binding['http_health_endpoint'] == '/healthz'
+          assert binding['http_health_verified_before_and_after_each_request'] is True
+          assert binding['docker_health_metadata_required'] is False
+          scope = evidence['scope']
+          assert scope['real_provider_requests_performed'] is True
+          assert scope['runtime_identity_verified_during_provider_requests'] is True
+          assert scope['http_health_verified_during_provider_requests'] is True
+          assert scope['all_required_categories_passed'] is True
+          assert scope['query_text_persisted'] is False
+          assert scope['response_content_persisted'] is False
+          assert scope['production_cutover_authorized'] is False
           PY
           printf 'source_revision=%s\nimage=%s\n' \
             "$GC_CANDIDATE_SOURCE" "$GC_CANDIDATE_IMAGE" \
