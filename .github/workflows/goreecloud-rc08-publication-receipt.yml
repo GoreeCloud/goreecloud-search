@@ -98,8 +98,26 @@ jobs:
           python - <<'PY' >/tmp/comment.json
           import json
           import os
-          body = f'''## RC #08 publication verified\n\n- Source: `2e04d650aac7a457c594f64ba704218c168c71a8`\n- Image: `{os.environ['GOREECLOUD_RC08_IMAGE']}`\n- OCI version: `{os.environ['GOREECLOUD_RC08_VERSION']}`\n- Registry digest pull: **passed**\n- OCI source/revision identity: **passed**\n- Isolated runtime identity/health: **passed**\n- Lifecycle: **Release Candidate**\n- Production cutover authorized: **false**\n- Stable promotion authorized: **false**\n\nThis verifies the published RC image only. Target-host, real-provider, monitoring/alert-delivery, application-level recovery, physical Android, desktop/persisted-theme, and actual compiled GoreeCloud Browser acceptance remain pending separate evidence.'''
-          print(json.dumps({'body': body}))
+
+          lines = [
+              '## RC #08 publication verified',
+              '',
+              '- Source: `2e04d650aac7a457c594f64ba704218c168c71a8`',
+              f"- Image: `{os.environ['GOREECLOUD_RC08_IMAGE']}`",
+              f"- OCI version: `{os.environ['GOREECLOUD_RC08_VERSION']}`",
+              '- Registry digest pull: **passed**',
+              '- OCI source/revision identity: **passed**',
+              '- Isolated runtime identity/health: **passed**',
+              '- Lifecycle: **Release Candidate**',
+              '- Production cutover authorized: **false**',
+              '- Stable promotion authorized: **false**',
+              '',
+              'This verifies the published RC image only. Target-host, real-provider,',
+              'monitoring/alert-delivery, application-level recovery, physical Android,',
+              'desktop/persisted-theme, and actual compiled GoreeCloud Browser acceptance',
+              'remain pending separate evidence.',
+          ]
+          print(json.dumps({'body': '\n'.join(lines)}))
           PY
           curl --fail --silent --show-error \
             --request POST \
