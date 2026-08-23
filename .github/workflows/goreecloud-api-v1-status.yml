@@ -11,6 +11,7 @@ on:
       - 'searx/plugins/goreecloud_api.py'
       - 'searx/webapp.py'
       - 'docs/goreecloud/API.md'
+      - 'docs/goreecloud/READINESS.md'
       - 'tests/unit/test_goreecloud_api_plugin.py'
   push:
     branches:
@@ -22,6 +23,7 @@ on:
       - 'searx/plugins/goreecloud_api.py'
       - 'searx/webapp.py'
       - 'docs/goreecloud/API.md'
+      - 'docs/goreecloud/READINESS.md'
       - 'tests/unit/test_goreecloud_api_plugin.py'
   workflow_dispatch:
 
@@ -71,3 +73,8 @@ jobs:
           grep -q 'HTTP 503' docs/goreecloud/API.md
           grep -q 'readiness_scope.*local_application' docs/goreecloud/API.md
           grep -q 'Existing process health.*GET /healthz' docs/goreecloud/API.md
+          grep -q 'Local application readiness.*GET /api/v1/readiness' \
+            docs/goreecloud/READINESS.md
+          grep -q 'Neither `/healthz` nor `/api/v1/readiness`' \
+            docs/goreecloud/READINESS.md
+          grep -q 'Glaze UI 1.1.0' docs/goreecloud/READINESS.md
