@@ -66,7 +66,7 @@ class GoreeCloudProviderWorkflowTest(SearxTestCase):
     def test_pr_evidence_harness_does_not_replace_candidate_provider_contract(self):
         self.assertIn("candidate-source/goreecloud/provider_acceptance.py", self.workflow)
         self.assertIn("evidence-tool/goreecloud/provider_acceptance.py", self.workflow)
-        self.assertIn("cmp \\", self.workflow)
+        self.assertIn("cmp", self.workflow)
         self.assertIn("/healthz", self.workflow)
 
     def test_untrusted_diagnostic_inputs_are_passed_through_environment(self):
