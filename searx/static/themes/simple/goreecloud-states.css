@@ -31,7 +31,7 @@
 .goreecloud-action-primary {
   border-color: transparent;
   background: linear-gradient(135deg, var(--gc-accent), var(--gc-accent-secondary));
-  color: white !important;
+  color: var(--gc-on-accent) !important;
   box-shadow: 0 10px 24px color-mix(in srgb, var(--gc-accent) 22%, transparent);
 }
 
@@ -58,7 +58,7 @@
   margin: 0 auto 1rem;
   border-radius: var(--gc-radius-lg);
   background: linear-gradient(145deg, var(--gc-accent), var(--gc-accent-secondary));
-  color: white;
+  color: var(--gc-on-accent);
   box-shadow: 0 12px 28px color-mix(in srgb, var(--gc-accent) 22%, transparent);
 }
 

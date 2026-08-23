@@ -73,13 +73,13 @@
     <p>{{- '' -}}
       <span class="right">{{ _("!bang for this engine") }}</span>{{- '' -}}
       {%- for bang in [search_engine.name] + [search_engine.shortcut] -%}
-        <span class="bang"> {{ '!' + bang.replace(' ', '_') }}</span>
+        <span class="bang"> {{ '!' + bang.replace(' ', '_') }}</span>{{- '' -}}
       {%- endfor -%}
     </p>{{- '' -}}
     <p>{{- '' -}}
-      <span class="right">{{ _("!bang for its categories") }}</span>
+      <span class="right">{{ _("!bang for its categories") }}</span>{{- '' -}}
       {%- for bang in search_engine.categories -%}
-        <span class="bang">{{ '!' + bang.replace(' ', '_') }}</span>
+        <span class="bang">{{ '!' + bang.replace(' ', '_') }}</span>{{- '' -}}
       {%- endfor -%}
     </p>{{- '' -}}
   </div>
@@ -218,6 +218,20 @@
     {# tab: privacy #}
 
     {{- tab_header('maintab', 'privacy', _('Privacy')) -}}
+    <aside class="goreecloud-privacy-shield-panel" aria-labelledby="goreecloud-privacy-shield-heading">
+      <img src="{{ url_for('static', filename='img/privacy-shield.svg') }}" alt="" aria-hidden="true">
+      <div>
+        <h2 id="goreecloud-privacy-shield-heading">GoreeCloud Privacy Shield</h2>
+        <p>These Search controls form the user-facing Privacy Shield boundary for this application. They reduce avoidable disclosure while keeping provider and engine choices visible.</p>
+        <ul aria-label="Privacy Shield Search capabilities">
+          <li>Image proxying</li>
+          <li>Referrer protection</li>
+          <li>Query-title minimization</li>
+          <li>Provider control</li>
+        </ul>
+        <p><small>Privacy Shield does not imply that external providers are anonymous or governed by GoreeCloud. Their independent policies still apply.</small></p>
+      </div>
+    </aside>
     {%- if 'method' not in locked_preferences -%}
       {%- include 'simple/preferences/method.html' -%}
     {%- endif -%}

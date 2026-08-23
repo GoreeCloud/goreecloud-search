@@ -130,8 +130,11 @@ jobs:
           home_preferences='searx/static/themes/simple/goreecloud-home-preferences-v2.css'
           grep -q 'Glaze UI 1.1.0' docs/goreecloud/READINESS.md
           grep -q 'Glaze UI 1.1.0 is mandatory' CONTRIBUTING.rst
-          grep -q -- '--gc-accent: #366cf6' "$css"
-          grep -q -- '--gc-accent-secondary: #7c5cff' "$css"
+          grep -q -- '--gc-muted: #5f6d82' "$css"
+          grep -q -- '--gc-accent: #2a5bd7' "$css"
+          grep -q -- '--gc-accent-secondary: #6b4cf0' "$css"
+          grep -q -- '--gc-on-accent: #ffffff' "$css"
+          grep -q -- '--gc-on-accent: #0d1119' "$css"
           grep -q -- '--gc-target-min: 44px' "$css"
           grep -q -- '--gc-target-comfortable: 48px' "$css"
           grep -q -- '--gc-motion-instant: 90ms' "$css"

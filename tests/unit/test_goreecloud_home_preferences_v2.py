@@ -2,6 +2,7 @@
 """Source contracts for the GoreeCloud Search homepage/Preferences rebuild."""
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -10,6 +11,23 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def _read(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def _css_variables(css: str, selector: str) -> dict[str, str]:
+    match = re.search(rf"{selector}\s*\{{(?P<body>.*?)\}}", css, flags=re.DOTALL)
+    if match is None:
+        raise AssertionError(f"CSS variable scope not found: {selector}")
+    return dict(re.findall(r"(--[\w-]+):\s*(#[0-9a-fA-F]{6})", match.group("body")))
+
+
+def _contrast_ratio(first: str, second: str) -> float:
+    def luminance(value: str) -> float:
+        channels = [int(value[index : index + 2], 16) / 255 for index in (1, 3, 5)]
+        linear = [channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channels]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    lighter, darker = sorted((luminance(first), luminance(second)), reverse=True)
+    return (lighter + 0.05) / (darker + 0.05)
 
 
 class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
@@ -77,8 +95,9 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
     def test_adaptive_css(self):
         css = _read("searx/static/themes/simple/goreecloud-home-preferences-v2.css")
         containment = _read("searx/static/themes/simple/goreecloud-home-preferences-v2-containment.css")
-        self.assertIn("@media (min-width: 1200px)", css)
-        self.assertIn("@media (min-width: 600px) and (max-width: 999px)", css)
+        self.assertIn("@media (min-width: 1024px) and (max-width: 1439px)", css)
+        self.assertIn("@media (min-width: 1440px)", css)
+        self.assertIn("@media (min-width: 600px) and (max-width: 1023px)", css)
         self.assertIn("@media (max-width: 599px)", css)
         self.assertIn("@media (prefers-reduced-motion: reduce)", css)
         self.assertIn("@media (prefers-reduced-transparency: reduce)", css)
@@ -87,6 +106,30 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
         self.assertIn("overflow-x: clip", containment)
         self.assertIn("width: 44px", containment)
         self.assertIn("overflow-x: auto", containment)
+        self.assertIn("#main_index #search_view:focus-within", containment)
+
+    def test_semantic_color_contrast(self):
+        css = _read("searx/static/themes/simple/goreecloud.css")
+        light = _css_variables(css, r":root")
+        dark = _css_variables(css, r"html\.theme-dark,\s*html\.theme-black")
+        pairs = (
+            (light, "--gc-text", "--gc-canvas"),
+            (light, "--gc-muted", "--gc-canvas"),
+            (light, "--gc-accent", "--gc-canvas"),
+            (light, "--gc-on-accent", "--gc-accent"),
+            (light, "--gc-on-accent", "--gc-accent-secondary"),
+            (dark, "--gc-text", "--gc-canvas"),
+            (dark, "--gc-muted", "--gc-canvas"),
+            (dark, "--gc-accent", "--gc-canvas"),
+            (dark, "--gc-on-accent", "--gc-accent"),
+            (dark, "--gc-on-accent", "--gc-accent-secondary"),
+        )
+        for palette, foreground, background in pairs:
+            with self.subTest(foreground=foreground, background=background):
+                self.assertGreaterEqual(
+                    _contrast_ratio(palette[foreground], palette[background]),
+                    4.5,
+                )
 
     def test_browser_contract(self):
         acceptance = _read("goreecloud/browser_acceptance.py")
@@ -94,6 +137,17 @@ class GoreeCloudHomePreferencesV2Test(unittest.TestCase):
         self.assertIn(".goreecloud-index-brand", acceptance)
         self.assertIn("#categories_container input[type='checkbox']", acceptance)
         self.assertIn("goreecloud-home-preferences-v2.css", acceptance)
+        self.assertIn('Appearance("light", "light")', acceptance)
+        self.assertIn('Appearance("dark", "dark")', acceptance)
+        self.assertIn("Page.captureScreenshot", acceptance)
+        self.assertIn("_assert_search_category_separation", acceptance)
+        self.assertIn("_assert_footer", acceptance)
+
+    def test_exact_head_evidence(self):
+        workflow = _read(".github/workflows/goreecloud-browser-acceptance.yml")
+        exact_head = "${{ github.event.pull_request.head.sha || github.sha }}"
+        self.assertIn(f"ref: {exact_head}", workflow)
+        self.assertIn(f"name: goreecloud-search-ui-{exact_head}", workflow)
 
     def test_footer_contract(self):
         base = _read("searx/templates/simple/base.html")

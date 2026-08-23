@@ -10,25 +10,60 @@
     </header>
 
     <section class="index" aria-labelledby="goreecloud-index-title">
-        <div class="goreecloud-search-kicker">Privacy-first by design</div>
+        <div class="goreecloud-platform-eyebrow" aria-label="GoreeCloud Search platform foundations">
+            <span class="goreecloud-search-kicker">Private search by design</span>
+            <span class="goreecloud-platform-badge goreecloud-platform-badge--privacy">
+                <img src="{{ url_for('static', filename='img/privacy-shield.svg') }}" alt="" aria-hidden="true">
+                <span>Privacy Shield integrated</span>
+            </span>
+            <span class="goreecloud-platform-badge goreecloud-platform-badge--wardveil">
+                <img src="{{ url_for('static', filename='img/wardveil-security.svg') }}" alt="" aria-hidden="true">
+                <span>Wardveil integrated</span>
+            </span>
+        </div>
         <div class="title">
             <h1 id="goreecloud-index-title">Private search.<span>Total control.</span></h1>
         </div>
-        <p class="goreecloud-search-subtitle">Search the web through a GoreeCloud-controlled interface with provider choice, privacy preferences, and search behavior kept visible and configurable.</p>
+        <p class="goreecloud-search-subtitle">One GoreeCloud-controlled search surface with visible sources, privacy-first defaults, and clear protection boundaries—without hiding the open SearXNG foundation underneath.</p>
         {% include 'simple/simple_search.html' %}
+
+        <div class="goreecloud-platform-grid" aria-label="Privacy Shield and Wardveil Security integrations">
+            <article class="goreecloud-platform-card goreecloud-platform-card--privacy">
+                <div class="goreecloud-platform-card-icon">
+                    <img src="{{ url_for('static', filename='img/privacy-shield.svg') }}" alt="" aria-hidden="true">
+                </div>
+                <div class="goreecloud-platform-card-copy">
+                    <div class="goreecloud-platform-card-heading">
+                        <strong>GoreeCloud Privacy Shield</strong>
+                        <span class="goreecloud-platform-state">Integrated</span>
+                    </div>
+                    <p>Search-data minimization, image proxying, referrer protection, and user-controlled privacy preferences are part of the Search privacy boundary.</p>
+                    <small>External providers remain separate services with their own privacy and retention policies.</small>
+                </div>
+            </article>
+            <article class="goreecloud-platform-card goreecloud-platform-card--wardveil">
+                <div class="goreecloud-platform-card-icon">
+                    <img src="{{ url_for('static', filename='img/wardveil-security.svg') }}" alt="" aria-hidden="true">
+                </div>
+                <div class="goreecloud-platform-card-copy">
+                    <div class="goreecloud-platform-card-heading">
+                        <strong>Wardveil Security</strong>
+                        <span class="goreecloud-platform-state goreecloud-platform-state--unknown">Runtime evidence required</span>
+                    </div>
+                    <p>Search integrates the Wardveil security contract around secret separation, loopback binding, response hardening, and exposure boundaries.</p>
+                    <small>Search does not claim an overall “Protected by Wardveil” state from source integration alone.</small>
+                </div>
+            </article>
+        </div>
 
         <div class="goreecloud-index-principles" aria-label="GoreeCloud Search product principles">
             <div class="goreecloud-index-principle">
-                <strong>Private by default</strong>
-                <span>GoreeCloud Search is designed to minimize unnecessary search-data exposure and profiling.</span>
+                <strong>Visible source control</strong>
+                <span>Categories, engines, language, SafeSearch, and other search preferences remain visible and configurable.</span>
             </div>
             <div class="goreecloud-index-principle">
-                <strong>You choose the sources</strong>
-                <span>Categories, engines, language, SafeSearch, and other search preferences remain under your control.</span>
-            </div>
-            <div class="goreecloud-index-principle">
-                <strong>Open and inspectable</strong>
-                <span>Built as a GoreeCloud-maintained open-source product on the SearXNG foundation.</span>
+                <strong>Open, inspectable foundation</strong>
+                <span>GoreeCloud owns the product layer while preserving SearXNG attribution, source access, and upstream provenance.</span>
             </div>
         </div>
     </section>
