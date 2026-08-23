@@ -40,6 +40,13 @@ class GoreeCloudDocumentationWorkflowTest(unittest.TestCase):
         dispatch_check = self.release.index("github.event_name == 'workflow_dispatch'")
         self.assertLess(owner_check, dispatch_check)
 
+    def test_pr_concurrency_drops_stale_documentation_heads(self):
+        self.assertIn(
+            "group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}", self.workflow
+        )
+        self.assertIn("cancel-in-progress: ${{ github.event_name == 'pull_request' }}", self.workflow)
+        self.assertNotIn("cancel-in-progress: false", self.workflow)
+
     def test_checkout_credentials_are_not_persisted(self):
         self.assertEqual(self.workflow.count("persist-credentials: \"false\""), 2)
         self.assertEqual(
