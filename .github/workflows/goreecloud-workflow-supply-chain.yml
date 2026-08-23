@@ -57,6 +57,7 @@ jobs:
           exact_checkout = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
           exact_python = 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97'
           exact_upload = 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02'
+          runner_ref = re.compile(r'^\s*runs-on:\s*([^\s#]+)')
           action_ref = re.compile(r'^\s*uses:\s*([^\s#]+)')
           immutable_ref = re.compile(r'^[^@]+@[0-9a-f]{40}$')
 
@@ -64,8 +65,15 @@ jobs:
               path = root / name
               assert path.is_file(), f'missing critical workflow: {path}'
               text = path.read_text(encoding='utf-8')
-              assert 'runs-on: ubuntu-26.04' in text, f'unpinned runner in {name}'
-              assert 'runs-on: ubuntu-latest' not in text, f'mutable runner in {name}'
+              runner_values = [
+                  match.group(1)
+                  for line in text.splitlines()
+                  if (match := runner_ref.match(line))
+              ]
+              assert runner_values, f'missing runner directive in {name}'
+              assert all(value == 'ubuntu-26.04' for value in runner_values), (
+                  f'unapproved runner directive(s) in {name}: {runner_values}'
+              )
               assert exact_checkout in text, f'checkout is not on the approved immutable pin in {name}'
               if 'actions/setup-python@' in text:
                   assert exact_python in text, f'setup-python is not on the approved immutable pin in {name}'
