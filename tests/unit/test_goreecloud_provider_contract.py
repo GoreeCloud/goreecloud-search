@@ -5,8 +5,22 @@ import json
 import tempfile
 from pathlib import Path
 from unittest import TestCase, main
+from unittest.mock import patch
 
-from goreecloud import provider_acceptance
+from goreecloud import provider_acceptance, provider_evidence_harness
+
+
+class _Response:
+    """Minimal urllib response context for health-contract tests."""
+
+    def __init__(self, status: int):
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
 
 
 class ProviderContractTestCase(TestCase):
@@ -74,6 +88,24 @@ class ProviderContractTestCase(TestCase):
         self.assertNotIn("query", evidence)
         self.assertNotIn("response_content", evidence)
 
+    def test_http_health_evidence_harness(self):
+        source = Path("goreecloud/provider_evidence_harness.py").read_text(encoding="utf-8")
+        self.assertIn("/healthz", source)
+        self.assertNotIn(".State.Health", source)
+        with patch.object(
+            provider_evidence_harness.urllib.request,
+            "urlopen",
+            return_value=_Response(200),
+        ):
+            provider_evidence_harness.verify_http_health("http://127.0.0.1:8888", 1.0)
+        with patch.object(
+            provider_evidence_harness.urllib.request,
+            "urlopen",
+            return_value=_Response(503),
+        ):
+            with self.assertRaisesRegex(ValueError, "returned 503"):
+                provider_evidence_harness.verify_http_health("http://127.0.0.1:8888", 1.0)
+
     def test_workflow_cli_binding(self):
         workflow = Path(".github/workflows/goreecloud-provider-acceptance.yml").read_text(encoding="utf-8")
         for argument in (
@@ -84,6 +116,7 @@ class ProviderContractTestCase(TestCase):
         ):
             self.assertIn(argument, workflow)
         self.assertIn("runtime_identity_verified_during_provider_requests", workflow)
+        self.assertIn("http_health_verified_during_provider_requests", workflow)
         self.assertIn("all_required_categories_passed", workflow)
 
 
