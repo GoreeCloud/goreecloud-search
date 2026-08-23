@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # pylint: disable=missing-class-docstring,invalid-name
-"""Contracts for the manual GoreeCloud real-provider acceptance workflow."""
+"""Contracts for the GoreeCloud real-provider acceptance workflow."""
 
 from pathlib import Path
 
@@ -24,8 +24,12 @@ class GoreeCloudProviderWorkflowTest(SearxTestCase):
             "^ghcr\\.io/goreecloud/goreecloud-search@sha256:[0-9a-f]{64}$",
             self.workflow,
         )
-        self.assertIn("ref: ${{ inputs.candidate_source }}", self.workflow)
+        self.assertIn("ref: ${{ env.GC_CANDIDATE_SOURCE }}", self.workflow)
         self.assertIn('test "$observed_source" = "$GC_CANDIDATE_SOURCE"', self.workflow)
+        self.assertIn(
+            "ref: ${{ github.event.pull_request.head.sha || github.sha }}",
+            self.workflow,
+        )
 
     def test_stages_only_the_immutable_candidate_on_loopback(self):
         self.assertIn('docker pull "$GC_CANDIDATE_IMAGE"', self.workflow)
@@ -43,8 +47,11 @@ class GoreeCloudProviderWorkflowTest(SearxTestCase):
         ):
             self.assertIn(required_argument, self.workflow)
 
+        self.assertIn("goreecloud.provider_evidence_harness", self.workflow)
         self.assertIn("provider-evidence.json", self.workflow)
         self.assertIn("verified_before_and_after_requests", self.workflow)
+        self.assertIn("http_health_verified_before_and_after_each_request", self.workflow)
+        self.assertIn("docker_health_metadata_required", self.workflow)
         self.assertIn("all_required_categories_passed", self.workflow)
         self.assertIn("query_text_persisted", self.workflow)
         self.assertIn("response_content_persisted", self.workflow)
@@ -56,8 +63,17 @@ class GoreeCloudProviderWorkflowTest(SearxTestCase):
         self.assertNotIn("actions/upload-artifact@v4", self.workflow)
         self.assertIn("sha256sum --check SHA256SUMS", self.workflow)
 
+    def test_pr_evidence_harness_does_not_replace_candidate_provider_contract(self):
+        self.assertIn("candidate-source/goreecloud/provider_acceptance.py", self.workflow)
+        self.assertIn("evidence-tool/goreecloud/provider_acceptance.py", self.workflow)
+        self.assertIn("cmp \\", self.workflow)
+        self.assertIn("/healthz", self.workflow)
+
     def test_untrusted_diagnostic_inputs_are_passed_through_environment(self):
-        self.assertIn("GC_QUERY: ${{ inputs.query }}", self.workflow)
-        self.assertIn("GC_CATEGORY: ${{ inputs.category }}", self.workflow)
-        self.assertIn(' --query "$GC_QUERY"', self.workflow.replace("\\\n", " "))
-        self.assertIn(' --category "$GC_CATEGORY"', self.workflow.replace("\\\n", " "))
+        self.assertIn("GC_QUERY:", self.workflow)
+        self.assertIn("inputs.query", self.workflow)
+        self.assertIn("GC_CATEGORY:", self.workflow)
+        self.assertIn("inputs.category", self.workflow)
+        normalized = self.workflow.replace("\\\n", " ")
+        self.assertIn(' --query "$GC_QUERY"', normalized)
+        self.assertIn(' --category "$GC_CATEGORY"', normalized)
