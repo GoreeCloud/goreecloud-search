@@ -105,7 +105,7 @@ jobs:
           grep -q 'GoreeCloud Search' /tmp/search.html
           grep -q 'goreecloud.css' /tmp/search.html
 
-      - name: Validate GoreeCloud API status and advertised health path
+      - name: Validate GoreeCloud API status, readiness, and health
         shell: bash
         run: |
           set -euo pipefail
@@ -124,6 +124,19 @@ jobs:
           fi
 
           curl --fail --silent --show-error \
+            --dump-header /tmp/api-readiness-headers.txt \
+            "http://127.0.0.1:8888/api/v1/readiness?q=${marker}" \
+            >/tmp/api-readiness.json
+
+          grep -qi '^cache-control: no-store' /tmp/api-readiness-headers.txt
+          grep -qi '^pragma: no-cache' /tmp/api-readiness-headers.txt
+          grep -qi '^x-goreecloud-api-version: 1' /tmp/api-readiness-headers.txt
+          if grep -q "$marker" /tmp/api-readiness.json; then
+            echo 'API readiness response echoed query input' >&2
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
             --dump-header /tmp/healthz-headers.txt \
             http://127.0.0.1:8888/healthz \
             >/tmp/healthz.txt
@@ -134,23 +147,44 @@ jobs:
           import json
           from pathlib import Path
 
-          payload = json.loads(Path('/tmp/api-status.json').read_text(encoding='utf-8'))
-          assert payload['api_version'] == '1'
-          assert payload['product'] == 'GoreeCloud Search'
-          assert payload['service'] == 'search'
-          assert payload['status'] == 'ok'
-          assert payload['foundation']['name'] == 'SearXNG'
-          assert payload['foundation']['version']
-          assert payload['capabilities']['html_search'] is True
-          assert payload['capabilities']['opensearch'] is True
-          assert payload['capabilities']['machine_readable_search_api'] is False
-          assert payload['endpoints'] == {
+          status = json.loads(Path('/tmp/api-status.json').read_text(encoding='utf-8'))
+          assert status['api_version'] == '1'
+          assert status['product'] == 'GoreeCloud Search'
+          assert status['service'] == 'search'
+          assert status['status'] == 'ok'
+          assert status['foundation']['name'] == 'SearXNG'
+          assert status['foundation']['version']
+          assert status['capabilities']['html_search'] is True
+          assert status['capabilities']['opensearch'] is True
+          assert status['capabilities']['machine_readable_search_api'] is False
+          assert status['endpoints'] == {
               'health': '/healthz',
               'opensearch': '/opensearch.xml',
+              'readiness': '/api/v1/readiness',
               'search': '/search',
           }
           for forbidden in ('engines', 'plugins', 'preferences'):
-              assert forbidden not in payload
+              assert forbidden not in status
+
+          readiness = json.loads(
+              Path('/tmp/api-readiness.json').read_text(encoding='utf-8')
+          )
+          assert readiness['api_version'] == '1'
+          assert readiness['product'] == 'GoreeCloud Search'
+          assert readiness['service'] == 'search'
+          assert readiness['status'] == 'ready'
+          assert readiness['ready'] is True
+          assert readiness['readiness_scope'] == 'local_application'
+          assert all(readiness['checks'].values())
+          assert readiness['not_evaluated'] == [
+              'external_search_providers',
+              'dns',
+              'reverse_proxy',
+              'monitoring_and_alert_delivery',
+              'backup_restore_and_rollback',
+          ]
+          for forbidden in ('engines', 'plugins', 'preferences', 'query', 'results'):
+              assert forbidden not in readiness
           PY
 
       - name: Validate privacy-facing headers
