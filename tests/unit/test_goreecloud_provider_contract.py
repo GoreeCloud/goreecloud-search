@@ -4,7 +4,7 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest import TestCase
+from unittest import TestCase, main
 
 from goreecloud import provider_acceptance
 
@@ -87,3 +87,7 @@ class ProviderContractTestCase(TestCase):
             self.assertIn(argument, workflow)
         self.assertIn("runtime_identity_verified_during_provider_requests", workflow)
         self.assertIn("all_required_categories_passed", workflow)
+
+
+if __name__ == "__main__":
+    main()
