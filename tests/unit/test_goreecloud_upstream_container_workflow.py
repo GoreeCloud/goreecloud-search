@@ -33,8 +33,7 @@ class GoreeCloudUpstreamContainerWorkflowTest(unittest.TestCase):
 
     def test_manual_dispatch_no_longer_bypasses_owner_gate(self):
         self.assertNotIn(
-            "github.event_name == 'workflow_dispatch'\n"
-            "      || (github.repository_owner == 'searxng'",
+            "github.event_name == 'workflow_dispatch'\n" "      || (github.repository_owner == 'searxng'",
             self.upstream,
         )
 
