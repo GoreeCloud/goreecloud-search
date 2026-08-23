@@ -1,0 +1,48 @@
+---
+name: GoreeCloud target-runtime evidence tooling
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/goreecloud-target-runtime-evidence-tooling.yml'
+      - 'goreecloud/target_runtime_acceptance.py'
+      - 'tests/unit/test_goreecloud_target_runtime_acceptance.py'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-target-runtime-evidence-tooling.yml'
+      - 'goreecloud/target_runtime_acceptance.py'
+      - 'tests/unit/test_goreecloud_target_runtime_acceptance.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Validate target-runtime harness
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            goreecloud/target_runtime_acceptance.py \
+            tests/unit/test_goreecloud_target_runtime_acceptance.py
+          python goreecloud/target_runtime_acceptance.py --help | grep -q -- '--expected-image'
+          python goreecloud/target_runtime_acceptance.py --help | grep -q -- '--expected-source'
+          python goreecloud/target_runtime_acceptance.py --help | grep -q -- '--expected-version'
+          python goreecloud/target_runtime_acceptance.py --help | grep -q -- '--evidence-json'
+          python tests/unit/test_goreecloud_target_runtime_acceptance.py
