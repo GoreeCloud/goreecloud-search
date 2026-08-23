@@ -73,13 +73,9 @@ def visual_summary(visual: dict) -> dict:
         "glaze_ui_version": "1.1.0",
         "review_artifact": visual["review_artifact"],
         "reviews": visual["reviews"],
-        "physical_android_preferences_review": visual[
-            "physical_android_preferences_review"
-        ],
+        "physical_android_preferences_review": visual["physical_android_preferences_review"],
         "desktop_regression_review": visual["desktop_regression_review"],
-        "persisted_theme_preference_review": visual[
-            "persisted_theme_preference_review"
-        ],
+        "persisted_theme_preference_review": visual["persisted_theme_preference_review"],
     }
 
 
@@ -265,8 +261,7 @@ def build_fixture(root: Path) -> argparse.Namespace:
         },
         "required_categories": ["general", "images", "videos", "news", "files"],
         "results": [
-            {"category": category, "passed": True}
-            for category in ("general", "images", "videos", "news", "files")
+            {"category": category, "passed": True} for category in ("general", "images", "videos", "news", "files")
         ],
         "scope": {
             "real_provider_requests_performed": True,
