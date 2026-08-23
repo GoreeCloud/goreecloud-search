@@ -736,13 +736,18 @@ body.preferences_endpoint {
 }
 
 #main_preferences #tab-content-general > fieldset:first-of-type > legend {
+  float: none;
+  width: auto;
   margin-bottom: 0.72rem;
 }
 
 #main_preferences #tab-content-general #categories_container {
+  box-sizing: border-box;
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+  width: 100%;
+  max-width: 100%;
   padding: 0;
 }
 

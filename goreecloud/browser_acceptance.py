@@ -334,6 +334,22 @@ def _assert_preferences(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
         raise AssertionError(f"{viewport.name}: preferences action set is incomplete: {len(actions)} visible")
     for action in actions:
         _assert_target_size(action, f"{viewport.name} preferences action")
+    category_width, category_surface_width = driver.execute_script(
+        """
+        const categories = document.querySelector(
+          '#main_preferences #tab-content-general #categories_container'
+        ).getBoundingClientRect();
+        const surface = document.querySelector(
+          '#main_preferences #tab-content-general > fieldset:first-of-type'
+        ).getBoundingClientRect();
+        return [categories.width, surface.width];
+        """
+    )
+    if category_width < category_surface_width * 0.8:
+        raise AssertionError(
+            f"{viewport.name}: preferences category chooser uses only "
+            f"{category_width:.1f}px of its {category_surface_width:.1f}px surface"
+        )
     if viewport.width < 600:
         category_container = driver.find_element(
             By.CSS_SELECTOR,
