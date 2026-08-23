@@ -88,7 +88,7 @@ class ProviderContractTestCase(TestCase):
         self.assertNotIn("query", evidence)
         self.assertNotIn("response_content", evidence)
 
-    def test_http_health_evidence_harness(self):
+    def test_http_health_harness(self):
         source = Path("goreecloud/provider_evidence_harness.py").read_text(encoding="utf-8")
         self.assertIn("/healthz", source)
         self.assertNotIn(".State.Health", source)
