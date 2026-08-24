@@ -7,6 +7,7 @@
   <title>{{if .Query}}{{.Query}} · {{end}}GoreeCloud Search</title>
   <link rel="stylesheet" href="/assets/app.css">
   <link rel="stylesheet" href="/assets/results.css">
+  <link rel="stylesheet" href="/assets/categories.css">
 </head>
 <body>
   <div class="page-shell">
@@ -23,11 +24,11 @@
 
     <main class="results-main">
       <nav class="results-categories" aria-label="Search categories">
-        <a class="chip" href="/search?q={{urlquery .Query}}&amp;category=general">General</a>
-        <a class="chip" href="/search?q={{urlquery .Query}}&amp;category=images">Images</a>
-        <a class="chip" href="/search?q={{urlquery .Query}}&amp;category=videos">Videos</a>
-        <a class="chip" href="/search?q={{urlquery .Query}}&amp;category=news">News</a>
-        <a class="chip" href="/search?q={{urlquery .Query}}&amp;category=files">Files</a>
+        <a class="chip {{if eq .Category "general"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=general">General</a>
+        <a class="chip {{if eq .Category "images"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=images">Images</a>
+        <a class="chip {{if eq .Category "videos"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=videos">Videos</a>
+        <a class="chip {{if eq .Category "news"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=news">News</a>
+        <a class="chip {{if eq .Category "files"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=files">Files</a>
       </nav>
 
       {{if .Error}}
