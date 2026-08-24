@@ -34,6 +34,10 @@ func Styles(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/app.css", "text/css; charset=utf-8")
 }
 
+func ResultsStyles(w http.ResponseWriter, _ *http.Request) {
+	serveAsset(w, "assets/results.css", "text/css; charset=utf-8")
+}
+
 func RenderResults(w http.ResponseWriter, response searchcore.Response) {
 	renderResults(w, http.StatusOK, resultsPageData{
 		Query:     response.Query,
