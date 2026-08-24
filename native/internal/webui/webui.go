@@ -16,6 +16,7 @@ var resultsTemplate = template.Must(template.ParseFS(assets, "assets/results.htm
 
 type resultsPageData struct {
 	Query     string
+	Category  string
 	Results   []searchcore.Result
 	Providers []searchcore.ProviderStatus
 	Degraded  bool
@@ -41,6 +42,7 @@ func ResultsStyles(w http.ResponseWriter, _ *http.Request) {
 func RenderResults(w http.ResponseWriter, response searchcore.Response) {
 	renderResults(w, http.StatusOK, resultsPageData{
 		Query:     response.Query,
+		Category:  response.Category,
 		Results:   response.Results,
 		Providers: response.Providers,
 		Degraded:  response.Degraded,
@@ -55,7 +57,15 @@ func RenderSearchError(w http.ResponseWriter, query string, err error) {
 	if err == nil {
 		message = "Search could not run."
 	}
-	renderResults(w, http.StatusBadRequest, resultsPageData{Query: strings.TrimSpace(query), Error: message})
+	renderResults(w, http.StatusBadRequest, resultsPageData{Query: strings.TrimSpace(query), Category: searchcore.CategoryGeneral, Error: message})
+}
+
+func RenderCategoryError(w http.ResponseWriter, query, category string, status int) {
+	message := "That search category is not supported."
+	if status == http.StatusNotImplemented {
+		message = "This category is preserved in the native Search contract, but its native provider adapters are not implemented yet."
+	}
+	renderResults(w, status, resultsPageData{Query: strings.TrimSpace(query), Category: category, Error: message})
 }
 
 func renderResults(w http.ResponseWriter, status int, data resultsPageData) {
