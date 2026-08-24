@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Preferences · GoreeCloud Search</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="GoreeCloud Search home">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span><strong>GoreeCloud</strong><small>Search</small></span>
+      </a>
+      <nav class="top-actions"><a href="/">Search</a><a href="/api/v1/preferences/definitions">Definitions API</a></nav>
+    </header>
+
+    <main class="preferences-layout">
+      <aside class="settings-nav" aria-label="Preferences sections">
+        <div class="settings-title"><span class="eyebrow">Preferences</span><h1>Make Search yours.</h1></div>
+        <label class="settings-filter"><span>⌕</span><input type="search" placeholder="Find a setting" aria-label="Find a setting"></label>
+        <nav>
+          <a class="active" href="#search">Search</a>
+          <a href="#sources">Sources</a>
+          <a href="#appearance">Appearance</a>
+          <a href="#privacy">Privacy</a>
+          <a href="#security">Security</a>
+          <a href="#data-resilience">Data &amp; resilience</a>
+          <a href="#advanced">Advanced</a>
+        </nav>
+      </aside>
+
+      <div class="settings-content">
+        <section id="search" class="settings-section">
+          <header><div><span class="section-kicker">Search</span><h2>Search behavior</h2><p>Choose how queries start and how results are presented.</p></div><span class="scope-pill">Local</span></header>
+          <div class="setting-row"><div><strong>Default category</strong><p>Choose the category selected when Search opens.</p></div><select><option>General</option><option>Images</option><option>Videos</option><option>News</option><option>Files</option></select></div>
+          <div class="setting-row"><div><strong>SafeSearch</strong><p>Set the default filtering level for providers that support it.</p></div><select><option>Moderate</option><option>Strict</option><option>Off</option></select></div>
+          <div class="setting-row"><div><strong>Search suggestions</strong><p>Show suggestions while typing. Off by default for privacy.</p></div><button class="toggle" aria-pressed="false"><span></span></button></div>
+        </section>
+
+        <section id="sources" class="settings-section">
+          <header><div><span class="section-kicker">Sources</span><h2>Providers and categories</h2><p>Understand which sources can answer each kind of query.</p></div><span class="scope-pill">Deployment</span></header>
+          <div class="setting-row"><div><strong>Provider controls</strong><p>Enable, disable, and inspect configured providers from one organized surface.</p></div><button class="secondary-button">Manage</button></div>
+          <div class="setting-row"><div><strong>Degraded provider status</strong><p>Show availability without exposing backend errors or secrets.</p></div><span class="status-badge">Enabled</span></div>
+        </section>
+
+        <section id="appearance" class="settings-section">
+          <header><div><span class="section-kicker">Appearance</span><h2>Look and feel</h2><p>Glaze UI adapts across screen sizes and accessibility modes.</p></div><span class="scope-pill">Local</span></header>
+          <div class="setting-row"><div><strong>Theme</strong><p>Follow the system or choose a fixed light or dark theme.</p></div><select><option>System</option><option>Light</option><option>Dark</option></select></div>
+          <div class="setting-row"><div><strong>Result density</strong><p>Choose comfortable or compact result spacing.</p></div><select><option>Comfortable</option><option>Compact</option></select></div>
+        </section>
+
+        <section id="privacy" class="settings-section">
+          <header><div><span class="section-kicker">Privacy Shield</span><h2>Privacy controls</h2><p>Minimize retained data and keep convenience features understandable.</p></div><span class="scope-pill">Mixed scope</span></header>
+          <div class="setting-row"><div><strong>Recent searches</strong><p>Keep recent queries only on this device. Off by default.</p></div><button class="toggle" aria-pressed="false"><span></span></button></div>
+          <div class="setting-row"><div><strong>Private media loading</strong><p>Use the approved Search media-proxy boundary when available.</p></div><span class="status-badge">Deployment controlled</span></div>
+        </section>
+
+        <section id="security" class="settings-section">
+          <header><div><span class="section-kicker">Wardveil Security</span><h2>Protection state</h2><p>Security status is evidence-backed and never inferred from branding alone.</p></div><span class="scope-pill">Deployment</span></header>
+          <div class="setting-row"><div><strong>Safe external links</strong><p>Apply approved external-content protections before leaving Search.</p></div><span class="status-badge">Required</span></div>
+          <div class="setting-row"><div><strong>Runtime protection evidence</strong><p>Production protection remains unclaimed until validated evidence exists.</p></div><span class="status-badge neutral">Pending</span></div>
+        </section>
+
+        <section id="data-resilience" class="settings-section">
+          <header><div><span class="section-kicker">Everkeep</span><h2>Data &amp; resilience</h2><p>Keep preferences portable, recoverable, and schema-versioned.</p></div><span class="scope-pill">Local</span></header>
+          <div class="setting-row"><div><strong>Export preferences</strong><p>Download a portable settings document without secrets.</p></div><button class="secondary-button">Export</button></div>
+          <div class="setting-row"><div><strong>Reset local preferences</strong><p>Return local settings to privacy-first defaults.</p></div><button class="secondary-button danger">Reset</button></div>
+        </section>
+
+        <section id="advanced" class="settings-section">
+          <header><div><span class="section-kicker">Advanced</span><h2>Diagnostics and expert controls</h2><p>Technical settings remain clearly separated from everyday preferences.</p></div><span class="scope-pill">Mixed scope</span></header>
+          <div class="setting-row"><div><strong>Preference schema</strong><p>Current native preference definition version.</p></div><code>1</code></div>
+          <div class="setting-row"><div><strong>Native definitions API</strong><p>Inspect the machine-readable preference contract.</p></div><a class="secondary-button" href="/api/v1/preferences/definitions">Open API</a></div>
+        </section>
+      </div>
+    </main>
+
+    <footer>GoreeCloud Search · Native Preferences preview · Production approval not granted</footer>
+  </div>
+</body>
+</html>
