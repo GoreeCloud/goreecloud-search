@@ -111,7 +111,7 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 	}()
 
 	response := Response{Query: query, Results: []Result{}, Providers: []ProviderStatus{}}
-	seen := map[string]struct{}{}
+	bestByURL := map[string]Result{}
 	for item := range ch {
 		response.Providers = append(response.Providers, item.status)
 		if item.status.State != ProviderStateAvailable {
@@ -122,23 +122,41 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 			if !ok {
 				continue
 			}
-			if _, exists := seen[normalized]; exists {
-				continue
-			}
-			seen[normalized] = struct{}{}
 			result.URL = normalized
-			response.Results = append(response.Results, result)
+			current, exists := bestByURL[normalized]
+			if !exists || resultBetterThan(result, current) {
+				bestByURL[normalized] = result
+			}
 		}
 	}
 
-	sort.SliceStable(response.Results, func(i, j int) bool {
+	for _, result := range bestByURL {
+		response.Results = append(response.Results, result)
+	}
+	sort.Slice(response.Results, func(i, j int) bool {
 		if response.Results[i].Score == response.Results[j].Score {
+			if response.Results[i].URL == response.Results[j].URL {
+				return response.Results[i].Provider < response.Results[j].Provider
+			}
 			return response.Results[i].URL < response.Results[j].URL
 		}
 		return response.Results[i].Score > response.Results[j].Score
 	})
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
+}
+
+func resultBetterThan(candidate, current Result) bool {
+	if candidate.Score != current.Score {
+		return candidate.Score > current.Score
+	}
+	if candidate.Provider != current.Provider {
+		return candidate.Provider < current.Provider
+	}
+	if candidate.Title != current.Title {
+		return candidate.Title < current.Title
+	}
+	return candidate.Snippet < current.Snippet
 }
 
 func classifyProviderFailure(err error) string {
