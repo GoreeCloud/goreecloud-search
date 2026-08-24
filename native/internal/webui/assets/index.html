@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>GoreeCloud Search</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar" aria-label="Primary navigation">
+      <a class="brand" href="/" aria-label="GoreeCloud Search home">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span><strong>GoreeCloud</strong><small>Search</small></span>
+      </a>
+      <nav class="top-actions">
+        <a href="/preferences">Preferences</a>
+        <a href="/api/v1/preferences/definitions">API</a>
+      </nav>
+    </header>
+
+    <main class="home-main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="eyebrow">Private metasearch · GoreeCloud native</div>
+        <h1 id="hero-title">Search the web without giving up control.</h1>
+        <p class="hero-copy">One calm search surface for trusted providers, clear provenance, privacy-first defaults, and no advertising or behavioral profiling.</p>
+
+        <form class="search-box" action="/api/v1/search" method="get" role="search">
+          <label class="sr-only" for="q">Search query</label>
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="q" name="q" type="search" placeholder="Search with GoreeCloud" autocomplete="off" autofocus>
+          <button type="submit">Search</button>
+        </form>
+
+        <div class="category-row" aria-label="Search categories">
+          <button type="button" class="chip active">General</button>
+          <button type="button" class="chip">Images</button>
+          <button type="button" class="chip">Videos</button>
+          <button type="button" class="chip">News</button>
+          <button type="button" class="chip">Files</button>
+        </div>
+      </section>
+
+      <section class="feature-grid" aria-label="Search principles">
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">◌</div>
+          <h2>Private by default</h2>
+          <p>Recent queries and autocomplete remain off until you choose otherwise. No advertising or click tracking.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">⌁</div>
+          <h2>Provider transparency</h2>
+          <p>Search providers stay behind one GoreeCloud boundary, with degraded states surfaced instead of silently bypassed.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-icon" aria-hidden="true">◇</div>
+          <h2>Built for every screen</h2>
+          <p>Compact through Wide layouts, strong keyboard navigation, touch-friendly controls, and resilient accessibility modes.</p>
+        </article>
+      </section>
+
+      <section class="status-panel" aria-label="Native development status">
+        <div>
+          <span class="status-dot" aria-hidden="true"></span>
+          <strong>Native Search foundation active</strong>
+          <p>The new GoreeCloud-owned application is being built alongside the transitional runtime until migration gates pass.</p>
+        </div>
+        <a class="secondary-button" href="/preferences">Open Preferences</a>
+      </section>
+    </main>
+
+    <footer>GoreeCloud Search · Native development build · Production approval not granted</footer>
+  </div>
+</body>
+</html>

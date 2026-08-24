@@ -7,7 +7,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
+	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
 )
 
 type server struct {
@@ -19,8 +21,12 @@ func main() {
 	app := server{engine: engine}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", webui.Homepage)
+	mux.HandleFunc("GET /preferences", webui.Preferences)
+	mux.HandleFunc("GET /assets/app.css", webui.Styles)
 	mux.HandleFunc("GET /healthz", app.health)
 	mux.HandleFunc("GET /api/v1/search", app.search)
+	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 
 	addr := os.Getenv("GOREECLOUD_SEARCH_ADDR")
 	if addr == "" {
@@ -57,17 +63,27 @@ func (s server) search(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
+func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"schema_version": 1,
+		"sections": []string{"search", "sources", "appearance", "privacy", "security", "data-resilience", "advanced"},
+		"definitions": preferences.Definitions(),
+	})
+}
+
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
 		next.ServeHTTP(w, r)
 	})
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(value); err != nil {
 		log.Printf("encode response: %v", err)
