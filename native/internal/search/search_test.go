@@ -49,7 +49,10 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	if len(response.Results) != 2 {
 		t.Fatalf("expected 2 sanitized unique results, got %d", len(response.Results))
 	}
-	if response.Results[0].URL != "https://example.org/c" || response.Results[1].URL != "https://example.com/a" {
+	if response.Results[0].URL != "https://example.com/a" || response.Results[0].Score != 9 || response.Results[0].Provider != "two" {
+		t.Fatalf("expected highest-scoring duplicate to win deterministically: %#v", response.Results)
+	}
+	if response.Results[1].URL != "https://example.org/c" || response.Results[1].Score != 5 {
 		t.Fatalf("unexpected deterministic ranking: %#v", response.Results)
 	}
 	if len(response.Providers) != 3 {
@@ -61,6 +64,14 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	}
 	if failed.Count != 0 {
 		t.Fatalf("failed provider must not report discarded results: %#v", failed)
+	}
+}
+
+func TestResultTieBreakIsStable(t *testing.T) {
+	one := Result{Title: "B", URL: "https://example.com/a", Provider: "zeta", Score: 5}
+	two := Result{Title: "A", URL: "https://example.com/a", Provider: "alpha", Score: 5}
+	if !resultBetterThan(two, one) {
+		t.Fatal("expected provider-name tie break to be deterministic")
 	}
 }
 
