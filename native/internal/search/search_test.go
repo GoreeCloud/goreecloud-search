@@ -58,8 +58,19 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	if len(response.Providers) != 3 {
 		t.Fatalf("expected provider evidence, got %#v", response.Providers)
 	}
-	failed := response.Providers[2]
-	if failed.Name != "three" || failed.State != ProviderStateUnavailable || failed.Code != ProviderCodeUnavailable {
+	var failed ProviderStatus
+	found := false
+	for _, status := range response.Providers {
+		if status.Name == "three" {
+			failed = status
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("missing failed provider evidence: %#v", response.Providers)
+	}
+	if failed.State != ProviderStateUnavailable || failed.Code != ProviderCodeUnavailable {
 		t.Fatalf("unexpected sanitized provider failure: %#v", failed)
 	}
 	if failed.Count != 0 {
