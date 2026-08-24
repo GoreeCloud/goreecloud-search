@@ -56,7 +56,20 @@ func (s server) health(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+func requestedCategory(r *http.Request) (string, error) {
+	return searchcore.ValidateCategory(r.URL.Query().Get("category"))
+}
+
 func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
+	category, err := requestedCategory(r)
+	if err != nil {
+		webui.RenderCategoryError(w, r.URL.Query().Get("q"), "", http.StatusBadRequest)
+		return
+	}
+	if !searchcore.CategoryImplemented(category) {
+		webui.RenderCategoryError(w, r.URL.Query().Get("q"), category, http.StatusNotImplemented)
+		return
+	}
 	response, err := s.engine.Search(r.Context(), r.URL.Query().Get("q"))
 	if err != nil {
 		webui.RenderSearchError(w, r.URL.Query().Get("q"), err)
@@ -66,6 +79,18 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
+	category, err := requestedCategory(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported search category"})
+		return
+	}
+	if !searchcore.CategoryImplemented(category) {
+		writeJSON(w, http.StatusNotImplemented, map[string]string{
+			"error":    "search category is not implemented in the native provider layer",
+			"category": category,
+		})
+		return
+	}
 	response, err := s.engine.Search(r.Context(), r.URL.Query().Get("q"))
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
