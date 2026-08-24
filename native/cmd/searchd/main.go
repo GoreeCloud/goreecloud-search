@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
@@ -21,6 +22,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", app.health)
 	mux.HandleFunc("GET /api/v1/search", app.search)
+	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 
 	addr := os.Getenv("GOREECLOUD_SEARCH_ADDR")
 	if addr == "" {
@@ -55,6 +57,14 @@ func (s server) search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, response)
+}
+
+func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"schema_version": 1,
+		"sections": []string{"search", "sources", "appearance", "privacy", "security", "data-resilience", "advanced"},
+		"definitions": preferences.Definitions(),
+	})
 }
 
 func securityHeaders(next http.Handler) http.Handler {
