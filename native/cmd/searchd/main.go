@@ -22,10 +22,12 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", webui.Homepage)
+	mux.HandleFunc("GET /search", app.searchPage)
 	mux.HandleFunc("GET /preferences", webui.Preferences)
 	mux.HandleFunc("GET /assets/app.css", webui.Styles)
+	mux.HandleFunc("GET /assets/results.css", webui.ResultsStyles)
 	mux.HandleFunc("GET /healthz", app.health)
-	mux.HandleFunc("GET /api/v1/search", app.search)
+	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 
 	addr := os.Getenv("GOREECLOUD_SEARCH_ADDR")
@@ -54,7 +56,16 @@ func (s server) health(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-func (s server) search(w http.ResponseWriter, r *http.Request) {
+func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
+	response, err := s.engine.Search(r.Context(), r.URL.Query().Get("q"))
+	if err != nil {
+		webui.RenderSearchError(w, r.URL.Query().Get("q"), err)
+		return
+	}
+	webui.RenderResults(w, response)
+}
+
+func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 	response, err := s.engine.Search(r.Context(), r.URL.Query().Get("q"))
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})

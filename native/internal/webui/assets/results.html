@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>{{if .Query}}{{.Query}} · {{end}}GoreeCloud Search</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <link rel="stylesheet" href="/assets/results.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar results-topbar">
+      <a class="brand" href="/" aria-label="GoreeCloud Search home">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span><strong>GoreeCloud</strong><small>Search</small></span>
+      </a>
+      <form class="results-search" action="/search" method="get" role="search">
+        <label class="sr-only" for="results-q">Search query</label>
+        <input id="results-q" name="q" type="search" value="{{.Query}}" placeholder="Search with GoreeCloud" autocomplete="off">
+        <button type="submit">Search</button>
+      </form>
+      <nav class="top-actions"><a href="/preferences">Preferences</a></nav>
+    </header>
+
+    <main class="results-main">
+      <nav class="results-categories" aria-label="Search categories">
+        <a class="chip active" href="/search?q={{urlquery .Query}}">General</a>
+        <span class="chip disabled" aria-disabled="true">Images</span>
+        <span class="chip disabled" aria-disabled="true">Videos</span>
+        <span class="chip disabled" aria-disabled="true">News</span>
+        <span class="chip disabled" aria-disabled="true">Files</span>
+      </nav>
+
+      {{if .Error}}
+      <section class="results-state error-state" role="alert">
+        <span class="state-icon" aria-hidden="true">!</span>
+        <div><h1>Search needs attention</h1><p>{{.Error}}</p></div>
+      </section>
+      {{else}}
+        <section class="results-heading">
+          <div><span class="eyebrow">Results</span><h1>{{.Query}}</h1></div>
+          {{if .Degraded}}<span class="status-badge neutral">Some sources unavailable</span>{{end}}
+        </section>
+
+        {{if .Providers}}
+        <details class="provider-summary">
+          <summary>Source status</summary>
+          <div class="provider-grid">
+            {{range .Providers}}
+            <div class="provider-item"><strong>{{.Name}}</strong><span class="status-badge {{if eq .State "available"}}{{else}}neutral{{end}}">{{.State}}</span><small>{{.Count}} results{{if .Code}} · {{.Code}}{{end}}</small></div>
+            {{end}}
+          </div>
+        </details>
+        {{end}}
+
+        {{if .Results}}
+        <ol class="result-list">
+          {{range .Results}}
+          <li class="result-card">
+            <div class="result-source"><span>{{.Provider}}</span><span class="result-score">Score {{.Score}}</span></div>
+            <h2><a href="{{.URL}}" rel="noopener noreferrer">{{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}</a></h2>
+            <a class="result-url" href="{{.URL}}" rel="noopener noreferrer">{{.URL}}</a>
+            {{if .Snippet}}<p>{{.Snippet}}</p>{{end}}
+          </li>
+          {{end}}
+        </ol>
+        {{else}}
+        <section class="results-state">
+          <span class="state-icon" aria-hidden="true">⌕</span>
+          <div><h2>No results yet</h2><p>The native provider adapters are still being migrated. Your query was accepted, but no configured native provider returned a result.</p></div>
+        </section>
+        {{end}}
+      {{end}}
+    </main>
+
+    <footer>GoreeCloud Search · Native results preview · Production approval not granted</footer>
+  </div>
+</body>
+</html>

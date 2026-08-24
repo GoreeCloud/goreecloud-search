@@ -26,7 +26,7 @@
         <h1 id="hero-title">Search the web without giving up control.</h1>
         <p class="hero-copy">One calm search surface for trusted providers, clear provenance, privacy-first defaults, and no advertising or behavioral profiling.</p>
 
-        <form class="search-box" action="/api/v1/search" method="get" role="search">
+        <form class="search-box" action="/search" method="get" role="search">
           <label class="sr-only" for="q">Search query</label>
           <span class="search-icon" aria-hidden="true">⌕</span>
           <input id="q" name="q" type="search" placeholder="Search with GoreeCloud" autocomplete="off" autofocus>
@@ -34,12 +34,13 @@
         </form>
 
         <div class="category-row" aria-label="Search categories">
-          <button type="button" class="chip active">General</button>
-          <button type="button" class="chip">Images</button>
-          <button type="button" class="chip">Videos</button>
-          <button type="button" class="chip">News</button>
-          <button type="button" class="chip">Files</button>
+          <span class="chip active">General</span>
+          <span class="chip disabled" aria-disabled="true">Images</span>
+          <span class="chip disabled" aria-disabled="true">Videos</span>
+          <span class="chip disabled" aria-disabled="true">News</span>
+          <span class="chip disabled" aria-disabled="true">Files</span>
         </div>
+        <p class="migration-note">General is live in the native development shell. Additional category adapters remain visible but disabled until their native provider contracts are implemented and validated.</p>
       </section>
 
       <section class="feature-grid" aria-label="Search principles">
