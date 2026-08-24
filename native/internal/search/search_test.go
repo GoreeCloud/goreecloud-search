@@ -36,7 +36,7 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	engine := NewEngine(time.Second,
 		fakeProvider{name: "one", results: []Result{{Title: "A", URL: "https://example.com/a#fragment", Score: 4}, {Title: "B", URL: "javascript:alert(1)", Score: 10}}},
 		fakeProvider{name: "two", results: []Result{{Title: "Duplicate", URL: "https://example.com/a", Score: 9}, {Title: "C", URL: "https://example.org/c", Score: 5}}},
-		fakeProvider{name: "three", err: errors.New("provider unavailable")},
+		fakeProvider{name: "three", err: errors.New("provider unavailable: credential=do-not-expose")},
 	)
 
 	response, err := engine.Search(context.Background(), "test")
@@ -54,5 +54,21 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	}
 	if len(response.Providers) != 3 {
 		t.Fatalf("expected provider evidence, got %#v", response.Providers)
+	}
+	failed := response.Providers[2]
+	if failed.Name != "three" || failed.State != ProviderStateUnavailable || failed.Code != ProviderCodeUnavailable {
+		t.Fatalf("unexpected sanitized provider failure: %#v", failed)
+	}
+	if failed.Count != 0 {
+		t.Fatalf("failed provider must not report discarded results: %#v", failed)
+	}
+}
+
+func TestProviderFailureClassification(t *testing.T) {
+	if code := classifyProviderFailure(context.DeadlineExceeded); code != ProviderCodeTimeout {
+		t.Fatalf("expected timeout code, got %q", code)
+	}
+	if code := classifyProviderFailure(errors.New("token=secret")); code != ProviderCodeUnavailable {
+		t.Fatalf("expected bounded unavailable code, got %q", code)
 	}
 }
