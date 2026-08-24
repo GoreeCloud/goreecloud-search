@@ -25,6 +25,7 @@ func main() {
 	mux.HandleFunc("GET /search", app.searchPage)
 	mux.HandleFunc("GET /preferences", webui.Preferences)
 	mux.HandleFunc("GET /assets/app.css", webui.Styles)
+	mux.HandleFunc("GET /assets/results.css", webui.ResultsStyles)
 	mux.HandleFunc("GET /healthz", app.health)
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
