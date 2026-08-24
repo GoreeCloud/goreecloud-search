@@ -12,6 +12,13 @@ import (
 
 const MaxQueryRunes = 512
 
+const (
+	ProviderStateAvailable   = "available"
+	ProviderStateUnavailable = "unavailable"
+	ProviderCodeUnavailable  = "provider_unavailable"
+	ProviderCodeTimeout      = "provider_timeout"
+)
+
 type Result struct {
 	Title    string `json:"title"`
 	URL      string `json:"url"`
@@ -27,7 +34,8 @@ type Provider interface {
 
 type ProviderStatus struct {
 	Name  string `json:"name"`
-	Error string `json:"error,omitempty"`
+	State string `json:"state"`
+	Code  string `json:"code,omitempty"`
 	Count int    `json:"count"`
 }
 
@@ -83,9 +91,11 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 		go func() {
 			defer wg.Done()
 			items, searchErr := provider.Search(ctx, query)
-			status := ProviderStatus{Name: provider.Name(), Count: len(items)}
+			status := ProviderStatus{Name: provider.Name(), State: ProviderStateAvailable, Count: len(items)}
 			if searchErr != nil {
-				status.Error = searchErr.Error()
+				status.State = ProviderStateUnavailable
+				status.Code = classifyProviderFailure(searchErr)
+				status.Count = 0
 				items = nil
 			}
 			for i := range items {
@@ -101,10 +111,10 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 	}()
 
 	response := Response{Query: query, Results: []Result{}, Providers: []ProviderStatus{}}
-	seen := map[string]struct{}{}
+	bestByURL := map[string]Result{}
 	for item := range ch {
 		response.Providers = append(response.Providers, item.status)
-		if item.status.Error != "" {
+		if item.status.State != ProviderStateAvailable {
 			response.Degraded = true
 		}
 		for _, result := range item.results {
@@ -112,23 +122,48 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 			if !ok {
 				continue
 			}
-			if _, exists := seen[normalized]; exists {
-				continue
-			}
-			seen[normalized] = struct{}{}
 			result.URL = normalized
-			response.Results = append(response.Results, result)
+			current, exists := bestByURL[normalized]
+			if !exists || resultBetterThan(result, current) {
+				bestByURL[normalized] = result
+			}
 		}
 	}
 
-	sort.SliceStable(response.Results, func(i, j int) bool {
+	for _, result := range bestByURL {
+		response.Results = append(response.Results, result)
+	}
+	sort.Slice(response.Results, func(i, j int) bool {
 		if response.Results[i].Score == response.Results[j].Score {
+			if response.Results[i].URL == response.Results[j].URL {
+				return response.Results[i].Provider < response.Results[j].Provider
+			}
 			return response.Results[i].URL < response.Results[j].URL
 		}
 		return response.Results[i].Score > response.Results[j].Score
 	})
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
+}
+
+func resultBetterThan(candidate, current Result) bool {
+	if candidate.Score != current.Score {
+		return candidate.Score > current.Score
+	}
+	if candidate.Provider != current.Provider {
+		return candidate.Provider < current.Provider
+	}
+	if candidate.Title != current.Title {
+		return candidate.Title < current.Title
+	}
+	return candidate.Snippet < current.Snippet
+}
+
+func classifyProviderFailure(err error) string {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return ProviderCodeTimeout
+	}
+	return ProviderCodeUnavailable
 }
 
 func normalizeResultURL(raw string) (string, bool) {
