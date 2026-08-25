@@ -70,6 +70,55 @@ func TestResultsStylesAreServedAsCSS(t *testing.T) {
 	}
 }
 
+func TestPreferencesScriptIsLocalOnlyAndSchemaBound(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	PreferencesScript(recorder, httptest.NewRequest(http.MethodGet, "/assets/preferences.js", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+	if got := recorder.Header().Get("Content-Type"); got != "text/javascript; charset=utf-8" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	body := recorder.Body.String()
+	for _, expected := range []string{
+		"goreecloud.search.preferences.v1",
+		"schema_version",
+		"localStorage",
+		"privacy.recent_queries",
+		"search.autocomplete",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("Preferences script missing %q", expected)
+		}
+	}
+	for _, forbidden := range []string{"fetch(", "XMLHttpRequest", "sendBeacon", "WebSocket"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("Preferences script unexpectedly contains network primitive %q", forbidden)
+		}
+	}
+}
+
+func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	Preferences(recorder, httptest.NewRequest(http.MethodGet, "/preferences", nil))
+	body := recorder.Body.String()
+
+	for _, expected := range []string{
+		"/assets/preferences.js",
+		"data-settings-filter",
+		"data-export-preferences",
+		"data-import-preferences",
+		"data-reset-preferences",
+		"data-preference=\"search.autocomplete\"",
+		"data-preference=\"privacy.recent_queries\"",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("Preferences page missing %q", expected)
+		}
+	}
+}
+
 type errPrivate string
 
 func (e errPrivate) Error() string { return string(e) }
