@@ -42,6 +42,14 @@ type Provider interface {
 	Search(context.Context, string) ([]Result, error)
 }
 
+// CategoryProvider extends the base provider contract with explicit category
+// capabilities. Providers that do not implement this interface remain General-
+// only for compatibility and may not be invoked for another category.
+type CategoryProvider interface {
+	Provider
+	Categories() []string
+}
+
 type ProviderStatus struct {
 	Name  string `json:"name"`
 	State string `json:"state"`
@@ -93,14 +101,41 @@ func ValidateCategory(raw string) (string, error) {
 	return "", errors.New("unsupported search category")
 }
 
-func CategoryImplemented(category string) bool {
-	return category == CategoryGeneral
+// SupportsCategory reports whether the native engine has a usable execution
+// path for a validated category. General remains implemented even with no
+// configured providers so the development shell retains its bounded empty
+// result behavior. Additional categories require an explicit provider claim.
+func (e *Engine) SupportsCategory(category string) bool {
+	category, err := ValidateCategory(category)
+	if err != nil {
+		return false
+	}
+	if category == CategoryGeneral {
+		return true
+	}
+	for _, provider := range e.providers {
+		if providerSupportsCategory(provider, category) {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
+	return e.SearchCategory(ctx, raw, CategoryGeneral)
+}
+
+func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (Response, error) {
 	query, err := ValidateQuery(raw)
 	if err != nil {
 		return Response{}, err
+	}
+	category, err := ValidateCategory(rawCategory)
+	if err != nil {
+		return Response{}, err
+	}
+	if !e.SupportsCategory(category) {
+		return Response{}, errors.New("search category is not implemented in the native provider layer")
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, e.timeout)
@@ -111,9 +146,16 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 		results []Result
 	}
 
-	ch := make(chan providerResult, len(e.providers))
-	var wg sync.WaitGroup
+	selected := make([]Provider, 0, len(e.providers))
 	for _, provider := range e.providers {
+		if providerSupportsCategory(provider, category) {
+			selected = append(selected, provider)
+		}
+	}
+
+	ch := make(chan providerResult, len(selected))
+	var wg sync.WaitGroup
+	for _, provider := range selected {
 		provider := provider
 		wg.Add(1)
 		go func() {
@@ -138,7 +180,7 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 		close(ch)
 	}()
 
-	response := Response{Query: query, Category: CategoryGeneral, Results: []Result{}, Providers: []ProviderStatus{}}
+	response := Response{Query: query, Category: category, Results: []Result{}, Providers: []ProviderStatus{}}
 	bestByURL := map[string]Result{}
 	for item := range ch {
 		response.Providers = append(response.Providers, item.status)
@@ -172,6 +214,27 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 	})
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
+}
+
+func providerSupportsCategory(provider Provider, category string) bool {
+	if provider == nil {
+		return false
+	}
+	category, err := ValidateCategory(category)
+	if err != nil {
+		return false
+	}
+	categorized, ok := provider.(CategoryProvider)
+	if !ok {
+		return category == CategoryGeneral
+	}
+	for _, candidate := range categorized.Categories() {
+		validated, err := ValidateCategory(candidate)
+		if err == nil && validated == category {
+			return true
+		}
+	}
+	return false
 }
 
 func resultBetterThan(candidate, current Result) bool {

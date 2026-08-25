@@ -46,11 +46,13 @@ func TestValidateCategory(t *testing.T) {
 	if _, err := ValidateCategory("shopping"); err == nil {
 		t.Fatal("expected unknown category rejection")
 	}
-	if !CategoryImplemented(CategoryGeneral) {
+
+	engine := NewEngine(time.Second)
+	if !engine.SupportsCategory(CategoryGeneral) {
 		t.Fatal("general category must be implemented")
 	}
 	for _, category := range []string{CategoryImages, CategoryVideos, CategoryNews, CategoryFiles} {
-		if CategoryImplemented(category) {
+		if engine.SupportsCategory(category) {
 			t.Fatalf("category %q must remain fail-closed until adapters are implemented", category)
 		}
 	}
