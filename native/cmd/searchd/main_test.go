@@ -57,3 +57,25 @@ func TestGeneralSearchAPIIncludesCategory(t *testing.T) {
 		t.Fatalf("general response missing category contract: %s", response.Body.String())
 	}
 }
+
+func TestProviderDefinitionsAPIIsReadOnlyAndNonProduction(t *testing.T) {
+	app := server{engine: searchcore.NewEngine(time.Second)}
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/providers/definitions", nil)
+	response := httptest.NewRecorder()
+	app.providerDefinitions(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+	body := response.Body.String()
+	for _, required := range []string{
+		`"configured_provider_count":0`,
+		`"credentials_exposed":false`,
+		`"management_scope":"deployment-controlled"`,
+		`"production_approved":false`,
+		`"supported_categories"`,
+	} {
+		if !strings.Contains(body, required) {
+			t.Fatalf("provider registry response missing %s: %s", required, body)
+		}
+	}
+}

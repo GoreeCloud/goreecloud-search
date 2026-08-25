@@ -33,6 +33,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", app.health)
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
+	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
 
 	addr := os.Getenv("GOREECLOUD_SEARCH_ADDR")
 	if addr == "" {
@@ -108,6 +109,19 @@ func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {
 		"schema_version": 1,
 		"sections": []string{"search", "sources", "appearance", "privacy", "security", "data-resilience", "advanced"},
 		"definitions": preferences.Definitions(),
+	})
+}
+
+func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
+	providers := s.engine.ProviderDefinitions()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"schema_version":             1,
+		"providers":                  providers,
+		"configured_provider_count": len(providers),
+		"supported_categories":      searchcore.SupportedCategories,
+		"management_scope":           "deployment-controlled",
+		"credentials_exposed":       false,
+		"production_approved":       false,
 	})
 }
 

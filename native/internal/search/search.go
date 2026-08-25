@@ -50,6 +50,12 @@ type CategoryProvider interface {
 	Categories() []string
 }
 
+type ProviderDefinition struct {
+	Name       string   `json:"name"`
+	Categories []string `json:"categories"`
+	Legacy     bool     `json:"legacy_general_only"`
+}
+
 type ProviderStatus struct {
 	Name  string `json:"name"`
 	State string `json:"state"`
@@ -75,6 +81,43 @@ func NewEngine(timeout time.Duration, providers ...Provider) *Engine {
 		timeout = 8 * time.Second
 	}
 	return &Engine{providers: append([]Provider(nil), providers...), timeout: timeout}
+}
+
+// ProviderDefinitions returns a sanitized, deterministic view of configured
+// provider identity and category capabilities. It does not expose credentials,
+// endpoint configuration, runtime errors, request state, or mutable controls.
+func (e *Engine) ProviderDefinitions() []ProviderDefinition {
+	definitions := make([]ProviderDefinition, 0, len(e.providers))
+	for _, provider := range e.providers {
+		if provider == nil {
+			continue
+		}
+		definition := ProviderDefinition{Name: strings.TrimSpace(provider.Name())}
+		categorized, ok := provider.(CategoryProvider)
+		if !ok {
+			definition.Categories = []string{CategoryGeneral}
+			definition.Legacy = true
+			definitions = append(definitions, definition)
+			continue
+		}
+		seen := map[string]bool{}
+		for _, rawCategory := range categorized.Categories() {
+			category, err := ValidateCategory(rawCategory)
+			if err == nil && !seen[category] {
+				definition.Categories = append(definition.Categories, category)
+				seen[category] = true
+			}
+		}
+		sort.Strings(definition.Categories)
+		definitions = append(definitions, definition)
+	}
+	sort.Slice(definitions, func(i, j int) bool {
+		if definitions[i].Name == definitions[j].Name {
+			return strings.Join(definitions[i].Categories, ",") < strings.Join(definitions[j].Categories, ",")
+		}
+		return definitions[i].Name < definitions[j].Name
+	})
+	return definitions
 }
 
 func ValidateQuery(raw string) (string, error) {
