@@ -7,6 +7,7 @@
   <title>GoreeCloud Search</title>
   <link rel="stylesheet" href="/assets/app.css">
   <link rel="stylesheet" href="/assets/categories.css">
+  <link rel="stylesheet" href="/assets/home.css">
 </head>
 <body>
   <div class="page-shell">
@@ -18,13 +19,13 @@
     <main class="home-main">
       <section class="hero" aria-labelledby="hero-title">
         <div class="eyebrow">Private metasearch · GoreeCloud native</div>
-        <h1 id="hero-title">Search the web without giving up control.</h1>
-        <p class="hero-copy">One calm search surface for trusted providers, clear provenance, privacy-first defaults, and no advertising or behavioral profiling.</p>
+        <h1 id="hero-title">Find what matters. Keep control.</h1>
+        <p class="hero-copy">A focused search experience with explicit provider provenance, privacy-first defaults, bounded failures, and no advertising or behavioral profiling.</p>
 
         <form id="home-search" class="search-box" action="/search" method="get" role="search">
           <label class="sr-only" for="q">Search query</label>
           <span class="search-icon" aria-hidden="true">⌕</span>
-          <input id="q" name="q" type="search" placeholder="Search with GoreeCloud" autocomplete="off" autofocus>
+          <input id="q" name="q" type="search" placeholder="Search the web with GoreeCloud" autocomplete="off" autofocus>
           <button type="submit">Search</button>
         </form>
 
@@ -36,7 +37,16 @@
           <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="news">News</label>
           <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="files">Files</label>
         </fieldset>
-        <p class="migration-note">General is implemented in the native provider layer. Images, Videos, News, and Files are selectable so their preserved request contract is explicit; until native category adapters pass validation, those requests return a bounded not-implemented state instead of silently falling back.</p>
+
+        <div class="trust-strip" aria-label="Search trust commitments">
+          <span>No advertising</span><span>No click tracking</span><span>Provider transparency</span><span>Private defaults</span>
+        </div>
+        <p class="migration-note">General is active in the native provider layer. Other categories become executable only when a reviewed provider explicitly declares that capability; unsupported paths fail closed rather than silently falling back.</p>
+      </section>
+
+      <section class="home-insights" aria-label="Search behavior and controls">
+        <article class="insight-card"><div class="section-kicker">Clear by design</div><h2>Search state stays understandable.</h2><p>GoreeCloud Search makes provider identity and degraded-source state visible so a successful page never hides which source actually answered.</p><div class="insight-list"><div><span aria-hidden="true">◇</span><span><strong>Bounded provider failures.</strong> One failed source does not erase the state of the others.</span></div><div><span aria-hidden="true">◇</span><span><strong>Local preferences.</strong> Device-level appearance and search choices stay local unless a future reviewed sync path is enabled.</span></div></div></article>
+        <article class="insight-card"><div class="section-kicker">Keyboard first</div><h2>Fast without becoming noisy.</h2><p>The homepage remains script-free and form-native. Focus the query, choose a category, and submit with standard browser controls.</p><div class="insight-list"><div><span class="keycap">Tab</span><span>Move through search, categories, and navigation.</span></div><div><span class="keycap">Enter</span><span>Run the current query using the selected category.</span></div></div></article>
       </section>
 
       <section class="feature-grid" aria-label="Search principles">
@@ -45,7 +55,7 @@
         <article class="feature-card"><div class="feature-icon" aria-hidden="true">◇</div><h2>Built for every screen</h2><p>Compact through Wide layouts, strong keyboard navigation, touch-friendly controls, and resilient accessibility modes.</p></article>
       </section>
 
-      <section class="status-panel" aria-label="Native development status"><div><span class="status-dot" aria-hidden="true"></span><strong>Native Search foundation active</strong><p>The new GoreeCloud-owned application is being built alongside the transitional runtime until migration gates pass.</p></div><a class="secondary-button" href="/preferences">Open Preferences</a></section>
+      <section class="status-panel" aria-label="Native development status"><div><span class="status-dot" aria-hidden="true"></span><strong>Native Search foundation active</strong><p>The GoreeCloud-owned application is replacing the transitional runtime only through validated migration gates.</p></div><a class="secondary-button" href="/preferences">Open Preferences</a></section>
     </main>
 
     <footer>GoreeCloud Search · Native development build · Production approval not granted</footer>
