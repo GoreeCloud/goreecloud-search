@@ -35,6 +35,10 @@ func Styles(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/app.css", "text/css; charset=utf-8")
 }
 
+func PreferencesScript(w http.ResponseWriter, _ *http.Request) {
+	serveAsset(w, "assets/preferences.js", "text/javascript; charset=utf-8")
+}
+
 func ResultsStyles(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/results.css", "text/css; charset=utf-8")
 }
