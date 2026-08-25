@@ -32,6 +32,30 @@ func TestValidateQuery(t *testing.T) {
 	}
 }
 
+func TestValidateCategory(t *testing.T) {
+	for _, category := range SupportedCategories {
+		got, err := ValidateCategory("  " + strings.ToUpper(category) + "  ")
+		if err != nil || got != category {
+			t.Fatalf("category %q normalized to %q with %v", category, got, err)
+		}
+	}
+	got, err := ValidateCategory("")
+	if err != nil || got != CategoryGeneral {
+		t.Fatalf("blank category = %q, %v", got, err)
+	}
+	if _, err := ValidateCategory("shopping"); err == nil {
+		t.Fatal("expected unknown category rejection")
+	}
+	if !CategoryImplemented(CategoryGeneral) {
+		t.Fatal("general category must be implemented")
+	}
+	for _, category := range []string{CategoryImages, CategoryVideos, CategoryNews, CategoryFiles} {
+		if CategoryImplemented(category) {
+			t.Fatalf("category %q must remain fail-closed until adapters are implemented", category)
+		}
+	}
+}
+
 func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	engine := NewEngine(time.Second,
 		fakeProvider{name: "one", results: []Result{{Title: "A", URL: "https://example.com/a#fragment", Score: 4}, {Title: "B", URL: "javascript:alert(1)", Score: 10}}},
@@ -42,6 +66,9 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	response, err := engine.Search(context.Background(), "test")
 	if err != nil {
 		t.Fatal(err)
+	}
+	if response.Category != CategoryGeneral {
+		t.Fatalf("expected general response category, got %q", response.Category)
 	}
 	if !response.Degraded {
 		t.Fatal("expected degraded response when one provider fails")

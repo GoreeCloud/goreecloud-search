@@ -13,6 +13,16 @@ import (
 const MaxQueryRunes = 512
 
 const (
+	CategoryGeneral = "general"
+	CategoryImages  = "images"
+	CategoryVideos  = "videos"
+	CategoryNews    = "news"
+	CategoryFiles   = "files"
+)
+
+var SupportedCategories = []string{CategoryGeneral, CategoryImages, CategoryVideos, CategoryNews, CategoryFiles}
+
+const (
 	ProviderStateAvailable   = "available"
 	ProviderStateUnavailable = "unavailable"
 	ProviderCodeUnavailable  = "provider_unavailable"
@@ -41,6 +51,7 @@ type ProviderStatus struct {
 
 type Response struct {
 	Query     string           `json:"query"`
+	Category  string           `json:"category"`
 	Results   []Result         `json:"results"`
 	Providers []ProviderStatus `json:"providers"`
 	Degraded  bool             `json:"degraded"`
@@ -67,6 +78,23 @@ func ValidateQuery(raw string) (string, error) {
 		return "", errors.New("query exceeds maximum length")
 	}
 	return query, nil
+}
+
+func ValidateCategory(raw string) (string, error) {
+	category := strings.ToLower(strings.TrimSpace(raw))
+	if category == "" {
+		return CategoryGeneral, nil
+	}
+	for _, allowed := range SupportedCategories {
+		if category == allowed {
+			return category, nil
+		}
+	}
+	return "", errors.New("unsupported search category")
+}
+
+func CategoryImplemented(category string) bool {
+	return category == CategoryGeneral
 }
 
 func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
@@ -110,7 +138,7 @@ func (e *Engine) Search(ctx context.Context, raw string) (Response, error) {
 		close(ch)
 	}()
 
-	response := Response{Query: query, Results: []Result{}, Providers: []ProviderStatus{}}
+	response := Response{Query: query, Category: CategoryGeneral, Results: []Result{}, Providers: []ProviderStatus{}}
 	bestByURL := map[string]Result{}
 	for item := range ch {
 		response.Providers = append(response.Providers, item.status)

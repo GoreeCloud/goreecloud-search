@@ -6,18 +6,13 @@
   <meta name="color-scheme" content="light dark">
   <title>GoreeCloud Search</title>
   <link rel="stylesheet" href="/assets/app.css">
+  <link rel="stylesheet" href="/assets/categories.css">
 </head>
 <body>
   <div class="page-shell">
     <header class="topbar" aria-label="Primary navigation">
-      <a class="brand" href="/" aria-label="GoreeCloud Search home">
-        <span class="brand-mark" aria-hidden="true">G</span>
-        <span><strong>GoreeCloud</strong><small>Search</small></span>
-      </a>
-      <nav class="top-actions">
-        <a href="/preferences">Preferences</a>
-        <a href="/api/v1/preferences/definitions">API</a>
-      </nav>
+      <a class="brand" href="/" aria-label="GoreeCloud Search home"><span class="brand-mark" aria-hidden="true">G</span><span><strong>GoreeCloud</strong><small>Search</small></span></a>
+      <nav class="top-actions"><a href="/preferences">Preferences</a><a href="/api/v1/preferences/definitions">API</a></nav>
     </header>
 
     <main class="home-main">
@@ -26,49 +21,31 @@
         <h1 id="hero-title">Search the web without giving up control.</h1>
         <p class="hero-copy">One calm search surface for trusted providers, clear provenance, privacy-first defaults, and no advertising or behavioral profiling.</p>
 
-        <form class="search-box" action="/search" method="get" role="search">
+        <form id="home-search" class="search-box" action="/search" method="get" role="search">
           <label class="sr-only" for="q">Search query</label>
           <span class="search-icon" aria-hidden="true">⌕</span>
           <input id="q" name="q" type="search" placeholder="Search with GoreeCloud" autocomplete="off" autofocus>
           <button type="submit">Search</button>
         </form>
 
-        <div class="category-row" aria-label="Search categories">
-          <span class="chip active">General</span>
-          <span class="chip disabled" aria-disabled="true">Images</span>
-          <span class="chip disabled" aria-disabled="true">Videos</span>
-          <span class="chip disabled" aria-disabled="true">News</span>
-          <span class="chip disabled" aria-disabled="true">Files</span>
-        </div>
-        <p class="migration-note">General is live in the native development shell. Additional category adapters remain visible but disabled until their native provider contracts are implemented and validated.</p>
+        <fieldset class="category-row">
+          <legend class="sr-only">Search category</legend>
+          <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="general" checked>General</label>
+          <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="images">Images</label>
+          <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="videos">Videos</label>
+          <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="news">News</label>
+          <label class="chip"><input class="sr-only" form="home-search" type="radio" name="category" value="files">Files</label>
+        </fieldset>
+        <p class="migration-note">General is implemented in the native provider layer. Images, Videos, News, and Files are selectable so their preserved request contract is explicit; until native category adapters pass validation, those requests return a bounded not-implemented state instead of silently falling back.</p>
       </section>
 
       <section class="feature-grid" aria-label="Search principles">
-        <article class="feature-card">
-          <div class="feature-icon" aria-hidden="true">◌</div>
-          <h2>Private by default</h2>
-          <p>Recent queries and autocomplete remain off until you choose otherwise. No advertising or click tracking.</p>
-        </article>
-        <article class="feature-card">
-          <div class="feature-icon" aria-hidden="true">⌁</div>
-          <h2>Provider transparency</h2>
-          <p>Search providers stay behind one GoreeCloud boundary, with degraded states surfaced instead of silently bypassed.</p>
-        </article>
-        <article class="feature-card">
-          <div class="feature-icon" aria-hidden="true">◇</div>
-          <h2>Built for every screen</h2>
-          <p>Compact through Wide layouts, strong keyboard navigation, touch-friendly controls, and resilient accessibility modes.</p>
-        </article>
+        <article class="feature-card"><div class="feature-icon" aria-hidden="true">◌</div><h2>Private by default</h2><p>Recent queries and autocomplete remain off until you choose otherwise. No advertising or click tracking.</p></article>
+        <article class="feature-card"><div class="feature-icon" aria-hidden="true">⌁</div><h2>Provider transparency</h2><p>Search providers stay behind one GoreeCloud boundary, with degraded states surfaced instead of silently bypassed.</p></article>
+        <article class="feature-card"><div class="feature-icon" aria-hidden="true">◇</div><h2>Built for every screen</h2><p>Compact through Wide layouts, strong keyboard navigation, touch-friendly controls, and resilient accessibility modes.</p></article>
       </section>
 
-      <section class="status-panel" aria-label="Native development status">
-        <div>
-          <span class="status-dot" aria-hidden="true"></span>
-          <strong>Native Search foundation active</strong>
-          <p>The new GoreeCloud-owned application is being built alongside the transitional runtime until migration gates pass.</p>
-        </div>
-        <a class="secondary-button" href="/preferences">Open Preferences</a>
-      </section>
+      <section class="status-panel" aria-label="Native development status"><div><span class="status-dot" aria-hidden="true"></span><strong>Native Search foundation active</strong><p>The new GoreeCloud-owned application is being built alongside the transitional runtime until migration gates pass.</p></div><a class="secondary-button" href="/preferences">Open Preferences</a></section>
     </main>
 
     <footer>GoreeCloud Search · Native development build · Production approval not granted</footer>
