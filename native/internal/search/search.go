@@ -147,7 +147,7 @@ func ValidateCategory(raw string) (string, error) {
 // SupportsCategory reports whether the native engine has a usable execution
 // path for a validated category. General remains implemented even with no
 // configured providers so the development shell retains its bounded empty
-// result behavior. Additional categories require an explicit provider claim.
+// result behavior. Additional categories require an executable provider path.
 func (e *Engine) SupportsCategory(category string) bool {
 	category, err := ValidateCategory(category)
 	if err != nil {
@@ -157,7 +157,7 @@ func (e *Engine) SupportsCategory(category string) bool {
 		return true
 	}
 	for _, provider := range e.providers {
-		if providerSupportsCategory(provider, category) {
+		if providerCanExecuteCategory(provider, category) {
 			return true
 		}
 	}
@@ -191,7 +191,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 
 	selected := make([]Provider, 0, len(e.providers))
 	for _, provider := range e.providers {
-		if providerSupportsCategory(provider, category) {
+		if providerCanExecuteCategory(provider, category) {
 			selected = append(selected, provider)
 		}
 	}
@@ -203,7 +203,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			items, searchErr := provider.Search(ctx, query)
+			items, searchErr := executeProviderSearch(ctx, provider, query, category)
 			status := ProviderStatus{Name: provider.Name(), State: ProviderStateAvailable, Count: len(items)}
 			if searchErr != nil {
 				status.State = ProviderStateUnavailable
@@ -278,6 +278,37 @@ func providerSupportsCategory(provider Provider, category string) bool {
 		}
 	}
 	return false
+}
+
+func providerCanExecuteCategory(provider Provider, category string) bool {
+	if !providerSupportsCategory(provider, category) {
+		return false
+	}
+	if category == CategoryGeneral {
+		return true
+	}
+	if _, ok := provider.(CategorySearcher); ok {
+		return true
+	}
+	categorized, ok := provider.(CategoryProvider)
+	if !ok {
+		return false
+	}
+	valid := map[string]bool{}
+	for _, raw := range categorized.Categories() {
+		candidate, err := ValidateCategory(raw)
+		if err == nil {
+			valid[candidate] = true
+		}
+	}
+	return len(valid) == 1 && valid[category]
+}
+
+func executeProviderSearch(ctx context.Context, provider Provider, query, category string) ([]Result, error) {
+	if categorized, ok := provider.(CategorySearcher); ok {
+		return categorized.SearchCategory(ctx, query, category)
+	}
+	return provider.Search(ctx, query)
 }
 
 func resultBetterThan(candidate, current Result) bool {
