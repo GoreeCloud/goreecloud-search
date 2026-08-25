@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +10,14 @@ import (
 
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
+
+type imageProvider struct{}
+
+func (imageProvider) Name() string { return "images" }
+func (imageProvider) Search(context.Context, string) ([]searchcore.Result, error) {
+	return nil, nil
+}
+func (imageProvider) Categories() []string { return []string{searchcore.CategoryImages} }
 
 func TestRequestedCategoryDefaultsToGeneral(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/search?q=test", nil)
@@ -58,6 +67,14 @@ func TestGeneralSearchAPIIncludesCategory(t *testing.T) {
 	}
 }
 
+func TestExecutableCategoriesReflectCurrentEngine(t *testing.T) {
+	engine := searchcore.NewEngine(time.Second, imageProvider{})
+	categories := executableCategories(engine)
+	if strings.Join(categories, ",") != "general,images" {
+		t.Fatalf("executable categories = %v, want [general images]", categories)
+	}
+}
+
 func TestProviderDefinitionsAPIIsReadOnlyAndNonProduction(t *testing.T) {
 	app := server{engine: searchcore.NewEngine(time.Second)}
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/providers/definitions", nil)
@@ -73,6 +90,8 @@ func TestProviderDefinitionsAPIIsReadOnlyAndNonProduction(t *testing.T) {
 		`"management_scope":"deployment-controlled"`,
 		`"production_approved":false`,
 		`"supported_categories"`,
+		`"executable_categories":["general"]`,
+		`"category_execution_scope":"current-native-engine"`,
 	} {
 		if !strings.Contains(body, required) {
 			t.Fatalf("provider registry response missing %s: %s", required, body)
