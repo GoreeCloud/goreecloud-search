@@ -98,3 +98,26 @@ func TestProviderDefinitionsAPIIsReadOnlyAndNonProduction(t *testing.T) {
 		}
 	}
 }
+
+func TestSyncCapabilitiesAPIIsReadOnlyAndNonProduction(t *testing.T) {
+	app := server{engine: searchcore.NewEngine(time.Second)}
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/sync/capabilities", nil)
+	response := httptest.NewRecorder()
+	app.syncCapabilities(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+	body := response.Body.String()
+	for _, required := range []string{
+		`"application":"search"`,
+		`"credentials_exposed":false`,
+		`"production_approved":false`,
+		`"dataset":"search.preferences"`,
+		`"dataset":"search.history"`,
+		`"dataset":"search.sources"`,
+	} {
+		if !strings.Contains(body, required) {
+			t.Fatalf("sync capability response missing %s: %s", required, body)
+		}
+	}
+}
