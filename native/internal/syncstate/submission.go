@@ -21,8 +21,6 @@ var (
 	ErrSyncSubmissionFailed  = errors.New("Search history sync submission failed")
 )
 
-// Envelope mirrors GoreeCloud Sync's transport contract without importing the
-// Sync service as an application dependency.
 type Envelope struct {
 	Dataset       string         `json:"dataset"`
 	SchemaVersion int            `json:"schemaVersion"`
@@ -46,8 +44,6 @@ type DeviceIdentity struct {
 	PrivateKey ed25519.PrivateKey
 }
 
-// SignedHistoryEnvelope converts Search's minimized application record into a
-// revisioned transport envelope and signs the exact contents expected by Sync.
 func SignedHistoryEnvelope(record Record, revision uint64, updatedAt time.Time, identity DeviceIdentity) (Envelope, RecordProof, error) {
 	if record.Dataset != "search.history" || record.SchemaVersion < 1 || record.RecordID == "" || record.Payload == nil || revision == 0 || updatedAt.IsZero() {
 		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
@@ -77,12 +73,11 @@ type HTTPDoer interface {
 }
 
 type SubmissionClient struct {
-	BaseURL string
-	Client  HTTPDoer
+	BaseURL     string
+	BearerToken string
+	Client      HTTPDoer
 }
 
-// SubmitHistory sends only the signed envelope and proof. Authentication is
-// supplied by the configured HTTP transport/session layer, never by record data.
 func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, proof RecordProof) error {
 	if strings.TrimSpace(c.BaseURL) == "" || c.Client == nil {
 		return ErrSyncSubmissionFailed
@@ -100,6 +95,9 @@ func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, 
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
+	if token := strings.TrimSpace(c.BearerToken); token != "" {
+		request.Header.Set("Authorization", "Bearer "+token)
+	}
 	response, err := c.Client.Do(request)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrSyncSubmissionFailed, err)
