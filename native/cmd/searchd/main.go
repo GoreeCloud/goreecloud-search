@@ -112,6 +112,16 @@ func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+func executableCategories(engine *searchcore.Engine) []string {
+	categories := make([]string, 0, len(searchcore.SupportedCategories))
+	for _, category := range searchcore.SupportedCategories {
+		if engine.SupportsCategory(category) {
+			categories = append(categories, category)
+		}
+	}
+	return categories
+}
+
 func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
 	providers := s.engine.ProviderDefinitions()
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -119,6 +129,8 @@ func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
 		"providers":                  providers,
 		"configured_provider_count": len(providers),
 		"supported_categories":      searchcore.SupportedCategories,
+		"executable_categories":     executableCategories(s.engine),
+		"category_execution_scope":  "current-native-engine",
 		"management_scope":           "deployment-controlled",
 		"credentials_exposed":       false,
 		"production_approved":       false,
