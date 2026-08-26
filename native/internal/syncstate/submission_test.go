@@ -1,0 +1,92 @@
+package syncstate
+
+import (
+	"context"
+	"crypto/ed25519"
+	"crypto/rand"
+	"encoding/json"
+	"io"
+	"net/http"
+	"strings"
+	"testing"
+	"time"
+)
+
+type doerFunc func(*http.Request) (*http.Response, error)
+
+func (f doerFunc) Do(request *http.Request) (*http.Response, error) { return f(request) }
+
+func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	history, err := NewHistoryRecord("history-1", "goreecloud", "general", time.Unix(100, 0).UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	envelope, proof, err := SignedHistoryEnvelope(history, 2, time.Unix(101, 0).UTC(), DeviceIdentity{
+		DeviceID: "device-a", PublicKey: publicKey, PrivateKey: privateKey,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if envelope.Dataset != "search.history" || envelope.Revision != 2 || proof.DeviceID != "device-a" || proof.Signature == "" {
+		t.Fatalf("unexpected signed envelope: envelope=%+v proof=%+v", envelope, proof)
+	}
+
+	client := SubmissionClient{
+		BaseURL: "https://sync.internal",
+		Client: doerFunc(func(request *http.Request) (*http.Response, error) {
+			if request.URL.Path != "/api/v1/sync/search/history" || request.Method != http.MethodPost {
+				t.Fatalf("unexpected request: %s %s", request.Method, request.URL.Path)
+			}
+			var payload struct {
+				Record Envelope    `json:"record"`
+				Proof  RecordProof `json:"proof"`
+			}
+			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+				t.Fatal(err)
+			}
+			if payload.Record.RecordID != "history-1" || payload.Proof.Signature == "" {
+				t.Fatalf("unexpected payload: %+v", payload)
+			}
+			return &http.Response{
+				StatusCode: http.StatusAccepted,
+				Body:       io.NopCloser(strings.NewReader(`{"accepted":true}`)),
+				Header:     make(http.Header),
+			}, nil
+		}),
+	}
+	if err := client.SubmitHistory(context.Background(), envelope, proof); err != nil {
+		t.Fatalf("SubmitHistory: %v", err)
+	}
+}
+
+func TestSubmissionDoesNotCarryAuthoritativePolicyFields(t *testing.T) {
+	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	history, _ := NewHistoryRecord("history-2", "privacy", "general", time.Unix(200, 0).UTC())
+	envelope, proof, _ := SignedHistoryEnvelope(history, 1, time.Unix(201, 0).UTC(), DeviceIdentity{
+		DeviceID: "device-b", PublicKey: publicKey, PrivateKey: privateKey,
+	})
+
+	client := SubmissionClient{
+		BaseURL: "https://sync.internal",
+		Client: doerFunc(func(request *http.Request) (*http.Response, error) {
+			body, err := io.ReadAll(request.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			text := string(body)
+			for _, forbidden := range []string{"consentGranted", "purposeAllowed", "trusted", "evidenceId"} {
+				if strings.Contains(text, forbidden) {
+					t.Fatalf("request contains authoritative policy field %q: %s", forbidden, text)
+				}
+			}
+			return &http.Response{StatusCode: http.StatusAccepted, Body: io.NopCloser(strings.NewReader("{}")), Header: make(http.Header)}, nil
+		}),
+	}
+	if err := client.SubmitHistory(context.Background(), envelope, proof); err != nil {
+		t.Fatal(err)
+	}
+}
