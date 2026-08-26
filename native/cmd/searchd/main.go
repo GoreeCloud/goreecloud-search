@@ -9,6 +9,7 @@ import (
 
 	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
+	"github.com/GoreeCloud/goreecloud-search/native/internal/syncstate"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
 )
 
@@ -34,6 +35,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
+	mux.HandleFunc("GET /api/v1/sync/capabilities", app.syncCapabilities)
 
 	addr := os.Getenv("GOREECLOUD_SEARCH_ADDR")
 	if addr == "" {
@@ -134,6 +136,16 @@ func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
 		"management_scope":           "deployment-controlled",
 		"credentials_exposed":       false,
 		"production_approved":       false,
+	})
+}
+
+func (s server) syncCapabilities(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"schema_version":       1,
+		"application":          "search",
+		"capabilities":         syncstate.Capabilities(),
+		"credentials_exposed": false,
+		"production_approved": false,
 	})
 }
 
