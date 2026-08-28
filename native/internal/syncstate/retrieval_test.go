@@ -37,9 +37,28 @@ func TestFetchHistoryUsesBearerSessionAndValidatesDataset(t *testing.T) {
 	}
 }
 
-func TestFetchHistoryRejectsCrossDatasetResponse(t *testing.T) {
+func TestFetchHistoryRequiresBearerBeforeTransport(t *testing.T) {
+	called := false
 	client := RetrievalClient{
 		BaseURL: "https://sync.goreecloud.test",
+		Client: retrievalDoerFunc(func(*http.Request) (*http.Response, error) {
+			called = true
+			return nil, nil
+		}),
+	}
+
+	if _, err := client.FetchHistory(context.Background()); err == nil {
+		t.Fatal("missing bearer session must fail closed")
+	}
+	if called {
+		t.Fatal("transport must not be called without an authenticated Sync session")
+	}
+}
+
+func TestFetchHistoryRejectsCrossDatasetResponse(t *testing.T) {
+	client := RetrievalClient{
+		BaseURL:     "https://sync.goreecloud.test",
+		BearerToken: "session-token",
 		Client: retrievalDoerFunc(func(*http.Request) (*http.Response, error) {
 			body := `{"dataset":"search.history","count":1,"records":[{"dataset":"bookmarks.items","schemaVersion":1,"recordId":"bookmark-1","revision":1,"updatedAt":"2026-08-26T23:30:00Z","originDevice":"device-1","deleted":false,"payload":{}}]}`
 			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body)), Header: make(http.Header)}, nil
@@ -48,5 +67,35 @@ func TestFetchHistoryRejectsCrossDatasetResponse(t *testing.T) {
 
 	if _, err := client.FetchHistory(context.Background()); err == nil {
 		t.Fatal("cross-dataset retrieval response must fail closed")
+	}
+}
+
+func TestFetchHistoryRejectsTrailingJSON(t *testing.T) {
+	client := RetrievalClient{
+		BaseURL:     "https://sync.goreecloud.test",
+		BearerToken: "session-token",
+		Client: retrievalDoerFunc(func(*http.Request) (*http.Response, error) {
+			body := `{"dataset":"search.history","count":0,"records":[]} {}`
+			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body)), Header: make(http.Header)}, nil
+		}),
+	}
+
+	if _, err := client.FetchHistory(context.Background()); err == nil {
+		t.Fatal("trailing JSON document must fail closed")
+	}
+}
+
+func TestFetchHistoryRejectsOversizedResponse(t *testing.T) {
+	client := RetrievalClient{
+		BaseURL:     "https://sync.goreecloud.test",
+		BearerToken: "session-token",
+		Client: retrievalDoerFunc(func(*http.Request) (*http.Response, error) {
+			body := strings.Repeat(" ", maxRetrievalBodyBytes+1)
+			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body)), Header: make(http.Header)}, nil
+		}),
+	}
+
+	if _, err := client.FetchHistory(context.Background()); err == nil {
+		t.Fatal("oversized retrieval response must fail closed")
 	}
 }
