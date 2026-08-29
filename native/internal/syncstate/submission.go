@@ -86,7 +86,7 @@ type SubmissionClient struct {
 
 func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, proof RecordProof) error {
 	token := strings.TrimSpace(c.BearerToken)
-	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || !canSubmitHistoryEnvelope(envelope) {
+	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || !canSubmitHistoryEnvelope(envelope) || !validRecordProof(envelope, proof) {
 		return ErrSyncSubmissionFailed
 	}
 	body, err := json.Marshal(struct {
@@ -113,6 +113,25 @@ func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, 
 		return fmt.Errorf("%w: status %d", ErrSyncSubmissionFailed, response.StatusCode)
 	}
 	return nil
+}
+
+func validRecordProof(record Envelope, proof RecordProof) bool {
+	if strings.TrimSpace(proof.DeviceID) == "" || proof.DeviceID != record.OriginDevice {
+		return false
+	}
+	publicKey, err := base64.RawURLEncoding.DecodeString(proof.PublicKey)
+	if err != nil || len(publicKey) != ed25519.PublicKeySize {
+		return false
+	}
+	signature, err := base64.RawURLEncoding.DecodeString(proof.Signature)
+	if err != nil || len(signature) != ed25519.SignatureSize {
+		return false
+	}
+	message, err := proofMessage(record)
+	if err != nil {
+		return false
+	}
+	return ed25519.Verify(ed25519.PublicKey(publicKey), message, signature)
 }
 
 func proofMessage(record Envelope) ([]byte, error) {
