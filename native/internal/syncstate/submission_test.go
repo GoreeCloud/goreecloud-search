@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -153,6 +154,55 @@ func TestSubmitHistoryRejectsNonconformingEnvelopeBeforeTransport(t *testing.T) 
 			}
 			if called {
 				t.Fatal("transport must not receive a nonconforming envelope")
+			}
+		})
+	}
+}
+
+func TestSubmitHistoryRejectsInvalidProofBeforeTransport(t *testing.T) {
+	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	history, err := NewHistoryRecord("history-proof", "goreecloud", "general", time.Unix(100, 0).UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseEnvelope, baseProof, err := SignedHistoryEnvelope(history, 1, time.Unix(101, 0).UTC(), DeviceIdentity{
+		DeviceID: "device-a", PublicKey: publicKey, PrivateKey: privateKey,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name   string
+		mutate func(*Envelope, *RecordProof)
+	}{
+		{name: "device mismatch", mutate: func(_ *Envelope, proof *RecordProof) { proof.DeviceID = "device-b" }},
+		{name: "malformed public key", mutate: func(_ *Envelope, proof *RecordProof) { proof.PublicKey = "!" }},
+		{name: "malformed signature", mutate: func(_ *Envelope, proof *RecordProof) { proof.Signature = "!" }},
+		{name: "invalid signature", mutate: func(_ *Envelope, proof *RecordProof) {
+			proof.Signature = base64.RawURLEncoding.EncodeToString(make([]byte, ed25519.SignatureSize))
+		}},
+		{name: "record changed after signing", mutate: func(envelope *Envelope, _ *RecordProof) { envelope.Revision++ }},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			envelope := baseEnvelope
+			proof := baseProof
+			test.mutate(&envelope, &proof)
+			called := false
+			client := SubmissionClient{
+				BaseURL: "https://sync.internal", BearerToken: "session-token",
+				Client: doerFunc(func(*http.Request) (*http.Response, error) {
+					called = true
+					return nil, nil
+				}),
+			}
+			if err := client.SubmitHistory(context.Background(), envelope, proof); err == nil {
+				t.Fatal("invalid record proof must fail closed")
+			}
+			if called {
+				t.Fatal("transport must not receive an invalid record proof")
 			}
 		})
 	}
