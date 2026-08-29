@@ -16,8 +16,8 @@ func searchHistoryCapability() (Capability, bool) {
 	return Capability{}, false
 }
 
-// validHistoryEnvelope enforces Search's negotiated Sync envelope boundary.
-// Tombstones deliberately carry no application payload; live records must.
+// validHistoryEnvelope validates the direction-neutral negotiated envelope
+// shape. Read/write/delete permissions are enforced at the operation boundary.
 func validHistoryEnvelope(envelope Envelope) bool {
 	capability, ok := searchHistoryCapability()
 	if !ok || envelope.Dataset != capability.Dataset ||
@@ -27,8 +27,15 @@ func validHistoryEnvelope(envelope Envelope) bool {
 		strings.TrimSpace(envelope.OriginDevice) == "" {
 		return false
 	}
-	if envelope.Deleted {
-		return capability.Delete && envelope.Payload == nil
+	// Privacy Shield data minimization: tombstones carry no application payload;
+	// live records carry application state.
+	return envelope.Deleted ? envelope.Payload == nil : envelope.Payload != nil
+}
+
+func canSubmitHistoryEnvelope(envelope Envelope) bool {
+	capability, ok := searchHistoryCapability()
+	if !ok || !validHistoryEnvelope(envelope) {
+		return false
 	}
-	return capability.Write && envelope.Payload != nil
+	return capability.Delete || !envelope.Deleted && capability.Write
 }
