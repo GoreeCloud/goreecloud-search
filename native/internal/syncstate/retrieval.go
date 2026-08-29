@@ -1,6 +1,7 @@
 package syncstate
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -27,7 +28,8 @@ type retrievalResponse struct {
 }
 
 func (c RetrievalClient) FetchHistory(ctx context.Context) ([]Envelope, error) {
-	if strings.TrimSpace(c.BaseURL) == "" || c.Client == nil {
+	token := strings.TrimSpace(c.BearerToken)
+	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil {
 		return nil, ErrSyncRetrievalFailed
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimRight(c.BaseURL, "/")+"/api/v1/sync/search/history", nil)
@@ -35,9 +37,7 @@ func (c RetrievalClient) FetchHistory(ctx context.Context) ([]Envelope, error) {
 		return nil, err
 	}
 	request.Header.Set("Accept", "application/json")
-	if token := strings.TrimSpace(c.BearerToken); token != "" {
-		request.Header.Set("Authorization", "Bearer "+token)
-	}
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	response, err := c.Client.Do(request)
 	if err != nil {
@@ -49,10 +49,17 @@ func (c RetrievalClient) FetchHistory(ctx context.Context) ([]Envelope, error) {
 		return nil, fmt.Errorf("%w: status %d", ErrSyncRetrievalFailed, response.StatusCode)
 	}
 
-	decoder := json.NewDecoder(io.LimitReader(response.Body, maxRetrievalBodyBytes))
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxRetrievalBodyBytes+1))
+	if err != nil || len(body) > maxRetrievalBodyBytes {
+		return nil, fmt.Errorf("%w: invalid response", ErrSyncRetrievalFailed)
+	}
+	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()
 	var result retrievalResponse
 	if err := decoder.Decode(&result); err != nil {
+		return nil, fmt.Errorf("%w: invalid response", ErrSyncRetrievalFailed)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return nil, fmt.Errorf("%w: invalid response", ErrSyncRetrievalFailed)
 	}
 	if result.Dataset != "search.history" || result.Count != len(result.Records) {
