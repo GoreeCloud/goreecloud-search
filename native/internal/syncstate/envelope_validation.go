@@ -29,7 +29,10 @@ func validHistoryEnvelope(envelope Envelope) bool {
 	}
 	// Privacy Shield data minimization: tombstones carry no application payload;
 	// live records carry application state.
-	return envelope.Deleted ? envelope.Payload == nil : envelope.Payload != nil
+	if envelope.Deleted {
+		return envelope.Payload == nil
+	}
+	return envelope.Payload != nil
 }
 
 func canSubmitHistoryEnvelope(envelope Envelope) bool {
