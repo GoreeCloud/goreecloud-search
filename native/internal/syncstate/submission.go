@@ -21,8 +21,6 @@ var (
 	ErrSyncSubmissionFailed  = errors.New("Search history sync submission failed")
 )
 
-const maxSyncRecordIDBytes = 512
-
 type Envelope struct {
 	Dataset       string         `json:"dataset"`
 	SchemaVersion int            `json:"schemaVersion"`
@@ -47,7 +45,9 @@ type DeviceIdentity struct {
 }
 
 func SignedHistoryEnvelope(record Record, revision uint64, updatedAt time.Time, identity DeviceIdentity) (Envelope, RecordProof, error) {
-	if record.Dataset != "search.history" || record.SchemaVersion < 1 || record.RecordID == "" || len(record.RecordID) > maxSyncRecordIDBytes || record.Payload == nil || revision == 0 || updatedAt.IsZero() {
+	if record.Dataset != searchHistoryDataset || record.SchemaVersion != searchHistorySchemaVersion ||
+		record.RecordID == "" || len(record.RecordID) > maxSyncRecordIDBytes ||
+		record.Payload == nil || revision == 0 || updatedAt.IsZero() {
 		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
 	}
 	if strings.TrimSpace(identity.DeviceID) == "" || len(identity.PublicKey) != ed25519.PublicKeySize || len(identity.PrivateKey) != ed25519.PrivateKeySize {
@@ -57,6 +57,9 @@ func SignedHistoryEnvelope(record Record, revision uint64, updatedAt time.Time, 
 		Dataset: record.Dataset, SchemaVersion: record.SchemaVersion, RecordID: record.RecordID,
 		Revision: revision, UpdatedAt: updatedAt.UTC(), OriginDevice: identity.DeviceID,
 		Payload: clonePayload(record.Payload),
+	}
+	if !validHistoryEnvelope(envelope) {
+		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
 	}
 	message, err := proofMessage(envelope)
 	if err != nil {
@@ -82,7 +85,7 @@ type SubmissionClient struct {
 
 func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, proof RecordProof) error {
 	token := strings.TrimSpace(c.BearerToken)
-	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || envelope.RecordID == "" || len(envelope.RecordID) > maxSyncRecordIDBytes {
+	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || !validHistoryEnvelope(envelope) {
 		return ErrSyncSubmissionFailed
 	}
 	body, err := json.Marshal(struct {
