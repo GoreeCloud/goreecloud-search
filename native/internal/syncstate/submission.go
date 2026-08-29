@@ -46,7 +46,7 @@ type DeviceIdentity struct {
 
 func SignedHistoryEnvelope(record Record, revision uint64, updatedAt time.Time, identity DeviceIdentity) (Envelope, RecordProof, error) {
 	capability, ok := searchHistoryCapability()
-	if !ok || record.Dataset != capability.Dataset || record.SchemaVersion != capability.SchemaVersion ||
+	if !ok || !capability.Write || record.Dataset != capability.Dataset || record.SchemaVersion != capability.SchemaVersion ||
 		record.RecordID == "" || len(record.RecordID) > maxSyncRecordIDBytes ||
 		record.Payload == nil || revision == 0 || updatedAt.IsZero() {
 		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
@@ -86,7 +86,7 @@ type SubmissionClient struct {
 
 func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, proof RecordProof) error {
 	token := strings.TrimSpace(c.BearerToken)
-	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || !validHistoryEnvelope(envelope) {
+	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || !canSubmitHistoryEnvelope(envelope) {
 		return ErrSyncSubmissionFailed
 	}
 	body, err := json.Marshal(struct {
