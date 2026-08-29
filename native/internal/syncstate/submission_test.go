@@ -17,6 +17,10 @@ type doerFunc func(*http.Request) (*http.Response, error)
 func (f doerFunc) Do(request *http.Request) (*http.Response, error) { return f(request) }
 
 func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +35,7 @@ func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if envelope.Dataset != searchHistoryDataset || envelope.SchemaVersion != searchHistorySchemaVersion || envelope.Revision != 2 || proof.DeviceID != "device-a" || proof.Signature == "" {
+	if envelope.Dataset != capability.Dataset || envelope.SchemaVersion != capability.SchemaVersion || envelope.Revision != 2 || proof.DeviceID != "device-a" || proof.Signature == "" {
 		t.Fatalf("unexpected signed envelope: envelope=%+v proof=%+v", envelope, proof)
 	}
 
@@ -81,9 +85,13 @@ func TestSignedHistoryEnvelopeRejectsOversizedRecordID(t *testing.T) {
 }
 
 func TestSignedHistoryEnvelopeRejectsUnnegotiatedSchema(t *testing.T) {
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
 	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
 	record := Record{
-		Dataset: searchHistoryDataset, SchemaVersion: searchHistorySchemaVersion + 1,
+		Dataset: capability.Dataset, SchemaVersion: capability.SchemaVersion + 1,
 		RecordID: "history-1", Payload: map[string]any{"query": "goreecloud"},
 	}
 	if _, _, err := SignedHistoryEnvelope(record, 1, time.Unix(101, 0).UTC(), DeviceIdentity{
@@ -111,8 +119,12 @@ func TestSubmitHistoryRequiresBearerBeforeTransport(t *testing.T) {
 }
 
 func TestSubmitHistoryRejectsNonconformingEnvelopeBeforeTransport(t *testing.T) {
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
 	base := Envelope{
-		Dataset: searchHistoryDataset, SchemaVersion: searchHistorySchemaVersion,
+		Dataset: capability.Dataset, SchemaVersion: capability.SchemaVersion,
 		RecordID: "history-1", Revision: 1, UpdatedAt: time.Unix(101, 0).UTC(),
 		OriginDevice: "device-a", Payload: map[string]any{"query": "goreecloud"},
 	}
