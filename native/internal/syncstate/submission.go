@@ -45,7 +45,8 @@ type DeviceIdentity struct {
 }
 
 func SignedHistoryEnvelope(record Record, revision uint64, updatedAt time.Time, identity DeviceIdentity) (Envelope, RecordProof, error) {
-	if record.Dataset != searchHistoryDataset || record.SchemaVersion != searchHistorySchemaVersion ||
+	capability, ok := searchHistoryCapability()
+	if !ok || record.Dataset != capability.Dataset || record.SchemaVersion != capability.SchemaVersion ||
 		record.RecordID == "" || len(record.RecordID) > maxSyncRecordIDBytes ||
 		record.Payload == nil || revision == 0 || updatedAt.IsZero() {
 		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
