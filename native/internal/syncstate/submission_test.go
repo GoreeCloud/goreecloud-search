@@ -36,10 +36,14 @@ func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
 	}
 
 	client := SubmissionClient{
-		BaseURL: "https://sync.internal",
+		BaseURL:     "https://sync.internal",
+		BearerToken: "session-token",
 		Client: doerFunc(func(request *http.Request) (*http.Response, error) {
 			if request.URL.Path != "/api/v1/sync/search/history" || request.Method != http.MethodPost {
 				t.Fatalf("unexpected request: %s %s", request.Method, request.URL.Path)
+			}
+			if got := request.Header.Get("Authorization"); got != "Bearer session-token" {
+				t.Fatalf("Authorization = %q", got)
 			}
 			var payload struct {
 				Record Envelope    `json:"record"`
@@ -63,6 +67,36 @@ func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
 	}
 }
 
+func TestSignedHistoryEnvelopeRejectsOversizedRecordID(t *testing.T) {
+	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	history, err := NewHistoryRecord(strings.Repeat("r", maxSyncRecordIDBytes+1), "goreecloud", "general", time.Unix(100, 0).UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := SignedHistoryEnvelope(history, 1, time.Unix(101, 0).UTC(), DeviceIdentity{
+		DeviceID: "device-a", PublicKey: publicKey, PrivateKey: privateKey,
+	}); err == nil {
+		t.Fatal("oversized record ID must fail before signing")
+	}
+}
+
+func TestSubmitHistoryRequiresBearerBeforeTransport(t *testing.T) {
+	called := false
+	client := SubmissionClient{
+		BaseURL: "https://sync.internal",
+		Client: doerFunc(func(*http.Request) (*http.Response, error) {
+			called = true
+			return nil, nil
+		}),
+	}
+	if err := client.SubmitHistory(context.Background(), Envelope{RecordID: "history-1"}, RecordProof{}); err == nil {
+		t.Fatal("missing bearer session must fail closed")
+	}
+	if called {
+		t.Fatal("transport must not be called without an authenticated Sync session")
+	}
+}
+
 func TestSubmissionDoesNotCarryAuthoritativePolicyFields(t *testing.T) {
 	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
 	history, _ := NewHistoryRecord("history-2", "privacy", "general", time.Unix(200, 0).UTC())
@@ -71,7 +105,8 @@ func TestSubmissionDoesNotCarryAuthoritativePolicyFields(t *testing.T) {
 	})
 
 	client := SubmissionClient{
-		BaseURL: "https://sync.internal",
+		BaseURL:     "https://sync.internal",
+		BearerToken: "session-token",
 		Client: doerFunc(func(request *http.Request) (*http.Response, error) {
 			body, err := io.ReadAll(request.Body)
 			if err != nil {
