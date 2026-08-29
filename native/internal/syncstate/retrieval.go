@@ -102,15 +102,12 @@ func (c RetrievalClient) fetchHistoryPage(ctx context.Context, token, after stri
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		return retrievalResponse{}, fmt.Errorf("%w: invalid response", ErrSyncRetrievalFailed)
 	}
-	if result.Dataset != "search.history" || result.Count != len(result.Records) || len(result.Records) > retrievalPageSize || len(result.NextAfter) > maxSyncRecordIDBytes {
+	if result.Dataset != searchHistoryDataset || result.Count != len(result.Records) || len(result.Records) > retrievalPageSize || len(result.NextAfter) > maxSyncRecordIDBytes {
 		return retrievalResponse{}, ErrSyncRetrievalFailed
 	}
 	previousID := after
 	for _, record := range result.Records {
-		if record.Dataset != "search.history" || record.SchemaVersion < 1 || record.RecordID == "" || len(record.RecordID) > maxSyncRecordIDBytes || record.Revision == 0 || record.UpdatedAt.IsZero() || strings.TrimSpace(record.OriginDevice) == "" {
-			return retrievalResponse{}, ErrSyncRetrievalFailed
-		}
-		if previousID != "" && record.RecordID <= previousID {
+		if !validHistoryEnvelope(record) || (previousID != "" && record.RecordID <= previousID) {
 			return retrievalResponse{}, ErrSyncRetrievalFailed
 		}
 		previousID = record.RecordID
