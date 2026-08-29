@@ -35,8 +35,9 @@ type retrievalResponse struct {
 }
 
 func (c RetrievalClient) FetchHistory(ctx context.Context) ([]Envelope, error) {
+	capability, ok := searchHistoryCapability()
 	token := strings.TrimSpace(c.BearerToken)
-	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil {
+	if !ok || !capability.Read || strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil {
 		return nil, ErrSyncRetrievalFailed
 	}
 
