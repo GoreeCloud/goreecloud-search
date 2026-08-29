@@ -11,16 +11,20 @@ import (
 // Search history can converge without retaining the deleted query payload.
 func SignedHistoryTombstone(recordID string, revision uint64, updatedAt time.Time, identity DeviceIdentity) (Envelope, RecordProof, error) {
 	recordID = strings.TrimSpace(recordID)
-	if recordID == "" || revision == 0 || updatedAt.IsZero() {
+	capability, ok := searchHistoryCapability()
+	if !ok || !capability.Delete || recordID == "" || len(recordID) > maxSyncRecordIDBytes || revision == 0 || updatedAt.IsZero() {
 		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
 	}
 	if strings.TrimSpace(identity.DeviceID) == "" || len(identity.PublicKey) != ed25519.PublicKeySize || len(identity.PrivateKey) != ed25519.PrivateKeySize {
 		return Envelope{}, RecordProof{}, ErrInvalidDeviceIdentity
 	}
 	envelope := Envelope{
-		Dataset: "search.history", SchemaVersion: 1, RecordID: recordID,
+		Dataset: capability.Dataset, SchemaVersion: capability.SchemaVersion, RecordID: recordID,
 		Revision: revision, UpdatedAt: updatedAt.UTC(), OriginDevice: identity.DeviceID,
 		Deleted: true,
+	}
+	if !validHistoryEnvelope(envelope) {
+		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
 	}
 	message, err := proofMessage(envelope)
 	if err != nil {

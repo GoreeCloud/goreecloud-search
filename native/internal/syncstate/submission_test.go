@@ -17,6 +17,10 @@ type doerFunc func(*http.Request) (*http.Response, error)
 func (f doerFunc) Do(request *http.Request) (*http.Response, error) { return f(request) }
 
 func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +35,7 @@ func TestSignedHistoryEnvelopeAndSubmission(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if envelope.Dataset != "search.history" || envelope.Revision != 2 || proof.DeviceID != "device-a" || proof.Signature == "" {
+	if envelope.Dataset != capability.Dataset || envelope.SchemaVersion != capability.SchemaVersion || envelope.Revision != 2 || proof.DeviceID != "device-a" || proof.Signature == "" {
 		t.Fatalf("unexpected signed envelope: envelope=%+v proof=%+v", envelope, proof)
 	}
 
@@ -80,6 +84,23 @@ func TestSignedHistoryEnvelopeRejectsOversizedRecordID(t *testing.T) {
 	}
 }
 
+func TestSignedHistoryEnvelopeRejectsUnnegotiatedSchema(t *testing.T) {
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
+	publicKey, privateKey, _ := ed25519.GenerateKey(rand.Reader)
+	record := Record{
+		Dataset: capability.Dataset, SchemaVersion: capability.SchemaVersion + 1,
+		RecordID: "history-1", Payload: map[string]any{"query": "goreecloud"},
+	}
+	if _, _, err := SignedHistoryEnvelope(record, 1, time.Unix(101, 0).UTC(), DeviceIdentity{
+		DeviceID: "device-a", PublicKey: publicKey, PrivateKey: privateKey,
+	}); err == nil {
+		t.Fatal("unnegotiated schema must fail before signing")
+	}
+}
+
 func TestSubmitHistoryRequiresBearerBeforeTransport(t *testing.T) {
 	called := false
 	client := SubmissionClient{
@@ -94,6 +115,46 @@ func TestSubmitHistoryRequiresBearerBeforeTransport(t *testing.T) {
 	}
 	if called {
 		t.Fatal("transport must not be called without an authenticated Sync session")
+	}
+}
+
+func TestSubmitHistoryRejectsNonconformingEnvelopeBeforeTransport(t *testing.T) {
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
+	base := Envelope{
+		Dataset: capability.Dataset, SchemaVersion: capability.SchemaVersion,
+		RecordID: "history-1", Revision: 1, UpdatedAt: time.Unix(101, 0).UTC(),
+		OriginDevice: "device-a", Payload: map[string]any{"query": "goreecloud"},
+	}
+	tests := []struct {
+		name   string
+		mutate func(*Envelope)
+	}{
+		{name: "unnegotiated schema", mutate: func(envelope *Envelope) { envelope.SchemaVersion++ }},
+		{name: "tombstone payload", mutate: func(envelope *Envelope) { envelope.Deleted = true }},
+		{name: "live record without payload", mutate: func(envelope *Envelope) { envelope.Payload = nil }},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			envelope := base
+			test.mutate(&envelope)
+			called := false
+			client := SubmissionClient{
+				BaseURL: "https://sync.internal", BearerToken: "session-token",
+				Client: doerFunc(func(*http.Request) (*http.Response, error) {
+					called = true
+					return nil, nil
+				}),
+			}
+			if err := client.SubmitHistory(context.Background(), envelope, RecordProof{}); err == nil {
+				t.Fatal("nonconforming envelope must fail closed")
+			}
+			if called {
+				t.Fatal("transport must not receive a nonconforming envelope")
+			}
+		})
 	}
 }
 
