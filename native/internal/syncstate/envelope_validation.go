@@ -37,5 +37,8 @@ func canSubmitHistoryEnvelope(envelope Envelope) bool {
 	if !ok || !validHistoryEnvelope(envelope) {
 		return false
 	}
-	return capability.Delete || !envelope.Deleted && capability.Write
+	if envelope.Deleted {
+		return capability.Delete
+	}
+	return capability.Write
 }
