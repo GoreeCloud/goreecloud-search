@@ -13,13 +13,17 @@ func TestSignedHistoryTombstoneIsPayloadFree(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	capability, ok := searchHistoryCapability()
+	if !ok {
+		t.Fatal("search.history capability missing")
+	}
 	envelope, proof, err := SignedHistoryTombstone("history-1", 3, time.Unix(100, 0).UTC(), DeviceIdentity{
 		DeviceID: "device-a", PublicKey: publicKey, PrivateKey: privateKey,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !envelope.Deleted || envelope.Payload != nil || envelope.Dataset != searchHistoryDataset || envelope.SchemaVersion != searchHistorySchemaVersion {
+	if !envelope.Deleted || envelope.Payload != nil || envelope.Dataset != capability.Dataset || envelope.SchemaVersion != capability.SchemaVersion {
 		t.Fatalf("unexpected tombstone: %+v", envelope)
 	}
 	if proof.DeviceID != "device-a" || proof.Signature == "" {
