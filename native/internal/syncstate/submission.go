@@ -21,6 +21,8 @@ var (
 	ErrSyncSubmissionFailed  = errors.New("Search history sync submission failed")
 )
 
+const maxSyncRecordIDBytes = 512
+
 type Envelope struct {
 	Dataset       string         `json:"dataset"`
 	SchemaVersion int            `json:"schemaVersion"`
@@ -45,7 +47,7 @@ type DeviceIdentity struct {
 }
 
 func SignedHistoryEnvelope(record Record, revision uint64, updatedAt time.Time, identity DeviceIdentity) (Envelope, RecordProof, error) {
-	if record.Dataset != "search.history" || record.SchemaVersion < 1 || record.RecordID == "" || record.Payload == nil || revision == 0 || updatedAt.IsZero() {
+	if record.Dataset != "search.history" || record.SchemaVersion < 1 || record.RecordID == "" || len(record.RecordID) > maxSyncRecordIDBytes || record.Payload == nil || revision == 0 || updatedAt.IsZero() {
 		return Envelope{}, RecordProof{}, ErrInvalidSyncRecord
 	}
 	if strings.TrimSpace(identity.DeviceID) == "" || len(identity.PublicKey) != ed25519.PublicKeySize || len(identity.PrivateKey) != ed25519.PrivateKeySize {
@@ -79,7 +81,8 @@ type SubmissionClient struct {
 }
 
 func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, proof RecordProof) error {
-	if strings.TrimSpace(c.BaseURL) == "" || c.Client == nil {
+	token := strings.TrimSpace(c.BearerToken)
+	if strings.TrimSpace(c.BaseURL) == "" || token == "" || c.Client == nil || envelope.RecordID == "" || len(envelope.RecordID) > maxSyncRecordIDBytes {
 		return ErrSyncSubmissionFailed
 	}
 	body, err := json.Marshal(struct {
@@ -95,9 +98,7 @@ func (c SubmissionClient) SubmitHistory(ctx context.Context, envelope Envelope, 
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
-	if token := strings.TrimSpace(c.BearerToken); token != "" {
-		request.Header.Set("Authorization", "Bearer "+token)
-	}
+	request.Header.Set("Authorization", "Bearer "+token)
 	response, err := c.Client.Do(request)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrSyncSubmissionFailed, err)

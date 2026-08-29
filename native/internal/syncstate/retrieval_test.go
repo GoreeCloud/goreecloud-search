@@ -129,6 +129,22 @@ func TestFetchHistoryRejectsCrossDatasetResponse(t *testing.T) {
 	}
 }
 
+func TestFetchHistoryRejectsOversizedRecordID(t *testing.T) {
+	oversized := strings.Repeat("r", maxSyncRecordIDBytes+1)
+	client := RetrievalClient{
+		BaseURL:     "https://sync.goreecloud.test",
+		BearerToken: "session-token",
+		Client: retrievalDoerFunc(func(*http.Request) (*http.Response, error) {
+			body := `{"dataset":"search.history","count":1,"records":[{"dataset":"search.history","schemaVersion":1,"recordId":"` + oversized + `","revision":1,"updatedAt":"2026-08-26T23:30:00Z","originDevice":"device-1","deleted":false,"payload":{"query":"one"}}],"nextAfter":"` + oversized + `"}`
+			return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body)), Header: make(http.Header)}, nil
+		}),
+	}
+
+	if _, err := client.FetchHistory(context.Background()); err == nil {
+		t.Fatal("oversized record ID and continuation must fail closed")
+	}
+}
+
 func TestFetchHistoryRejectsTrailingJSON(t *testing.T) {
 	client := RetrievalClient{
 		BaseURL:     "https://sync.goreecloud.test",
