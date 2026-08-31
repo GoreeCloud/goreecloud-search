@@ -34,18 +34,31 @@ const (
 )
 
 type Result struct {
-	Title       string   `json:"title"`
-	URL         string   `json:"url"`
-	Snippet     string   `json:"snippet,omitempty"`
-	Provider    string   `json:"provider"`
-	Score       int      `json:"score"`
-	SourceCount int      `json:"source_count,omitempty"`
-	Sources     []string `json:"sources,omitempty"`
+	Title             string     `json:"title"`
+	URL               string     `json:"url"`
+	Snippet           string     `json:"snippet,omitempty"`
+	Provider          string     `json:"provider"`
+	Score             int        `json:"score"`
+	SourceCount       int        `json:"source_count,omitempty"`
+	Sources           []string   `json:"sources,omitempty"`
+	PublishedAt       *time.Time `json:"published_at,omitempty"`
+	PublishedAtSource string     `json:"published_at_source,omitempty"`
+	publishedAtTrusted bool
+	recencyBonus      int
 }
 
 type Provider interface {
 	Name() string
 	Search(context.Context, string) ([]Result, error)
+}
+
+// PublishedAtProvider is an explicit metadata-authority opt-in. Implementations
+// must return true only when Result.PublishedAt is copied from a trustworthy
+// upstream publication/update field with publication semantics. Search must not
+// infer this authority from snippets, URLs, crawl time, or provider score.
+type PublishedAtProvider interface {
+	Provider
+	PublishedAtAuthoritative() bool
 }
 
 // CategoryProvider extends the base provider contract with explicit category
@@ -207,6 +220,8 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 
 	ctx, cancel := context.WithTimeout(ctx, e.timeout)
 	defer cancel()
+	requestNow := time.Now().UTC()
+	intent := parseQueryIntent(query)
 
 	type providerResult struct {
 		index   int
@@ -215,14 +230,19 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	}
 
 	type selectedProvider struct {
-		provider Provider
-		name     string
+		provider                 Provider
+		name                     string
+		publishedAtAuthoritative bool
 	}
 	selected := make([]selectedProvider, 0, len(e.providers))
 	for _, provider := range e.providers {
 		name, ok := validExecutableProvider(provider)
 		if ok && providerCanExecuteCategory(provider, category) {
-			selected = append(selected, selectedProvider{provider: provider, name: name})
+			authoritative := false
+			if timestampProvider, supportsTimestamps := provider.(PublishedAtProvider); supportsTimestamps {
+				authoritative = timestampProvider.PublishedAtAuthoritative()
+			}
+			selected = append(selected, selectedProvider{provider: provider, name: name, publishedAtAuthoritative: authoritative})
 		}
 	}
 
@@ -244,6 +264,13 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 			}
 			for i := range items {
 				items[i].Provider = selectedProvider.name
+				publishedAt, trusted := normalizeAuthoritativePublishedAt(items[i].PublishedAt, selectedProvider.publishedAtAuthoritative, requestNow)
+				items[i].PublishedAt = publishedAt
+				items[i].PublishedAtSource = ""
+				items[i].publishedAtTrusted = trusted
+				if trusted {
+					items[i].PublishedAtSource = selectedProvider.name
+				}
 			}
 			ch <- providerResult{index: index, status: status, results: items}
 		}()
@@ -270,6 +297,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 				continue
 			}
 			result.URL = normalized
+			result.recencyBonus = freshnessScore(intent, category, result, requestNow)
 			candidates = append(candidates, result)
 		}
 	}
