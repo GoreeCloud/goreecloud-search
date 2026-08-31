@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	MaxQueryRunes        = 512
-	MaxProviderNameRunes = 128
+	MaxQueryRunes         = 512
+	MaxProviderNameRunes  = 128
+	MaxResultsPerProvider = 512
 )
 
 const (
@@ -62,10 +63,11 @@ type ProviderDefinition struct {
 }
 
 type ProviderStatus struct {
-	Name  string `json:"name"`
-	State string `json:"state"`
-	Code  string `json:"code,omitempty"`
-	Count int    `json:"count"`
+	Name      string `json:"name"`
+	State     string `json:"state"`
+	Code      string `json:"code,omitempty"`
+	Count     int    `json:"count"`
+	Truncated bool   `json:"truncated,omitempty"`
 }
 
 type Response struct {
@@ -231,12 +233,14 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		index, selectedProvider := index, selectedProvider
 		go func() {
 			items, searchErr := executeProviderSearch(ctx, selectedProvider.provider, query, category)
-			status := ProviderStatus{Name: selectedProvider.name, State: ProviderStateAvailable, Count: len(items)}
+			status := ProviderStatus{Name: selectedProvider.name, State: ProviderStateAvailable}
 			if searchErr != nil {
 				status.State = ProviderStateUnavailable
 				status.Code = classifyProviderFailure(searchErr)
-				status.Count = 0
 				items = nil
+			} else {
+				items, status.Truncated = boundProviderResults(items)
+				status.Count = len(items)
 			}
 			for i := range items {
 				items[i].Provider = selectedProvider.name
@@ -292,6 +296,14 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	response.Results = rankResults(query, candidates)
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
+}
+
+func boundProviderResults(items []Result) ([]Result, bool) {
+	if len(items) <= MaxResultsPerProvider {
+		return items, false
+	}
+	bounded := append([]Result(nil), items[:MaxResultsPerProvider]...)
+	return bounded, true
 }
 
 func validExecutableProvider(provider Provider) (string, bool) {
