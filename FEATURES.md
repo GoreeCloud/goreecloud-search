@@ -29,6 +29,8 @@ This file records Search functionality and implementation state. A listed capabi
 - Explicit provider-level publication-timestamp authority: only adapters that declare `PublishedAt` authoritative from a trustworthy upstream publication/update field can retain that metadata for output and freshness ranking.
 - Untrusted, zero, pre-Unix, and implausibly future publication timestamps are stripped before aggregation; retained metadata carries provider provenance through `published_at_source`.
 - Bounded request-local freshness ranking for explicit temporal queries and News-category ranking, with no recency bias on ordinary General searches and a maximum 1,200-point contribution.
+- Clear unquoted freshness modifiers such as `latest`, `recent`, `today`, `breaking`, `newest`, and `this week`/`this month` are separated from ordinary lexical relevance so they do not dilute the real subject terms.
+- Quoted temporal language remains literal relevance text, while leading `current` can request freshness without misclassifying noun uses such as `electric current`; content-bearing `news`, `updated`, and `updates` remain lexical terms even when they activate freshness.
 - Freshness is derived only from accepted provider timestamp metadata; Search does not infer publication time from snippets, URLs, crawl order, or arbitrary provider scores.
 - Exact-URL de-duplication that preserves sorted source provenance and bounded multi-provider consensus evidence.
 - Query-relevant representative selection when duplicate providers return different titles/snippets for the same URL.
