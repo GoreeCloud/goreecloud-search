@@ -1,0 +1,288 @@
+package search
+
+import (
+	"net"
+	"net/url"
+	"path"
+	"strings"
+	"unicode"
+)
+
+type queryPart struct {
+	text   string
+	quoted bool
+}
+
+type queryIntent struct {
+	normalized    string
+	tokens        []string
+	phrases       []string
+	siteHosts     []string
+	domainTargets []string
+	fileTypes     []string
+}
+
+func parseQueryIntent(raw string) queryIntent {
+	intent := queryIntent{}
+	normalizedParts := make([]string, 0)
+	for _, part := range splitQueryParts(raw) {
+		trimmed := strings.TrimSpace(part.text)
+		if trimmed == "" {
+			continue
+		}
+		lower := strings.ToLower(trimmed)
+		if strings.HasPrefix(lower, "site:") {
+			if host := normalizeDomainTarget(trimmed[len("site:"):]); host != "" {
+				intent.siteHosts = appendUniqueString(intent.siteHosts, host)
+			}
+			continue
+		}
+		if strings.HasPrefix(lower, "filetype:") {
+			if fileType := normalizeFileType(trimmed[len("filetype:"):]); fileType != "" {
+				intent.fileTypes = appendUniqueString(intent.fileTypes, fileType)
+			}
+			continue
+		}
+		if strings.HasPrefix(lower, "ext:") {
+			if fileType := normalizeFileType(trimmed[len("ext:"):]); fileType != "" {
+				intent.fileTypes = appendUniqueString(intent.fileTypes, fileType)
+			}
+			continue
+		}
+
+		normalized := normalizeSearchText(trimmed)
+		if normalized == "" {
+			continue
+		}
+		normalizedParts = append(normalizedParts, normalized)
+		if part.quoted && strings.Contains(normalized, " ") {
+			intent.phrases = appendUniqueString(intent.phrases, normalized)
+		}
+		if host := normalizeDomainTarget(trimmed); host != "" {
+			intent.domainTargets = appendUniqueString(intent.domainTargets, host)
+		}
+	}
+
+	intent.normalized = strings.Join(normalizedParts, " ")
+	intent.tokens = uniqueTokens(intent.normalized)
+	return intent
+}
+
+func splitQueryParts(raw string) []queryPart {
+	parts := make([]queryPart, 0)
+	var builder strings.Builder
+	quoted := false
+	partQuoted := false
+	flush := func() {
+		if builder.Len() == 0 {
+			partQuoted = false
+			return
+		}
+		parts = append(parts, queryPart{text: builder.String(), quoted: partQuoted})
+		builder.Reset()
+		partQuoted = false
+	}
+
+	for _, r := range raw {
+		switch {
+		case r == '"':
+			if quoted {
+				quoted = false
+				partQuoted = true
+				flush()
+			} else {
+				flush()
+				quoted = true
+				partQuoted = true
+			}
+		case unicode.IsSpace(r) && !quoted:
+			flush()
+		default:
+			builder.WriteRune(r)
+		}
+	}
+	flush()
+	return parts
+}
+
+func normalizeDomainTarget(raw string) string {
+	trimmed := strings.ToLower(strings.Trim(strings.TrimSpace(raw), "()[]{}<>,;\"'"))
+	if trimmed == "" {
+		return ""
+	}
+
+	candidate := trimmed
+	if !strings.Contains(candidate, "://") {
+		candidate = "https://" + candidate
+	}
+	parsed, err := url.Parse(candidate)
+	if err != nil || parsed.Hostname() == "" {
+		return ""
+	}
+	host := strings.TrimSuffix(strings.TrimPrefix(strings.ToLower(parsed.Hostname()), "www."), ".")
+	if host == "" {
+		return ""
+	}
+	if net.ParseIP(host) != nil {
+		return host
+	}
+
+	labels := strings.Split(host, ".")
+	if len(labels) < 2 {
+		return ""
+	}
+	for _, label := range labels {
+		if !validDomainLabel(label) {
+			return ""
+		}
+	}
+	tld := labels[len(labels)-1]
+	if len(tld) < 2 || !containsLetter(tld) {
+		return ""
+	}
+	return host
+}
+
+func validDomainLabel(label string) bool {
+	if label == "" || len(label) > 63 || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
+		return false
+	}
+	for _, r := range label {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func containsLetter(raw string) bool {
+	for _, r := range raw {
+		if r >= 'a' && r <= 'z' {
+			return true
+		}
+	}
+	return false
+}
+
+func normalizeFileType(raw string) string {
+	trimmed := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(raw)), ".")
+	if trimmed == "" || len(trimmed) > 12 {
+		return ""
+	}
+	for _, r := range trimmed {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			continue
+		}
+		return ""
+	}
+	return trimmed
+}
+
+func appendUniqueString(values []string, candidate string) []string {
+	for _, value := range values {
+		if value == candidate {
+			return values
+		}
+	}
+	return append(values, candidate)
+}
+
+func hostMatchesTarget(host, target string) bool {
+	host = strings.TrimSuffix(strings.TrimPrefix(strings.ToLower(host), "www."), ".")
+	target = strings.TrimSuffix(strings.TrimPrefix(strings.ToLower(target), "www."), ".")
+	return host == target || strings.HasSuffix(host, "."+target)
+}
+
+func resultFileType(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	extension := strings.TrimPrefix(strings.ToLower(path.Ext(parsed.Path)), ".")
+	return normalizeFileType(extension)
+}
+
+func fuzzyTokenCoverageScore(queryTokens []string, normalizedField string, maximum int) int {
+	if len(queryTokens) == 0 || normalizedField == "" || maximum <= 0 {
+		return 0
+	}
+	fieldTokens := uniqueTokens(normalizedField)
+	exact := make(map[string]struct{}, len(fieldTokens))
+	for _, token := range fieldTokens {
+		exact[token] = struct{}{}
+	}
+
+	matched := 0
+	for _, queryToken := range queryTokens {
+		if _, ok := exact[queryToken]; ok {
+			continue
+		}
+		if len([]rune(queryToken)) < 5 {
+			continue
+		}
+		for _, fieldToken := range fieldTokens {
+			if oneEditOrTranspositionApart(queryToken, fieldToken) {
+				matched++
+				break
+			}
+		}
+	}
+	return matched * maximum / len(queryTokens)
+}
+
+func oneEditOrTranspositionApart(left, right string) bool {
+	if left == right {
+		return false
+	}
+	leftRunes := []rune(left)
+	rightRunes := []rune(right)
+	if len(leftRunes) < 4 || len(rightRunes) < 4 {
+		return false
+	}
+	if len(leftRunes)-len(rightRunes) > 1 || len(rightRunes)-len(leftRunes) > 1 {
+		return false
+	}
+
+	if len(leftRunes) == len(rightRunes) {
+		mismatches := make([]int, 0, 2)
+		for index := range leftRunes {
+			if leftRunes[index] != rightRunes[index] {
+				mismatches = append(mismatches, index)
+				if len(mismatches) > 2 {
+					return false
+				}
+			}
+		}
+		if len(mismatches) == 1 {
+			return true
+		}
+		return len(mismatches) == 2 &&
+			mismatches[1] == mismatches[0]+1 &&
+			leftRunes[mismatches[0]] == rightRunes[mismatches[1]] &&
+			leftRunes[mismatches[1]] == rightRunes[mismatches[0]]
+	}
+
+	longer := leftRunes
+	shorter := rightRunes
+	if len(rightRunes) > len(leftRunes) {
+		longer = rightRunes
+		shorter = leftRunes
+	}
+	longIndex := 0
+	shortIndex := 0
+	skipped := false
+	for longIndex < len(longer) && shortIndex < len(shorter) {
+		if longer[longIndex] == shorter[shortIndex] {
+			longIndex++
+			shortIndex++
+			continue
+		}
+		if skipped {
+			return false
+		}
+		skipped = true
+		longIndex++
+	}
+	return true
+}
