@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 	"unicode"
 )
@@ -206,6 +205,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	defer cancel()
 
 	type providerResult struct {
+		index   int
 		status  ProviderStatus
 		results []Result
 	}
@@ -222,13 +222,12 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		}
 	}
 
+	// One slot per selected provider prevents a late provider completion from
+	// blocking after this request has already returned at its deadline.
 	ch := make(chan providerResult, len(selected))
-	var wg sync.WaitGroup
-	for _, selectedProvider := range selected {
-		selectedProvider := selectedProvider
-		wg.Add(1)
+	for index, selectedProvider := range selected {
+		index, selectedProvider := index, selectedProvider
 		go func() {
-			defer wg.Done()
 			items, searchErr := executeProviderSearch(ctx, selectedProvider.provider, query, category)
 			status := ProviderStatus{Name: selectedProvider.name, State: ProviderStateAvailable, Count: len(items)}
 			if searchErr != nil {
@@ -240,18 +239,21 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 			for i := range items {
 				items[i].Provider = selectedProvider.name
 			}
-			ch <- providerResult{status: status, results: items}
+			ch <- providerResult{index: index, status: status, results: items}
 		}()
 	}
 
-	go func() {
-		wg.Wait()
-		close(ch)
-	}()
-
 	response := Response{Query: query, Category: category, Results: []Result{}, Providers: []ProviderStatus{}}
 	bestByURL := map[string]Result{}
-	for item := range ch {
+	resolved := make([]bool, len(selected))
+	remaining := len(selected)
+
+	consume := func(item providerResult) {
+		if item.index < 0 || item.index >= len(selected) || resolved[item.index] {
+			return
+		}
+		resolved[item.index] = true
+		remaining--
 		response.Providers = append(response.Providers, item.status)
 		if item.status.State != ProviderStateAvailable {
 			response.Degraded = true
@@ -265,6 +267,25 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 			current, exists := bestByURL[normalized]
 			if !exists || resultBetterThan(result, current) {
 				bestByURL[normalized] = result
+			}
+		}
+	}
+
+	for remaining > 0 {
+		select {
+		case item := <-ch:
+			consume(item)
+		case <-ctx.Done():
+			for index, provider := range selected {
+				if resolved[index] {
+					continue
+				}
+				resolved[index] = true
+				remaining--
+				response.Providers = append(response.Providers, ProviderStatus{
+					Name: provider.name, State: ProviderStateUnavailable, Code: ProviderCodeTimeout,
+				})
+				response.Degraded = true
 			}
 		}
 	}
