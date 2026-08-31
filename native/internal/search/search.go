@@ -34,17 +34,17 @@ const (
 )
 
 type Result struct {
-	Title             string     `json:"title"`
-	URL               string     `json:"url"`
-	Snippet           string     `json:"snippet,omitempty"`
-	Provider          string     `json:"provider"`
-	Score             int        `json:"score"`
-	SourceCount       int        `json:"source_count,omitempty"`
-	Sources           []string   `json:"sources,omitempty"`
-	PublishedAt       *time.Time `json:"published_at,omitempty"`
-	PublishedAtSource string     `json:"published_at_source,omitempty"`
+	Title              string     `json:"title"`
+	URL                string     `json:"url"`
+	Snippet            string     `json:"snippet,omitempty"`
+	Provider           string     `json:"provider"`
+	Score              int        `json:"score"`
+	SourceCount        int        `json:"source_count,omitempty"`
+	Sources            []string   `json:"sources,omitempty"`
+	PublishedAt        *time.Time `json:"published_at,omitempty"`
+	PublishedAtSource  string     `json:"published_at_source,omitempty"`
 	publishedAtTrusted bool
-	recencyBonus      int
+	recencyBonus       int
 }
 
 type Provider interface {
@@ -70,9 +70,10 @@ type CategoryProvider interface {
 }
 
 type ProviderDefinition struct {
-	Name       string   `json:"name"`
-	Categories []string `json:"categories"`
-	Legacy     bool     `json:"legacy_general_only"`
+	Name                     string   `json:"name"`
+	Categories               []string `json:"categories"`
+	Legacy                   bool     `json:"legacy_general_only"`
+	PublishedAtAuthoritative bool     `json:"published_at_authoritative"`
 }
 
 type ProviderStatus struct {
@@ -104,8 +105,9 @@ func NewEngine(timeout time.Duration, providers ...Provider) *Engine {
 }
 
 // ProviderDefinitions returns a sanitized, deterministic view of configured
-// provider identity and category capabilities. It does not expose credentials,
-// endpoint configuration, runtime errors, request state, or mutable controls.
+// provider identity and category/metadata capabilities. It does not expose
+// credentials, endpoint configuration, runtime errors, request state, or
+// mutable controls.
 func (e *Engine) ProviderDefinitions() []ProviderDefinition {
 	definitions := make([]ProviderDefinition, 0, len(e.providers))
 	for _, provider := range e.providers {
@@ -117,6 +119,9 @@ func (e *Engine) ProviderDefinitions() []ProviderDefinition {
 			continue
 		}
 		definition := ProviderDefinition{Name: name}
+		if timestampProvider, supportsTimestamps := provider.(PublishedAtProvider); supportsTimestamps {
+			definition.PublishedAtAuthoritative = timestampProvider.PublishedAtAuthoritative()
+		}
 		categorized, ok := provider.(CategoryProvider)
 		if !ok {
 			definition.Categories = []string{CategoryGeneral}
