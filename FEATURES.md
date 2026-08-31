@@ -26,6 +26,10 @@ This file records Search functionality and implementation state. A listed capabi
 - Bounded one-edit or adjacent-transposition tolerance for query tokens of at least five runes, with substantially lower weight than exact title/token relevance.
 - Short query tokens are excluded from fuzzy matching to reduce false-positive relevance.
 - Provider scores bounded to weak supporting evidence instead of being trusted as one universal cross-provider scale.
+- Explicit provider-level publication-timestamp authority: only adapters that declare `PublishedAt` authoritative from a trustworthy upstream publication/update field can retain that metadata for output and freshness ranking.
+- Untrusted, zero, pre-Unix, and implausibly future publication timestamps are stripped before aggregation; retained metadata carries provider provenance through `published_at_source`.
+- Bounded request-local freshness ranking for explicit temporal queries and News-category ranking, with no recency bias on ordinary General searches and a maximum 1,200-point contribution.
+- Freshness is derived only from accepted provider timestamp metadata; Search does not infer publication time from snippets, URLs, crawl order, or arbitrary provider scores.
 - Exact-URL de-duplication that preserves sorted source provenance and bounded multi-provider consensus evidence.
 - Query-relevant representative selection when duplicate providers return different titles/snippets for the same URL.
 - First-viewport hostname diversity when multiple relevant domains are available, with site/domain-directed queries exempt from diversity reshuffling.
@@ -51,7 +55,8 @@ This file records Search functionality and implementation state. A listed capabi
 - No GoreeCloud advertising or sponsored-ranking business model.
 - No intended behavioral profiling.
 - Native ranking does not use click history, behavioral profiles, advertising signals, or remote ranking telemetry.
-- Intent parsing and typo-tolerant ranking operate request-locally and do not send correction lookups to another service.
+- Intent parsing, typo-tolerant ranking, and freshness scoring operate request-locally and do not send correction or recency lookups to another service.
+- Freshness metadata is fail-closed unless its provider explicitly satisfies the publication-timestamp authority contract.
 - Explicit query and provider-result processing bounds and minimized native state.
 - No hidden fallback requirement that bypasses GoreeCloud Search as configured Browser search authority.
 - Provider errors reduced to bounded status codes.
@@ -81,8 +86,8 @@ Inherited capability presence is transitional evidence, not the target applicati
 - Production-approved native external-provider adapters and credentials integration.
 - Accepted native provider coverage for every category selected for release.
 - User-facing query correction/spelling suggestions backed by an approved local or privacy-preserving implementation; the current ranker only tolerates bounded near-token matches and does not rewrite submitted queries.
-- Additional intent routing and specialized result understanding beyond the implemented site/domain/file-type/quoted-phrase ranking signals, where justified by accepted native provider metadata.
-- Freshness-aware ranking for result types that carry trustworthy publication/update timestamps.
+- Additional intent routing and specialized result understanding beyond the implemented site/domain/file-type/quoted-phrase/temporal ranking signals, where justified by accepted native provider metadata.
+- Production-reviewed timestamp authority and live-provider freshness acceptance for result classes where recency is required; the source-level freshness contract is implemented but no provider is production-approved by that fact alone.
 - Optional semantic retrieval/reranking only if implemented through an approved privacy-preserving GoreeCloud-controlled path and validated against deterministic fallback behavior.
 - Completed feature-parity migration from the inherited runtime.
 - Full native Glaze UI 2.0 visual/accessibility/device acceptance.
