@@ -45,6 +45,9 @@
           </div>
           {{if .Degraded}}<span class="status-badge neutral">Some sources unavailable</span>{{end}}
         </section>
+        {{if .SuggestedQuery}}
+        <p class="query-suggestion">Did you mean <a href="/search?q={{urlquery .SuggestedQuery}}&amp;category={{urlquery .Category}}">{{.SuggestedQuery}}</a>?</p>
+        {{end}}
 
         <div class="results-layout">
           <section class="results-column" aria-label="Search results">
