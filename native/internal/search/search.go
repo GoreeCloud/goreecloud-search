@@ -85,11 +85,12 @@ type ProviderStatus struct {
 }
 
 type Response struct {
-	Query     string           `json:"query"`
-	Category  string           `json:"category"`
-	Results   []Result         `json:"results"`
-	Providers []ProviderStatus `json:"providers"`
-	Degraded  bool             `json:"degraded"`
+	Query          string           `json:"query"`
+	SuggestedQuery string           `json:"suggested_query,omitempty"`
+	Category       string           `json:"category"`
+	Results        []Result         `json:"results"`
+	Providers      []ProviderStatus `json:"providers"`
+	Degraded       bool             `json:"degraded"`
 }
 
 type Engine struct {
@@ -326,6 +327,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		}
 	}
 
+	response.SuggestedQuery = suggestQueryCorrection(query, candidates)
 	response.Results = rankResults(query, candidates)
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
