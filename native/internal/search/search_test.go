@@ -19,6 +19,17 @@ func (p fakeProvider) Search(context.Context, string) ([]Result, error) {
 	return append([]Result(nil), p.results...), p.err
 }
 
+type blockingProvider struct {
+	name    string
+	release <-chan struct{}
+}
+
+func (p blockingProvider) Name() string { return p.name }
+func (p blockingProvider) Search(context.Context, string) ([]Result, error) {
+	<-p.release // Intentionally ignores context to exercise the engine boundary.
+	return []Result{{Title: "Late", URL: "https://late.example/", Score: 100}}, nil
+}
+
 func TestValidateQuery(t *testing.T) {
 	if _, err := ValidateQuery("   "); err == nil {
 		t.Fatal("expected blank query rejection")
@@ -104,6 +115,44 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	}
 	if failed.Count != 0 {
 		t.Fatalf("failed provider must not report discarded results: %#v", failed)
+	}
+}
+
+func TestEngineDeadlineBoundsProviderIgnoringContext(t *testing.T) {
+	release := make(chan struct{})
+	defer close(release)
+
+	engine := NewEngine(30*time.Millisecond,
+		fakeProvider{name: "healthy", results: []Result{{Title: "Healthy", URL: "https://healthy.example/", Score: 1}}},
+		blockingProvider{name: "stuck", release: release},
+	)
+
+	started := time.Now()
+	response, err := engine.Search(context.Background(), "bounded")
+	elapsed := time.Since(started)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if elapsed > time.Second {
+		t.Fatalf("search exceeded bounded request deadline: %s", elapsed)
+	}
+	if !response.Degraded {
+		t.Fatal("expected degraded response for provider that ignored context")
+	}
+	if len(response.Results) != 1 || response.Results[0].Provider != "healthy" {
+		t.Fatalf("expected healthy provider results to survive timeout: %#v", response.Results)
+	}
+	if len(response.Providers) != 2 {
+		t.Fatalf("expected status for both providers: %#v", response.Providers)
+	}
+	var stuck ProviderStatus
+	for _, status := range response.Providers {
+		if status.Name == "stuck" {
+			stuck = status
+		}
+	}
+	if stuck.State != ProviderStateUnavailable || stuck.Code != ProviderCodeTimeout || stuck.Count != 0 {
+		t.Fatalf("unexpected timeout status for stuck provider: %#v", stuck)
 	}
 }
 
