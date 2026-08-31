@@ -90,7 +90,7 @@
               <div class="provider-grid">
                 {{range .Providers}}
                 <div class="provider-item">
-                  <div><strong>{{.Name}}</strong><small>{{.Count}} result{{if ne .Count 1}}s{{end}}{{if .Code}} · {{.Code}}{{end}}</small></div>
+                  <div><strong>{{.Name}}</strong><small>{{.Count}} result{{if ne .Count 1}}s{{end}}{{if .Truncated}} · limit applied{{end}}{{if .Code}} · {{.Code}}{{end}}</small></div>
                   <span class="status-badge {{if eq .State "available"}}{{else}}neutral{{end}}">{{.State}}</span>
                 </div>
                 {{end}}
