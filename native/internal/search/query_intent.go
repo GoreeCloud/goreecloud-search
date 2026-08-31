@@ -13,18 +13,24 @@ type queryPart struct {
 	quoted bool
 }
 
+type intentLexeme struct {
+	text   string
+	quoted bool
+}
+
 type queryIntent struct {
-	normalized    string
-	tokens        []string
-	phrases       []string
-	siteHosts     []string
-	domainTargets []string
-	fileTypes     []string
+	normalized         string
+	tokens             []string
+	phrases            []string
+	siteHosts          []string
+	domainTargets      []string
+	fileTypes          []string
+	freshnessRequested bool
 }
 
 func parseQueryIntent(raw string) queryIntent {
 	intent := queryIntent{}
-	normalizedParts := make([]string, 0)
+	lexemes := make([]intentLexeme, 0)
 	for _, part := range splitQueryParts(raw) {
 		trimmed := strings.TrimSpace(part.text)
 		if trimmed == "" {
@@ -59,15 +65,69 @@ func parseQueryIntent(raw string) queryIntent {
 		if normalized == "" {
 			continue
 		}
-		normalizedParts = append(normalizedParts, normalized)
 		if part.quoted && strings.Contains(normalized, " ") {
 			intent.phrases = appendUniqueString(intent.phrases, normalized)
 		}
+		for _, token := range strings.Fields(normalized) {
+			lexemes = append(lexemes, intentLexeme{text: token, quoted: part.quoted})
+		}
 	}
 
-	intent.normalized = strings.Join(normalizedParts, " ")
+	intent.freshnessRequested, lexicalSkip := temporalIntentLexemes(lexemes)
+	normalizedTokens := make([]string, 0, len(lexemes))
+	for index, lexeme := range lexemes {
+		if lexicalSkip[index] {
+			continue
+		}
+		normalizedTokens = append(normalizedTokens, lexeme.text)
+	}
+	intent.normalized = strings.Join(normalizedTokens, " ")
 	intent.tokens = uniqueTokens(intent.normalized)
 	return intent
+}
+
+// temporalIntentLexemes separates clear temporal modifiers from subject terms.
+// Quoted terms remain literal. Ambiguous/content-bearing terms such as "news",
+// "updated", and "updates" may request freshness but remain in lexical ranking.
+func temporalIntentLexemes(lexemes []intentLexeme) (bool, map[int]bool) {
+	unquoted := make([]int, 0, len(lexemes))
+	for index, lexeme := range lexemes {
+		if !lexeme.quoted {
+			unquoted = append(unquoted, index)
+		}
+	}
+
+	requested := false
+	skip := map[int]bool{}
+	for position, index := range unquoted {
+		token := lexemes[index].text
+		switch token {
+		case "latest", "recent", "recently", "today", "breaking", "newest":
+			requested = true
+			skip[index] = true
+		case "updated", "updates", "news":
+			requested = true
+		case "current":
+			// Leading "current" is normally a temporal modifier (for example,
+			// "current weather"). A trailing noun use such as "electric current"
+			// remains ordinary lexical content and does not activate freshness.
+			if position == 0 {
+				requested = true
+				skip[index] = true
+			}
+		case "this":
+			if position+1 < len(unquoted) {
+				nextIndex := unquoted[position+1]
+				next := lexemes[nextIndex].text
+				if next == "week" || next == "month" {
+					requested = true
+					skip[index] = true
+					skip[nextIndex] = true
+				}
+			}
+		}
+	}
+	return requested, skip
 }
 
 func splitQueryParts(raw string) []queryPart {
