@@ -33,11 +33,13 @@ const (
 )
 
 type Result struct {
-	Title    string `json:"title"`
-	URL      string `json:"url"`
-	Snippet  string `json:"snippet,omitempty"`
-	Provider string `json:"provider"`
-	Score    int    `json:"score"`
+	Title       string   `json:"title"`
+	URL         string   `json:"url"`
+	Snippet     string   `json:"snippet,omitempty"`
+	Provider    string   `json:"provider"`
+	Score       int      `json:"score"`
+	SourceCount int      `json:"source_count,omitempty"`
+	Sources     []string `json:"sources,omitempty"`
 }
 
 type Provider interface {
@@ -244,7 +246,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	}
 
 	response := Response{Query: query, Category: category, Results: []Result{}, Providers: []ProviderStatus{}}
-	bestByURL := map[string]Result{}
+	candidates := make([]Result, 0)
 	resolved := make([]bool, len(selected))
 	remaining := len(selected)
 
@@ -264,10 +266,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 				continue
 			}
 			result.URL = normalized
-			current, exists := bestByURL[normalized]
-			if !exists || resultBetterThan(result, current) {
-				bestByURL[normalized] = result
-			}
+			candidates = append(candidates, result)
 		}
 	}
 
@@ -290,18 +289,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		}
 	}
 
-	for _, result := range bestByURL {
-		response.Results = append(response.Results, result)
-	}
-	sort.Slice(response.Results, func(i, j int) bool {
-		if response.Results[i].Score == response.Results[j].Score {
-			if response.Results[i].URL == response.Results[j].URL {
-				return response.Results[i].Provider < response.Results[j].Provider
-			}
-			return response.Results[i].URL < response.Results[j].URL
-		}
-		return response.Results[i].Score > response.Results[j].Score
-	})
+	response.Results = rankResults(query, candidates)
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
 }
