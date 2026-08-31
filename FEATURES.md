@@ -1,126 +1,71 @@
-# Features
+# GoreeCloud Search Features
 
-## Purpose
+This file records Search functionality and implementation state. A listed capability is not a production-readiness or Stable claim unless current runtime and acceptance evidence support it.
 
-I use this record to maintain a current, product-level inventory of GoreeCloud Search capabilities. I distinguish features that are already part of the active product from first-Stable Release Candidate capabilities and future work that remains unaccepted.
+## Implemented native foundations
 
-A feature appearing here does not silently promote a Release Candidate to Stable. Release lifecycle and runtime acceptance remain governed separately.
+### Native search engine
 
-## Active product capabilities
+- GoreeCloud-owned Go search engine under `native/internal/search`.
+- Bounded 512-rune query validation.
+- Explicit General, Images, Videos, News, and Files category model.
+- General-category development execution even with no configured providers.
+- Specialized categories fail closed unless an executable provider path exists.
+- Concurrent provider execution under a bounded request timeout.
+- Bounded provider availability/timeout status without returning raw provider error messages.
+- Deterministic result ordering and de-duplication.
+- HTTP/HTTPS result URL normalization with fragments removed.
+- Result URLs with embedded user-info credentials rejected.
+- Provider identities normalized and bounded to 128 runes; blank/control-character provider names are not advertised or executed.
+- Sanitized provider capability definitions without credentials, endpoints, runtime errors, or mutable controls.
 
-### Private self-hosted metasearch
+### Native GoreeCloud product experience
 
-- GoreeCloud-controlled SearXNG-derived metasearch service.
-- Aggregation across approved external search providers instead of dependence on one direct Browser search engine.
-- General web search and supported specialized search categories.
-- Clear engine and result-source visibility.
-- Failure isolation when individual providers are unavailable or degraded where the underlying engine supports it.
+- GoreeCloud-owned native service entry point and web-presentation foundation.
+- First-party homepage/results presentation work.
+- First-party preference state and organization.
+- GoreeCloud product identity rather than an upstream-only shell.
+- Native-first development direction governed by the latest applicable Stable Glaze UI contract.
 
-### Search categories and controls
+### Privacy-first behavior
 
-- General web search.
-- Image search.
-- Video search.
-- News search.
-- Technical and documentation-oriented discovery.
-- Software/package and research-oriented discovery where enabled providers support it.
-- Search-language, time-range, safe-search, category, and engine controls inherited from the maintained search foundation where applicable.
-- Representative provider-acceptance tooling for General, Images, Videos, News, Files, IT, and Science coverage, with the first five treated as first-Stable mandatory categories in the current release-candidate evidence model.
+- No GoreeCloud advertising or sponsored-ranking business model.
+- No intended behavioral profiling.
+- Explicit query bounds and minimized native state.
+- No hidden fallback requirement that bypasses GoreeCloud Search as configured Browser search authority.
+- Provider errors reduced to bounded status codes.
+- Result URLs containing embedded credentials rejected before presentation.
 
-### GoreeCloud product experience
+### GoreeCloud Sync foundations
 
-- GoreeCloud Search identity rather than an upstream-only product shell.
-- Glaze UI treatment across the home page, search header, results, result cards, sidebars, pagination, Preferences, About, empty states, errors, and recovery surfaces.
-- Compact, Medium, Expanded, and Wide adaptive layouts.
-- Light and dark presentation.
-- Keyboard navigation and visible focus behavior.
-- Reduced-motion support.
-- Reduced-transparency support and solid no-blur fallbacks.
-- Increased-contrast and forced-colors resilience.
-- Mobile-friendly interaction targets and result presentation.
-- GoreeCloud-owned favicon, web-app manifest identity, and OpenSearch provider metadata.
+- Application-owned `search.history` capability contract.
+- Exact dataset/schema validation.
+- 512-byte record/cursor bounds.
+- Authenticated submission requirements.
+- Payload-free deletion tombstones.
+- Bounded paginated retrieval.
+- Client-side Ed25519 record-proof verification against the canonical GoreeCloud Sync vector.
 
-### Privacy-first defaults
+These are source contracts; they do not imply that account search-history synchronization is enabled in a production environment.
 
-- No GoreeCloud advertising or sponsored-result business model.
-- No intended behavioral user profiling.
-- Minimal persistent user-search state.
-- Image proxying in the controlled runtime baseline.
-- Query text excluded from browser page titles in the controlled runtime baseline.
-- `noindex, nofollow` search-service behavior.
-- `no-referrer` behavior.
-- Frame-embedding denial.
-- Camera, microphone, and geolocation browser capabilities disabled for the Search surface.
-- Public-instance behavior and SearXNG usage metrics disabled in the GoreeCloud runtime baseline.
-- HTML-only response format by default while machine-readable integration access remains separately governed.
+## Transitional retained capabilities
 
-### Browser and client integration
+The repository still contains the inherited SearXNG-derived runtime for continuity and migration. While it remains in use it may provide broader mature metasearch/provider/category functionality than the current native implementation.
 
-- OpenSearch integration for compatible browsers.
-- GoreeCloud Browser policy direction that makes GoreeCloud Search the sole/default managed Browser search authority on the current acceptance line.
-- Candidate-bound Browser evidence tooling that keeps normal Search policy separate from acceptance-only loopback staging.
-- Search outage behavior designed so direct URL navigation can remain available while Browser searches do not silently fall back to an unrelated external search provider.
+Inherited capability presence is transitional evidence, not the target application architecture. Features must be retained, replaced, improved, or explicitly approved for retirement before the inherited runtime is removed.
 
-### Operational and deployment capabilities
+## Planned / incomplete native capabilities
 
-- Docker and Docker Compose deployment model.
-- GoreeCloud container image build and runtime validation.
-- Health endpoint validation.
-- Loopback/private-publication-oriented deployment controls.
-- Persistent supporting cache/runtime integration through Valkey in the current production architecture.
-- Controlled configuration examples with secret separation.
-- Bounded container logging in the GoreeCloud Compose example.
-- Target-runtime evidence tooling.
-- Provider-acceptance evidence tooling.
-- Provider-degradation evidence tooling.
-- Backup, recovery, and rollback evidence contracts.
-- Exact source, image, artifact, and release-evidence identity controls.
-
-### Maintained-fork governance
-
-- Preserved SearXNG provenance and AGPL licensing obligations.
-- Recorded exact initial upstream baseline.
-- Controlled upstream-update policy.
-- GoreeCloud-specific contribution and security-reporting boundaries.
-- Automated checks for product identity, privacy behavior, Glaze UI contracts, provider contracts, deployment configuration, source provenance, and licensing preservation.
-- Retained upstream integration testing rather than bypassing inherited compatibility checks.
-
-## First-Stable Release Candidate capabilities
-
-The current first-Stable line is Release Candidate material and remains separate from Stable promotion.
-
-Candidate #07 adds or binds the following first-Stable capabilities and acceptance controls:
-
-- Glaze UI 1.1 first-Stable source-conformance work.
-- Exact immutable candidate publication and registry retrieval.
-- Candidate-bound release evidence.
-- Exact-image Compact/Expanded light/dark visual evidence.
-- Deterministic GoreeCloud result-treatment and ranking acceptance contracts on the stabilization line.
-- Provider-suite and provider-degradation acceptance contracts.
-- Target-runtime identity evidence.
-- Recovery and rollback evidence contracts.
-- Actual GoreeCloud Browser runtime-evidence contract.
-- Final-acceptance schema version 2 that cryptographically binds exactly six completed JSON artifacts: release, target runtime, recovery, provider, visual/device review, and actual GoreeCloud Browser runtime evidence.
-- Fail-closed rejection of mismatched candidate identities, mutated review evidence, incomplete physical-device/desktop/persisted-theme/Browser acceptance, and production-cutover self-authorization.
-
-These controls improve release integrity but do not independently authorize production cutover or Stable promotion.
-
-## Planned or not-yet-accepted capabilities
-
-The following remain future or incomplete product capabilities and must not be represented as fully accepted merely because related scaffolding exists:
-
-- A stable GoreeCloud-facing machine-readable Search API for approved applications and AI/research consumers.
-- JSON, RSS, CSV, or other machine-readable response formats enabled as a general product contract.
-- Account-based search history, saved searches, synchronization, or personalization.
-- Production-approved local-AI and research-agent integration using the governed Search API.
-- Completed actual GoreeCloud Browser runtime acceptance against the exact first-Stable candidate.
-- Completed physical Android Preferences acceptance.
-- Completed desktop runtime/regression acceptance.
-- Completed persisted theme-preference acceptance.
-- Completed target-host provider, monitoring, alert-delivery, restore, and rollback evidence for the exact first-Stable candidate.
-- Stable lifecycle promotion for the current first-Stable candidate.
-- A fully GoreeCloud-native search backend replacing SearXNG.
+- Production-approved native external-provider adapters and credentials integration.
+- Accepted native provider coverage for every category selected for release.
+- Completed feature-parity migration from the inherited runtime.
+- Full native Glaze UI visual/accessibility/device acceptance.
+- Complete Privacy Shield, Wardveil Security, Everkeep, GoreeCloud Identity, and GoreeCloud Mesh runtime/evidence integration where applicable.
+- Production-approved account search history, saved searches, synchronization, or personalization.
+- Governed machine-readable Search API for approved first-party/AI/research consumers.
+- Complete monitoring, rate limiting, abuse protection, target-host deployment, restore, rollback, migration, and operational evidence.
+- Stable lifecycle promotion of the native application.
 
 ## Feature-governance rule
 
-I add a capability to the accepted product inventory only to the level supported by source, release, runtime, and lifecycle evidence. Planning, source scaffolding, CI success, candidate publication, production deployment, production acceptance, and Stable promotion remain distinct states.
+Planning, source implementation, CI validation, runtime integration, production acceptance, migration cutover, and Stable promotion are separate states. Search documentation must preserve those distinctions.
