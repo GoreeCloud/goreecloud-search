@@ -68,6 +68,8 @@ The native results surface now implements source-level scan-first presentation w
 - restrained list-based result composition rather than a wall of equally elevated cards;
 - title-first hierarchy, subordinate URL/snippet treatment, and no user-visible internal numeric ranking score;
 - source-agreement disclosure for clustered multi-provider results;
+- human-readable publication dates only when `PublishedAt` survived the authoritative provider boundary, rendered through semantic `<time datetime>` markup rather than inferred or synthetic dates;
+- a ranking explanation that discloses trustworthy freshness as a conditional signal when the query/category requests recency;
 - a separate source-health surface for available/degraded provider state, including visible “limit applied” disclosure when a provider exceeds the Search-owned result-processing ceiling;
 - explicit local-ranking/privacy explanation without claiming anonymity from external providers;
 - adaptive desktop and narrow-window composition;
