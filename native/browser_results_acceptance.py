@@ -164,7 +164,10 @@ def assert_results_page(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
         "Results for “goreecloud search privacy”",
         "7 results from the configured native sources.",
         "3 sources agree",
+        "Published Aug 31, 2026",
+        "Published Aug 28, 2026",
         "Relevant first",
+        "trustworthy freshness when requested",
         "Click history is not used.",
         "Some sources unavailable",
         "limit applied",
@@ -178,6 +181,11 @@ def assert_results_page(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
         raise AssertionError(f"{context}: internal rank score leaked into results UI")
     if len(driver.find_elements(By.CSS_SELECTOR, ".result-card")) != 7:
         raise AssertionError(f"{context}: expected seven representative result rows")
+    published = driver.find_elements(By.CSS_SELECTOR, "time.result-published")
+    if len(published) != 2:
+        raise AssertionError(f"{context}: expected two trusted publication timestamps, got {len(published)}")
+    if published[0].get_attribute("datetime") != "2026-08-31T14:30:00Z":
+        raise AssertionError(f"{context}: publication timestamp lost machine-readable UTC value")
     current = driver.find_elements(By.CSS_SELECTOR, '.results-categories a[aria-current="page"]')
     if len(current) != 1 or current[0].text != "General":
         raise AssertionError(f"{context}: selected category semantics are incorrect")
