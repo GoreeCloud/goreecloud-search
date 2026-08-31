@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -118,6 +119,33 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	}
 	if failed.Count != 0 {
 		t.Fatalf("failed provider must not report discarded results: %#v", failed)
+	}
+}
+
+func TestEngineBoundsProviderResultVolume(t *testing.T) {
+	results := make([]Result, 0, MaxResultsPerProvider+20)
+	for index := 0; index < MaxResultsPerProvider+20; index++ {
+		results = append(results, Result{
+			Title: "Bounded result " + strconv.Itoa(index),
+			URL:   "https://bounded.example/result/" + strconv.Itoa(index),
+			Score: index,
+		})
+	}
+	engine := NewEngine(time.Second, fakeProvider{name: "bounded", results: results})
+
+	response, err := engine.Search(context.Background(), "bounded result")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Results) != MaxResultsPerProvider {
+		t.Fatalf("expected %d processed results, got %d", MaxResultsPerProvider, len(response.Results))
+	}
+	if len(response.Providers) != 1 {
+		t.Fatalf("expected one provider status, got %#v", response.Providers)
+	}
+	status := response.Providers[0]
+	if !status.Truncated || status.Count != MaxResultsPerProvider {
+		t.Fatalf("expected disclosed provider result limit, got %#v", status)
 	}
 }
 
