@@ -31,7 +31,7 @@ func rankResults(query string, candidates []Result) []Result {
 	intent := parseQueryIntent(query)
 	clusters := make(map[string]*resultCluster, len(candidates))
 	for _, candidate := range candidates {
-		baseScore := relevanceScoreIntent(intent, candidate)
+		baseScore := relevanceScoreIntent(intent, candidate) + candidate.recencyBonus
 		cluster, exists := clusters[candidate.URL]
 		if !exists {
 			cluster = &resultCluster{
