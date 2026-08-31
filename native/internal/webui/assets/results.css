@@ -33,6 +33,7 @@
 .result-card h2 a{color:inherit;text-decoration:none;text-underline-offset:3px}
 .result-card h2 a:hover{text-decoration:underline;text-decoration-thickness:1px}
 .result-url{display:block;max-width:100%;margin-bottom:8px;color:color-mix(in srgb,var(--accent) 80%,var(--text));font-size:12.5px;line-height:1.4;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.result-published{display:block;margin:-2px 0 7px;color:var(--muted);font-size:12px;line-height:1.4;font-weight:650}
 .result-snippet{margin:0;max-width:74ch;color:var(--muted);font-size:14.5px;line-height:1.58}
 .result-provenance{margin-top:7px;color:var(--muted);font-size:12px}
 .result-provenance summary{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding-block:4px;cursor:pointer;color:var(--muted);font-weight:700}
