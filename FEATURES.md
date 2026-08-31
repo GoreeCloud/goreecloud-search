@@ -43,6 +43,8 @@ This file records Search functionality and implementation state. A listed capabi
 - Scan-first native result list that prioritizes source, title, URL, and snippet hierarchy over repeated elevated-card chrome.
 - Compact persistent query field and category navigation on results.
 - Multi-provider source-agreement disclosure without exposing internal numeric ranking scores to users.
+- Trusted retained publication timestamps are shown as concise human-readable dates with semantic machine-readable `<time datetime>` values; results without accepted timestamps do not receive synthetic dates.
+- The results ranking explanation discloses that trustworthy freshness is used when requested rather than presenting recency as an undisclosed ranking signal.
 - Source-health presentation separated from the primary result-reading flow, including visible “limit applied” disclosure when a provider exceeds the native per-request processing ceiling.
 - Adaptive wide/narrow layouts plus reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks in the native results stylesheet.
 - Script-free Go-template result rendering with automatic escaping of provider/query/result content.
