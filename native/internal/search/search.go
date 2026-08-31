@@ -8,9 +8,13 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
-const MaxQueryRunes = 512
+const (
+	MaxQueryRunes        = 512
+	MaxProviderNameRunes = 128
+)
 
 const (
 	CategoryGeneral = "general"
@@ -92,7 +96,11 @@ func (e *Engine) ProviderDefinitions() []ProviderDefinition {
 		if provider == nil {
 			continue
 		}
-		definition := ProviderDefinition{Name: strings.TrimSpace(provider.Name())}
+		name, ok := normalizeProviderName(provider.Name())
+		if !ok {
+			continue
+		}
+		definition := ProviderDefinition{Name: name}
 		categorized, ok := provider.(CategoryProvider)
 		if !ok {
 			definition.Categories = []string{CategoryGeneral}
@@ -144,6 +152,19 @@ func ValidateCategory(raw string) (string, error) {
 	return "", errors.New("unsupported search category")
 }
 
+func normalizeProviderName(raw string) (string, bool) {
+	name := strings.TrimSpace(raw)
+	if name == "" || len([]rune(name)) > MaxProviderNameRunes {
+		return "", false
+	}
+	for _, r := range name {
+		if unicode.IsControl(r) {
+			return "", false
+		}
+	}
+	return name, true
+}
+
 // SupportsCategory reports whether the native engine has a usable execution
 // path for a validated category. General remains implemented even with no
 // configured providers so the development shell retains its bounded empty
@@ -157,7 +178,7 @@ func (e *Engine) SupportsCategory(category string) bool {
 		return true
 	}
 	for _, provider := range e.providers {
-		if providerCanExecuteCategory(provider, category) {
+		if _, ok := validExecutableProvider(provider); ok && providerCanExecuteCategory(provider, category) {
 			return true
 		}
 	}
@@ -189,22 +210,27 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		results []Result
 	}
 
-	selected := make([]Provider, 0, len(e.providers))
+	type selectedProvider struct {
+		provider Provider
+		name     string
+	}
+	selected := make([]selectedProvider, 0, len(e.providers))
 	for _, provider := range e.providers {
-		if providerCanExecuteCategory(provider, category) {
-			selected = append(selected, provider)
+		name, ok := validExecutableProvider(provider)
+		if ok && providerCanExecuteCategory(provider, category) {
+			selected = append(selected, selectedProvider{provider: provider, name: name})
 		}
 	}
 
 	ch := make(chan providerResult, len(selected))
 	var wg sync.WaitGroup
-	for _, provider := range selected {
-		provider := provider
+	for _, selectedProvider := range selected {
+		selectedProvider := selectedProvider
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			items, searchErr := executeProviderSearch(ctx, provider, query, category)
-			status := ProviderStatus{Name: provider.Name(), State: ProviderStateAvailable, Count: len(items)}
+			items, searchErr := executeProviderSearch(ctx, selectedProvider.provider, query, category)
+			status := ProviderStatus{Name: selectedProvider.name, State: ProviderStateAvailable, Count: len(items)}
 			if searchErr != nil {
 				status.State = ProviderStateUnavailable
 				status.Code = classifyProviderFailure(searchErr)
@@ -212,7 +238,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 				items = nil
 			}
 			for i := range items {
-				items[i].Provider = provider.Name()
+				items[i].Provider = selectedProvider.name
 			}
 			ch <- providerResult{status: status, results: items}
 		}()
@@ -257,6 +283,13 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	})
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
+}
+
+func validExecutableProvider(provider Provider) (string, bool) {
+	if provider == nil {
+		return "", false
+	}
+	return normalizeProviderName(provider.Name())
 }
 
 func providerSupportsCategory(provider Provider, category string) bool {
@@ -333,7 +366,7 @@ func classifyProviderFailure(err error) string {
 
 func normalizeResultURL(raw string) (string, bool) {
 	parsed, err := url.Parse(strings.TrimSpace(raw))
-	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+	if err != nil || parsed.Host == "" || parsed.User != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
 		return "", false
 	}
 	parsed.Fragment = ""
