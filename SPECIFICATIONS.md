@@ -29,7 +29,7 @@ The native engine currently provides source-level application logic for:
 - sanitized provider-definition exposure that does not publish credentials, endpoints, mutable controls, or runtime errors;
 - GoreeCloud-owned request-local result ranking rather than direct cross-provider trust in arbitrary provider score scales;
 - Unicode-aware query/result token normalization for deterministic relevance scoring;
-- local query-intent parsing that separates `site:`, `filetype:`/`ext:`, quoted phrases, and domain-directed targets from ordinary relevance tokens without rewriting the submitted provider query;
+- local query-intent parsing that separates `site:`, `filetype:`/`ext:`, quoted phrases, domain-directed targets, and temporal modifiers from ordinary relevance tokens without rewriting the submitted provider query;
 - strong title relevance and exact-title signals, with lower-weight snippet and URL token coverage;
 - bounded quoted-phrase boosts when an explicitly quoted multi-word phrase remains contiguous in a result title, snippet, or URL text;
 - bounded one-edit or adjacent-transposition tolerance for tokens of at least five runes, with fuzzy title/snippet/URL contributions kept materially below exact relevance signals;
@@ -41,9 +41,14 @@ The native engine currently provides source-level application logic for:
 - provider-supplied integer score retained only as bounded supporting evidence with a maximum contribution of 300 ranking points;
 - explicit provider-level `PublishedAtProvider` authority for publication/update timestamps: adapters may opt in only when `Result.PublishedAt` is copied from a trustworthy upstream field with publication semantics rather than inferred from snippets, URLs, crawl time, or provider score;
 - stripping of untrusted, zero, pre-Unix, or more-than-24-hours-future publication timestamps before aggregation; retained timestamp output records the authoritative provider in `published_at_source`;
-- request-local freshness scoring only for explicit temporal intent (`latest`, `recent`, `today`, `current`, `breaking`, `newest`, `updated`/`updates`, `news`, `this week`, or `this month`) or the News category;
+- request-local freshness scoring only for explicit temporal intent or the News category;
+- clear unquoted modifiers `latest`, `recent`, `recently`, `today`, `breaking`, and `newest`, plus the phrases `this week` and `this month`, activate freshness while being omitted from ordinary lexical relevance so they do not dilute the actual subject terms;
+- leading unquoted `current` activates freshness and is omitted from lexical relevance, while noun/non-leading uses such as `electric current` remain ordinary lexical content and do not activate freshness;
+- content-bearing unquoted terms `news`, `updated`, and `updates` may activate freshness but remain lexical terms because they can describe the subject itself;
+- quoted temporal wording remains literal phrase/text relevance and does not independently activate freshness, so a query such as `"latest goreecloud" search` keeps `latest` as requested content rather than silently interpreting it as a recency modifier;
 - a freshness contribution bounded to at most 1,200 ranking points, with declining buckets through 90 days and a lower implicit weight for News-category recency when the query itself has no temporal wording;
 - no freshness bias for ordinary General searches that do not express temporal intent;
+- temporal-only modifier queries may have no lexical tokens and can still order accepted timestamp-bearing candidates by the bounded freshness signal rather than manufacturing synthetic relevance terms;
 - exact normalized-URL clustering that preserves deterministic source-agreement evidence rather than discarding duplicate-provider consensus;
 - source-agreement bonus bounded to 900 ranking points, preventing consensus from becoming unlimited ranking authority;
 - selection of the most query-relevant duplicate title/snippet as the displayed representative while preserving deterministic tie breaks;
@@ -52,7 +57,7 @@ The native engine currently provides source-level application logic for:
 - final deterministic score/URL/provider ordering before the bounded diversity pass;
 - native result metadata for deterministic `source_count` and sorted `sources` provenance.
 
-The native ranking path is deterministic and request-local. It does not use click history, behavioral profiles, advertising signals, sponsored placement, remote spelling/correction lookups, remote freshness lookups, or remote ranking telemetry. Current typo tolerance affects ordering only; Search does not silently rewrite or replace the query sent to providers. Freshness uses only timestamp metadata that passed the explicit provider-authority boundary; Search does not infer publication time from result text or URL structure.
+The native ranking path is deterministic and request-local. It does not use click history, behavioral profiles, advertising signals, sponsored placement, remote spelling/correction lookups, remote freshness lookups, or remote ranking telemetry. Current typo tolerance affects ordering only; Search does not silently rewrite or replace the query sent to providers. Freshness uses only timestamp metadata that passed the explicit provider-authority boundary; Search does not infer publication time from result text or URL structure. Temporal-modifier separation is also request-local parsing: it changes only GoreeCloud-owned reranking interpretation and does not alter the original query submitted to configured providers.
 
 The provider result ceiling bounds Search-owned post-provider work; it cannot prevent an adapter or external provider implementation from allocating its own oversized response before returning. Production provider adapters therefore remain responsible for their own transport/body/result bounds in addition to this engine-level ceiling.
 
