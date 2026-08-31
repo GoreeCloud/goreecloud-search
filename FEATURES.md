@@ -11,7 +11,7 @@ This file records Search functionality and implementation state. A listed capabi
 - Explicit General, Images, Videos, News, and Files category model.
 - General-category development execution even with no configured providers.
 - Specialized categories fail closed unless an executable provider path exists.
-- Concurrent provider execution under a bounded request timeout.
+- Concurrent provider execution under a bounded request timeout; the request returns degraded timeout evidence even when an integration adapter fails to honor context cancellation.
 - Bounded provider availability/timeout status without returning raw provider error messages.
 - Deterministic result ordering and de-duplication.
 - HTTP/HTTPS result URL normalization with fragments removed.
