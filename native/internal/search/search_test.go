@@ -60,7 +60,7 @@ func TestValidateCategory(t *testing.T) {
 
 func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	engine := NewEngine(time.Second,
-		fakeProvider{name: "one", results: []Result{{Title: "A", URL: "https://example.com/a#fragment", Score: 4}, {Title: "B", URL: "javascript:alert(1)", Score: 10}}},
+		fakeProvider{name: "one", results: []Result{{Title: "A", URL: "https://example.com/a#fragment", Score: 4}, {Title: "B", URL: "javascript:alert(1)", Score: 10}, {Title: "Credential URL", URL: "https://user:secret@example.net/private", Score: 20}}},
 		fakeProvider{name: "two", results: []Result{{Title: "Duplicate", URL: "https://example.com/a", Score: 9}, {Title: "C", URL: "https://example.org/c", Score: 5}}},
 		fakeProvider{name: "three", err: errors.New("provider unavailable: credential=do-not-expose")},
 	)
@@ -104,6 +104,37 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	}
 	if failed.Count != 0 {
 		t.Fatalf("failed provider must not report discarded results: %#v", failed)
+	}
+}
+
+func TestInvalidProviderIdentityIsNotAdvertisedOrExecuted(t *testing.T) {
+	invalid := fakeProvider{name: "bad\nprovider", results: []Result{{Title: "Bad", URL: "https://bad.example/", Score: 99}}}
+	blank := fakeProvider{name: "   ", results: []Result{{Title: "Blank", URL: "https://blank.example/", Score: 99}}}
+	valid := fakeProvider{name: "  good-provider  ", results: []Result{{Title: "Good", URL: "https://good.example/", Score: 1}}}
+	engine := NewEngine(time.Second, invalid, blank, valid)
+
+	definitions := engine.ProviderDefinitions()
+	if len(definitions) != 1 || definitions[0].Name != "good-provider" {
+		t.Fatalf("unexpected provider definitions: %#v", definitions)
+	}
+	response, err := engine.Search(context.Background(), "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Providers) != 1 || response.Providers[0].Name != "good-provider" {
+		t.Fatalf("invalid provider identities must not enter runtime evidence: %#v", response.Providers)
+	}
+	if len(response.Results) != 1 || response.Results[0].Provider != "good-provider" {
+		t.Fatalf("invalid provider identities must not execute: %#v", response.Results)
+	}
+}
+
+func TestProviderNameBounds(t *testing.T) {
+	if _, ok := normalizeProviderName(strings.Repeat("p", MaxProviderNameRunes)); !ok {
+		t.Fatal("provider name at maximum length should be valid")
+	}
+	if _, ok := normalizeProviderName(strings.Repeat("p", MaxProviderNameRunes+1)); ok {
+		t.Fatal("oversized provider name should be rejected")
 	}
 }
 
