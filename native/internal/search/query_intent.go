@@ -50,6 +50,11 @@ func parseQueryIntent(raw string) queryIntent {
 			continue
 		}
 
+		if host := normalizeDomainTarget(trimmed); host != "" {
+			intent.domainTargets = appendUniqueString(intent.domainTargets, host)
+			continue
+		}
+
 		normalized := normalizeSearchText(trimmed)
 		if normalized == "" {
 			continue
@@ -57,9 +62,6 @@ func parseQueryIntent(raw string) queryIntent {
 		normalizedParts = append(normalizedParts, normalized)
 		if part.quoted && strings.Contains(normalized, " ") {
 			intent.phrases = appendUniqueString(intent.phrases, normalized)
-		}
-		if host := normalizeDomainTarget(trimmed); host != "" {
-			intent.domainTargets = appendUniqueString(intent.domainTargets, host)
 		}
 	}
 
@@ -116,7 +118,7 @@ func normalizeDomainTarget(raw string) string {
 		candidate = "https://" + candidate
 	}
 	parsed, err := url.Parse(candidate)
-	if err != nil || parsed.Hostname() == "" {
+	if err != nil || parsed.Hostname() == "" || parsed.User != nil {
 		return ""
 	}
 	host := strings.TrimSuffix(strings.TrimPrefix(strings.ToLower(parsed.Hostname()), "www."), ".")
@@ -137,18 +139,18 @@ func normalizeDomainTarget(raw string) string {
 		}
 	}
 	tld := labels[len(labels)-1]
-	if len(tld) < 2 || !containsLetter(tld) {
+	if !validDomainTLD(tld) {
 		return ""
 	}
 	return host
 }
 
 func validDomainLabel(label string) bool {
-	if label == "" || len(label) > 63 || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
+	if label == "" || len([]rune(label)) > 63 || strings.HasPrefix(label, "-") || strings.HasSuffix(label, "-") {
 		return false
 	}
 	for _, r := range label {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' {
 			continue
 		}
 		return false
@@ -156,13 +158,20 @@ func validDomainLabel(label string) bool {
 	return true
 }
 
-func containsLetter(raw string) bool {
-	for _, r := range raw {
-		if r >= 'a' && r <= 'z' {
-			return true
+func validDomainTLD(label string) bool {
+	if strings.HasPrefix(label, "xn--") {
+		return len(label) > len("xn--") && validDomainLabel(label)
+	}
+	runes := []rune(label)
+	if len(runes) < 2 || len(runes) > 63 {
+		return false
+	}
+	for _, r := range runes {
+		if !unicode.IsLetter(r) {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 func normalizeFileType(raw string) string {
