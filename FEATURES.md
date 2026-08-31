@@ -13,6 +13,7 @@ This file records Search functionality and implementation state. A listed capabi
 - Specialized categories fail closed unless an executable provider path exists.
 - Concurrent provider execution under a bounded request timeout; the request returns degraded timeout evidence even when an integration adapter fails to honor context cancellation.
 - Bounded provider availability/timeout status without returning raw provider error messages.
+- At most 512 results from any one provider enter native sanitization/ranking for a request; oversized provider result slices are copied down to the bounded working set and the provider status records `truncated=true`.
 - HTTP/HTTPS result URL normalization with fragments removed.
 - Result URLs with embedded user-info credentials rejected.
 - Provider identities normalized and bounded to 128 runes; blank/control-character provider names are not advertised or executed.
@@ -38,7 +39,7 @@ This file records Search functionality and implementation state. A listed capabi
 - Scan-first native result list that prioritizes source, title, URL, and snippet hierarchy over repeated elevated-card chrome.
 - Compact persistent query field and category navigation on results.
 - Multi-provider source-agreement disclosure without exposing internal numeric ranking scores to users.
-- Source-health presentation separated from the primary result-reading flow.
+- Source-health presentation separated from the primary result-reading flow, including visible “limit applied” disclosure when a provider exceeds the native per-request processing ceiling.
 - Adaptive wide/narrow layouts plus reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks in the native results stylesheet.
 - Script-free Go-template result rendering with automatic escaping of provider/query/result content.
 - First-party preference state and organization.
@@ -51,7 +52,7 @@ This file records Search functionality and implementation state. A listed capabi
 - No intended behavioral profiling.
 - Native ranking does not use click history, behavioral profiles, advertising signals, or remote ranking telemetry.
 - Intent parsing and typo-tolerant ranking operate request-locally and do not send correction lookups to another service.
-- Explicit query bounds and minimized native state.
+- Explicit query and provider-result processing bounds and minimized native state.
 - No hidden fallback requirement that bypasses GoreeCloud Search as configured Browser search authority.
 - Provider errors reduced to bounded status codes.
 - Result URLs containing embedded credentials rejected before presentation.
