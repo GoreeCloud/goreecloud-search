@@ -19,10 +19,16 @@ This file records Search functionality and implementation state. A listed capabi
 - Sanitized provider capability definitions without credentials, endpoints, runtime errors, or mutable controls.
 - GoreeCloud-owned deterministic ranking v2 that evaluates the submitted query against result titles, snippets, and URL text locally for each request.
 - Strong title/exact-match relevance with lower-weight snippet and URL coverage.
+- Local query-intent parsing for `site:`, domain-directed, `filetype:`/`ext:`, and quoted-phrase signals without rewriting the provider query.
+- Explicit site/domain matches and requested file extensions receive bounded ranking preference while mismatched explicit operators are demoted.
+- Quoted multi-word phrases receive bounded title/snippet/URL ordering boosts.
+- Bounded one-edit or adjacent-transposition tolerance for query tokens of at least five runes, with substantially lower weight than exact title/token relevance.
+- Short query tokens are excluded from fuzzy matching to reduce false-positive relevance.
 - Provider scores bounded to weak supporting evidence instead of being trusted as one universal cross-provider scale.
 - Exact-URL de-duplication that preserves sorted source provenance and bounded multi-provider consensus evidence.
 - Query-relevant representative selection when duplicate providers return different titles/snippets for the same URL.
 - First-viewport hostname diversity when multiple relevant domains are available, with site/domain-directed queries exempt from diversity reshuffling.
+- Domain detection distinguishes actual domain targets from dotted version-like tokens so queries such as `1.5.0` do not accidentally disable result diversity.
 - Deterministic final ordering and bounded ranking scores.
 
 ### Native GoreeCloud product experience
@@ -44,6 +50,7 @@ This file records Search functionality and implementation state. A listed capabi
 - No GoreeCloud advertising or sponsored-ranking business model.
 - No intended behavioral profiling.
 - Native ranking does not use click history, behavioral profiles, advertising signals, or remote ranking telemetry.
+- Intent parsing and typo-tolerant ranking operate request-locally and do not send correction lookups to another service.
 - Explicit query bounds and minimized native state.
 - No hidden fallback requirement that bypasses GoreeCloud Search as configured Browser search authority.
 - Provider errors reduced to bounded status codes.
@@ -72,8 +79,8 @@ Inherited capability presence is transitional evidence, not the target applicati
 
 - Production-approved native external-provider adapters and credentials integration.
 - Accepted native provider coverage for every category selected for release.
-- Query correction/spelling assistance backed by an approved local or privacy-preserving implementation.
-- Richer intent routing and specialized result understanding where justified by accepted native provider metadata.
+- User-facing query correction/spelling suggestions backed by an approved local or privacy-preserving implementation; the current ranker only tolerates bounded near-token matches and does not rewrite submitted queries.
+- Additional intent routing and specialized result understanding beyond the implemented site/domain/file-type/quoted-phrase ranking signals, where justified by accepted native provider metadata.
 - Freshness-aware ranking for result types that carry trustworthy publication/update timestamps.
 - Optional semantic retrieval/reranking only if implemented through an approved privacy-preserving GoreeCloud-controlled path and validated against deterministic fallback behavior.
 - Completed feature-parity migration from the inherited runtime.
