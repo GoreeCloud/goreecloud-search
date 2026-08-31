@@ -10,38 +10,98 @@
   <link rel="stylesheet" href="/assets/categories.css">
 </head>
 <body>
-  <div class="page-shell">
+  <div class="page-shell results-shell">
     <header class="topbar results-topbar">
-      <a class="brand" href="/" aria-label="GoreeCloud Search home"><span class="brand-mark" aria-hidden="true">G</span><span><strong>GoreeCloud</strong><small>Search</small></span></a>
+      <a class="brand results-brand" href="/" aria-label="GoreeCloud Search home"><span class="brand-mark" aria-hidden="true">G</span><span><strong>GoreeCloud</strong><small>Search</small></span></a>
       <form class="results-search" action="/search" method="get" role="search">
         <label class="sr-only" for="results-q">Search query</label>
-        <input id="results-q" name="q" type="search" value="{{.Query}}" placeholder="Search with GoreeCloud" autocomplete="off">
+        <span class="results-search-icon" aria-hidden="true">⌕</span>
+        <input id="results-q" name="q" type="search" value="{{.Query}}" placeholder="Search with GoreeCloud" autocomplete="off" enterkeyhint="search">
         <input type="hidden" name="category" value="{{if .Category}}{{.Category}}{{else}}general{{end}}">
         <button type="submit">Search</button>
       </form>
-      <nav class="top-actions"><a href="/preferences">Preferences</a></nav>
+      <nav class="top-actions" aria-label="Search actions"><a href="/preferences">Preferences</a></nav>
     </header>
 
     <main class="results-main">
-      <nav class="results-categories" aria-label="Search categories">
-        <a class="chip {{if eq .Category "general"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=general">General</a>
-        <a class="chip {{if eq .Category "images"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=images">Images</a>
-        <a class="chip {{if eq .Category "videos"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=videos">Videos</a>
-        <a class="chip {{if eq .Category "news"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=news">News</a>
-        <a class="chip {{if eq .Category "files"}}active{{end}}" href="/search?q={{urlquery .Query}}&amp;category=files">Files</a>
-      </nav>
+      <div class="results-context">
+        <nav class="results-categories" aria-label="Search categories">
+          <a class="chip {{if eq .Category "general"}}active{{end}}" {{if eq .Category "general"}}aria-current="page"{{end}} href="/search?q={{urlquery .Query}}&amp;category=general">General</a>
+          <a class="chip {{if eq .Category "images"}}active{{end}}" {{if eq .Category "images"}}aria-current="page"{{end}} href="/search?q={{urlquery .Query}}&amp;category=images">Images</a>
+          <a class="chip {{if eq .Category "videos"}}active{{end}}" {{if eq .Category "videos"}}aria-current="page"{{end}} href="/search?q={{urlquery .Query}}&amp;category=videos">Videos</a>
+          <a class="chip {{if eq .Category "news"}}active{{end}}" {{if eq .Category "news"}}aria-current="page"{{end}} href="/search?q={{urlquery .Query}}&amp;category=news">News</a>
+          <a class="chip {{if eq .Category "files"}}active{{end}}" {{if eq .Category "files"}}aria-current="page"{{end}} href="/search?q={{urlquery .Query}}&amp;category=files">Files</a>
+        </nav>
+      </div>
 
       {{if .Error}}
       <section class="results-state error-state" role="alert"><span class="state-icon" aria-hidden="true">!</span><div><h1>Search needs attention</h1><p>{{.Error}}</p></div></section>
       {{else}}
-        <section class="results-heading"><div><span class="eyebrow">{{.Category}} results</span><h1>{{.Query}}</h1></div>{{if .Degraded}}<span class="status-badge neutral">Some sources unavailable</span>{{end}}</section>
-        {{if .Providers}}<details class="provider-summary"><summary>Source status</summary><div class="provider-grid">{{range .Providers}}<div class="provider-item"><strong>{{.Name}}</strong><span class="status-badge {{if eq .State "available"}}{{else}}neutral{{end}}">{{.State}}</span><small>{{.Count}} results{{if .Code}} · {{.Code}}{{end}}</small></div>{{end}}</div></details>{{end}}
-        {{if .Results}}
-        <ol class="result-list">{{range .Results}}<li class="result-card"><div class="result-source"><span>{{.Provider}}</span><span class="result-score">Score {{.Score}}</span></div><h2><a href="{{.URL}}" rel="noopener noreferrer">{{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}</a></h2><a class="result-url" href="{{.URL}}" rel="noopener noreferrer">{{.URL}}</a>{{if .Snippet}}<p>{{.Snippet}}</p>{{end}}</li>{{end}}</ol>
-        {{else}}<section class="results-state"><span class="state-icon" aria-hidden="true">⌕</span><div><h2>No results yet</h2><p>The native provider adapters are still being migrated. Your query was accepted, but no configured native provider returned a result.</p></div></section>{{end}}
+        <section class="results-heading" aria-labelledby="results-title">
+          <div>
+            <span class="eyebrow">{{.Category}} search</span>
+            <h1 id="results-title">Results for “{{.Query}}”</h1>
+            <p>{{len .Results}} result{{if ne (len .Results) 1}}s{{end}} from the configured native sources.</p>
+          </div>
+          {{if .Degraded}}<span class="status-badge neutral">Some sources unavailable</span>{{end}}
+        </section>
+
+        <div class="results-layout">
+          <section class="results-column" aria-label="Search results">
+            {{if .Results}}
+            <ol class="result-list">
+              {{range .Results}}
+              <li class="result-card">
+                <article>
+                  <div class="result-source">
+                    <span class="source-avatar" aria-hidden="true">↗</span>
+                    <div class="source-copy">
+                      <strong>{{.Provider}}</strong>
+                      {{if gt .SourceCount 1}}<span>{{.SourceCount}} sources agree</span>{{else}}<span>Search source</span>{{end}}
+                    </div>
+                  </div>
+                  <h2><a href="{{.URL}}" rel="noopener noreferrer">{{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}</a></h2>
+                  <a class="result-url" href="{{.URL}}" rel="noopener noreferrer">{{.URL}}</a>
+                  {{if .Snippet}}<p class="result-snippet">{{.Snippet}}</p>{{end}}
+                  {{if gt .SourceCount 1}}
+                  <details class="result-provenance">
+                    <summary>Source agreement</summary>
+                    <div class="source-list" aria-label="Sources reporting this result">{{range .Sources}}<span>{{.}}</span>{{end}}</div>
+                  </details>
+                  {{end}}
+                </article>
+              </li>
+              {{end}}
+            </ol>
+            {{else}}
+            <section class="results-state empty-state"><span class="state-icon" aria-hidden="true">⌕</span><div><h2>No results found</h2><p>Try fewer words, a broader phrase, or another category. If a provider is unavailable, its status is shown under Source health.</p></div></section>
+            {{end}}
+          </section>
+
+          <aside class="results-sidebar" aria-label="Search details">
+            <section class="results-side-panel">
+              <span class="section-kicker">Ranking</span>
+              <h2>Relevant first</h2>
+              <p>GoreeCloud ranks this request locally using query relevance, bounded provider evidence, source agreement, and first-page source diversity. Click history is not used.</p>
+            </section>
+            {{if .Providers}}
+            <details class="provider-summary" {{if .Degraded}}open{{end}}>
+              <summary><span>Source health</span><small>{{len .Providers}} configured</small></summary>
+              <div class="provider-grid">
+                {{range .Providers}}
+                <div class="provider-item">
+                  <div><strong>{{.Name}}</strong><small>{{.Count}} result{{if ne .Count 1}}s{{end}}{{if .Code}} · {{.Code}}{{end}}</small></div>
+                  <span class="status-badge {{if eq .State "available"}}{{else}}neutral{{end}}">{{.State}}</span>
+                </div>
+                {{end}}
+              </div>
+            </details>
+            {{end}}
+          </aside>
+        </div>
       {{end}}
     </main>
-    <footer>GoreeCloud Search · Native results preview · Production approval not granted</footer>
+    <footer>GoreeCloud Search · Native development preview · Production approval not granted</footer>
   </div>
 </body>
 </html>
