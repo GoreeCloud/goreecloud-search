@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	maxRankScore            = 9999
+	maxRankScore            = 30000
+	maxPhraseScore          = 2500
 	maxProviderScoreSignal  = 300
 	maxConsensusBonus       = 900
 	consensusBonusPerSource = 300
@@ -113,20 +114,7 @@ func relevanceScoreIntent(intent queryIntent, result Result) int {
 		score -= 250
 	}
 
-	for _, phrase := range intent.phrases {
-		if strings.Contains(title, phrase) {
-			score += 1000
-			if title == phrase {
-				score += 500
-			}
-		}
-		if strings.Contains(snippet, phrase) {
-			score += 350
-		}
-		if strings.Contains(urlText, phrase) {
-			score += 200
-		}
-	}
+	score += phraseMatchScore(intent.phrases, title, snippet, urlText)
 
 	if len(intent.siteHosts) > 0 {
 		matched := false
@@ -167,6 +155,28 @@ func relevanceScoreIntent(intent queryIntent, result Result) int {
 	}
 
 	return clampRankScore(score)
+}
+
+func phraseMatchScore(phrases []string, title, snippet, urlText string) int {
+	score := 0
+	for _, phrase := range phrases {
+		if strings.Contains(title, phrase) {
+			score += 1000
+			if title == phrase {
+				score += 500
+			}
+		}
+		if strings.Contains(snippet, phrase) {
+			score += 350
+		}
+		if strings.Contains(urlText, phrase) {
+			score += 200
+		}
+	}
+	if score > maxPhraseScore {
+		return maxPhraseScore
+	}
+	return score
 }
 
 func providerScoreSignal(raw int) int {
