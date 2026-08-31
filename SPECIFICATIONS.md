@@ -22,12 +22,23 @@ The native engine currently provides source-level application logic for:
 - fail-closed specialized-category execution unless a configured provider has an executable category path;
 - concurrent provider execution under one bounded request context;
 - per-provider availability/timeout status without exposing provider error strings to the response;
-- deterministic provider status ordering and deterministic result ordering;
-- URL de-duplication with deterministic highest-score/tie-break behavior;
 - HTTP/HTTPS result URL validation with fragment removal;
 - rejection of result URLs containing embedded user-info credentials;
 - provider identity normalization with a 128-rune maximum and rejection of blank or control-character names before advertisement or execution;
-- sanitized provider-definition exposure that does not publish credentials, endpoints, mutable controls, or runtime errors.
+- sanitized provider-definition exposure that does not publish credentials, endpoints, mutable controls, or runtime errors;
+- GoreeCloud-owned request-local result ranking rather than direct cross-provider trust in arbitrary provider score scales;
+- Unicode-aware query/result token normalization for deterministic relevance scoring;
+- strong title relevance, exact-title and phrase-match signals, with lower-weight snippet and URL token coverage;
+- provider-supplied integer score retained only as bounded supporting evidence with a maximum contribution of 300 ranking points;
+- exact normalized-URL clustering that preserves deterministic source-agreement evidence rather than discarding duplicate-provider consensus;
+- source-agreement bonus bounded to 900 ranking points, preventing consensus from becoming unlimited ranking authority;
+- selection of the most query-relevant duplicate title/snippet as the displayed representative while preserving deterministic tie breaks;
+- first-viewport hostname diversity of at most two results per hostname when other ranked hosts are available;
+- no hostname-diversity override for explicit `site:` or domain-looking queries, where concentration is likely intentional;
+- final deterministic score/URL/provider ordering before the bounded diversity pass;
+- native result metadata for deterministic `source_count` and sorted `sources` provenance.
+
+The native ranking path is deterministic and request-local. It does not use click history, behavioral profiles, advertising signals, sponsored placement, or remote ranking telemetry.
 
 No external provider is production-approved merely because the native provider interfaces exist. Provider selection, credentials, privacy policy, terms, health, rate limiting, degradation behavior, and target-runtime evidence remain separate acceptance work.
 
@@ -35,7 +46,19 @@ No external provider is production-approved merely because the native provider i
 
 The native tree contains GoreeCloud-owned homepage/results/presentation work under `native/internal/webui` and first-party preference state under `native/internal/preferences`.
 
-Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. Source structure alone is not visual/accessibility acceptance.
+The native results surface now implements source-level scan-first presentation with:
+
+- a compact persistent query field and category navigation;
+- restrained list-based result composition rather than a wall of equally elevated cards;
+- title-first hierarchy, subordinate URL/snippet treatment, and no user-visible internal numeric ranking score;
+- source-agreement disclosure for clustered multi-provider results;
+- a separate source-health surface for available/degraded provider state;
+- explicit local-ranking/privacy explanation without claiming anonymity from external providers;
+- adaptive desktop and narrow-window composition;
+- visible focus inherited from the shared application contract plus reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks;
+- script-free result rendering through Go `html/template`, preserving automatic escaping of query/provider/title/snippet/source content.
+
+Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is Glaze UI 2.0.0. Source structure, CSS implementation, or passing unit tests alone are not visual/accessibility/device acceptance and do not establish Glaze UI production conformance.
 
 ## Sync boundary
 
@@ -57,7 +80,9 @@ Search requirements include:
 - explicit user controls before account history or personalization is enabled;
 - no hidden provider fallback that bypasses the configured Search authority;
 - no result URL user-info credentials entering the native response surface;
-- provider errors represented by bounded status codes rather than raw error text that may contain secrets.
+- provider errors represented by bounded status codes rather than raw error text that may contain secrets;
+- no click-history or behavioral-profile dependency in native relevance ranking;
+- no user-visible internal ranking score that could be mistaken for a provider trust or quality guarantee.
 
 External providers may observe requests from GoreeCloud infrastructure. Search must not claim anonymity from external providers.
 
@@ -90,7 +115,7 @@ Stable remains blocked by at least:
 
 - production-approved native provider adapters and credentials/secrets integration;
 - complete native category/provider coverage required for the selected release;
-- accepted Glaze UI native visual/accessibility/device evidence;
+- accepted Glaze UI 2.0 native visual/accessibility/device evidence;
 - applicable Wardveil Security and Privacy Shield runtime/evidence integration;
 - Everkeep-backed backup/restore/migration/rollback acceptance;
 - GoreeCloud Identity and Mesh integration where the release uses account-bound capabilities;
