@@ -49,6 +49,15 @@ func TestRankingEvaluationCorpus(t *testing.T) {
 			wantURL: "https://goreecloud.com/search",
 		},
 		{
+			name:  "temporal modifier preserves subject relevance",
+			query: "latest goreecloud security model",
+			candidates: []Result{
+				{Title: "GoreeCloud security model", URL: "https://security.example/model", Provider: "security", Score: 1, recencyBonus: 400},
+				{Title: "Latest cloud security model news", URL: "https://news.example/model", Provider: "news", Score: 300, recencyBonus: maxFreshnessBonus},
+			},
+			wantURL: "https://security.example/model",
+		},
+		{
 			name:  "consensus cannot overpower clearly relevant result",
 			query: "goreecloud security model",
 			candidates: []Result{
