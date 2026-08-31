@@ -22,6 +22,7 @@ The native engine currently provides source-level application logic for:
 - fail-closed specialized-category execution unless a configured provider has an executable category path;
 - concurrent provider execution under one bounded request context;
 - per-provider availability/timeout status without exposing provider error strings to the response;
+- a deterministic 512-result processing ceiling per provider per request before native URL sanitization and ranking; an oversized provider result slice is copied to the bounded working set, provider status records the processed count, and `truncated=true` discloses that the ceiling was applied;
 - HTTP/HTTPS result URL validation with fragment removal;
 - rejection of result URLs containing embedded user-info credentials;
 - provider identity normalization with a 128-rune maximum and rejection of blank or control-character names before advertisement or execution;
@@ -48,6 +49,8 @@ The native engine currently provides source-level application logic for:
 
 The native ranking path is deterministic and request-local. It does not use click history, behavioral profiles, advertising signals, sponsored placement, remote spelling/correction lookups, or remote ranking telemetry. Current typo tolerance affects ordering only; Search does not silently rewrite or replace the query sent to providers.
 
+The provider result ceiling bounds Search-owned post-provider work; it cannot prevent an adapter or external provider implementation from allocating its own oversized response before returning. Production provider adapters therefore remain responsible for their own transport/body/result bounds in addition to this engine-level ceiling.
+
 No external provider is production-approved merely because the native provider interfaces exist. Provider selection, credentials, privacy policy, terms, health, rate limiting, degradation behavior, and target-runtime evidence remain separate acceptance work.
 
 ## Native presentation and preferences
@@ -60,7 +63,7 @@ The native results surface now implements source-level scan-first presentation w
 - restrained list-based result composition rather than a wall of equally elevated cards;
 - title-first hierarchy, subordinate URL/snippet treatment, and no user-visible internal numeric ranking score;
 - source-agreement disclosure for clustered multi-provider results;
-- a separate source-health surface for available/degraded provider state;
+- a separate source-health surface for available/degraded provider state, including visible “limit applied” disclosure when a provider exceeds the Search-owned result-processing ceiling;
 - explicit local-ranking/privacy explanation without claiming anonymity from external providers;
 - adaptive desktop and narrow-window composition;
 - visible focus inherited from the shared application contract plus reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks;
@@ -87,6 +90,7 @@ Search requirements include:
 - minimized persistent query/history state;
 - explicit user controls before account history or personalization is enabled;
 - no hidden provider fallback that bypasses the configured Search authority;
+- bounded Search-owned per-provider result processing for native ranking/resource control;
 - no result URL user-info credentials entering the native response surface;
 - provider errors represented by bounded status codes rather than raw error text that may contain secrets;
 - no click-history or behavioral-profile dependency in native relevance ranking;
@@ -131,7 +135,7 @@ Stable remains blocked by at least:
 - Everkeep-backed backup/restore/migration/rollback acceptance;
 - GoreeCloud Identity and Mesh integration where the release uses account-bound capabilities;
 - migration parity and controlled cutover from the transitional runtime;
-- monitoring, alerting, resource/abuse bounds, target-host validation, and rollback evidence;
+- monitoring, alerting, provider-adapter resource/body bounds, abuse controls, target-host validation, and rollback evidence;
 - supported Browser/device/runtime acceptance;
 - exact-release provenance and production approval.
 
