@@ -1,12 +1,9 @@
 package search
 
-import (
-	"strings"
-	"time"
-)
+import "time"
 
 const (
-	maxFreshnessBonus       = 1200
+	maxFreshnessBonus        = 1200
 	maxPublishedAtFutureSkew = 24 * time.Hour
 )
 
@@ -75,11 +72,5 @@ func freshnessScore(intent queryIntent, category string, result Result, now time
 }
 
 func queryRequestsFreshness(intent queryIntent) bool {
-	for _, token := range intent.tokens {
-		switch token {
-		case "latest", "recent", "recently", "today", "current", "breaking", "newest", "updated", "updates", "news":
-			return true
-		}
-	}
-	return strings.Contains(intent.normalized, "this week") || strings.Contains(intent.normalized, "this month")
+	return intent.freshnessRequested
 }
