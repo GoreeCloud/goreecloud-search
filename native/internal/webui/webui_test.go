@@ -5,22 +5,26 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
 func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) {
 	recorder := httptest.NewRecorder()
+	published := time.Date(2026, time.August, 31, 14, 30, 0, 0, time.UTC)
 	RenderResults(recorder, searchcore.Response{
 		Query: "goreecloud <script>alert(1)</script>",
 		Results: []searchcore.Result{{
-			Title:       "<img src=x onerror=alert(1)>",
-			URL:         "https://example.com/path?q=one&two=2",
-			Snippet:     "<b>provider content</b>",
-			Provider:    "example <script>",
-			Score:       42,
-			SourceCount: 2,
-			Sources:     []string{"example <script>", "other"},
+			Title:             "<img src=x onerror=alert(1)>",
+			URL:               "https://example.com/path?q=one&two=2",
+			Snippet:           "<b>provider content</b>",
+			Provider:          "example <script>",
+			Score:             42,
+			SourceCount:       2,
+			Sources:           []string{"example <script>", "other"},
+			PublishedAt:       &published,
+			PublishedAtSource: "example <script>",
 		}},
 		Providers: []searchcore.ProviderStatus{{
 			Name: "example", State: searchcore.ProviderStateAvailable, Count: 512, Truncated: true,
@@ -36,13 +40,43 @@ func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) 
 			t.Fatalf("rendered unsafe provider HTML %q", unsafe)
 		}
 	}
-	for _, expected := range []string{"GoreeCloud Search", "result-card", "example", "2 sources agree", "Source agreement", "https://example.com/path", "Click history is not used", "512 results · limit applied"} {
+	for _, expected := range []string{
+		"GoreeCloud Search",
+		"result-card",
+		"example",
+		"2 sources agree",
+		"Source agreement",
+		"https://example.com/path",
+		"trustworthy freshness when requested",
+		"Click history is not used",
+		"Published Aug 31, 2026",
+		`datetime="2026-08-31T14:30:00Z"`,
+		"512 results · limit applied",
+	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("rendered body missing %q", expected)
 		}
 	}
 	if strings.Contains(body, "Score 42") {
 		t.Fatal("results UI exposed internal ranking score")
+	}
+	if strings.Contains(body, "PublishedAtSource") {
+		t.Fatal("results UI exposed internal publication metadata field name")
+	}
+}
+
+func TestRenderResultsOmitsPublicationTimeWhenTimestampMissing(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	RenderResults(recorder, searchcore.Response{
+		Query: "goreecloud search",
+		Results: []searchcore.Result{{
+			Title:    "GoreeCloud Search",
+			URL:      "https://example.com/search",
+			Provider: "example",
+		}},
+	})
+	if strings.Contains(recorder.Body.String(), "result-published") {
+		t.Fatal("results UI rendered publication metadata without a timestamp")
 	}
 }
 
@@ -73,7 +107,7 @@ func TestResultsStylesAreServedAsCSS(t *testing.T) {
 		t.Fatalf("Content-Type = %q", got)
 	}
 	body := recorder.Body.String()
-	for _, expected := range []string{".result-card", ".results-layout", ".results-sidebar", "prefers-reduced-motion", "forced-colors"} {
+	for _, expected := range []string{".result-card", ".result-published", ".results-layout", ".results-sidebar", "prefers-reduced-motion", "forced-colors"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("results stylesheet missing %q", expected)
 		}
