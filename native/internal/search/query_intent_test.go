@@ -18,6 +18,34 @@ func TestParseQueryIntentSeparatesOperators(t *testing.T) {
 	}
 }
 
+func TestTemporalModifiersSeparateFreshnessFromLexicalIntent(t *testing.T) {
+	cases := []struct {
+		query      string
+		wantText   string
+		wantFresh  bool
+	}{
+		{query: "latest goreecloud search", wantText: "goreecloud search", wantFresh: true},
+		{query: "recent goreecloud search", wantText: "goreecloud search", wantFresh: true},
+		{query: "this week goreecloud search", wantText: "goreecloud search", wantFresh: true},
+		{query: "current weather", wantText: "weather", wantFresh: true},
+		{query: "electric current", wantText: "electric current", wantFresh: false},
+		{query: "goreecloud news", wantText: "goreecloud news", wantFresh: true},
+		{query: "goreecloud updates", wantText: "goreecloud updates", wantFresh: true},
+		{query: `"latest goreecloud" search`, wantText: "latest goreecloud search", wantFresh: false},
+	}
+	for _, test := range cases {
+		t.Run(test.query, func(t *testing.T) {
+			intent := parseQueryIntent(test.query)
+			if intent.normalized != test.wantText {
+				t.Fatalf("normalized=%q, want %q", intent.normalized, test.wantText)
+			}
+			if intent.freshnessRequested != test.wantFresh {
+				t.Fatalf("freshnessRequested=%v, want %v", intent.freshnessRequested, test.wantFresh)
+			}
+		})
+	}
+}
+
 func TestQueryIntentRejectsVersionAsDomain(t *testing.T) {
 	if queryTargetsDomain("goreecloud 1.5.0 release") {
 		t.Fatal("version token should not disable hostname diversity")
