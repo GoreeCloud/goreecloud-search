@@ -9,16 +9,18 @@ import (
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
-func TestRenderResultsEscapesProviderContent(t *testing.T) {
+func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	RenderResults(recorder, searchcore.Response{
 		Query: "goreecloud <script>alert(1)</script>",
 		Results: []searchcore.Result{{
-			Title:    "<img src=x onerror=alert(1)>",
-			URL:      "https://example.com/path?q=one&two=2",
-			Snippet:  "<b>provider content</b>",
-			Provider: "example <script>",
-			Score:    42,
+			Title:       "<img src=x onerror=alert(1)>",
+			URL:         "https://example.com/path?q=one&two=2",
+			Snippet:     "<b>provider content</b>",
+			Provider:    "example <script>",
+			Score:       42,
+			SourceCount: 2,
+			Sources:     []string{"example <script>", "other"},
 		}},
 		Providers: []searchcore.ProviderStatus{{Name: "example", State: searchcore.ProviderStateAvailable, Count: 1}},
 	})
@@ -32,10 +34,13 @@ func TestRenderResultsEscapesProviderContent(t *testing.T) {
 			t.Fatalf("rendered unsafe provider HTML %q", unsafe)
 		}
 	}
-	for _, expected := range []string{"GoreeCloud Search", "result-card", "example", "Score 42", "https://example.com/path"} {
+	for _, expected := range []string{"GoreeCloud Search", "result-card", "example", "2 sources agree", "Source agreement", "https://example.com/path", "Click history is not used"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("rendered body missing %q", expected)
 		}
+	}
+	if strings.Contains(body, "Score 42") {
+		t.Fatal("results UI exposed internal ranking score")
 	}
 }
 
@@ -65,8 +70,11 @@ func TestResultsStylesAreServedAsCSS(t *testing.T) {
 	if got := recorder.Header().Get("Content-Type"); got != "text/css; charset=utf-8" {
 		t.Fatalf("Content-Type = %q", got)
 	}
-	if !strings.Contains(recorder.Body.String(), ".result-card") {
-		t.Fatal("results stylesheet missing result-card contract")
+	body := recorder.Body.String()
+	for _, expected := range []string{".result-card", ".results-layout", ".results-sidebar", "prefers-reduced-motion", "forced-colors"} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("results stylesheet missing %q", expected)
+		}
 	}
 }
 
