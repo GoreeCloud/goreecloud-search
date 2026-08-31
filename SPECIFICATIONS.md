@@ -28,17 +28,25 @@ The native engine currently provides source-level application logic for:
 - sanitized provider-definition exposure that does not publish credentials, endpoints, mutable controls, or runtime errors;
 - GoreeCloud-owned request-local result ranking rather than direct cross-provider trust in arbitrary provider score scales;
 - Unicode-aware query/result token normalization for deterministic relevance scoring;
-- strong title relevance, exact-title and phrase-match signals, with lower-weight snippet and URL token coverage;
+- local query-intent parsing that separates `site:`, `filetype:`/`ext:`, quoted phrases, and domain-directed targets from ordinary relevance tokens without rewriting the submitted provider query;
+- strong title relevance and exact-title signals, with lower-weight snippet and URL token coverage;
+- bounded quoted-phrase boosts when an explicitly quoted multi-word phrase remains contiguous in a result title, snippet, or URL text;
+- bounded one-edit or adjacent-transposition tolerance for tokens of at least five runes, with fuzzy title/snippet/URL contributions kept materially below exact relevance signals;
+- no fuzzy matching for shorter tokens, reducing accidental matches on common short words;
+- bounded positive preference for explicit `site:` host/subdomain matches and bounded demotion of results that violate an explicit site target;
+- bounded positive preference for domain-directed navigational results whose hostname matches the requested domain;
+- bounded positive preference for `filetype:`/`ext:` URL extensions and bounded demotion when an explicit requested extension does not match;
+- actual domain-target recognition rather than a generic dotted-token heuristic, preventing dotted versions such as `1.5.0` from disabling hostname diversity;
 - provider-supplied integer score retained only as bounded supporting evidence with a maximum contribution of 300 ranking points;
 - exact normalized-URL clustering that preserves deterministic source-agreement evidence rather than discarding duplicate-provider consensus;
 - source-agreement bonus bounded to 900 ranking points, preventing consensus from becoming unlimited ranking authority;
 - selection of the most query-relevant duplicate title/snippet as the displayed representative while preserving deterministic tie breaks;
 - first-viewport hostname diversity of at most two results per hostname when other ranked hosts are available;
-- no hostname-diversity override for explicit `site:` or domain-looking queries, where concentration is likely intentional;
+- no hostname-diversity override for explicit `site:` or valid domain-directed queries, where concentration is likely intentional;
 - final deterministic score/URL/provider ordering before the bounded diversity pass;
 - native result metadata for deterministic `source_count` and sorted `sources` provenance.
 
-The native ranking path is deterministic and request-local. It does not use click history, behavioral profiles, advertising signals, sponsored placement, or remote ranking telemetry.
+The native ranking path is deterministic and request-local. It does not use click history, behavioral profiles, advertising signals, sponsored placement, remote spelling/correction lookups, or remote ranking telemetry. Current typo tolerance affects ordering only; Search does not silently rewrite or replace the query sent to providers.
 
 No external provider is production-approved merely because the native provider interfaces exist. Provider selection, credentials, privacy policy, terms, health, rate limiting, degradation behavior, and target-runtime evidence remain separate acceptance work.
 
@@ -82,6 +90,7 @@ Search requirements include:
 - no result URL user-info credentials entering the native response surface;
 - provider errors represented by bounded status codes rather than raw error text that may contain secrets;
 - no click-history or behavioral-profile dependency in native relevance ranking;
+- no external lookup requirement for the implemented intent parsing or typo-tolerant ranking signals;
 - no user-visible internal ranking score that could be mistaken for a provider trust or quality guarantee.
 
 External providers may observe requests from GoreeCloud infrastructure. Search must not claim anonymity from external providers.
@@ -115,6 +124,8 @@ Stable remains blocked by at least:
 
 - production-approved native provider adapters and credentials/secrets integration;
 - complete native category/provider coverage required for the selected release;
+- user-facing spelling/correction suggestions, if included in the release, through an approved local or privacy-preserving implementation distinct from the current ranking-only typo tolerance;
+- trustworthy freshness metadata and freshness-aware ranking for result classes where recency is required;
 - accepted Glaze UI 2.0 native visual/accessibility/device evidence;
 - applicable Wardveil Security and Privacy Shield runtime/evidence integration;
 - Everkeep-backed backup/restore/migration/rollback acceptance;
