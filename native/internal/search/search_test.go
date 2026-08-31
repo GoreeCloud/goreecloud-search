@@ -89,10 +89,13 @@ func TestEngineAggregatesDeduplicatesAndDegrades(t *testing.T) {
 	if len(response.Results) != 2 {
 		t.Fatalf("expected 2 sanitized unique results, got %d", len(response.Results))
 	}
-	if response.Results[0].URL != "https://example.com/a" || response.Results[0].Score != 9 || response.Results[0].Provider != "two" {
-		t.Fatalf("expected highest-scoring duplicate to win deterministically: %#v", response.Results)
+	if response.Results[0].URL != "https://example.com/a" || response.Results[0].Provider != "two" {
+		t.Fatalf("expected query-aware duplicate cluster to retain deterministic representative: %#v", response.Results)
 	}
-	if response.Results[1].URL != "https://example.org/c" || response.Results[1].Score != 5 {
+	if response.Results[0].SourceCount != 2 || len(response.Results[0].Sources) != 2 {
+		t.Fatalf("expected duplicate-provider consensus evidence: %#v", response.Results[0])
+	}
+	if response.Results[1].URL != "https://example.org/c" || response.Results[0].Score <= response.Results[1].Score {
 		t.Fatalf("unexpected deterministic ranking: %#v", response.Results)
 	}
 	if len(response.Providers) != 3 {
