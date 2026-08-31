@@ -27,9 +27,10 @@ type resultCluster struct {
 // relevance scale. Query/result text remains local to the request and this
 // ranking path does not use click history, behavioral profiles, or telemetry.
 func rankResults(query string, candidates []Result) []Result {
+	intent := parseQueryIntent(query)
 	clusters := make(map[string]*resultCluster, len(candidates))
 	for _, candidate := range candidates {
-		baseScore := relevanceScore(query, candidate)
+		baseScore := relevanceScoreIntent(intent, candidate)
 		cluster, exists := clusters[candidate.URL]
 		if !exists {
 			cluster = &resultCluster{
@@ -72,40 +73,97 @@ func rankResults(query string, candidates []Result) []Result {
 		}
 		return ranked[i].Score > ranked[j].Score
 	})
-	return diversifyTopResults(query, ranked)
+	return diversifyTopResultsIntent(intent, ranked)
 }
 
 func relevanceScore(query string, result Result) int {
-	queryNormalized := normalizeSearchText(query)
-	queryTokens := uniqueTokens(queryNormalized)
-	if queryNormalized == "" || len(queryTokens) == 0 {
-		return providerScoreSignal(result.Score)
-	}
+	return relevanceScoreIntent(parseQueryIntent(query), result)
+}
 
+func relevanceScoreIntent(intent queryIntent, result Result) int {
 	title := normalizeSearchText(result.Title)
 	snippet := normalizeSearchText(result.Snippet)
 	urlText := normalizeURLText(result.URL)
+	host := resultHost(result)
 
 	score := providerScoreSignal(result.Score)
-	titleCoverage := tokenCoverageScore(queryTokens, title, 2600)
-	score += titleCoverage
-	score += tokenCoverageScore(queryTokens, snippet, 1000)
-	score += tokenCoverageScore(queryTokens, urlText, 700)
+	if len(intent.tokens) > 0 {
+		titleCoverage := tokenCoverageScore(intent.tokens, title, 2600)
+		score += titleCoverage
+		score += tokenCoverageScore(intent.tokens, snippet, 1000)
+		score += tokenCoverageScore(intent.tokens, urlText, 700)
+		score += fuzzyTokenCoverageScore(intent.tokens, title, 700)
+		score += fuzzyTokenCoverageScore(intent.tokens, snippet, 250)
+		score += fuzzyTokenCoverageScore(intent.tokens, urlText, 300)
 
-	if title != "" && title == queryNormalized {
-		score += 3600
-	}
-	if len(queryTokens) > 1 && title != "" && strings.Contains(title, queryNormalized) {
-		score += 1800
-	}
-	if titleCoverage == 2600 {
-		score += 900
-	}
-	if title != "" && strings.HasPrefix(title, queryNormalized) {
-		score += 350
+		if title != "" && title == intent.normalized {
+			score += 3600
+		}
+		if len(intent.tokens) > 1 && title != "" && strings.Contains(title, intent.normalized) {
+			score += 1800
+		}
+		if titleCoverage == 2600 {
+			score += 900
+		}
+		if title != "" && strings.HasPrefix(title, intent.normalized) {
+			score += 350
+		}
 	}
 	if title == "" {
 		score -= 250
+	}
+
+	for _, phrase := range intent.phrases {
+		if strings.Contains(title, phrase) {
+			score += 1000
+			if title == phrase {
+				score += 500
+			}
+		}
+		if strings.Contains(snippet, phrase) {
+			score += 350
+		}
+		if strings.Contains(urlText, phrase) {
+			score += 200
+		}
+	}
+
+	if len(intent.siteHosts) > 0 {
+		matched := false
+		for _, target := range intent.siteHosts {
+			if hostMatchesTarget(host, target) {
+				matched = true
+				break
+			}
+		}
+		if matched {
+			score += 2800
+		} else {
+			score -= 1200
+		}
+	}
+
+	for _, target := range intent.domainTargets {
+		if hostMatchesTarget(host, target) {
+			score += 2400
+			break
+		}
+	}
+
+	if len(intent.fileTypes) > 0 {
+		fileType := resultFileType(result.URL)
+		matched := false
+		for _, target := range intent.fileTypes {
+			if fileType == target {
+				matched = true
+				break
+			}
+		}
+		if matched {
+			score += 1800
+		} else {
+			score -= 500
+		}
 	}
 
 	return clampRankScore(score)
@@ -216,7 +274,11 @@ func resultHost(result Result) string {
 // when other relevant hosts are available. Explicit site/domain-looking queries
 // retain pure score order because concentration is likely intentional.
 func diversifyTopResults(query string, ranked []Result) []Result {
-	if len(ranked) < 4 || queryTargetsDomain(query) {
+	return diversifyTopResultsIntent(parseQueryIntent(query), ranked)
+}
+
+func diversifyTopResultsIntent(intent queryIntent, ranked []Result) []Result {
+	if len(ranked) < 4 || len(intent.siteHosts) > 0 || len(intent.domainTargets) > 0 {
 		return ranked
 	}
 	window := topDiversityWindow
@@ -268,15 +330,6 @@ func diversifyTopResults(query string, ranked []Result) []Result {
 }
 
 func queryTargetsDomain(query string) bool {
-	lower := strings.ToLower(strings.TrimSpace(query))
-	if strings.Contains(lower, "site:") {
-		return true
-	}
-	for _, field := range strings.Fields(lower) {
-		trimmed := strings.Trim(field, "()[]{}<>,;\"'")
-		if strings.Contains(trimmed, ".") && !strings.HasPrefix(trimmed, ".") && !strings.HasSuffix(trimmed, ".") {
-			return true
-		}
-	}
-	return false
+	intent := parseQueryIntent(query)
+	return len(intent.siteHosts) > 0 || len(intent.domainTargets) > 0
 }
