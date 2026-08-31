@@ -22,6 +22,12 @@ func TestQueryIntentRejectsVersionAsDomain(t *testing.T) {
 	if queryTargetsDomain("goreecloud 1.5.0 release") {
 		t.Fatal("version token should not disable hostname diversity")
 	}
+	if queryTargetsDomain("release v1.5.0 component.v2") {
+		t.Fatal("version-like dotted token should not be treated as a domain")
+	}
+	if queryTargetsDomain("user@example.com") {
+		t.Fatal("email-like tokens should not be treated as navigational domains")
+	}
 	if !queryTargetsDomain("goreecloud.com") {
 		t.Fatal("domain target should be recognized")
 	}
