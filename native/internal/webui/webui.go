@@ -15,12 +15,13 @@ var assets embed.FS
 var resultsTemplate = template.Must(template.ParseFS(assets, "assets/results.html"))
 
 type resultsPageData struct {
-	Query     string
-	Category  string
-	Results   []searchcore.Result
-	Providers []searchcore.ProviderStatus
-	Degraded  bool
-	Error     string
+	Query          string
+	SuggestedQuery string
+	Category       string
+	Results        []searchcore.Result
+	Providers      []searchcore.ProviderStatus
+	Degraded       bool
+	Error          string
 }
 
 func Homepage(w http.ResponseWriter, _ *http.Request) {
@@ -57,11 +58,12 @@ func CategoryStyles(w http.ResponseWriter, _ *http.Request) {
 
 func RenderResults(w http.ResponseWriter, response searchcore.Response) {
 	renderResults(w, http.StatusOK, resultsPageData{
-		Query:     response.Query,
-		Category:  response.Category,
-		Results:   response.Results,
-		Providers: response.Providers,
-		Degraded:  response.Degraded,
+		Query:          response.Query,
+		SuggestedQuery: response.SuggestedQuery,
+		Category:       response.Category,
+		Results:        response.Results,
+		Providers:      response.Providers,
+		Degraded:       response.Degraded,
 	})
 }
 
