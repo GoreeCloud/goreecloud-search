@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
@@ -59,18 +60,22 @@ func representativeResponse() searchcore.Response {
 		Degraded: true,
 		Results: []searchcore.Result{
 			{
-				Title:       "GoreeCloud Search — Private Search Architecture",
-				URL:         "https://docs.goreecloud.example/search/private-search-architecture",
-				Snippet:     "How GoreeCloud Search keeps request-local relevance, source agreement, privacy boundaries, and deterministic ranking separate from behavioral profiling.",
-				Provider:    "GoreeCloud Index",
-				SourceCount: 3,
-				Sources:     []string{"Docs Mirror", "GoreeCloud Index", "Research Catalog"},
+				Title:             "GoreeCloud Search — Private Search Architecture",
+				URL:               "https://docs.goreecloud.example/search/private-search-architecture",
+				Snippet:           "How GoreeCloud Search keeps request-local relevance, source agreement, privacy boundaries, and deterministic ranking separate from behavioral profiling.",
+				Provider:          "GoreeCloud Index",
+				SourceCount:       3,
+				Sources:           []string{"Docs Mirror", "GoreeCloud Index", "Research Catalog"},
+				PublishedAt:       fixedPublishedAt(2026, time.August, 31, 14, 30),
+				PublishedAtSource: "GoreeCloud Index",
 			},
 			{
-				Title:    "Search ranking without click-history profiling",
-				URL:      "https://research.goreecloud.example/search/ranking-without-profiling",
-				Snippet:  "A relevance model that favors query-title alignment, bounded source evidence, transparent consensus, and source diversity without personal behavioral tracking.",
-				Provider: "Research Catalog",
+				Title:             "Search ranking without click-history profiling",
+				URL:               "https://research.goreecloud.example/search/ranking-without-profiling",
+				Snippet:           "A relevance model that favors query-title alignment, bounded source evidence, transparent consensus, and source diversity without personal behavioral tracking.",
+				Provider:          "Research Catalog",
+				PublishedAt:       fixedPublishedAt(2026, time.August, 28, 9, 15),
+				PublishedAtSource: "Research Catalog",
 			},
 			{
 				Title:    "Understanding source agreement in GoreeCloud Search",
@@ -109,6 +114,11 @@ func representativeResponse() searchcore.Response {
 			{Name: "Research Catalog", State: searchcore.ProviderStateUnavailable, Code: searchcore.ProviderCodeTimeout, Count: 0},
 		},
 	}
+}
+
+func fixedPublishedAt(year int, month time.Month, day, hour, minute int) *time.Time {
+	value := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
+	return &value
 }
 
 func acceptanceHeaders(next http.Handler) http.Handler {
