@@ -62,6 +62,7 @@
                   </div>
                   <h2><a href="{{.URL}}" rel="noopener noreferrer">{{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}</a></h2>
                   <a class="result-url" href="{{.URL}}" rel="noopener noreferrer">{{.URL}}</a>
+                  {{if .PublishedAt}}<time class="result-published" datetime="{{.PublishedAt.Format "2006-01-02T15:04:05Z07:00"}}">Published {{.PublishedAt.Format "Jan 2, 2006"}}</time>{{end}}
                   {{if .Snippet}}<p class="result-snippet">{{.Snippet}}</p>{{end}}
                   {{if gt .SourceCount 1}}
                   <details class="result-provenance">
@@ -82,7 +83,7 @@
             <section class="results-side-panel">
               <span class="section-kicker">Ranking</span>
               <h2>Relevant first</h2>
-              <p>GoreeCloud ranks this request locally using query relevance, bounded provider evidence, source agreement, and first-page source diversity. Click history is not used.</p>
+              <p>GoreeCloud ranks this request locally using query relevance, trustworthy freshness when requested, bounded provider evidence, source agreement, and first-page source diversity. Click history is not used.</p>
             </section>
             {{if .Providers}}
             <details class="provider-summary" {{if .Degraded}}open{{end}}>
