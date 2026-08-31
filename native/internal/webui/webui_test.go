@@ -22,7 +22,9 @@ func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) 
 			SourceCount: 2,
 			Sources:     []string{"example <script>", "other"},
 		}},
-		Providers: []searchcore.ProviderStatus{{Name: "example", State: searchcore.ProviderStateAvailable, Count: 1}},
+		Providers: []searchcore.ProviderStatus{{
+			Name: "example", State: searchcore.ProviderStateAvailable, Count: 512, Truncated: true,
+		}},
 	})
 
 	if recorder.Code != http.StatusOK {
@@ -34,7 +36,7 @@ func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) 
 			t.Fatalf("rendered unsafe provider HTML %q", unsafe)
 		}
 	}
-	for _, expected := range []string{"GoreeCloud Search", "result-card", "example", "2 sources agree", "Source agreement", "https://example.com/path", "Click history is not used"} {
+	for _, expected := range []string{"GoreeCloud Search", "result-card", "example", "2 sources agree", "Source agreement", "https://example.com/path", "Click history is not used", "512 results · limit applied"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("rendered body missing %q", expected)
 		}
