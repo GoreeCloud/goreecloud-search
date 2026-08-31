@@ -48,6 +48,11 @@ func resultsFixture(w http.ResponseWriter, r *http.Request) {
 		})
 	case "error":
 		webui.RenderSearchError(w, "goreecloud search", errors.New("acceptance fixture error"))
+	case "suggestion":
+		response := representativeResponse()
+		response.Query = "goreecluod search privacy"
+		response.SuggestedQuery = "goreecloud search privacy"
+		webui.RenderResults(w, response)
 	default:
 		webui.RenderResults(w, representativeResponse())
 	}
