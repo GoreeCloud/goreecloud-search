@@ -73,7 +73,8 @@ func parseQueryIntent(raw string) queryIntent {
 		}
 	}
 
-	intent.freshnessRequested, lexicalSkip := temporalIntentLexemes(lexemes)
+	var lexicalSkip map[int]bool
+	intent.freshnessRequested, lexicalSkip = temporalIntentLexemes(lexemes)
 	normalizedTokens := make([]string, 0, len(lexemes))
 	for index, lexeme := range lexemes {
 		if lexicalSkip[index] {
@@ -321,7 +322,7 @@ func oneEditOrTranspositionApart(left, right string) bool {
 				if len(mismatches) > 2 {
 					return false
 				}
-			}
+		}
 		}
 		if len(mismatches) == 1 {
 			return true
