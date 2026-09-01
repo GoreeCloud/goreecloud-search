@@ -203,6 +203,8 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
     assert_targets(driver.find_elements(By.CSS_SELECTOR, ".top-actions a"), f"{context} top actions")
 
     filter_input = driver.find_element(By.CSS_SELECTOR, "[data-settings-filter]")
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", filter_input)
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-settings-filter]")))
     filter_input.click()
     filter_input.send_keys(Keys.TAB)
     active = driver.switch_to.active_element
@@ -211,6 +213,7 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
     assert_visible_focus(active, driver, context)
 
     autocomplete = driver.find_element(By.CSS_SELECTOR, 'button.toggle[data-preference="search.autocomplete"]')
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", autocomplete)
     if autocomplete.get_attribute("aria-pressed") != "false":
         raise AssertionError(f"{context}: autocomplete did not start from the privacy-first disabled default")
     autocomplete.click()
