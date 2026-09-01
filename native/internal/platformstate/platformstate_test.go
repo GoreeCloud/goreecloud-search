@@ -56,22 +56,12 @@ func TestPrivacyShieldTransportAcceptanceDoesNotCreateAuthorization(t *testing.T
 	}
 }
 
-func TestWardveilProtectedClaimRequiresCurrentAuthoritativeEvidence(t *testing.T) {
+func TestWardveilProtectedClaimRequiresBoundCurrentMeshEnvelope(t *testing.T) {
 	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(5*time.Minute))
 	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
-		Wardveil: &WardveilStatusRecord{
-			ContractVersion:        "0.1.0",
-			ScopeKind:              "application",
-			ScopeID:                searchScopeID,
-			AuthoritySystem:        "wardveil-security",
-			AuthorityControl:       "application-runtime",
-			AuthorityAuthoritative: true,
-			State:                  "protected",
-			EvidenceStatus:         "current",
-			ObservedAt:             now.Add(-time.Minute),
-			ValidUntil:             now.Add(5 * time.Minute),
-			ProtectedByWardveil:    true,
-		},
+		Wardveil:         &record,
+		WardveilEnvelope: wardveilEnvelope(record),
 	}}, now)
 	wardveil := snapshot.Systems[1]
 	if wardveil.RuntimeEvidence != "current" || wardveil.State != "protected" || !wardveil.PositiveClaim {
@@ -82,26 +72,75 @@ func TestWardveilProtectedClaimRequiresCurrentAuthoritativeEvidence(t *testing.T
 	}
 }
 
-func TestExpiredWardveilProtectedClaimFailsClosed(t *testing.T) {
+func TestWardveilProtectedClaimWithoutEnvelopeFailsClosed(t *testing.T) {
 	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(5*time.Minute))
 	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
-		Wardveil: &WardveilStatusRecord{
-			ContractVersion:        "0.1.0",
-			ScopeKind:              "service",
-			ScopeID:                searchScopeID,
-			AuthoritySystem:        "wardveil-security",
-			AuthorityControl:       "service-runtime",
-			AuthorityAuthoritative: true,
-			State:                  "protected",
-			EvidenceStatus:         "current",
-			ObservedAt:             now.Add(-time.Minute),
-			ValidUntil:             now.Add(-time.Second),
-			ProtectedByWardveil:    true,
-		},
+		Wardveil: &record,
+	}}, now)
+	wardveil := snapshot.Systems[1]
+	if wardveil.RuntimeEvidence != "unverified" || wardveil.State != "unknown" || wardveil.PositiveClaim {
+		t.Fatalf("unbound Wardveil evidence did not fail closed: %+v", wardveil)
+	}
+}
+
+func TestWardveilWrongProducerRepositoryFailsClosed(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(5*time.Minute))
+	envelope := wardveilEnvelope(record)
+	envelope.Producer.Repository = "GoreeCloud/not-wardveil"
+	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
+		Wardveil:         &record,
+		WardveilEnvelope: envelope,
+	}}, now)
+	wardveil := snapshot.Systems[1]
+	if wardveil.RuntimeEvidence != "unverified" || wardveil.PositiveClaim {
+		t.Fatalf("wrong Wardveil producer repository did not fail closed: %+v", wardveil)
+	}
+}
+
+func TestWardveilSensitiveEnvelopeFailsClosed(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(5*time.Minute))
+	envelope := wardveilEnvelope(record)
+	envelope.ContainsUserContent = true
+	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
+		Wardveil:         &record,
+		WardveilEnvelope: envelope,
+	}}, now)
+	wardveil := snapshot.Systems[1]
+	if wardveil.RuntimeEvidence != "unverified" || wardveil.PositiveClaim {
+		t.Fatalf("sensitive Wardveil envelope did not fail closed: %+v", wardveil)
+	}
+}
+
+func TestExpiredWardveilProtectedClaimIsStaleAndNotPositive(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(-time.Second))
+	record.ObservedAt = now.Add(-time.Minute)
+	envelope := wardveilEnvelope(record)
+	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
+		Wardveil:         &record,
+		WardveilEnvelope: envelope,
 	}}, now)
 	wardveil := snapshot.Systems[1]
 	if wardveil.RuntimeEvidence != "stale" || wardveil.State != "unknown" || wardveil.PositiveClaim {
-		t.Fatalf("expired Wardveil evidence did not fail closed: %+v", wardveil)
+		t.Fatalf("expired Wardveil evidence did not remain auditable/stale: %+v", wardveil)
+	}
+}
+
+func TestWardveilEnvelopeRevisionMustBeCanonicalGitSHA(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(5*time.Minute))
+	envelope := wardveilEnvelope(record)
+	envelope.Producer.Revision = "not-a-revision"
+	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
+		Wardveil:         &record,
+		WardveilEnvelope: envelope,
+	}}, now)
+	wardveil := snapshot.Systems[1]
+	if wardveil.RuntimeEvidence != "unverified" || wardveil.PositiveClaim {
+		t.Fatalf("invalid producer revision did not fail closed: %+v", wardveil)
 	}
 }
 
@@ -109,6 +148,7 @@ func TestEverkeepRequiresCompleteFreshContinuitySet(t *testing.T) {
 	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
 	record := func(dimension string) EverkeepContinuityRecord {
 		return EverkeepContinuityRecord{
+			RecordID:           "everkeep-record-" + dimension,
 			Producer:           "everkeep",
 			Scope:              searchScopeID,
 			Dimension:          dimension,
@@ -136,9 +176,31 @@ func TestEverkeepRequiresCompleteFreshContinuitySet(t *testing.T) {
 	}
 }
 
+func TestEverkeepWrongProducerFailsClosed(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
+		Everkeep: []EverkeepContinuityRecord{{
+			RecordID:           "backup-1",
+			Producer:           "search",
+			Scope:              searchScopeID,
+			Dimension:          "backup_coverage",
+			State:              "ready",
+			ObservedAt:         now.Add(-time.Minute),
+			FreshUntil:         now.Add(10 * time.Minute),
+			VerificationMethod: "accepted-runtime-evidence",
+			EvidenceReference:  "everkeep:evidence:backup",
+		}},
+	}}, now)
+	everkeep := snapshot.Systems[2]
+	if everkeep.RuntimeEvidence != "unverified" || everkeep.PositiveClaim {
+		t.Fatalf("wrong Everkeep producer did not fail closed: %+v", everkeep)
+	}
+}
+
 func TestEverkeepDuplicateDimensionFailsClosed(t *testing.T) {
 	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
 	record := EverkeepContinuityRecord{
+		RecordID:           "everkeep-record-backup",
 		Producer:           "everkeep",
 		Scope:              searchScopeID,
 		Dimension:          "backup_coverage",
@@ -146,6 +208,7 @@ func TestEverkeepDuplicateDimensionFailsClosed(t *testing.T) {
 		ObservedAt:         now.Add(-time.Minute),
 		FreshUntil:         now.Add(10 * time.Minute),
 		VerificationMethod: "accepted-runtime-evidence",
+		EvidenceReference:  "everkeep:evidence:backup",
 	}
 	snapshot := SnapshotWithEvidence(staticEvidenceSource{bundle: RuntimeEvidenceBundle{
 		Everkeep: []EverkeepContinuityRecord{record, record},
@@ -153,6 +216,16 @@ func TestEverkeepDuplicateDimensionFailsClosed(t *testing.T) {
 	everkeep := snapshot.Systems[2]
 	if everkeep.RuntimeEvidence != "unverified" || everkeep.State != "unknown" || everkeep.PositiveClaim {
 		t.Fatalf("duplicate Everkeep dimension did not fail closed: %+v", everkeep)
+	}
+}
+
+func TestMeshEnvelopeRejectsMalformedPayloadDigest(t *testing.T) {
+	now := time.Date(2026, time.September, 1, 17, 0, 0, 0, time.UTC)
+	record := currentWardveilRecord(now, now.Add(5*time.Minute))
+	envelope := wardveilEnvelope(record)
+	envelope.PayloadDigest = "sha256:not-a-digest"
+	if ValidateMeshEvidenceEnvelope(envelope, wardveilExpectation(record), now) {
+		t.Fatal("malformed payload digest unexpectedly validated")
 	}
 }
 
@@ -184,5 +257,64 @@ func TestPlatformStatusHandlerIsSanitizedAndVersioned(t *testing.T) {
 	}
 	if strings.Contains(body, "private-search") {
 		t.Fatalf("platform status echoed query input: %s", body)
+	}
+}
+
+func currentWardveilRecord(now, validUntil time.Time) WardveilStatusRecord {
+	return WardveilStatusRecord{
+		ContractVersion:        "0.1.0",
+		ScopeKind:              "application",
+		ScopeID:                searchScopeID,
+		AuthoritySystem:        "wardveil-security",
+		AuthorityControl:       "application-runtime",
+		AuthorityAuthoritative: true,
+		State:                  "protected",
+		EvidenceStatus:         "current",
+		ObservedAt:             now.Add(-time.Minute),
+		ValidUntil:             validUntil,
+		EvidenceReference:      "wardveil:evidence:search-runtime",
+		ProtectedByWardveil:    true,
+	}
+}
+
+func wardveilEnvelope(record WardveilStatusRecord) *MeshEvidenceEnvelope {
+	return &MeshEvidenceEnvelope{
+		Version: meshEvidenceEnvelopeVersion,
+		ID:      "mesh-envelope-wardveil-search",
+		Producer: MeshEvidenceProducer{
+			System:     "wardveil-security",
+			Repository: "GoreeCloud/goreecloud-wardveil-security",
+			Revision:   strings.Repeat("a", 40),
+			Contract:   "contracts/wardveil.status.schema.json",
+		},
+		AuthorityDomain: "security",
+		Subject: MeshEvidenceSubject{
+			Kind: record.ScopeKind,
+			ID:   searchScopeID,
+		},
+		Assertion:              "security-status",
+		Outcome:                record.State,
+		Source:                 record.EvidenceReference,
+		ObservedAt:             record.ObservedAt,
+		ValidUntil:             record.ValidUntil,
+		DataClass:              "derived",
+		PayloadDigest:          "sha256:" + strings.Repeat("b", 64),
+		ContainsUserContent:    false,
+		ContainsSecretMaterial: false,
+	}
+}
+
+func wardveilExpectation(record WardveilStatusRecord) MeshEvidenceExpectation {
+	return MeshEvidenceExpectation{
+		ProducerSystem:  "wardveil-security",
+		Repository:      "GoreeCloud/goreecloud-wardveil-security",
+		Contract:        "contracts/wardveil.status.schema.json",
+		AuthorityDomain: "security",
+		SubjectKind:     record.ScopeKind,
+		SubjectID:       searchScopeID,
+		Assertion:       "security-status",
+		Source:          record.EvidenceReference,
+		ObservedAt:      record.ObservedAt,
+		ValidUntil:      record.ValidUntil,
 	}
 }
