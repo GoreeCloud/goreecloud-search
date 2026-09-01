@@ -12,7 +12,8 @@ Current native endpoints are:
 - `GET /api/v1/search` — machine-readable execution through the same native engine used by the HTML results surface;
 - `GET /api/v1/preferences/definitions` — read-only preference schema/definition discovery;
 - `GET /api/v1/providers/definitions` — read-only sanitized provider/capability discovery;
-- `GET /api/v1/sync/capabilities` — read-only Search Sync capability discovery.
+- `GET /api/v1/sync/capabilities` — read-only Search Sync capability discovery;
+- `GET /api/v1/platform/status` — read-only sanitized Privacy Shield, Wardveil Security, and Everkeep source/runtime-evidence state.
 
 The inherited SearXNG-derived tree still contains its earlier GoreeCloud `/api/v1/status` and `/api/v1/readiness` plugin contract for transitional continuity. That legacy implementation is not the target architecture and must not be described as the native API implementation.
 
@@ -61,10 +62,11 @@ Current native capability flags identify source-level availability of:
 - HTML search;
 - the machine-readable Search API;
 - preference definitions;
-- provider definitions; and
-- Sync capability discovery.
+- provider definitions;
+- Sync capability discovery; and
+- sanitized platform-status discovery.
 
-`machine_readable_search_api: true` means the native endpoint is implemented in the current source. It does **not** mean the endpoint has received production or Stable approval for arbitrary consumers.
+`machine_readable_search_api: true` means the native endpoint is implemented in the current source. `platform_status: true` similarly means the sanitized evidence-state endpoint exists in source. Neither flag means the endpoint or any underlying platform integration has received production or Stable approval.
 
 ### Representative response shape
 
@@ -82,7 +84,8 @@ Current native capability flags identify source-level availability of:
     "machine_readable_search_api": true,
     "preferences_definitions": true,
     "provider_definitions": true,
-    "sync_capabilities": true
+    "sync_capabilities": true,
+    "platform_status": true
   }
 }
 ```
@@ -110,7 +113,30 @@ The readiness response explicitly marks `production_approved: false` and lists m
 - physical-device acceptance; and
 - production cutover.
 
-`/healthz` and `/api/v1/readiness` are complementary local signals. Neither authorizes production deployment or Stable promotion.
+`/healthz` and `/api/v1/readiness` are complementary local signals. Neither authorizes production deployment or Stable promotion. Platform-status presentation does not expand the readiness scope.
+
+## `GET /api/v1/platform/status`
+
+The platform-status endpoint exposes a minimized application-side view of platform integration evidence without manufacturing runtime or production truth.
+
+The current Development snapshot identifies three authoritative systems:
+
+- Privacy Shield — authority contract `contracts/privacy-shield.platform-evidence.runtime-acceptance.json`;
+- Wardveil Security — authority contract `contracts/wardveil.status.schema.json`;
+- Everkeep — authority contract `contracts/continuity.status.schema.json`.
+
+Current source truth deliberately remains conservative:
+
+- Privacy Shield source integration is present, runtime evidence is unavailable, state is `unknown`, `positive_claim` is false, and `production_accepted` is false.
+- Wardveil source integration is present, runtime evidence is unverified, state is `unknown`, `positive_claim` is false, and `production_accepted` is false.
+- Everkeep currently has a presentation boundary only, runtime evidence is unavailable, state is `unknown`, `positive_claim` is false, and `production_accepted` is false.
+- The aggregate snapshot reports `production_approved: false`.
+
+The response also explicitly reports that it contains no user content or query text and exposes no credentials. Unrelated query-string input is ignored and is not echoed.
+
+Source presence, green CI, schema parsing, Glaze UI presentation, or Mesh evidence transport cannot create a positive platform claim. A future runtime adapter may strengthen state only from current authoritative evidence that satisfies the relevant producer contract and the exact Search application/release boundary.
+
+See `docs/goreecloud/PLATFORM-STATUS.md` for the complete evidence boundary.
 
 ## `GET /api/v1/search`
 
