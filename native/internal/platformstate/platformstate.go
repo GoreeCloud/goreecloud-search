@@ -43,17 +43,17 @@ type PrivacyShieldRuntimeAcceptance struct {
 }
 
 type WardveilStatusRecord struct {
-	ContractVersion       string
-	ScopeKind             string
-	ScopeID               string
-	AuthoritySystem       string
-	AuthorityControl      string
-	AuthorityAuthoritative bool
-	State                 string
-	EvidenceStatus        string
-	ObservedAt            time.Time
-	ValidUntil            time.Time
-	ProtectedByWardveil   bool
+	ContractVersion         string
+	ScopeKind               string
+	ScopeID                 string
+	AuthoritySystem         string
+	AuthorityControl        string
+	AuthorityAuthoritative  bool
+	State                   string
+	EvidenceStatus          string
+	ObservedAt              time.Time
+	ValidUntil              time.Time
+	ProtectedByWardveil     bool
 }
 
 type EverkeepContinuityRecord struct {
@@ -149,8 +149,8 @@ func projectPrivacyShield(status SystemStatus, evidence *PrivacyShieldRuntimeAcc
 		return status
 	}
 	if evidence.ProductionAcceptance {
-		// Privacy Shield's runtime-acceptance contract governs evidence delivery.
-		// It explicitly does not convert Mesh transport acceptance into privacy authorization.
+		// This contract governs Privacy Shield evidence delivery, not Search authorization.
+		// Its own boundary says transport validity never creates privacy authorization.
 		status.RuntimeEvidence = "transport-accepted-application-unverified"
 		return status
 	}
@@ -170,22 +170,45 @@ func projectWardveil(status SystemStatus, evidence *WardveilStatusRecord, now ti
 		return status
 	}
 	if evidence.EvidenceStatus != "current" {
-		status.RuntimeEvidence = evidence.EvidenceStatus
+		status.RuntimeEvidence = normalizedEvidenceStatus(evidence.EvidenceStatus)
+		return status
+	}
+	if evidence.ProtectedByWardveil != (evidence.State == "protected") {
+		status.RuntimeEvidence = "unverified"
+		return status
+	}
+	if evidence.State == "protected" {
+		if !evidence.AuthorityAuthoritative || evidence.ValidUntil.IsZero() {
+			status.RuntimeEvidence = "unverified"
+			return status
+		}
+		if !evidence.ValidUntil.After(now) {
+			status.RuntimeEvidence = "stale"
+			return status
+		}
+		status.RuntimeEvidence = "current"
+		status.State = "protected"
+		status.PositiveClaim = true
 		return status
 	}
 
 	status.RuntimeEvidence = "current"
 	status.State = normalizedWardveilState(evidence.State)
-	if evidence.ProtectedByWardveil && evidence.State == "protected" &&
-		evidence.AuthorityAuthoritative && evidence.ValidUntil.After(now) {
-		status.PositiveClaim = true
-	}
 	return status
+}
+
+func normalizedEvidenceStatus(value string) string {
+	switch value {
+	case "stale", "unavailable", "unverified":
+		return value
+	default:
+		return "unverified"
+	}
 }
 
 func normalizedWardveilState(state string) string {
 	switch state {
-	case "protected", "attention", "degraded", "unknown", "not_applicable":
+	case "attention", "degraded", "unknown", "not_applicable":
 		return state
 	default:
 		return "unknown"
@@ -202,10 +225,16 @@ func projectEverkeep(status SystemStatus, evidence []EverkeepContinuityRecord, n
 		"restore_capability": false,
 		"recovery_freshness": false,
 	}
+	seen := make(map[string]bool, len(required))
 	for _, record := range evidence {
 		if _, relevant := required[record.Dimension]; !relevant {
 			continue
 		}
+		if seen[record.Dimension] {
+			status.RuntimeEvidence = "unverified"
+			return status
+		}
+		seen[record.Dimension] = true
 		if record.Producer == "" || record.Scope != searchScopeID || record.ObservedAt.IsZero() ||
 			record.ObservedAt.After(now) || record.VerificationMethod == "" {
 			status.RuntimeEvidence = "unverified"
