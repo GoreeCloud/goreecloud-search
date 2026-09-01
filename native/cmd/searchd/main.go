@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/GoreeCloud/goreecloud-search/native/internal/platformstate"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/syncstate"
@@ -40,6 +41,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
 	mux.HandleFunc("GET /api/v1/sync/capabilities", app.syncCapabilities)
+	mux.HandleFunc("GET /api/v1/platform/status", platformstate.Handler)
 
 	addr := os.Getenv("GOREECLOUD_SEARCH_ADDR")
 	if addr == "" {
@@ -82,6 +84,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 			"preferences_definitions":     true,
 			"provider_definitions":        true,
 			"sync_capabilities":           true,
+			"platform_status":             true,
 		},
 		"endpoints": map[string]string{
 			"health":                  "/healthz",
@@ -92,6 +95,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 			"preferences_definitions": "/api/v1/preferences/definitions",
 			"provider_definitions":    "/api/v1/providers/definitions",
 			"sync_capabilities":       "/api/v1/sync/capabilities",
+			"platform_status":         "/api/v1/platform/status",
 		},
 	})
 }
