@@ -170,18 +170,29 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
     driver.get(f"{BASE_URL}/preferences")
     wait.until(EC.visibility_of_element_located((By.ID, "search")))
     body = driver.find_element(By.TAG_NAME, "body").text
-    required = (
-        "Search, your way.",
-        "Privacy Shield",
-        "Wardveil Security",
-        "Data & resilience",
-        "Runtime protection evidence",
-        "Pending",
-        "Production approval not granted",
+    if "Search, your way." not in body:
+        raise AssertionError(f"{context}: missing Preferences heading")
+
+    platform_sections = (
+        ("privacy", ("Privacy Shield", "Privacy controls", "Recent searches")),
+        ("security", ("Wardveil Security", "Runtime protection evidence", "Pending")),
+        ("data-resilience", ("Everkeep", "Data & resilience", "Export preferences")),
     )
-    for marker in required:
-        if marker not in body:
-            raise AssertionError(f"{context}: missing {marker!r}")
+    for section_id, markers in platform_sections:
+        section = driver.find_element(By.ID, section_id)
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", section)
+        if not section.is_displayed():
+            raise AssertionError(f"{context}: section #{section_id} is not displayed")
+        section_text = driver.execute_script("return arguments[0].innerText", section)
+        for marker in markers:
+            if marker not in section_text:
+                raise AssertionError(f"{context}: section #{section_id} missing {marker!r}")
+
+    footer = driver.find_element(By.TAG_NAME, "footer")
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", footer)
+    footer_text = driver.execute_script("return arguments[0].innerText", footer)
+    if "Production approval not granted" not in footer_text:
+        raise AssertionError(f"{context}: lifecycle footer is missing")
 
     assert_min_target(driver.find_element(By.CSS_SELECTOR, ".brand"), TARGET_FLOOR, f"{context} brand")
     assert_min_target(driver.find_element(By.CSS_SELECTOR, "[data-settings-filter]"), TARGET_FLOOR, f"{context} filter")
