@@ -91,8 +91,7 @@ func ValidateMeshEvidenceEnvelope(
 		return false
 	}
 	if envelope.ObservedAt.IsZero() || envelope.ValidUntil.IsZero() ||
-		envelope.ObservedAt.After(now) || !envelope.ValidUntil.After(now) ||
-		!envelope.ValidUntil.After(envelope.ObservedAt) {
+		envelope.ObservedAt.After(now) || !envelope.ValidUntil.After(envelope.ObservedAt) {
 		return false
 	}
 	if !expectation.ObservedAt.IsZero() && !envelope.ObservedAt.Equal(expectation.ObservedAt) {
