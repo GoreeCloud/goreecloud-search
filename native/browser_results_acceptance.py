@@ -334,7 +334,7 @@ def assert_suggestion_state(driver: webdriver.Chrome, wait: WebDriverWait) -> No
     driver.get(f"{BASE_URL}/search?case=suggestion")
     wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".query-suggestion")))
     suggestion = driver.find_element(By.CSS_SELECTOR, ".query-suggestion")
-    if "Search instead for" not in suggestion.text or "goreecloud search privacy" not in suggestion.text:
+    if "Did you mean" not in suggestion.text or "goreecloud search privacy" not in suggestion.text:
         raise AssertionError("suggestion state: explicit local correction is missing")
     link = suggestion.find_element(By.TAG_NAME, "a")
     assert_min_target(link, TARGET_FLOOR, "suggestion state correction link")
