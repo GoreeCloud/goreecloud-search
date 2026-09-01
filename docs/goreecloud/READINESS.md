@@ -26,6 +26,27 @@ The native `searchd` process exposes `GET /healthz` as a bounded JSON health res
 
 A successful `/healthz` response proves only that the native process can serve that route. It does not prove provider availability, production configuration, private routing, monitoring, recovery, platform integrations, migration parity, or Stable qualification.
 
+### Service status — `GET /api/v1/status`
+
+The native status endpoint exposes the GoreeCloud-owned API version, product/service identity, native implementation identity, pre-Stable lifecycle, source-level capability availability, canonical endpoint paths, and `production_approved: false`.
+
+It is service-discovery evidence, not production approval. In particular, `machine_readable_search_api: true` means the native `/api/v1/search` endpoint exists in the current source; it does not mean arbitrary production consumers have been approved.
+
+### Local application readiness — `GET /api/v1/readiness`
+
+The native readiness endpoint evaluates a deliberately bounded local-native-application scope.
+
+Current checks are:
+
+- native engine initialized; and
+- General category locally executable under the native engine contract.
+
+When those checks pass, the endpoint returns HTTP 200 with `ready: true` and `readiness_scope: local_native_application`. If the native engine is unavailable or the required General path is not ready, it fails closed with HTTP 503 and `ready: false`.
+
+The endpoint explicitly marks `production_approved: false` and does not evaluate external providers, production provider credentials, private DNS/reverse proxy, monitoring and alert delivery, backup/restore/rollback, physical-device acceptance, or production cutover.
+
+Neither `/healthz` nor `/api/v1/readiness`, individually or together, authorizes a production deployment or Stable promotion.
+
 ### Provider capability readiness — `GET /api/v1/providers/definitions`
 
 The native provider-definition endpoint exposes a sanitized, deterministic capability view. It may report:
@@ -61,25 +82,28 @@ These contracts do not establish production account-history synchronization. Pro
 
 ## Deterministic source and CI gates
 
-The repository uses exact-revision CI as source evidence. Applicable gates currently include native foundation tests, runtime smoke, native rendered browser acceptance, container build/runtime checks, platform-integration checks, workflow supply-chain checks, documentation checks, and retained compatibility/integration validation.
+The repository uses exact-revision CI as source evidence. Applicable gates currently include native foundation tests, runtime smoke, native application rendered browser acceptance, container build/runtime checks, platform-integration checks, workflow supply-chain checks, documentation checks, and retained transitional compatibility/integration validation.
 
-The native ranking/results acceptance covers deterministic representative data rather than live providers. It validates, as applicable:
+The native application browser acceptance uses deterministic representative data rather than live providers. It validates, as applicable:
 
+- homepage, Preferences, and results surfaces;
 - Compact, Medium, Expanded, and Wide layouts;
 - light and dark appearances;
-- a 48px minimum interaction-target floor on tested results controls;
+- a 48px minimum interaction-target floor on tested actionable controls;
 - visible keyboard focus;
 - horizontal-overflow safety;
 - scan-first result composition;
 - trusted publication-date presentation;
+- explicit local correction presentation;
 - source-agreement and provider-health disclosure;
+- local Preferences interaction and privacy-first defaults;
 - empty/error states;
 - Reduced Motion;
 - Increased Contrast;
 - Forced Colors; and
 - reduced-transparency fallbacks in source styling.
 
-These gates can establish exact-head source and bounded rendered acceptance. They do not manufacture live-provider, physical-device, whole-application, target-host, recovery, or production evidence.
+These gates can establish exact-head source and bounded rendered acceptance. They do not manufacture live-provider, physical-device, target-host, recovery, or production evidence.
 
 ## Glaze UI 2.1 consumer acceptance
 
@@ -102,7 +126,7 @@ Stable application conformance requires Search-specific evidence for the exact r
 - representative physical-device/native acceptance where browser automation is insufficient; and
 - exact-revision rendered evidence plus required human visual review.
 
-The current native results acceptance is useful partial evidence. It is not whole-application or physical-device Glaze UI 2.1 acceptance.
+The expanded native browser gate provides substantially broader deterministic application evidence than the earlier results-only gate. It still does not by itself prove physical-device or production conformance.
 
 Glaze UI 2.2 documentation may guide future Search design work, but Candidate behavior cannot be used to satisfy the current Stable consumer gate.
 
@@ -170,7 +194,7 @@ No provider becomes trusted merely because it implements the native interface.
 The production candidate requires privacy-conscious monitoring appropriate to Search, including applicable:
 
 - process/container availability;
-- native `/healthz` availability through the intended private route;
+- native `/healthz` and `/api/v1/readiness` availability through the intended private route;
 - HTTPS/reverse-proxy success;
 - private DNS resolution;
 - certificate validity;
@@ -180,7 +204,7 @@ The production candidate requires privacy-conscious monitoring appropriate to Se
 - supporting-runtime health where required; and
 - verified actionable alert delivery for sustained failure.
 
-A healthy process is not sufficient when the intended private user path cannot perform representative searches.
+A healthy process and locally ready application are not sufficient when the intended private user path cannot perform representative searches.
 
 ## Identity and private-access readiness
 
@@ -192,7 +216,7 @@ Where Search remains private without an application-level account boundary, the 
 
 GoreeCloud Mesh is authoritative for cross-application capability coordination. Approved Search consumers must have documented and tested integration contracts covering trust, authentication/authorization where applicable, query sensitivity, request volume, timeouts, failure/degraded behavior, logging, compatibility, recovery, and disablement.
 
-The existence of `/api/v1/search` in native development source does not by itself make the machine interface Stable for unrestricted production consumers.
+The existence of `/api/v1/search` in native source does not by itself make the machine interface Stable for unrestricted production consumers.
 
 ## Migration and cutover readiness
 
