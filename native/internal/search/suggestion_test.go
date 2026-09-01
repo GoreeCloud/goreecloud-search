@@ -33,11 +33,11 @@ func TestSuggestQueryCorrectionRejectsAmbiguousEqualSupport(t *testing.T) {
 	results := []Result{
 		{Title: "GoreeCloud Search", Provider: "one"},
 		{Title: "GoreeCloud Docs", Provider: "two"},
-		{Title: "Goreecload Search", Provider: "three"},
-		{Title: "Goreecload Docs", Provider: "four"},
+		{Title: "GoreeClued Search", Provider: "three"},
+		{Title: "GoreeClued Docs", Provider: "four"},
 	}
 	if got := suggestQueryCorrection("goreecluod search", results); got != "" {
-		t.Fatalf("equal cross-provider support for two corrections should remain ambiguous, got %q", got)
+		t.Fatalf("equal cross-provider support for two one-edit corrections should remain ambiguous, got %q", got)
 	}
 }
 
