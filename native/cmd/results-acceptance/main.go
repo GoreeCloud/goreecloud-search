@@ -13,11 +13,13 @@ import (
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/search", http.StatusFound)
-	})
+	mux.HandleFunc("GET /", webui.Homepage)
+	mux.HandleFunc("GET /preferences", webui.Preferences)
 	mux.HandleFunc("GET /search", resultsFixture)
 	mux.HandleFunc("GET /assets/app.css", webui.Styles)
+	mux.HandleFunc("GET /assets/home.css", webui.HomepageStyles)
+	mux.HandleFunc("GET /assets/preferences.css", webui.PreferencesStyles)
+	mux.HandleFunc("GET /assets/preferences.js", webui.PreferencesScript)
 	mux.HandleFunc("GET /assets/results.css", webui.ResultsStyles)
 	mux.HandleFunc("GET /assets/categories.css", webui.CategoryStyles)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -30,7 +32,7 @@ func main() {
 		addr = "127.0.0.1:8091"
 	}
 
-	log.Printf("GoreeCloud Search native results acceptance fixture listening on %s", addr)
+	log.Printf("GoreeCloud Search native application acceptance fixture listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, acceptanceHeaders(mux)))
 }
 
@@ -131,7 +133,7 @@ func acceptanceHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self'; img-src 'self' data:; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
 		next.ServeHTTP(w, r)
 	})
 }
