@@ -13,6 +13,8 @@ import (
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
 )
 
+const apiVersion = "1"
+
 type server struct {
 	engine *searchcore.Engine
 }
@@ -32,6 +34,8 @@ func main() {
 	mux.HandleFunc("GET /assets/results.css", webui.ResultsStyles)
 	mux.HandleFunc("GET /assets/categories.css", webui.CategoryStyles)
 	mux.HandleFunc("GET /healthz", app.health)
+	mux.HandleFunc("GET /api/v1/status", app.status)
+	mux.HandleFunc("GET /api/v1/readiness", app.readiness)
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
@@ -63,6 +67,73 @@ func (s server) health(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+func (s server) status(w http.ResponseWriter, _ *http.Request) {
+	writeAPIV1JSON(w, http.StatusOK, map[string]any{
+		"api_version":         apiVersion,
+		"product":             "GoreeCloud Search",
+		"service":             "search",
+		"status":              "ok",
+		"implementation":      "native",
+		"lifecycle":           "pre-stable",
+		"production_approved": false,
+		"capabilities": map[string]bool{
+			"html_search":                 true,
+			"machine_readable_search_api": true,
+			"preferences_definitions":     true,
+			"provider_definitions":        true,
+			"sync_capabilities":           true,
+		},
+		"endpoints": map[string]string{
+			"health":                  "/healthz",
+			"status":                  "/api/v1/status",
+			"readiness":               "/api/v1/readiness",
+			"search":                  "/api/v1/search",
+			"interactive_search":      "/search",
+			"preferences_definitions": "/api/v1/preferences/definitions",
+			"provider_definitions":    "/api/v1/providers/definitions",
+			"sync_capabilities":       "/api/v1/sync/capabilities",
+		},
+	})
+}
+
+func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
+	engineInitialized := s.engine != nil
+	generalCategoryReady := false
+	if engineInitialized {
+		generalCategoryReady = s.engine.SupportsCategory(searchcore.CategoryGeneral)
+	}
+	ready := engineInitialized && generalCategoryReady
+	status := "ready"
+	httpStatus := http.StatusOK
+	if !ready {
+		status = "not_ready"
+		httpStatus = http.StatusServiceUnavailable
+	}
+
+	writeAPIV1JSON(w, httpStatus, map[string]any{
+		"api_version":         apiVersion,
+		"product":             "GoreeCloud Search",
+		"service":             "search",
+		"status":              status,
+		"ready":               ready,
+		"readiness_scope":     "local_native_application",
+		"production_approved": false,
+		"checks": map[string]bool{
+			"native_engine_initialized": engineInitialized,
+			"general_category_ready":     generalCategoryReady,
+		},
+		"not_evaluated": []string{
+			"external_search_providers",
+			"production_provider_credentials",
+			"private_dns_and_reverse_proxy",
+			"monitoring_and_alert_delivery",
+			"backup_restore_and_rollback",
+			"physical_device_acceptance",
+			"production_cutover",
+		},
+	})
+}
+
 func requestedCategory(r *http.Request) (string, error) {
 	return searchcore.ValidateCategory(r.URL.Query().Get("category"))
 }
@@ -88,11 +159,11 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 	category, err := requestedCategory(r)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported search category"})
+		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported search category"})
 		return
 	}
 	if !s.engine.SupportsCategory(category) {
-		writeJSON(w, http.StatusNotImplemented, map[string]string{
+		writeAPIV1JSON(w, http.StatusNotImplemented, map[string]string{
 			"error":    "search category is not implemented in the native provider layer",
 			"category": category,
 		})
@@ -100,14 +171,14 @@ func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	response, err := s.engine.SearchCategory(r.Context(), r.URL.Query().Get("q"), category)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, response)
+	writeAPIV1JSON(w, http.StatusOK, response)
 }
 
 func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{
+	writeAPIV1JSON(w, http.StatusOK, map[string]any{
 		"schema_version": 1,
 		"sections": []string{"search", "sources", "appearance", "privacy", "security", "data-resilience", "advanced"},
 		"definitions": preferences.Definitions(),
@@ -126,7 +197,7 @@ func executableCategories(engine *searchcore.Engine) []string {
 
 func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
 	providers := s.engine.ProviderDefinitions()
-	writeJSON(w, http.StatusOK, map[string]any{
+	writeAPIV1JSON(w, http.StatusOK, map[string]any{
 		"schema_version":             1,
 		"providers":                  providers,
 		"configured_provider_count": len(providers),
@@ -140,7 +211,7 @@ func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s server) syncCapabilities(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{
+	writeAPIV1JSON(w, http.StatusOK, map[string]any{
 		"schema_version":       1,
 		"application":          "search",
 		"capabilities":         syncstate.Capabilities(),
@@ -158,6 +229,11 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'none'")
 		next.ServeHTTP(w, r)
 	})
+}
+
+func writeAPIV1JSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("X-GoreeCloud-API-Version", apiVersion)
+	writeJSON(w, status, value)
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
