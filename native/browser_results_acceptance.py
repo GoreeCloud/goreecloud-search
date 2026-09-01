@@ -68,6 +68,19 @@ def set_media(driver: webdriver.Chrome, *, scheme: str, motion: str = "no-prefer
     )
 
 
+def scroll_into_view(driver: webdriver.Chrome, element) -> None:
+    driver.execute_script(
+        """
+        const root = document.documentElement;
+        const previous = root.style.scrollBehavior;
+        root.style.scrollBehavior = 'auto';
+        arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});
+        root.style.scrollBehavior = previous;
+        """,
+        element,
+    )
+
+
 def capture(driver: webdriver.Chrome, name: str) -> None:
     if not SCREENSHOT_DIR:
         return
@@ -180,7 +193,7 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
     )
     for section_id, markers in platform_sections:
         section = driver.find_element(By.ID, section_id)
-        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", section)
+        scroll_into_view(driver, section)
         if not section.is_displayed():
             raise AssertionError(f"{context}: section #{section_id} is not displayed")
         section_text = driver.execute_script("return arguments[0].textContent", section)
@@ -189,7 +202,7 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
                 raise AssertionError(f"{context}: section #{section_id} missing {marker!r}")
 
     footer = driver.find_element(By.TAG_NAME, "footer")
-    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", footer)
+    scroll_into_view(driver, footer)
     footer_text = driver.execute_script("return arguments[0].innerText", footer)
     if "Production approval not granted" not in footer_text:
         raise AssertionError(f"{context}: lifecycle footer is missing")
@@ -203,7 +216,7 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
     assert_targets(driver.find_elements(By.CSS_SELECTOR, ".top-actions a"), f"{context} top actions")
 
     filter_input = driver.find_element(By.CSS_SELECTOR, "[data-settings-filter]")
-    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", filter_input)
+    scroll_into_view(driver, filter_input)
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-settings-filter]")))
     filter_input.click()
     filter_input.send_keys(Keys.TAB)
@@ -213,7 +226,7 @@ def assert_preferences_page(driver: webdriver.Chrome, wait: WebDriverWait, viewp
     assert_visible_focus(active, driver, context)
 
     autocomplete = driver.find_element(By.CSS_SELECTOR, 'button.toggle[data-preference="search.autocomplete"]')
-    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", autocomplete)
+    scroll_into_view(driver, autocomplete)
     if autocomplete.get_attribute("aria-pressed") != "false":
         raise AssertionError(f"{context}: autocomplete did not start from the privacy-first disabled default")
     autocomplete.click()
