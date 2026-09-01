@@ -190,7 +190,7 @@ def assert_results_page(driver: webdriver.Chrome, wait: WebDriverWait, viewport:
     if len(current) != 1 or current[0].text != "General":
         raise AssertionError(f"{context}: selected category semantics are incorrect")
 
-    minimum = 48.0 if viewport.touch else 44.0
+    minimum = 48.0
     assert_min_target(driver.find_element(By.ID, "results-q"), minimum, f"{context} query")
     assert_min_target(driver.find_element(By.CSS_SELECTOR, ".results-search button"), minimum, f"{context} submit")
     for control in driver.find_elements(By.CSS_SELECTOR, ".results-categories a"):
