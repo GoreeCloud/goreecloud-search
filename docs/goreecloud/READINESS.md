@@ -1,201 +1,226 @@
 # GoreeCloud Search Readiness
 
-This document defines the readiness boundary for GoreeCloud Search. It separates process health, local application readiness, deterministic source/CI readiness, and target-environment release acceptance so a green endpoint or development branch is never mistaken for an authorized production deployment or Stable release.
+This document defines the current readiness boundary for the GoreeCloud-owned native Search application. It separates source/CI health, local native runtime behavior, integration readiness, target-environment acceptance, migration cutover, and Stable promotion so no lower lifecycle state is represented as a higher one.
 
-## Readiness layers
+## Current product boundary
 
-GoreeCloud Search uses distinct readiness layers that must not be collapsed into one signal.
+GoreeCloud Search is undergoing a native migration.
+
+- Target application: GoreeCloud-owned Go service under `native/`.
+- Transitional dependency: the inherited SearXNG-derived tree remains only for continuity, migration, compatibility, feature-preservation decisions, and applicable upstream security maintenance until controlled retirement.
+- Current lifecycle: pre-Stable native migration.
+- Current Stable design-system consumer target: Glaze UI 2.1.0.
+- Glaze UI 2.2: Candidate/design-reference line, not a Stable consumer target.
+
+A successful source build, green pull request, working development page, or healthy transitional production service does not establish Stable qualification for the native application.
+
+## Native readiness layers
 
 ### Process health — `GET /healthz`
 
-The existing SearXNG-derived `/healthz` route returns HTTP 200 with `text/plain` body `OK` when the application process can serve its health response.
+The native `searchd` process exposes `GET /healthz` as a bounded JSON health response. The current development response identifies:
 
-Process health does not prove that the local application is correctly configured for GoreeCloud, that external providers work, or that the intended DNS/Caddy/private-network path, monitoring, backup, restore, rollback, or Browser integration is healthy.
+- `service: goreecloud-search`;
+- the native development implementation state; and
+- `production_approved: false`.
 
-### Local application readiness — `GET /api/v1/readiness`
+A successful `/healthz` response proves only that the native process can serve that route. It does not prove provider availability, production configuration, private routing, monitoring, recovery, platform integrations, migration parity, or Stable qualification.
 
-The GoreeCloud-owned API v1 readiness endpoint performs deterministic local checks only. It verifies GoreeCloud Search instance identity, HTML-search enablement, and registration of required health, OpenSearch, search, and API-status routes.
+### Provider capability readiness — `GET /api/v1/providers/definitions`
 
-It returns HTTP 200 with `ready: true` when those local checks pass and HTTP 503 with `ready: false` when a local check fails.
+The native provider-definition endpoint exposes a sanitized, deterministic capability view. It may report:
 
-The endpoint explicitly does not evaluate external search providers, DNS, reverse proxy behavior, monitoring or alert delivery, backup/restore, rollback, or actual GoreeCloud Browser runtime behavior. It is a local application readiness contract for approved consumers, not a release-governance shortcut.
+- configured provider identity;
+- supported categories;
+- categories currently executable by the native engine;
+- whether publication timestamps are authoritative for a provider;
+- deployment-controlled management scope; and
+- `production_approved: false` while production acceptance is incomplete.
 
-### Release and production readiness
+The endpoint must not expose provider credentials, mutable management controls, raw provider errors, authorization headers, or secret endpoint configuration.
 
-Release and production readiness remain evidence-driven governance states. They require the broader source, target-runtime, provider, recovery, monitoring, device/desktop, Browser, and rollback acceptance defined by the first-Stable process.
+A provider interface or advertised capability is not production approval. A provider is release-ready only after its transport, privacy/terms boundary, credentials, timeouts, response/body/result bounds, degradation behavior, timestamp authority where applicable, target-runtime behavior, and representative live queries are accepted.
 
-Neither `/healthz` nor `/api/v1/readiness`, alone or together, authorizes production cutover or Stable promotion.
+### Search execution readiness
 
-## Governing release boundary
+Native Search currently includes bounded query validation, explicit category capability handling, concurrent provider execution, timeout/degradation handling, bounded per-provider post-processing, result URL sanitization, deterministic local ranking, bounded freshness, conservative local correction suggestions, source provenance, and first-party HTML/JSON response surfaces.
 
-GoreeCloud Search is a GoreeCloud-maintained SearXNG fork. A release candidate must preserve upstream AGPL obligations and required attribution while presenting GoreeCloud Search as the controlled product identity.
+General may retain a development empty-provider path. Specialized categories fail closed when the current native engine has no executable provider for the requested category.
 
-A Stable GoreeCloud Search release requires all applicable GoreeCloud production gates to be satisfied, including:
+This source behavior is not equivalent to live-provider or production readiness.
 
-- security and safe-operation readiness;
-- private-access and individual-user boundary readiness;
-- Glaze UI 1.1.0 source and final visual conformance;
-- immutable candidate identity and deployment/rollback readiness;
-- exact target-runtime identity acceptance;
-- monitoring and approved alert-delivery validation;
-- backup, restore, and recovery readiness;
-- representative General, Images, Videos, News, and Files provider acceptance;
-- physical-device and desktop acceptance;
-- actual GoreeCloud Browser runtime integration acceptance;
-- integration acceptance for every enabled consumer;
-- completed first-Stable evidence binding and a separate explicit Stable decision.
+### Preferences and local state readiness
 
-Source readiness does not authorize DNS, Caddy, NetBird, firewall, container, hostname, production-image, or compatibility-name changes.
+The native Preferences surface provides device/browser-local preference behavior and bounded import/export contracts. Local preferences do not grant deployment authority and cannot override Privacy Shield, Wardveil Security, Everkeep, Identity, Mesh, or administrator-controlled provider policy.
 
-## Current automated source gates
+### Sync readiness
 
-The repository provides deterministic gates that are safe to run on every proposed source revision.
+Native Search contains source-level `search.history` capability/schema, bounded record/cursor, authenticated transport, envelope-validation, tombstone, pagination, and Ed25519 record-proof contracts.
 
-### Foundation
+These contracts do not establish production account-history synchronization. Production use still requires accepted Identity/session authority, deployed Sync transport, privacy controls, recovery behavior, and end-to-end integration evidence.
 
-Validates GoreeCloud product markers, AGPL preservation, upstream provenance, Python syntax, privacy defaults, Glaze UI 1.1.0 semantics, deployment safeguards, provider-test boundaries, and Compose/source contracts.
+## Deterministic source and CI gates
 
-### API v1 service contract
+The repository uses exact-revision CI as source evidence. Applicable gates currently include native foundation tests, runtime smoke, native rendered browser acceptance, container build/runtime checks, platform-integration checks, workflow supply-chain checks, documentation checks, and retained compatibility/integration validation.
 
-Validates the first-party versioned `/api/v1/status` and `/api/v1/readiness` source contracts, preservation of the existing `/healthz` semantics, privacy/non-cache behavior, and the explicit boundary that general machine-readable search remains disabled.
+The native ranking/results acceptance covers deterministic representative data rather than live providers. It validates, as applicable:
 
-### Runtime smoke
+- Compact, Medium, Expanded, and Wide layouts;
+- light and dark appearances;
+- a 48px minimum interaction-target floor on tested results controls;
+- visible keyboard focus;
+- horizontal-overflow safety;
+- scan-first result composition;
+- trusted publication-date presentation;
+- source-agreement and provider-health disclosure;
+- empty/error states;
+- Reduced Motion;
+- Increased Contrast;
+- Forced Colors; and
+- reduced-transparency fallbacks in source styling.
 
-Starts the exact source revision with GoreeCloud runtime settings and validates application startup, `/healthz`, `/api/v1/status`, `/api/v1/readiness`, core pages, search behavior, privacy-facing headers, and product identity without relying on live external providers.
+These gates can establish exact-head source and bounded rendered acceptance. They do not manufacture live-provider, physical-device, whole-application, target-host, recovery, or production evidence.
 
-### Browser acceptance
+## Glaze UI 2.1 consumer acceptance
 
-Runs Chromium against Compact, Medium, Expanded, and Wide Glaze UI layouts. It validates GoreeCloud identity, browser metadata, OpenSearch discovery, manifest identity, minimum practical target sizing, keyboard behavior, About and Preferences surfaces, and horizontal-overflow safety.
+Glaze UI 2.1.0 is the current Stable Search consumer target.
 
-### Container acceptance
+Stable application conformance requires Search-specific evidence for the exact release candidate, including applicable:
 
-Builds the GoreeCloud Search OCI image from the exact source revision and validates startup, health, product identity, and container metadata.
+- current semantic/material hierarchy;
+- typography, spacing, geometry, focus, state, and interaction behavior;
+- 48px general interaction-target floor;
+- Compact, Medium, Expanded, and Wide behavior;
+- Light, Dark, and supported appearance behavior;
+- Reduced Motion;
+- Reduced Transparency;
+- Increased Contrast;
+- Forced Colors;
+- effects-free/solid fallbacks;
+- representative homepage, results, Preferences, error, empty, degraded, security, privacy, and recovery states;
+- keyboard and pointer behavior;
+- representative physical-device/native acceptance where browser automation is insufficient; and
+- exact-revision rendered evidence plus required human visual review.
 
-### First-Stable evidence contracts
+The current native results acceptance is useful partial evidence. It is not whole-application or physical-device Glaze UI 2.1 acceptance.
 
-The repository contains fail-closed source-side validation for immutable candidate provenance, target-runtime identity, provider result integrity, recovery/rollback evidence, visual and Browser evidence, readiness reporting, and final evidence binding. These gates validate evidence structure and consistency; they do not manufacture missing real-world evidence.
+Glaze UI 2.2 documentation may guide future Search design work, but Candidate behavior cannot be used to satisfy the current Stable consumer gate.
 
-### Upstream Integration
+## Privacy Shield readiness
 
-Retains the SearXNG integration suite so GoreeCloud branding, UI, API, and operational changes do not silently break upstream engine, settings, unit, Robot, lint, or theme contracts.
+Stable Search must prove applicable Privacy Shield behavior at the actual runtime boundary, including:
 
-## Manual provider acceptance
+- privacy-first defaults;
+- no GoreeCloud advertising or sponsored-result ranking;
+- no click-history/behavioral-profile ranking dependency;
+- minimized query/history retention;
+- privacy-safe provider diagnostics;
+- logging and telemetry boundaries;
+- no hidden provider bypass of the configured Search authority;
+- no unnecessary credential or private-content exposure; and
+- explicit controls before account history, personalization, or similar persistent convenience features are enabled.
 
-External providers are intentionally not part of required deterministic pull-request CI because they can throttle, block, rate-limit, challenge, or change independently of GoreeCloud Search.
+External providers may still observe requests originating from GoreeCloud infrastructure. Search must not claim anonymity from those providers.
 
-The candidate-bound real-provider workflow must be run before first-Stable governance review. Required representative categories are General, Images, Videos, News, and Files. Acceptance should record sanitized evidence for:
+## Wardveil Security readiness
 
-- useful result completion for every required category;
-- latency, timeout, access-denied, CAPTCHA, and rate-limit behavior where encountered;
-- image-proxy behavior where relevant;
-- bounded partial-provider degradation;
-- exact staged immutable Search candidate identity before and after requests;
-- absence of persisted query text and provider-response content in the acceptance artifact.
+Stable Search requires application-specific Wardveil evidence appropriate to the deployed release, including secure defaults, request/input validation, provider trust boundaries, secret handling, dependency/security maintenance, authorization for protected functionality, safe failure behavior, deployment hardening, and production security validation.
 
-A provider failure is not automatically an application failure. Persistent low-value or unstable engines should be reviewed separately rather than allowing one provider to redefine the readiness of the entire product.
+Source tests or Wardveil platform validation alone do not certify the Search deployment.
 
-## Private access and individual-user boundary
+## Everkeep and recovery readiness
 
-GoreeCloud Search is intended to remain private. The approved user path is through GoreeCloud private access controls such as NetBird, private DNS, and Caddy rather than a directly exposed application port.
+Stable Search requires evidence-backed recovery rather than backup assumptions. Applicable release evidence must identify and validate:
 
-The application container must remain bound to loopback or an otherwise explicitly approved private network. Public port forwarding is not part of the approved deployment model.
+- exact source and release artifact;
+- native deployment configuration;
+- provider policy/configuration required to restore service;
+- protected secret-recovery path without copying reusable secrets into ordinary evidence;
+- reverse-proxy/private-publication configuration;
+- user-controlled persistent state included in the selected release;
+- backup coverage;
+- isolated or representative restore procedure;
+- post-restore integrity/service validation;
+- previous known-good rollback target; and
+- migration rollback while the transitional runtime remains available.
 
-Before production promotion, the target environment must confirm that each approved person reaches the service through an individually attributable access identity or individually enrolled private-access device boundary. GoreeCloud Search itself does not claim to provide a standalone account database. If the target access architecture cannot provide the required individual boundary, the deployment is not production-ready.
+Rebuildable cache data is not authoritative simply because it exists.
 
-## Privacy and logging
+## Provider and category acceptance
 
-The baseline intentionally keeps:
+Before Stable promotion, every category selected for the release must have production-approved native execution coverage.
 
-- public-instance mode disabled;
-- SearXNG metrics disabled;
-- query text out of page titles;
-- image proxying enabled;
-- `noindex, nofollow` response directives;
-- a `no-referrer` policy;
-- machine-readable JSON, CSV, and RSS search-result formats disabled until the broader integration contract is approved;
-- API v1 status/readiness responses non-cacheable and free of query, result, provider-inventory, preference, credential, and secret data.
+Provider acceptance must record sanitized evidence for applicable:
 
-Search queries can contain sensitive information. Reverse-proxy, container, application, network, and monitoring logs must be reviewed so query strings are not retained unnecessarily.
+- useful result completion;
+- result integrity and URL safety;
+- category correctness;
+- latency and timeout behavior;
+- rate limiting, access denial, CAPTCHA, and provider outages where encountered;
+- bounded provider response/body/result processing;
+- degradation when one provider fails;
+- timestamp-authority correctness where freshness is used;
+- absence of raw credentials or private query/result content in release evidence; and
+- exact release candidate/runtime identity during the test.
 
-## AI and automation integrations
+No provider becomes trusted merely because it implements the native interface.
 
-Open WebUI, AnythingLLM, local research assistants, and approved automation may use GoreeCloud Search only after the integration has a documented contract covering:
+## Monitoring and operational readiness
 
-- requesting service and purpose;
-- required search categories and response format;
-- query sensitivity;
-- network path and access boundary;
-- expected request volume and concurrency;
-- failure and timeout behavior;
-- logging and retention;
-- recovery and disablement procedure.
+The production candidate requires privacy-conscious monitoring appropriate to Search, including applicable:
 
-The API v1 status/readiness contracts do not enable machine-readable search results. General machine-readable search remains disabled until its separate schema, privacy, authorization/network restriction, rate-limit, abuse-control, provider-degradation, and lifecycle requirements are accepted.
-
-## Monitoring acceptance
-
-Production acceptance should verify at least:
-
-- container/process availability;
-- `/healthz` from the intended internal network path;
-- `/api/v1/readiness` from the intended internal network path;
-- Caddy HTTPS success;
+- process/container availability;
+- native `/healthz` availability through the intended private route;
+- HTTPS/reverse-proxy success;
 - private DNS resolution;
 - certificate validity;
 - representative search completion;
-- latency and repeated engine failures;
-- resource usage appropriate to actual demand;
-- an actionable approved alert path for a sustained service outage.
+- provider failure/timeout trends without collecting unnecessary query text;
+- latency and resource pressure;
+- supporting-runtime health where required; and
+- verified actionable alert delivery for sustained failure.
 
-A healthy process and locally ready application are still insufficient if the intended private route cannot perform representative searches or alert on sustained failure.
+A healthy process is not sufficient when the intended private user path cannot perform representative searches.
 
-## Backup and recovery acceptance
+## Identity and private-access readiness
 
-The authoritative configuration and recovery material must be identified before production promotion. At minimum this includes the reviewed settings, deployment definition, protected secret recovery method, private publication configuration, immutable candidate and rollback identities, and any persistent state that the selected runtime actually requires.
+Search must use GoreeCloud Identity for account/session/authorization authority wherever the selected release includes account-bound functionality. Search must not invent a parallel identity authority.
 
-A Stable deployment must have documented and evidenced rebuild/restore and rollback procedures with representative application-level recovery testing. Cache-only data does not need to be preserved merely because it exists; recovery priority should follow whether the data is unique and required to restore service capability.
+Where Search remains private without an application-level account boundary, the deployed access model must still provide the approved private-access and individual-attribution boundary required by GoreeCloud policy. Direct public application-port exposure is not an approved shortcut.
 
-## Upgrade and rollback acceptance
+## Mesh and consumer integration readiness
 
-Before a material upgrade:
+GoreeCloud Mesh is authoritative for cross-application capability coordination. Approved Search consumers must have documented and tested integration contracts covering trust, authentication/authorization where applicable, query sensitivity, request volume, timeouts, failure/degraded behavior, logging, compatibility, recovery, and disablement.
 
-1. Record the deployed image/source revision.
-2. Verify current recovery material and required credentials.
-3. Review upstream release and dependency changes.
-4. Build and validate the exact candidate revision.
-5. Run deterministic source, Browser, and evidence-contract gates.
-6. Preserve the previous known-good immutable image and configuration.
-7. Stage the candidate through the approved private/loopback acceptance path.
-8. Validate exact target-runtime identity and required real-provider behavior.
-9. Validate DNS, HTTPS, local readiness, monitoring/alerts, restore, rollback, and integrations.
-10. Assemble and validate the required first-Stable evidence artifacts.
-11. Perform production cutover only after separate explicit authorization.
-12. Roll back immediately if an authorized release does not satisfy the acceptance boundary.
+The existence of `/api/v1/search` in native development source does not by itself make the machine interface Stable for unrestricted production consumers.
 
-The previous deployment must not be destroyed merely because the candidate starts successfully.
+## Migration and cutover readiness
 
-## Glaze UI 1.1.0 acceptance
+The inherited SearXNG-derived runtime remains a controlled transitional dependency until the native release has sufficient accepted capability and rollback evidence.
 
-GoreeCloud Search targets canonical Glaze UI 1.1.0. Stable visual acceptance requires:
+Before native production cutover:
 
-- canonical semantic colors, typography, spacing, state, and layering behavior;
-- Canvas, Solid, Raised, Glaze, and Overlay hierarchy where appropriate;
-- recognizable GoreeCloud identity without removing required upstream attribution;
-- successful Compact light, Compact dark, Expanded light, and Expanded dark final-candidate review;
-- physical Android Preferences review;
-- desktop runtime/regression review;
-- persisted-theme preference behavior;
-- visible keyboard focus and practical target sizing;
-- reduced-motion, reduced-transparency, increased-contrast, and forced-colors resilience;
-- readable solid fallbacks when blur is unavailable;
-- local or application-owned UI assets without analytics, trackers, remote fonts, or remote icon runtimes.
+1. Identify one exact release candidate and immutable artifact.
+2. Complete exact-head source/CI gates.
+3. Complete required native category/provider live acceptance.
+4. Complete Glaze UI 2.1 whole-application and required device acceptance.
+5. Complete Privacy Shield and Wardveil runtime/evidence acceptance.
+6. Complete Everkeep backup/restore/migration/rollback acceptance.
+7. Validate required Identity, Mesh, Browser, AI, and other consumer integrations.
+8. Validate target-host private networking, DNS, reverse proxy, TLS, monitoring, alert delivery, and resource/abuse boundaries.
+9. Preserve the previous known-good transitional deployment until rollback is proven.
+10. Perform a controlled cutover only after explicit production authorization.
+11. Verify the deployed artifact/configuration matches the exact approved candidate.
+12. Re-run representative production acceptance after cutover.
 
-Rounded cards or translucency by themselves do not satisfy Glaze UI conformance.
+If the candidate or relevant configuration changes after final validation, it becomes a new candidate and applicable validation must be repeated.
 
 ## Stable-release decision
 
-A GoreeCloud Search source revision may be described as source-valid or release-candidate-ready only when the applicable deterministic repository gates pass.
+A native Search revision may be described as source-valid when its applicable deterministic gates pass.
 
-It may be described as ready for final governance review only when the required candidate-bound evidence validates and cross-binds successfully.
+It may be described as a release candidate only when an exact candidate identity and artifact are established and no source-level release blocker remains for the selected scope.
 
-It may be described as production-ready or Stable only after the target deployment has separately passed private-access, provider, Browser, monitoring/alert, backup/restore, recovery, rollback, device/desktop, integration, and final evidence acceptance and an explicit GoreeCloud release-governance decision authorizes that state.
+It may be described as production-ready or Stable only when all applicable GoreeCloud Stable qualification gates have passed for that exact release, artifact, supported platform, and deployment boundary, and no unresolved release blocker remains.
+
+Stable is not a synonym for working, green CI, source-complete, deployed, or long-running.
