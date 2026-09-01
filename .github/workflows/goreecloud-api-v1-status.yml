@@ -81,7 +81,7 @@ jobs:
       - name: Test native API v1 contract
         run: |
           set -euo pipefail
-          go test ./native/cmd/searchd
+          (cd native && go test ./cmd/searchd)
           grep -q 'GET /api/v1/status' native/cmd/searchd/main.go
           grep -q 'GET /api/v1/readiness' native/cmd/searchd/main.go
           grep -q 'local_native_application' native/cmd/searchd/main.go
