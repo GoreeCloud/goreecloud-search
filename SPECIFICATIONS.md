@@ -22,20 +22,68 @@ The native engine currently provides source-level application logic for:
 - fail-closed specialized-category execution unless a configured provider has an executable category path;
 - concurrent provider execution under one bounded request context;
 - per-provider availability/timeout status without exposing provider error strings to the response;
-- deterministic provider status ordering and deterministic result ordering;
-- URL de-duplication with deterministic highest-score/tie-break behavior;
+- a deterministic 512-result processing ceiling per provider per request before native URL sanitization and ranking; an oversized provider result slice is copied to the bounded working set, provider status records the processed count, and `truncated=true` discloses that the ceiling was applied;
 - HTTP/HTTPS result URL validation with fragment removal;
 - rejection of result URLs containing embedded user-info credentials;
 - provider identity normalization with a 128-rune maximum and rejection of blank or control-character names before advertisement or execution;
-- sanitized provider-definition exposure that does not publish credentials, endpoints, mutable controls, or runtime errors.
+- sanitized provider-definition exposure that does not publish credentials, endpoints, mutable controls, or runtime errors;
+- GoreeCloud-owned request-local result ranking rather than direct cross-provider trust in arbitrary provider score scales;
+- Unicode-aware query/result token normalization for deterministic relevance scoring;
+- local query-intent parsing that separates `site:`, `filetype:`/`ext:`, quoted phrases, domain-directed targets, and temporal modifiers from ordinary relevance tokens without rewriting the submitted provider query;
+- strong title relevance and exact-title signals, with lower-weight snippet and URL token coverage;
+- bounded quoted-phrase boosts when an explicitly quoted multi-word phrase remains contiguous in a result title, snippet, or URL text;
+- bounded one-edit or adjacent-transposition tolerance for tokens of at least five runes, with fuzzy title/snippet/URL contributions kept materially below exact relevance signals;
+- conservative user-visible query correction derived only from result-title evidence already present in the current request: Search proposes at most one unquoted, non-operator, non-domain token change, requires at least two independent normalized providers to support the same one-edit/transposition alternative, fails closed on ambiguity, and never rewrites the query submitted to providers;
+- no fuzzy matching for shorter tokens, reducing accidental matches on common short words;
+- bounded positive preference for explicit `site:` host/subdomain matches and bounded demotion of results that violate an explicit site target;
+- bounded positive preference for domain-directed navigational results whose hostname matches the requested domain;
+- bounded positive preference for `filetype:`/`ext:` URL extensions and bounded demotion when an explicit requested extension does not match;
+- actual domain-target recognition rather than a generic dotted-token heuristic, preventing dotted versions such as `1.5.0` from disabling hostname diversity;
+- provider-supplied integer score retained only as bounded supporting evidence with a maximum contribution of 300 ranking points;
+- explicit provider-level `PublishedAtProvider` authority for publication/update timestamps: adapters may opt in only when `Result.PublishedAt` is copied from a trustworthy upstream field with publication semantics rather than inferred from snippets, URLs, crawl time, or provider score;
+- stripping of untrusted, zero, pre-Unix, or more-than-24-hours-future publication timestamps before aggregation; retained timestamp output records the authoritative provider in `published_at_source`;
+- request-local freshness scoring only for explicit temporal intent or the News category;
+- clear unquoted modifiers `latest`, `recent`, `recently`, `today`, `breaking`, and `newest`, plus the phrases `this week` and `this month`, activate freshness while being omitted from ordinary lexical relevance so they do not dilute the actual subject terms;
+- leading unquoted `current` activates freshness and is omitted from lexical relevance, while noun/non-leading uses such as `electric current` remain ordinary lexical content and do not activate freshness;
+- content-bearing unquoted terms `news`, `updated`, and `updates` may activate freshness but remain lexical terms because they can describe the subject itself;
+- quoted temporal wording remains literal phrase/text relevance and does not independently activate freshness, so a query such as `"latest goreecloud" search` keeps `latest` as requested content rather than silently interpreting it as a recency modifier;
+- a freshness contribution bounded to at most 1,200 ranking points, with declining buckets through 90 days and a lower implicit weight for News-category recency when the query itself has no temporal wording;
+- no freshness bias for ordinary General searches that do not express temporal intent;
+- temporal-only modifier queries may have no lexical tokens and can still order accepted timestamp-bearing candidates by the bounded freshness signal rather than manufacturing synthetic relevance terms;
+- exact normalized-URL clustering that preserves deterministic source-agreement evidence rather than discarding duplicate-provider consensus;
+- source-agreement bonus bounded to 900 ranking points, preventing consensus from becoming unlimited ranking authority;
+- selection of the most query-relevant duplicate title/snippet as the displayed representative while preserving deterministic tie breaks;
+- first-viewport hostname diversity of at most two results per hostname when other ranked hosts are available;
+- no hostname-diversity override for explicit `site:` or valid domain-directed queries, where concentration is likely intentional;
+- final deterministic score/URL/provider ordering before the bounded diversity pass;
+- native result metadata for deterministic `source_count` and sorted `sources` provenance.
 
-No external provider is production-approved merely because the native provider interfaces exist. Provider selection, credentials, privacy policy, terms, health, rate limiting, degradation behavior, and target-runtime evidence remain separate acceptance work.
+The native ranking and correction paths are deterministic and request-local. They do not use click history, behavioral profiles, advertising signals, sponsored placement, remote spelling/correction lookups, remote freshness lookups, or remote ranking telemetry. Search does not silently rewrite or replace the query sent to providers. A user-visible correction is only an explicit optional link derived from bounded provider-title evidence already returned for the same request. Freshness uses only timestamp metadata that passed the explicit provider-authority boundary; Search does not infer publication time from result text or URL structure. Temporal-modifier separation is also request-local parsing: it changes only GoreeCloud-owned reranking interpretation and does not alter the original query submitted to configured providers.
+
+The provider result ceiling bounds Search-owned post-provider work; it cannot prevent an adapter or external provider implementation from allocating its own oversized response before returning. Production provider adapters therefore remain responsible for their own transport/body/result bounds in addition to this engine-level ceiling.
+
+No external provider is production-approved merely because the native provider interfaces exist. Provider selection, credentials, privacy policy, terms, health, rate limiting, degradation behavior, timestamp-authority review, and target-runtime evidence remain separate acceptance work.
 
 ## Native presentation and preferences
 
 The native tree contains GoreeCloud-owned homepage/results/presentation work under `native/internal/webui` and first-party preference state under `native/internal/preferences`.
 
-Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. Source structure alone is not visual/accessibility acceptance.
+The native results surface now implements source-level scan-first presentation with:
+
+- a compact persistent query field and category navigation;
+- restrained list-based result composition rather than a wall of equally elevated cards;
+- title-first hierarchy, subordinate URL/snippet treatment, and no user-visible internal numeric ranking score;
+- source-agreement disclosure for clustered multi-provider results;
+- human-readable publication dates only when `PublishedAt` survived the authoritative provider boundary, rendered through semantic `<time datetime>` markup rather than inferred or synthetic dates;
+- an explicit optional “Search instead for” correction link only when the bounded local provider-agreement rule produces a single unambiguous alternative;
+- a ranking explanation that discloses trustworthy freshness as a conditional signal when the query/category requests recency;
+- a separate source-health surface for available/degraded provider state, including visible “limit applied” disclosure when a provider exceeds the Search-owned result-processing ceiling;
+- explicit local-ranking/privacy explanation without claiming anonymity from external providers;
+- adaptive desktop and narrow-window composition;
+- a 48px minimum interaction-target floor for the tested native results controls across Compact, Medium, Expanded, and Wide browser acceptance, plus visible focus and reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks;
+- script-free result rendering through Go `html/template`, preserving automatic escaping of query/provider/title/snippet/source content.
+
+Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is Glaze UI 2.1.0. Glaze UI 2.2 is the next-version Candidate/design-reference line and may guide future implementation work, but it cannot satisfy Stable consumer conformance until Glaze UI itself is formally promoted and Search has application-specific adoption evidence. Source structure, CSS implementation, unit tests, or bounded rendered acceptance alone do not establish whole-application visual/accessibility/device or production conformance.
 
 ## Sync boundary
 
@@ -56,8 +104,13 @@ Search requirements include:
 - minimized persistent query/history state;
 - explicit user controls before account history or personalization is enabled;
 - no hidden provider fallback that bypasses the configured Search authority;
+- bounded Search-owned per-provider result processing for native ranking/resource control;
 - no result URL user-info credentials entering the native response surface;
-- provider errors represented by bounded status codes rather than raw error text that may contain secrets.
+- provider errors represented by bounded status codes rather than raw error text that may contain secrets;
+- no click-history or behavioral-profile dependency in native relevance ranking;
+- no external lookup requirement for the implemented intent parsing, typo-tolerant ranking, explicit local correction suggestion, or freshness scoring signals;
+- no inferred publication time from result text/URLs and no use of provider timestamps unless the adapter explicitly satisfies the publication-metadata authority contract;
+- no user-visible internal ranking score that could be mistaken for a provider trust or quality guarantee.
 
 External providers may observe requests from GoreeCloud infrastructure. Search must not claim anonymity from external providers.
 
@@ -90,12 +143,13 @@ Stable remains blocked by at least:
 
 - production-approved native provider adapters and credentials/secrets integration;
 - complete native category/provider coverage required for the selected release;
-- accepted Glaze UI native visual/accessibility/device evidence;
+- production-reviewed provider timestamp authorities and live-provider acceptance for result classes where freshness is required; the source-level freshness contract/ranker alone is not production evidence;
+- accepted Glaze UI 2.1 whole-application native visual/accessibility/device evidence beyond the bounded results-renderer acceptance already present;
 - applicable Wardveil Security and Privacy Shield runtime/evidence integration;
 - Everkeep-backed backup/restore/migration/rollback acceptance;
 - GoreeCloud Identity and Mesh integration where the release uses account-bound capabilities;
 - migration parity and controlled cutover from the transitional runtime;
-- monitoring, alerting, resource/abuse bounds, target-host validation, and rollback evidence;
+- monitoring, alerting, provider-adapter resource/body bounds, abuse controls, target-host validation, and rollback evidence;
 - supported Browser/device/runtime acceptance;
 - exact-release provenance and production approval.
 

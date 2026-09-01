@@ -7,6 +7,8 @@ on:
     paths:
       - '.github/workflows/goreecloud-api-v1-status.yml'
       - '.github/workflows/goreecloud-runtime-smoke.yml'
+      - 'native/cmd/searchd/main.go'
+      - 'native/cmd/searchd/main_test.go'
       - 'searx/plugins/__init__.py'
       - 'searx/plugins/goreecloud_api.py'
       - 'searx/webapp.py'
@@ -19,6 +21,8 @@ on:
     paths:
       - '.github/workflows/goreecloud-api-v1-status.yml'
       - '.github/workflows/goreecloud-runtime-smoke.yml'
+      - 'native/cmd/searchd/main.go'
+      - 'native/cmd/searchd/main_test.go'
       - 'searx/plugins/__init__.py'
       - 'searx/plugins/goreecloud_api.py'
       - 'searx/webapp.py'
@@ -33,7 +37,7 @@ permissions:
 jobs:
   api-v1-service-contract:
     runs-on: ubuntu-26.04
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Check out exact revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -45,7 +49,13 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Validate Python source
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00  # v6.1.0
+        with:
+          go-version: '1.25.x'
+          cache: false
+
+      - name: Validate transitional Python API source
         run: |
           set -euo pipefail
           python -m py_compile \
@@ -53,7 +63,7 @@ jobs:
             searx/plugins/goreecloud_api.py \
             tests/unit/test_goreecloud_api_plugin.py
 
-      - name: Verify API v1 service contract markers
+      - name: Verify transitional API continuity markers
         run: |
           set -euo pipefail
           grep -q '/api/v1/status' searx/plugins/goreecloud_api.py
@@ -67,14 +77,30 @@ jobs:
           grep -q 'GoreeCloudAPIPlugin' searx/plugins/__init__.py
           grep -q "@app.route('/healthz'" searx/webapp.py
           grep -q "Response('OK', mimetype='text/plain')" searx/webapp.py
-          grep -q 'Query-string input is ignored' docs/goreecloud/API.md
-          grep -q 'machine_readable_search_api.*false' docs/goreecloud/API.md
+
+      - name: Test native API v1 contract
+        run: |
+          set -euo pipefail
+          (cd native && go test ./cmd/searchd)
+          grep -q 'GET /api/v1/status' native/cmd/searchd/main.go
+          grep -q 'GET /api/v1/readiness' native/cmd/searchd/main.go
+          grep -q 'local_native_application' native/cmd/searchd/main.go
+          grep -q 'machine_readable_search_api' native/cmd/searchd/main.go
+          grep -q 'production_approved' native/cmd/searchd/main.go
+          grep -q 'X-GoreeCloud-API-Version' native/cmd/searchd/main.go
+
+      - name: Verify current API documentation boundary
+        run: |
+          set -euo pipefail
+          grep -q 'GET /api/v1/status' docs/goreecloud/API.md
           grep -q 'GET /api/v1/readiness' docs/goreecloud/API.md
+          grep -q 'GET /api/v1/search' docs/goreecloud/API.md
+          grep -q 'readiness_scope.*local_native_application' docs/goreecloud/API.md
           grep -q 'HTTP 503' docs/goreecloud/API.md
-          grep -q 'readiness_scope.*local_application' docs/goreecloud/API.md
-          grep -q 'Existing process health.*GET /healthz' docs/goreecloud/API.md
+          grep -q 'production_approved: false' docs/goreecloud/API.md
+          grep -q 'Transitional compatibility' docs/goreecloud/API.md
           grep -q 'Local application readiness.*GET /api/v1/readiness' \
             docs/goreecloud/READINESS.md
           grep -q 'Neither `/healthz` nor `/api/v1/readiness`' \
             docs/goreecloud/READINESS.md
-          grep -q 'Glaze UI 1.1.0' docs/goreecloud/READINESS.md
+          grep -q 'Glaze UI 2.1.0' docs/goreecloud/READINESS.md

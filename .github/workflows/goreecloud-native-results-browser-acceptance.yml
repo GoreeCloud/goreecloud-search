@@ -1,0 +1,86 @@
+name: GoreeCloud native results browser acceptance
+
+"on":
+  pull_request:
+    paths:
+      - native/**
+      - .github/workflows/goreecloud-native-results-browser-acceptance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-results-browser-acceptance:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00  # v6.0.0
+        with:
+          go-version: "1.25.x"
+          cache: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install browser acceptance dependency
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install selenium==4.47.0
+
+      - name: Validate native source and acceptance harness
+        run: |
+          set -euo pipefail
+          python -m py_compile native/browser_results_acceptance.py
+          cd native
+          go test ./...
+          go build -o /tmp/goreecloud-search-results-acceptance ./cmd/results-acceptance
+
+      - name: Start native results acceptance fixture
+        env:
+          GOREECLOUD_SEARCH_ADDR: 127.0.0.1:8091
+        run: |
+          set -euo pipefail
+          nohup /tmp/goreecloud-search-results-acceptance >/tmp/goreecloud-search-native-results.log 2>&1 &
+          echo $! >/tmp/goreecloud-search-native-results.pid
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:8091/healthz >/dev/null; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/goreecloud-search-native-results.pid)" 2>/dev/null; then
+              cat /tmp/goreecloud-search-native-results.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/goreecloud-search-native-results.log
+          exit 1
+
+      - name: Run native results Glaze UI browser acceptance
+        env:
+          GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
+          GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
+        run: python native/browser_results_acceptance.py
+
+      - name: Preserve exact-head native results evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: goreecloud-search-native-results-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/goreecloud-search-native-results-screenshots
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Print fixture log on failure
+        if: failure()
+        run: cat /tmp/goreecloud-search-native-results.log || true

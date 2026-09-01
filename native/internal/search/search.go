@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	MaxQueryRunes        = 512
-	MaxProviderNameRunes = 128
+	MaxQueryRunes         = 512
+	MaxProviderNameRunes  = 128
+	MaxResultsPerProvider = 512
 )
 
 const (
@@ -33,16 +34,31 @@ const (
 )
 
 type Result struct {
-	Title    string `json:"title"`
-	URL      string `json:"url"`
-	Snippet  string `json:"snippet,omitempty"`
-	Provider string `json:"provider"`
-	Score    int    `json:"score"`
+	Title              string     `json:"title"`
+	URL                string     `json:"url"`
+	Snippet            string     `json:"snippet,omitempty"`
+	Provider           string     `json:"provider"`
+	Score              int        `json:"score"`
+	SourceCount        int        `json:"source_count,omitempty"`
+	Sources            []string   `json:"sources,omitempty"`
+	PublishedAt        *time.Time `json:"published_at,omitempty"`
+	PublishedAtSource  string     `json:"published_at_source,omitempty"`
+	publishedAtTrusted bool
+	recencyBonus       int
 }
 
 type Provider interface {
 	Name() string
 	Search(context.Context, string) ([]Result, error)
+}
+
+// PublishedAtProvider is an explicit metadata-authority opt-in. Implementations
+// must return true only when Result.PublishedAt is copied from a trustworthy
+// upstream publication/update field with publication semantics. Search must not
+// infer this authority from snippets, URLs, crawl time, or provider score.
+type PublishedAtProvider interface {
+	Provider
+	PublishedAtAuthoritative() bool
 }
 
 // CategoryProvider extends the base provider contract with explicit category
@@ -54,24 +70,27 @@ type CategoryProvider interface {
 }
 
 type ProviderDefinition struct {
-	Name       string   `json:"name"`
-	Categories []string `json:"categories"`
-	Legacy     bool     `json:"legacy_general_only"`
+	Name                     string   `json:"name"`
+	Categories               []string `json:"categories"`
+	Legacy                   bool     `json:"legacy_general_only"`
+	PublishedAtAuthoritative bool     `json:"published_at_authoritative"`
 }
 
 type ProviderStatus struct {
-	Name  string `json:"name"`
-	State string `json:"state"`
-	Code  string `json:"code,omitempty"`
-	Count int    `json:"count"`
+	Name      string `json:"name"`
+	State     string `json:"state"`
+	Code      string `json:"code,omitempty"`
+	Count     int    `json:"count"`
+	Truncated bool   `json:"truncated,omitempty"`
 }
 
 type Response struct {
-	Query     string           `json:"query"`
-	Category  string           `json:"category"`
-	Results   []Result         `json:"results"`
-	Providers []ProviderStatus `json:"providers"`
-	Degraded  bool             `json:"degraded"`
+	Query          string           `json:"query"`
+	SuggestedQuery string           `json:"suggested_query,omitempty"`
+	Category       string           `json:"category"`
+	Results        []Result         `json:"results"`
+	Providers      []ProviderStatus `json:"providers"`
+	Degraded       bool             `json:"degraded"`
 }
 
 type Engine struct {
@@ -87,8 +106,9 @@ func NewEngine(timeout time.Duration, providers ...Provider) *Engine {
 }
 
 // ProviderDefinitions returns a sanitized, deterministic view of configured
-// provider identity and category capabilities. It does not expose credentials,
-// endpoint configuration, runtime errors, request state, or mutable controls.
+// provider identity and category/metadata capabilities. It does not expose
+// credentials, endpoint configuration, runtime errors, request state, or
+// mutable controls.
 func (e *Engine) ProviderDefinitions() []ProviderDefinition {
 	definitions := make([]ProviderDefinition, 0, len(e.providers))
 	for _, provider := range e.providers {
@@ -100,6 +120,9 @@ func (e *Engine) ProviderDefinitions() []ProviderDefinition {
 			continue
 		}
 		definition := ProviderDefinition{Name: name}
+		if timestampProvider, supportsTimestamps := provider.(PublishedAtProvider); supportsTimestamps {
+			definition.PublishedAtAuthoritative = timestampProvider.PublishedAtAuthoritative()
+		}
 		categorized, ok := provider.(CategoryProvider)
 		if !ok {
 			definition.Categories = []string{CategoryGeneral}
@@ -203,6 +226,8 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 
 	ctx, cancel := context.WithTimeout(ctx, e.timeout)
 	defer cancel()
+	requestNow := time.Now().UTC()
+	intent := parseQueryIntent(query)
 
 	type providerResult struct {
 		index   int
@@ -211,14 +236,19 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	}
 
 	type selectedProvider struct {
-		provider Provider
-		name     string
+		provider                 Provider
+		name                     string
+		publishedAtAuthoritative bool
 	}
 	selected := make([]selectedProvider, 0, len(e.providers))
 	for _, provider := range e.providers {
 		name, ok := validExecutableProvider(provider)
 		if ok && providerCanExecuteCategory(provider, category) {
-			selected = append(selected, selectedProvider{provider: provider, name: name})
+			authoritative := false
+			if timestampProvider, supportsTimestamps := provider.(PublishedAtProvider); supportsTimestamps {
+				authoritative = timestampProvider.PublishedAtAuthoritative()
+			}
+			selected = append(selected, selectedProvider{provider: provider, name: name, publishedAtAuthoritative: authoritative})
 		}
 	}
 
@@ -229,22 +259,31 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		index, selectedProvider := index, selectedProvider
 		go func() {
 			items, searchErr := executeProviderSearch(ctx, selectedProvider.provider, query, category)
-			status := ProviderStatus{Name: selectedProvider.name, State: ProviderStateAvailable, Count: len(items)}
+			status := ProviderStatus{Name: selectedProvider.name, State: ProviderStateAvailable}
 			if searchErr != nil {
 				status.State = ProviderStateUnavailable
 				status.Code = classifyProviderFailure(searchErr)
-				status.Count = 0
 				items = nil
+			} else {
+				items, status.Truncated = boundProviderResults(items)
+				status.Count = len(items)
 			}
 			for i := range items {
 				items[i].Provider = selectedProvider.name
+				publishedAt, trusted := normalizeAuthoritativePublishedAt(items[i].PublishedAt, selectedProvider.publishedAtAuthoritative, requestNow)
+				items[i].PublishedAt = publishedAt
+				items[i].PublishedAtSource = ""
+				items[i].publishedAtTrusted = trusted
+				if trusted {
+					items[i].PublishedAtSource = selectedProvider.name
+				}
 			}
 			ch <- providerResult{index: index, status: status, results: items}
 		}()
 	}
 
 	response := Response{Query: query, Category: category, Results: []Result{}, Providers: []ProviderStatus{}}
-	bestByURL := map[string]Result{}
+	candidates := make([]Result, 0)
 	resolved := make([]bool, len(selected))
 	remaining := len(selected)
 
@@ -264,10 +303,8 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 				continue
 			}
 			result.URL = normalized
-			current, exists := bestByURL[normalized]
-			if !exists || resultBetterThan(result, current) {
-				bestByURL[normalized] = result
-			}
+			result.recencyBonus = freshnessScore(intent, category, result, requestNow)
+			candidates = append(candidates, result)
 		}
 	}
 
@@ -290,20 +327,18 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		}
 	}
 
-	for _, result := range bestByURL {
-		response.Results = append(response.Results, result)
-	}
-	sort.Slice(response.Results, func(i, j int) bool {
-		if response.Results[i].Score == response.Results[j].Score {
-			if response.Results[i].URL == response.Results[j].URL {
-				return response.Results[i].Provider < response.Results[j].Provider
-			}
-			return response.Results[i].URL < response.Results[j].URL
-		}
-		return response.Results[i].Score > response.Results[j].Score
-	})
+	response.SuggestedQuery = suggestQueryCorrection(query, candidates)
+	response.Results = rankResults(query, candidates)
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
 	return response, nil
+}
+
+func boundProviderResults(items []Result) ([]Result, bool) {
+	if len(items) <= MaxResultsPerProvider {
+		return items, false
+	}
+	bounded := append([]Result(nil), items[:MaxResultsPerProvider]...)
+	return bounded, true
 }
 
 func validExecutableProvider(provider Provider) (string, bool) {

@@ -40,12 +40,18 @@ jobs:
         run: |
           set -euo pipefail
           test -f GORECLOUD.md
+          test -f SPECIFICATIONS.md
+          test -f FEATURES.md
           test -f SECURITY.md
           test -f CONTRIBUTING.rst
           test -f docs/goreecloud/UPSTREAM.md
           test -f docs/goreecloud/API.md
           test -f docs/goreecloud/DEPLOYMENT.md
           test -f docs/goreecloud/READINESS.md
+          test -f native/cmd/searchd/main.go
+          test -f native/browser_results_acceptance.py
+          test -f native/internal/webui/assets/app.css
+          test -f native/internal/webui/assets/results.css
           test -f goreecloud/settings.yml.example
           test -f goreecloud/compose.yml.example
           test -f goreecloud/browser_acceptance.py
@@ -62,6 +68,7 @@ jobs:
           grep -q 'GoreeCloud Search' README.rst
           grep -q 'GoreeCloud Search Security Policy' SECURITY.md
           grep -q 'Contributing to GoreeCloud Search' CONTRIBUTING.rst
+          grep -q 'native migration' SPECIFICATIONS.md
           grep -q 'GoreeCloud Search' searx/templates/simple/base.html
           grep -q 'GoreeCloud Search' searx/templates/simple/index.html
           grep -q 'GoreeCloud Search' searx/templates/simple/search.html
@@ -72,7 +79,7 @@ jobs:
           grep -q 'b2da6b90f2f8446557c91f67d6be5064ab785ecd' \
             docs/goreecloud/UPSTREAM.md
 
-      - name: Validate maintained-fork ownership contract
+      - name: Validate native-first migration ownership contract
         shell: bash
         run: |
           set -euo pipefail
@@ -80,8 +87,8 @@ jobs:
           grep -q 'Upstream SearXNG issues' SECURITY.md
           grep -q 'security@searxng.org' SECURITY.md
           grep -q 'GoreeCloud-owned changes' CONTRIBUTING.rst
-          grep -q 'Upstream-capable changes' CONTRIBUTING.rst
-          grep -q 'Glaze UI 1.1.0 is mandatory' CONTRIBUTING.rst
+          grep -q 'Upstream-capable transitional changes' CONTRIBUTING.rst
+          grep -q 'Glaze UI 2.1.0 is the current Stable target' CONTRIBUTING.rst
           grep -q 'GoreeCloud-maintained translation exists' CONTRIBUTING.rst
           grep -q 'GoreeCloud product content may intentionally fall back to English' \
             CONTRIBUTING.rst
@@ -121,15 +128,28 @@ jobs:
           grep -q 'Viewport("expanded", 1280, 900)' goreecloud/browser_acceptance.py
           grep -q 'Viewport("wide", 1600, 1000)' goreecloud/browser_acceptance.py
 
-      - name: Validate GoreeCloud Glaze UI baseline
+      - name: Validate current native and transitional Glaze UI boundaries
         shell: bash
         run: |
           set -euo pipefail
           css='searx/static/themes/simple/goreecloud.css'
           states='searx/static/themes/simple/goreecloud-states.css'
           home_preferences='searx/static/themes/simple/goreecloud-home-preferences-v2.css'
-          grep -q 'Glaze UI 1.1.0' docs/goreecloud/READINESS.md
-          grep -q 'Glaze UI 1.1.0 is mandatory' CONTRIBUTING.rst
+          native_app='native/internal/webui/assets/app.css'
+          native_results='native/internal/webui/assets/results.css'
+          grep -q 'Glaze UI 2.1.0' docs/goreecloud/READINESS.md
+          grep -q 'Glaze UI 2.1.0 is the current Stable target' CONTRIBUTING.rst
+          grep -q 'Glaze UI 2.2.*Candidate' docs/goreecloud/READINESS.md
+          grep -q 'TARGET_FLOOR = 48.0' native/browser_results_acceptance.py
+          grep -q 'min-height:48px' "$native_app"
+          grep -q 'min-height:48px' "$native_results"
+          if grep -q 'min-height:44px' "$native_results"; then
+            echo 'Native results must not regress below the Glaze UI 2.1 48px target floor.' >&2
+            exit 1
+          fi
+          # Historical SearXNG-derived Glaze tokens remain validated only as
+          # transitional compatibility material; they are not the current
+          # Stable Search consumer target.
           grep -q -- '--gc-muted: #5f6d82' "$css"
           grep -q -- '--gc-accent: #2a5bd7' "$css"
           grep -q -- '--gc-accent-secondary: #6b4cf0' "$css"
@@ -191,7 +211,7 @@ jobs:
           grep -q '127.0.0.1:' goreecloud/compose.yml.example
           grep -q 'SEARXNG_SECRET:.*:?Set SEARXNG_SECRET' goreecloud/compose.yml.example
           if grep -Eq '^    - (json|csv|rss)$' goreecloud/settings.yml.example; then
-            echo 'Machine-readable formats must remain disabled in the foundation baseline.' >&2
+            echo 'Machine-readable formats must remain disabled in the transitional foundation baseline.' >&2
             exit 1
           fi
 

@@ -2,45 +2,71 @@
 
 ## Status
 
-Phase 1 of the GoreeCloud-owned integration API is implemented on the current development line through two read-only endpoints:
+The GoreeCloud-owned native Search service exposes a versioned API v1 development contract. These endpoints are implemented in `native/cmd/searchd` and remain **pre-Stable** with `production_approved: false` where lifecycle state is material.
 
-- `GET /api/v1/status` for stable service identity, capabilities, and canonical paths;
-- `GET /api/v1/readiness` for bounded local-application readiness.
+Current native endpoints are:
 
-GoreeCloud Search also provides `GET /healthz` through the SearXNG-derived web application. This work preserves that established health endpoint and its `text/plain` `OK` response rather than replacing or silently changing its semantics.
+- `GET /healthz` — bounded native process/service identity health;
+- `GET /api/v1/status` — GoreeCloud Search API/service identity and capability discovery;
+- `GET /api/v1/readiness` — bounded local-native-application readiness;
+- `GET /api/v1/search` — machine-readable execution through the same native engine used by the HTML results surface;
+- `GET /api/v1/preferences/definitions` — read-only preference schema/definition discovery;
+- `GET /api/v1/providers/definitions` — read-only sanitized provider/capability discovery;
+- `GET /api/v1/sync/capabilities` — read-only Search Sync capability discovery.
 
-The general GoreeCloud-facing machine-readable Search API remains planned and unaccepted. The Phase 1 service contracts do not enable JSON, RSS, or CSV search-result formats and do not promote the current first-Stable candidate or production runtime to Stable.
+The inherited SearXNG-derived tree still contains its earlier GoreeCloud `/api/v1/status` and `/api/v1/readiness` plugin contract for transitional continuity. That legacy implementation is not the target architecture and must not be described as the native API implementation.
 
-## Purpose
+API source availability does not authorize unrestricted production consumers. Stable API use still requires exact-release acceptance, access/trust boundaries, rate/resource controls, provider acceptance, privacy/security evidence, monitoring, recovery, and compatibility governance appropriate to each consumer.
 
-GoreeCloud Search will provide stable, documented interfaces for approved GoreeCloud applications, Browser integration, local AI systems, research agents, monitoring, and approved automation workflows. Consumers should depend on a GoreeCloud-owned versioned contract rather than on incidental SearXNG internals.
+## Versioning and response controls
 
-The first implemented GoreeCloud-owned API boundary is intentionally narrow. Clients can verify GoreeCloud Search identity, API-contract version, basic capabilities, implementation-foundation transparency, canonical service paths, and bounded local-application readiness without receiving query, result, preference, engine, plugin, provider-response, or secret data.
+Native API endpoints use the `/api/v1/` namespace and return `X-GoreeCloud-API-Version: 1`.
 
-## Phase 1 — `GET /api/v1/status`
+Compatible additive changes may be made within version 1. Breaking field or semantic changes require a new version or an explicit migration contract.
 
-The versioned read-only status endpoint returns:
+The native service applies `Cache-Control: no-store` through its application security middleware. API endpoints do not intentionally echo unrelated query-string input into status or readiness responses.
 
-- API contract version;
-- GoreeCloud Search product and service identity;
-- basic service status;
-- the SearXNG foundation name and runtime version for implementation transparency;
-- capability flags for HTML search, OpenSearch, and the future machine-readable Search API;
-- canonical paths for health, readiness, OpenSearch, and interactive search.
+Consumers must not depend on undocumented internal Go structures, transitional SearXNG objects, provider-specific implementation details, or the broad upstream `/config` representation when a GoreeCloud-owned contract exists.
 
-The endpoint deliberately excludes:
+## `GET /healthz`
 
-- search query text;
-- search results or provider-response content;
-- search history;
-- user preferences;
-- enabled-engine inventories;
-- plugin inventories;
-- credentials, tokens, keys, secret configuration, or environment values.
+The native health endpoint returns a bounded JSON response identifying:
 
-The response uses `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeCloud-API-Version: 1`. Query-string input is ignored and is not echoed into the response.
+- `service: goreecloud-search`;
+- `implementation: native-development-foundation`; and
+- `production_approved: false`.
 
-### Example response shape
+This is process/service health only. It does not prove live-provider functionality, private DNS, reverse proxy behavior, monitoring, recovery, physical-device acceptance, production cutover, or Stable qualification.
+
+The transitional SearXNG-derived runtime has a different historical `/healthz` representation (`text/plain` `OK`). Consumers must bind health expectations to the implementation/release they are actually using rather than assuming the two runtimes are byte-for-byte identical.
+
+## `GET /api/v1/status`
+
+The native status endpoint provides bounded first-party service discovery.
+
+Current fields include:
+
+- `api_version: "1"`;
+- `product: "GoreeCloud Search"`;
+- `service: "search"`;
+- `status: "ok"`;
+- `implementation: "native"`;
+- `lifecycle: "pre-stable"`;
+- `production_approved: false`;
+- capability flags; and
+- canonical native endpoint paths.
+
+Current native capability flags identify source-level availability of:
+
+- HTML search;
+- the machine-readable Search API;
+- preference definitions;
+- provider definitions; and
+- Sync capability discovery.
+
+`machine_readable_search_api: true` means the native endpoint is implemented in the current source. It does **not** mean the endpoint has received production or Stable approval for arbitrary consumers.
+
+### Representative response shape
 
 ```json
 {
@@ -48,135 +74,143 @@ The response uses `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeClo
   "product": "GoreeCloud Search",
   "service": "search",
   "status": "ok",
-  "foundation": {
-    "name": "SearXNG",
-    "version": "<runtime version>"
-  },
+  "implementation": "native",
+  "lifecycle": "pre-stable",
+  "production_approved": false,
   "capabilities": {
     "html_search": true,
-    "opensearch": true,
-    "machine_readable_search_api": false
-  },
-  "endpoints": {
-    "health": "/healthz",
-    "opensearch": "/opensearch.xml",
-    "readiness": "/api/v1/readiness",
-    "search": "/search"
+    "machine_readable_search_api": true,
+    "preferences_definitions": true,
+    "provider_definitions": true,
+    "sync_capabilities": true
   }
 }
 ```
 
-## Phase 1 — `GET /api/v1/readiness`
+## `GET /api/v1/readiness`
 
-The readiness endpoint answers one deliberately narrow question: **is the local GoreeCloud Search application configured and wired well enough to accept approved local application traffic?**
+The native readiness endpoint answers one deliberately narrow question: **is the local native application initialized well enough to accept its current source-level application traffic?**
 
-It verifies only deterministic local application conditions:
+Current local checks are:
 
-- the configured instance identity is `GoreeCloud Search`;
-- HTML search remains enabled;
-- the existing `/healthz` route is registered;
-- the OpenSearch route is registered;
-- the interactive `/search` route is registered;
-- the versioned `/api/v1/status` route is registered.
+- native engine initialized; and
+- General category locally executable under the native engine contract.
 
-When every local check passes, the endpoint returns HTTP 200 with `status: "ready"` and `ready: true`. If any local check fails, it returns HTTP 503 with `status: "not_ready"` and `ready: false`.
+When both checks pass, the endpoint returns HTTP 200 with `status: "ready"`, `ready: true`, and `readiness_scope: "local_native_application"`.
 
-The readiness response uses the same `Cache-Control: no-store`, `Pragma: no-cache`, and `X-GoreeCloud-API-Version: 1` controls as the status response. Query-string input is ignored and is not echoed.
+If the native engine is unavailable or the required local General path is not ready, it fails closed with HTTP 503, `status: "not_ready"`, and `ready: false`.
 
-### Example ready response shape
+The readiness response explicitly marks `production_approved: false` and lists material areas it does not evaluate, including:
 
-```json
-{
-  "api_version": "1",
-  "product": "GoreeCloud Search",
-  "service": "search",
-  "status": "ready",
-  "ready": true,
-  "readiness_scope": "local_application",
-  "checks": {
-    "service_identity": true,
-    "html_search_enabled": true,
-    "health_route_registered": true,
-    "opensearch_route_registered": true,
-    "search_route_registered": true,
-    "status_route_registered": true
-  },
-  "not_evaluated": [
-    "external_search_providers",
-    "dns",
-    "reverse_proxy",
-    "monitoring_and_alert_delivery",
-    "backup_restore_and_rollback"
-  ]
-}
-```
+- external search providers;
+- production provider credentials;
+- private DNS and reverse proxy;
+- monitoring and alert delivery;
+- backup, restore, and rollback;
+- physical-device acceptance; and
+- production cutover.
 
-### Readiness boundary
+`/healthz` and `/api/v1/readiness` are complementary local signals. Neither authorizes production deployment or Stable promotion.
 
-`/api/v1/readiness` is intentionally **not** a substitute for final-candidate, production, or Stable acceptance. It does not contact external search providers and does not prove:
+## `GET /api/v1/search`
 
-- representative General, Images, Videos, News, or Files provider success;
-- DNS or private-network reachability;
-- Caddy or other reverse-proxy behavior;
-- monitoring or approved alert delivery;
-- backup, restore, or rollback capability;
-- GoreeCloud Browser runtime integration;
-- production cutover or Stable authorization.
+The native Search API executes through the same `search.Engine` used by first-party HTML search.
 
-Those remain separate evidence and governance requirements. A consumer may use this endpoint to decide whether the local application itself is ready, but release governance must continue to evaluate the broader system independently.
+Current source behavior includes:
 
-## Existing process health — `GET /healthz`
+- bounded query validation;
+- explicit category validation;
+- fail-closed handling when a specialized category has no executable provider path;
+- bounded concurrent provider execution;
+- timeout/degraded provider status;
+- bounded per-provider result processing;
+- URL sanitization and credential-bearing URL rejection;
+- deterministic GoreeCloud-owned ranking;
+- bounded trustworthy freshness where applicable;
+- conservative local correction metadata where supported by current result evidence; and
+- source provenance.
 
-The API status contract advertises the existing `/healthz` application-process health path already implemented in the SearXNG-derived web application.
+General may return a valid empty development response when no native production provider is configured. Images, Videos, News, and Files return a bounded not-implemented response when the current native engine has no executable provider for the requested category rather than silently falling back to General or to the transitional runtime.
 
-A successful response is HTTP 200, `text/plain`, with body:
+Production provider availability and category parity remain separate release gates.
 
-```text
-OK
-```
+## `GET /api/v1/preferences/definitions`
 
-The Phase 1 API deliberately preserves that established contract. It does not add a duplicate health route and does not reinterpret process health as application readiness or full dependency readiness.
+This read-only endpoint exposes the native preference-definition contract, including schema version, recognized sections, and first-party preference definitions.
 
-`/healthz` proves that the GoreeCloud Search application process can serve its health response. `/api/v1/readiness` adds bounded local application/configuration checks. Neither endpoint by itself proves that external search providers, DNS, Caddy, monitoring, backups, recovery, or every dependency are healthy.
+It is descriptive. It does not provide an administrator write path, override deployment policy, or authorize browser-local preferences to modify Privacy Shield, Wardveil Security, Everkeep, Identity, Mesh, or provider-management authority.
 
-## Versioning rule
+## `GET /api/v1/providers/definitions`
 
-Clients must use the versioned `/api/v1/` namespace rather than treating upstream internal JSON surfaces such as `/config` as a permanent GoreeCloud application contract.
+This read-only endpoint exposes a sanitized deterministic view of configured native provider capability.
 
-Compatible additive changes may be made within API version 1. Breaking field or semantic changes require a new API version or an explicit migration contract.
+It includes applicable:
 
-## Future machine-readable Search contract
+- configured provider count;
+- sanitized provider identities;
+- supported categories;
+- categories executable by the current native engine;
+- publication-timestamp authority capability;
+- deployment-controlled management scope;
+- `credentials_exposed: false`; and
+- `production_approved: false`.
 
-The future interface must:
+It must not expose provider credentials, secret headers, raw provider error strings, mutable management controls, or unnecessary endpoint configuration.
 
-- preserve a versioned or otherwise governed response contract;
-- normalize provider-specific result details where practical;
-- expose source and engine provenance needed for research and debugging;
-- distinguish partial-provider failure from complete request failure;
-- avoid exposing secrets or administrative configuration;
-- apply bounded request limits and operational safeguards;
-- avoid retaining query history unless separately approved;
-- remain replaceable if SearXNG is later reduced or removed from the backend.
+A provider appearing here is not production approval.
 
-A future response may include:
+## `GET /api/v1/sync/capabilities`
 
-- query and normalized search parameters;
-- result category and result type;
-- title, URL, snippet, and published date when available;
-- source engine or engines;
-- score or ordering metadata only when its meaning can be documented;
-- request timing and partial-failure information suitable for diagnostics;
-- pagination or continuation data;
-- optional structured answers or infobox data.
+This read-only endpoint describes Search-owned Sync datasets/capabilities such as `search.preferences`, `search.history`, and `search.sources` according to the current source contract.
 
-Before `machine_readable_search_api` can become `true`, GoreeCloud Search must separately define and validate request/response schema versioning, result normalization, category and preference semantics, provider degradation behavior, rate limiting, abuse controls, query-data minimization, error/retry contracts, authorization if required, integration tests, and production/Stable lifecycle evidence.
+It exposes no credentials and remains `production_approved: false` while end-to-end Sync/Identity/runtime acceptance is incomplete.
 
-## Security boundary
+## Error and degradation contract
 
-The current GoreeCloud runtime example exposes HTML search only. JSON, RSS, and CSV search-result formats remain disabled until the API access model, authentication or network restriction, rate limiting, versioning, abuse controls, privacy boundaries, monitoring expectations, and lifecycle acceptance are approved.
+Native API errors should remain bounded and safe for first-party consumers.
 
-The Phase 1 status and readiness endpoints are intentionally non-sensitive and read-only. They are not administrative APIs and must not grow secret-bearing configuration, provider inventories, query data, or response content merely for convenience.
+The API must not expose reusable credentials, authorization headers, private keys, provider secrets, raw internal provider exceptions, or unbounded diagnostic payloads merely for debugging convenience.
 
-## Compatibility
+Provider partial failure should be distinguishable from whole-request failure where the native engine has usable results from other sources.
 
-No application should be written against undocumented SearXNG template objects, internal Python classes, provider-specific structures, or the broad upstream `/config` representation when a GoreeCloud-owned abstraction can reasonably be introduced.
+## Privacy boundary
+
+Search queries may contain sensitive information. API consumers, reverse proxies, monitoring systems, logs, and integrations must minimize unnecessary retention of query strings and result content.
+
+The native API does not use click-history or behavioral-profile ranking and must not grow advertising or sponsored-result authority.
+
+External providers may observe requests from GoreeCloud infrastructure. API availability does not imply external-provider anonymity.
+
+## Security and authorization boundary
+
+The current native development service is not an unrestricted public API product.
+
+Before a consumer is production-approved, its contract must define applicable:
+
+- access/network boundary;
+- authentication and authorization;
+- least privilege;
+- request volume and concurrency;
+- rate/resource limits;
+- timeout and retry behavior;
+- provider degradation behavior;
+- logging and retention;
+- privacy classification;
+- compatibility/versioning;
+- monitoring;
+- disablement; and
+- recovery.
+
+Protected administrative or account-bound functions must use the appropriate GoreeCloud trusted authority rather than treating API versioning as authorization.
+
+## Transitional compatibility
+
+The SearXNG-derived plugin implementation remains in the repository only while transitional continuity requires it. Its source contract may continue to be tested so migration work does not accidentally break the active transitional service before cutover.
+
+New first-party consumers should target the documented native API contract for the release they are approved to use. Migration must preserve or explicitly version useful GoreeCloud-owned contracts instead of making consumers depend on unstable backend internals.
+
+## Stable API qualification
+
+The native API may be described as source-implemented when exact-revision tests pass.
+
+It may be described as production-ready or Stable only when the exact candidate has passed the applicable GoreeCloud Stable gates, including provider/category acceptance, Privacy Shield, Wardveil Security, Everkeep recovery, Identity/Mesh integration where applicable, monitoring, target-runtime validation, supported consumer integration, release provenance, and explicit production authorization.
