@@ -60,9 +60,12 @@ func TestResultsStylesIncludeCorrectionTargetAndAccessibilityFallbacks(t *testin
 	recorder := httptest.NewRecorder()
 	ResultsStyles(recorder, httptest.NewRequest("GET", "/assets/results.css", nil))
 	body := recorder.Body.String()
-	for _, expected := range []string{".query-suggestion", ".query-suggestion a", "min-height:44px", "min-height:48px", "prefers-contrast:more", "forced-colors"} {
+	for _, expected := range []string{".query-suggestion", ".query-suggestion a", "min-height:48px", "prefers-contrast:more", "forced-colors"} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("results stylesheet missing correction contract %q", expected)
 		}
+	}
+	if strings.Contains(body, "min-height:44px") {
+		t.Fatal("results stylesheet regressed below the Glaze UI 2.1 48px target floor")
 	}
 }
