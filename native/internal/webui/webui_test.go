@@ -132,6 +132,29 @@ func TestHomepageStylesAreServedAsCSS(t *testing.T) {
 	}
 }
 
+func TestPreferencesStylesContainCompactNavigationOverflow(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	PreferencesStyles(recorder, httptest.NewRequest(http.MethodGet, "/assets/preferences.css", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+	if got := recorder.Header().Get("Content-Type"); got != "text/css; charset=utf-8" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	body := recorder.Body.String()
+	for _, expected := range []string{
+		".preferences-layout,.settings-nav,.settings-content{min-width:0}",
+		".settings-nav nav{display:flex;min-width:0;max-width:100%;overflow-x:auto",
+		".settings-nav nav a{flex:0 0 auto;white-space:nowrap}",
+		"min-height:48px",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("Preferences stylesheet missing compact overflow contract %q", expected)
+		}
+	}
+}
+
 func TestHomepageKeepsTrustAndCategoryControlsScriptFree(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	Homepage(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
