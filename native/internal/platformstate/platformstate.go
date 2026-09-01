@@ -71,10 +71,10 @@ type EverkeepContinuityRecord struct {
 }
 
 type RuntimeEvidenceBundle struct {
-	PrivacyShield   *PrivacyShieldRuntimeAcceptance
-	Wardveil        *WardveilStatusRecord
+	PrivacyShield    *PrivacyShieldRuntimeAcceptance
+	Wardveil         *WardveilStatusRecord
 	WardveilEnvelope *MeshEvidenceEnvelope
-	Everkeep        []EverkeepContinuityRecord
+	Everkeep         []EverkeepContinuityRecord
 }
 
 type RuntimeEvidenceSource interface {
@@ -191,6 +191,10 @@ func projectWardveil(
 		ValidUntil:      evidence.ValidUntil,
 	}, now) {
 		status.RuntimeEvidence = "unverified"
+		return status
+	}
+	if !envelope.ValidUntil.After(now) {
+		status.RuntimeEvidence = "stale"
 		return status
 	}
 	if evidence.EvidenceStatus != "current" {
