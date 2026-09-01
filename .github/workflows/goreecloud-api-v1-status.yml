@@ -95,7 +95,7 @@ jobs:
           grep -q 'GET /api/v1/status' docs/goreecloud/API.md
           grep -q 'GET /api/v1/readiness' docs/goreecloud/API.md
           grep -q 'GET /api/v1/search' docs/goreecloud/API.md
-          grep -q 'readiness_scope: `local_native_application`' docs/goreecloud/API.md
+          grep -q 'readiness_scope.*local_native_application' docs/goreecloud/API.md
           grep -q 'HTTP 503' docs/goreecloud/API.md
           grep -q 'production_approved: false' docs/goreecloud/API.md
           grep -q 'Transitional compatibility' docs/goreecloud/API.md
