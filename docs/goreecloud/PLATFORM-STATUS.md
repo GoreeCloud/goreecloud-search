@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The native Search platform-status contract provides a minimized, machine-readable view of the application’s current platform-integration evidence state without converting source presence, CI success, or presentation wiring into runtime or production acceptance.
+The native Search platform-status contract provides a minimized, machine-readable view of the application’s current platform-integration evidence state without converting source presence, CI success, presentation wiring, or evidence transport into runtime or production acceptance.
 
 The Development endpoint is:
 
@@ -12,7 +12,7 @@ It is also advertised through `GET /api/v1/status` as the `platform_status` capa
 
 ## Authority model
 
-Search does not own Privacy Shield, Wardveil Security, or Everkeep truth. The endpoint identifies the authoritative producer/contract family for each system and exposes only Search’s bounded evidence state.
+Search does not own Privacy Shield, Wardveil Security, or Everkeep truth. The endpoint identifies the authoritative producer/contract family for each system and exposes only Search’s bounded projection of supplied evidence.
 
 Current Development authority references are:
 
@@ -24,26 +24,83 @@ Glaze UI may present these states, but Search must not create, strengthen, merge
 
 ## Current Development state
 
-The source snapshot deliberately fails conservative:
+The shipped native handler deliberately uses an unavailable runtime-evidence source. Therefore current application behavior remains fail-conservative even though the source now contains deterministic projection logic:
 
-- Privacy Shield source integration is present, while application runtime evidence is unavailable and state remains `unknown`.
-- Wardveil source integration is present, while runtime evidence is unverified, state remains `unknown`, and `positive_claim` remains false.
-- Everkeep currently has only a presentation boundary in native Search source; application runtime evidence is unavailable and state remains `unknown`.
+- Privacy Shield source integration is present, while application authorization evidence remains unavailable and state remains `unknown`.
+- Wardveil source integration is present, while deployed authoritative application/service evidence is unavailable and the default state remains `unknown` with `positive_claim: false`.
+- Everkeep has a native presentation/projection boundary, while deployed continuity evidence is unavailable and the default state remains `unknown`.
 - Every platform system reports `production_accepted: false`.
 - The aggregate snapshot reports `production_approved: false`.
 
-This endpoint is therefore an evidence-state presentation boundary, not a readiness or release-authority endpoint.
+This endpoint is an evidence-state presentation boundary, not a readiness or release-authority endpoint.
+
+## Runtime evidence source
+
+`native/internal/platformstate` defines an injectable `RuntimeEvidenceSource`. It exists so a future approved transport/runtime adapter can supply already-collected producer evidence without coupling the HTTP contract to a particular file, network endpoint, GoreeCloud Mesh route, credential mechanism, or test fixture.
+
+The default handler does not configure such a producer. Its source is unavailable by design.
+
+Adding a transport implementation later is a separate change. That implementation must follow the applicable producer, Identity, Mesh, privacy, security, freshness, and deployment contracts and must not use the existence of this interface as evidence that connectivity is accepted.
+
+## Privacy Shield projection
+
+The current Privacy Shield runtime-acceptance contract is a contract for minimized Privacy Shield evidence delivery through GoreeCloud Mesh. Its own boundary explicitly says that Mesh transport validity never creates consent, purpose authorization, retention authorization, or deletion authority.
+
+Accordingly:
+
+- invalid contract identity is `unverified`;
+- `production_acceptance: false` remains non-accepted transport evidence;
+- even a future `production_acceptance: true` on this transport contract may only be surfaced as transport acceptance with Search application authorization still unverified;
+- Privacy Shield transport evidence can never set Search `positive_claim` or `production_accepted` by itself.
+
+Search requires a separate authoritative application-specific privacy/authorization boundary before any stronger privacy claim can be made.
+
+## Wardveil Security projection
+
+Wardveil status follows `wardveil.status.schema.json` semantics and is additionally bound by Search to scope ID `goreecloud-search`.
+
+A positive `protected` projection requires all of the following:
+
+- contract version `0.1.0`;
+- scope kind `application` or `service`;
+- scope ID exactly `goreecloud-search`;
+- non-empty authority system and control;
+- authoritative authority evidence;
+- `state: protected`;
+- `protected_by_wardveil: true`;
+- `evidence.status: current`;
+- a non-future observation time; and
+- a `valid_until` value later than the evaluation time.
+
+Contradictory protected state/claim values, invalid scope, future observation, unknown evidence status, missing authority, or expired protected evidence fail closed. Expired protected evidence becomes stale rather than leaving the displayed state protected.
+
+A valid Wardveil protected record may set the bounded platform `positive_claim`, but it still does not set Search `production_accepted`; release and production acceptance remain broader gates.
+
+## Everkeep projection
+
+A Search-level continuity-ready projection requires a complete, fresh application evidence set rather than one optimistic Everkeep record.
+
+The current consumer projection requires exactly one usable Search-scoped record for each of:
+
+- `backup_coverage`;
+- `restore_capability`; and
+- `recovery_freshness`.
+
+Each required dimension must be `ready`, have a non-future observation, have a future `fresh_until`, provide a verification method, and include an evidence reference when the record says evidence is required. Duplicate required dimensions fail closed as `unverified` so contradictory evidence cannot be hidden by record ordering.
+
+Only a complete fresh set can surface `state: ready` with a bounded positive continuity claim. It still cannot set Search `production_accepted` or `production_approved` by itself.
 
 ## Privacy and minimization
 
-The response is designed to contain no:
+The HTTP response is designed to contain no:
 
 - search query text;
 - result content;
 - user content;
 - credentials or reusable secrets;
 - authorization headers;
-- raw platform/provider runtime errors.
+- raw platform/provider runtime errors; or
+- raw producer evidence payloads.
 
 Unrelated query-string input is ignored and must not be echoed into the response.
 
@@ -51,7 +108,7 @@ Unrelated query-string input is ignored and must not be echoed into the response
 
 `GET /api/v1/readiness` remains scoped to `local_native_application` readiness. Platform-status information does not change that scope and does not make local readiness equivalent to production readiness.
 
-A future authoritative runtime adapter may strengthen a platform state only when the applicable producer contract, freshness, authority, scope, and acceptance rules are satisfied. Missing, malformed, stale, unverified, or unavailable evidence must not be upgraded by Search.
+A future authoritative runtime adapter may strengthen a bounded platform state only when the applicable producer contract, freshness, authority, scope, and Search-side projection rules are satisfied. Missing, malformed, stale, contradictory, unverified, or unavailable evidence must not be upgraded by Search.
 
 ## Positive-claim requirements
 
@@ -62,17 +119,19 @@ Search must not claim Privacy Shield production acceptance, Wardveil protection,
 - Search CI is green;
 - a UI section displays the platform name;
 - a transport such as GoreeCloud Mesh can carry evidence;
-- a local adapter can parse a schema.
+- a local adapter can parse a schema; or
+- deterministic tests can inject a synthetic accepted record.
 
-Positive claims require current authoritative application/runtime evidence under the relevant platform contract and remain subject to the exact Search release/deployment boundary.
+Any positive state remains limited to what current authoritative application/runtime evidence actually proves. Search release, production, and Stable claims remain separate exact-candidate gates.
 
 ## Lifecycle boundary
 
-This Development contract does not establish:
+This Development projection implementation does not establish:
 
 - Privacy Shield runtime authorization or production acceptance;
-- Wardveil Security protected state;
-- Everkeep backup, restore, rollback, or continuity readiness;
+- deployed Privacy Shield/Identity/Mesh evidence transport;
+- deployed Wardveil Security protected state;
+- deployed Everkeep backup, restore, rollback, or continuity readiness;
 - target-host acceptance;
 - production cutover authorization; or
 - Stable qualification.
