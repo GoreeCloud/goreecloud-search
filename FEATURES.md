@@ -20,10 +20,11 @@ This file records Search functionality and implementation state. A listed capabi
 - Sanitized provider capability definitions without credentials, endpoints, runtime errors, or mutable controls.
 - GoreeCloud-owned deterministic ranking v2 that evaluates the submitted query against result titles, snippets, and URL text locally for each request.
 - Strong title/exact-match relevance with lower-weight snippet and URL coverage.
-- Local query-intent parsing for `site:`, domain-directed, `filetype:`/`ext:`, and quoted-phrase signals without rewriting the provider query.
+- Local query-intent parsing for `site:`, domain-directed, `filetype:`/`ext:`, quoted-phrase, and temporal signals without rewriting the provider query.
 - Explicit site/domain matches and requested file extensions receive bounded ranking preference while mismatched explicit operators are demoted.
 - Quoted multi-word phrases receive bounded title/snippet/URL ordering boosts.
 - Bounded one-edit or adjacent-transposition tolerance for query tokens of at least five runes, with substantially lower weight than exact title/token relevance.
+- Conservative user-visible query correction derived only from result-title evidence already returned for the request. Search proposes at most one eligible token change, requires agreement from at least two independent normalized providers, fails closed on ambiguous alternatives, excludes quoted/operator/domain targets, and never rewrites the provider query.
 - Short query tokens are excluded from fuzzy matching to reduce false-positive relevance.
 - Provider scores bounded to weak supporting evidence instead of being trusted as one universal cross-provider scale.
 - Explicit provider-level publication-timestamp authority: only adapters that declare `PublishedAt` authoritative from a trustworthy upstream publication/update field can retain that metadata for output and freshness ranking.
@@ -46,20 +47,22 @@ This file records Search functionality and implementation state. A listed capabi
 - Compact persistent query field and category navigation on results.
 - Multi-provider source-agreement disclosure without exposing internal numeric ranking scores to users.
 - Trusted retained publication timestamps are shown as concise human-readable dates with semantic machine-readable `<time datetime>` values; results without accepted timestamps do not receive synthetic dates.
+- A user-visible “Search instead for” correction link is rendered only when the conservative local provider-agreement correction contract produces a single unambiguous alternative.
 - The results ranking explanation discloses that trustworthy freshness is used when requested rather than presenting recency as an undisclosed ranking signal.
 - Source-health presentation separated from the primary result-reading flow, including visible “limit applied” disclosure when a provider exceeds the native per-request processing ceiling.
 - Adaptive wide/narrow layouts plus reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks in the native results stylesheet.
+- Current native results acceptance enforces a 48px minimum target floor across Compact, Medium, Expanded, and Wide browser viewports.
 - Script-free Go-template result rendering with automatic escaping of provider/query/result content.
 - First-party preference state and organization.
 - GoreeCloud product identity rather than an upstream-only shell.
-- Native-first development direction governed by the latest applicable Stable Glaze UI contract; Glaze UI 2.0.0 is the current required production target, with application-specific acceptance still incomplete.
+- Native-first development direction governed by the latest applicable Stable Glaze UI contract; Glaze UI 2.1.0 is the current required production target. Glaze UI 2.2 is Candidate/design-reference work and is not a Stable consumer target. Application-specific whole-application and physical-device acceptance remain incomplete.
 
 ### Privacy-first behavior
 
 - No GoreeCloud advertising or sponsored-ranking business model.
 - No intended behavioral profiling.
 - Native ranking does not use click history, behavioral profiles, advertising signals, or remote ranking telemetry.
-- Intent parsing, typo-tolerant ranking, and freshness scoring operate request-locally and do not send correction or recency lookups to another service.
+- Intent parsing, typo-tolerant ranking, user-visible correction suggestions, and freshness scoring operate request-locally and do not send correction or recency lookups to another service.
 - Freshness metadata is fail-closed unless its provider explicitly satisfies the publication-timestamp authority contract.
 - Explicit query and provider-result processing bounds and minimized native state.
 - No hidden fallback requirement that bypasses GoreeCloud Search as configured Browser search authority.
@@ -89,12 +92,11 @@ Inherited capability presence is transitional evidence, not the target applicati
 
 - Production-approved native external-provider adapters and credentials integration.
 - Accepted native provider coverage for every category selected for release.
-- User-facing query correction/spelling suggestions backed by an approved local or privacy-preserving implementation; the current ranker only tolerates bounded near-token matches and does not rewrite submitted queries.
 - Additional intent routing and specialized result understanding beyond the implemented site/domain/file-type/quoted-phrase/temporal ranking signals, where justified by accepted native provider metadata.
 - Production-reviewed timestamp authority and live-provider freshness acceptance for result classes where recency is required; the source-level freshness contract is implemented but no provider is production-approved by that fact alone.
 - Optional semantic retrieval/reranking only if implemented through an approved privacy-preserving GoreeCloud-controlled path and validated against deterministic fallback behavior.
 - Completed feature-parity migration from the inherited runtime.
-- Full native Glaze UI 2.0 visual/accessibility/device acceptance.
+- Full native Glaze UI 2.1 whole-application visual/accessibility/device acceptance beyond the bounded native results evidence already implemented.
 - Complete Privacy Shield, Wardveil Security, Everkeep, GoreeCloud Identity, and GoreeCloud Mesh runtime/evidence integration where applicable.
 - Production-approved account search history, saved searches, synchronization, or personalization.
 - Governed machine-readable Search API for approved first-party/AI/research consumers.
