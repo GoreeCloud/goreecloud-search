@@ -16,8 +16,30 @@ import (
 
 const apiVersion = "1"
 
+type capabilityEvidence struct {
+	ID                 string `json:"id"`
+	ContractVersion    string `json:"contract_version"`
+	Authoritative      bool   `json:"authoritative"`
+	Current            bool   `json:"current"`
+	ProductionAccepted bool   `json:"production_accepted"`
+	Endpoint           string `json:"endpoint"`
+}
+
 type server struct {
 	engine *searchcore.Engine
+}
+
+func searchCapabilityEvidence() []capabilityEvidence {
+	return []capabilityEvidence{
+		{
+			ID:                 "search.query",
+			ContractVersion:    apiVersion,
+			Authoritative:      true,
+			Current:            true,
+			ProductionAccepted: false,
+			Endpoint:           "/api/v1/search",
+		},
+	}
 }
 
 func main() {
@@ -86,6 +108,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 			"sync_capabilities":           true,
 			"platform_status":             true,
 		},
+		"capability_evidence": searchCapabilityEvidence(),
 		"endpoints": map[string]string{
 			"health":                  "/healthz",
 			"status":                  "/api/v1/status",
