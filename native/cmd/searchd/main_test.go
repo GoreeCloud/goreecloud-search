@@ -46,6 +46,12 @@ func TestStatusAPIIdentifiesNativePreStableContract(t *testing.T) {
 		`"machine_readable_search_api":true`,
 		`"production_approved":false`,
 		`"readiness":"/api/v1/readiness"`,
+		`"id":"search.query"`,
+		`"contract_version":"1"`,
+		`"authoritative":true`,
+		`"current":true`,
+		`"production_accepted":false`,
+		`"endpoint":"/api/v1/search"`,
 	} {
 		if !strings.Contains(body, required) {
 			t.Fatalf("status response missing %s: %s", required, body)
@@ -53,6 +59,23 @@ func TestStatusAPIIdentifiesNativePreStableContract(t *testing.T) {
 	}
 	if strings.Contains(body, "ignored") {
 		t.Fatalf("status endpoint echoed query input: %s", body)
+	}
+}
+
+func TestSearchCapabilityEvidenceRemainsPreStable(t *testing.T) {
+	evidence := searchCapabilityEvidence()
+	if len(evidence) != 1 {
+		t.Fatalf("capability evidence count = %d, want 1", len(evidence))
+	}
+	query := evidence[0]
+	if query.ID != "search.query" || query.ContractVersion != apiVersion || !query.Authoritative || !query.Current {
+		t.Fatalf("unexpected Search query capability evidence: %+v", query)
+	}
+	if query.ProductionAccepted {
+		t.Fatal("pre-Stable Search must not claim production acceptance")
+	}
+	if query.Endpoint != "/api/v1/search" {
+		t.Fatalf("Search query endpoint = %q", query.Endpoint)
 	}
 }
 
