@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/app.css">
   <link rel="stylesheet" href="/assets/results.css">
   <link rel="stylesheet" href="/assets/categories.css">
+  <script defer src="/assets/results.js"></script>
 </head>
 <body>
   <div class="page-shell results-shell">
@@ -49,34 +50,77 @@
         <p class="query-suggestion">Did you mean <a href="/search?q={{urlquery .SuggestedQuery}}&amp;category={{urlquery .Category}}">{{.SuggestedQuery}}</a>?</p>
         {{end}}
 
-        <div class="results-layout">
+        <div class="results-layout {{if eq .Category "images"}}results-layout-images{{end}}">
           <section class="results-column" aria-label="Search results">
             {{if .Results}}
-            <ol class="result-list">
-              {{range .Results}}
-              <li class="result-card">
-                <article>
-                  <div class="result-source">
-                    <span class="source-avatar" aria-hidden="true">↗</span>
-                    <div class="source-copy">
-                      <strong>{{.Provider}}</strong>
-                      {{if gt .SourceCount 1}}<span>{{.SourceCount}} sources agree</span>{{else}}<span>Search source</span>{{end}}
-                    </div>
+              {{if eq .Category "images"}}
+              <div class="image-results-grid" role="list" aria-label="Image search results">
+                {{range .Results}}
+                <article class="image-result-card" role="listitem">
+                  {{if .Image}}
+                  <button id="{{.Image.OpenerID}}" class="image-result-open" type="button" data-image-open data-dialog="{{.Image.DialogID}}" aria-haspopup="dialog" aria-controls="{{.Image.DialogID}}" aria-label="View {{.Image.Alt}}">
+                    <img src="{{.Image.ThumbnailURL}}" alt="{{.Image.Alt}}" loading="lazy" decoding="async">
+                  </button>
+                  {{else}}
+                  <a class="image-result-fallback" href="{{.URL}}" rel="noopener noreferrer"><span aria-hidden="true">⌕</span><strong>Preview unavailable</strong><small>Open source result</small></a>
+                  {{end}}
+                  <div class="image-result-copy">
+                    <strong class="image-result-title">{{if .Title}}{{.Title}}{{else}}Image result{{end}}</strong>
+                    <span><span>{{.Provider}}</span>{{if .Image}}{{if .Image.Dimensions}}<span aria-hidden="true"> · </span><span>{{.Image.Dimensions}}</span>{{end}}{{end}}</span>
                   </div>
-                  <h2><a href="{{.URL}}" rel="noopener noreferrer">{{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}</a></h2>
-                  <a class="result-url" href="{{.URL}}" rel="noopener noreferrer">{{.URL}}</a>
-                  {{if .PublishedAt}}<time class="result-published" datetime="{{.PublishedAt.Format "2006-01-02T15:04:05Z07:00"}}">Published {{.PublishedAt.Format "Jan 2, 2006"}}</time>{{end}}
-                  {{if .Snippet}}<p class="result-snippet">{{.Snippet}}</p>{{end}}
-                  {{if gt .SourceCount 1}}
-                  <details class="result-provenance">
-                    <summary>Source agreement</summary>
-                    <div class="source-list" aria-label="Sources reporting this result">{{range .Sources}}<span>{{.}}</span>{{end}}</div>
-                  </details>
+
+                  {{if .Image}}
+                  <dialog id="{{.Image.DialogID}}" class="image-viewer" data-image-dialog data-opener-id="{{.Image.OpenerID}}" aria-label="Image viewer: {{.Image.Alt}}">
+                    <div class="image-viewer-shell">
+                      <div class="image-viewer-header">
+                        <div class="image-viewer-heading">
+                          <span class="section-kicker">Image result</span>
+                          <strong>{{if .Title}}{{.Title}}{{else}}{{.Image.Alt}}{{end}}</strong>
+                          <span>{{.Provider}}{{if .Image.Dimensions}} · {{.Image.Dimensions}}{{end}}</span>
+                        </div>
+                        <button class="image-viewer-close" type="button" data-image-close aria-label="Close image viewer">×</button>
+                      </div>
+                      <div class="image-viewer-stage">
+                        <img src="{{.Image.ContentURL}}" alt="{{.Image.Alt}}" decoding="async">
+                      </div>
+                      <div class="image-viewer-actions">
+                        <button type="button" data-image-previous aria-label="Previous image">← <span>Previous</span></button>
+                        <a class="image-viewer-source" href="{{.URL}}" rel="noopener noreferrer">Open source</a>
+                        <button type="button" data-image-next aria-label="Next image"><span>Next</span> →</button>
+                      </div>
+                    </div>
+                  </dialog>
                   {{end}}
                 </article>
-              </li>
+                {{end}}
+              </div>
+              {{else}}
+              <ol class="result-list">
+                {{range .Results}}
+                <li class="result-card">
+                  <article>
+                    <div class="result-source">
+                      <span class="source-avatar" aria-hidden="true">↗</span>
+                      <div class="source-copy">
+                        <strong>{{.Provider}}</strong>
+                        {{if gt .SourceCount 1}}<span>{{.SourceCount}} sources agree</span>{{else}}<span>Search source</span>{{end}}
+                      </div>
+                    </div>
+                    <h2><a href="{{.URL}}" rel="noopener noreferrer">{{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}</a></h2>
+                    <a class="result-url" href="{{.URL}}" rel="noopener noreferrer">{{.URL}}</a>
+                    {{if .PublishedAt}}<time class="result-published" datetime="{{.PublishedAt.Format "2006-01-02T15:04:05Z07:00"}}">Published {{.PublishedAt.Format "Jan 2, 2006"}}</time>{{end}}
+                    {{if .Snippet}}<p class="result-snippet">{{.Snippet}}</p>{{end}}
+                    {{if gt .SourceCount 1}}
+                    <details class="result-provenance">
+                      <summary>Source agreement</summary>
+                      <div class="source-list" aria-label="Sources reporting this result">{{range .Sources}}<span>{{.}}</span>{{end}}</div>
+                    </details>
+                    {{end}}
+                  </article>
+                </li>
+                {{end}}
+              </ol>
               {{end}}
-            </ol>
             {{else}}
             <section class="results-state empty-state"><span class="state-icon" aria-hidden="true">⌕</span><div><h2>No results found</h2><p>Try fewer words, a broader phrase, or another category. If a provider is unavailable, its status is shown under Source health.</p></div></section>
             {{end}}
