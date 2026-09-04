@@ -1,0 +1,24 @@
+# yamllint disable rule:line-length
+name: Platform Contract
+
+"on":
+  pull_request:
+    paths:
+      - goreecloud.platform.yaml
+      - .github/workflows/platform-contract.yml
+  push:
+    branches:
+      - master
+    paths:
+      - goreecloud.platform.yaml
+      - .github/workflows/platform-contract.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: GoreeCloud/GoreeCloud/.github/workflows/reusable-platform-manifest.yml@b25c96afd8cd5dd99154f720e5b709e64fc0c6df
+    with:
+      manifest-path: goreecloud.platform.yaml
