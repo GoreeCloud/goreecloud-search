@@ -67,6 +67,22 @@ The provenance record identifies:
 
 Those negative fields are deliberate evidence boundaries. Packaging must not silently upgrade application maturity.
 
+## Runtime build identity
+
+The native `/api/v1/status` response exposes a deliberately minimized `build` object derived from Go's embedded VCS build information.
+
+When canonical VCS metadata is available, the object contains only:
+
+- `provenance_available: true`;
+- `source_revision`, as a lowercase 40-character Git revision; and
+- `source_modified`, indicating whether the binary was built from a modified working tree.
+
+Build paths, environment values, module-cache paths, dependency details, credentials, queries, provider configuration, and other `debug.BuildInfo` fields are not exposed by this contract.
+
+If the required VCS metadata is missing or malformed, Search fails conservative: `provenance_available` is false and the source revision/modified fields are omitted rather than inventing a runtime identity.
+
+The packaged Development artifact workflow requires the running packaged binary to report the exact candidate revision and `source_modified: false`. This creates a direct source → package → running-process identity check on the CI Linux boundary. It does not by itself prove that the same artifact is deployed on a target host or in production.
+
 ## Packaged runtime acceptance
 
 The workflow extracts the Linux/amd64 package and launches the packaged executable on a GitHub-hosted Linux runner using a loopback-only address.
@@ -74,14 +90,14 @@ The workflow extracts the Linux/amd64 package and launches the packaged executab
 It validates the exact VCS revision embedded by the Go toolchain and exercises the packaged process through:
 
 - `/healthz`;
-- `/api/v1/status`;
+- `/api/v1/status`, including exact candidate-bound runtime build provenance;
 - `/api/v1/readiness`;
 - `/api/v1/providers/definitions`;
 - the native homepage;
 - Preferences; and
 - a specialized Images API request with zero configured providers, which must fail closed as not implemented rather than inventing provider coverage.
 
-The runtime must continue to report `production_approved: false`, canonical lifecycle `development`, local-native readiness scope, zero configured providers, and no credential exposure.
+The runtime must continue to report `production_approved: false`, canonical lifecycle `development`, exact clean runtime build identity, local-native readiness scope, zero configured providers, and no credential exposure.
 
 This establishes **build/package validation plus CI-Linux packaged-runtime acceptance** for the exact revision. It is not target-environment validation.
 
@@ -111,7 +127,7 @@ A Development artifact may later become input to Release Candidate review, but t
 
 Before a native Search artifact can be treated as a Release Candidate or used for controlled incumbent replacement, the applicable GoreeCloud lifecycle and production-readiness requirements still require an identifiable accepted candidate scope and sufficient evidence for provider/category behavior, current Stable Glaze UI application acceptance, Privacy Shield, Wardveil Security, Everkeep recovery/rollback, applicable Identity/Mesh/Manager integration, target-host networking and monitoring, migration compatibility, and other release blockers.
 
-Before production cutover, the exact deployed artifact must be proven to match the separately approved candidate and the previous known-good transitional runtime must remain recoverable until rollback requirements are satisfied.
+Before production cutover, the exact deployed artifact must be proven to match the separately approved candidate. The runtime build identity may provide one candidate-bound source signal, but target acceptance must also bind the actual deployed artifact/configuration/environment and preserve the previous known-good transitional runtime until rollback requirements are satisfied.
 
 ## Retention
 
