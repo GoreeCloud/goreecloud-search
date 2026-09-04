@@ -37,6 +37,7 @@ type Result struct {
 	Title              string     `json:"title"`
 	URL                string     `json:"url"`
 	Snippet            string     `json:"snippet,omitempty"`
+	Media              *Media     `json:"media,omitempty"`
 	Provider           string     `json:"provider"`
 	Score              int        `json:"score"`
 	SourceCount        int        `json:"source_count,omitempty"`
@@ -303,6 +304,7 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 				continue
 			}
 			result.URL = normalized
+			result.Media = normalizeMedia(result.Media, category)
 			result.recencyBonus = freshnessScore(intent, category, result, requestNow)
 			candidates = append(candidates, result)
 		}
