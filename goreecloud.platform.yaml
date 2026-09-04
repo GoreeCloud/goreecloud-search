@@ -1,0 +1,167 @@
+schema_version: '0.2'
+
+component:
+  type: application
+  id: goreecloud-search
+  product_name: GoreeCloud Search
+  repository: GoreeCloud/goreecloud-search
+
+lifecycle: development
+version: unreleased-development
+
+supported_platforms:
+  - web
+
+api:
+  versions:
+    - v1
+  endpoints:
+    - name: search-api
+      url: /api/v1/search
+      purpose: Machine-readable native Search query endpoint for the Development application.
+    - name: status-api
+      url: /api/v1/status
+      purpose: Bounded native application and capability status.
+    - name: readiness-api
+      url: /api/v1/readiness
+      purpose: Local native application readiness without production-provider or deployment claims.
+    - name: provider-definitions-api
+      url: /api/v1/providers/definitions
+      purpose: Sanitized read-only configured-provider capability definitions without credentials or endpoint disclosure.
+    - name: sync-capabilities-api
+      url: /api/v1/sync/capabilities
+      purpose: Read-only declaration of Search-owned datasets that may participate in authorized GoreeCloud Sync coordination.
+    - name: platform-status-api
+      url: /api/v1/platform/status
+      purpose: Bounded Search-local projection of applicable Integral Platform System evidence state.
+
+platform_systems:
+  manager:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+    notes: GoreeCloud Manager operational visibility is applicable, but no accepted Manager runtime integration exists for Search.
+  privacy_shield:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - native/internal/platformstate/platformstate.go
+      - native/internal/platformstate/platformstate_test.go
+    notes: Search contains a fail-closed Privacy Shield evidence projection boundary, but accepted producer-authoritative runtime privacy evidence and production acceptance remain unavailable.
+  wardveil_security:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - native/internal/platformstate/platformstate.go
+      - native/internal/platformstate/platformstate_test.go
+      - native/internal/mediaproxy/proxy.go
+      - native/internal/providers/httpjson.go
+    notes: Search implements bounded source-level security controls and a Wardveil evidence projection boundary, but producer-authoritative Wardveil runtime acceptance and production security validation remain incomplete.
+  everkeep:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - native/internal/platformstate/platformstate.go
+      - native/internal/platformstate/platformstate_test.go
+    notes: Search can project supplied Everkeep continuity evidence, but accepted backup, restore, recovery, migration, and rollback evidence for the native application remains incomplete.
+  glaze_ui:
+    result: applicable-migration-required
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - native/internal/webui
+      - native/browser_results_acceptance.py
+      - native/browser_image_acceptance.py
+    notes: GoreeCloud-owned responsive browser surfaces and bounded accessibility acceptance exist, but the native application has not completed exact current-Stable GLAZE UI V1.1 / 1.1.0 source adoption and whole-application acceptance.
+  mesh:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - native/docs/CAPABILITY-EVIDENCE.md
+    notes: Search capability semantics exist locally, but accepted GoreeCloud Mesh registration, discovery, event, dependency, and runtime evidence integration remains incomplete.
+    capabilities:
+      - search.query
+      - search.preferences
+      - search.history
+      - search.sources
+    dependencies: []
+    published_events: []
+    consumed_events: []
+  identity:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - native/docs/CAPABILITY-EVIDENCE.md
+    notes: GoreeCloud Identity must own account, authentication, authorization, session, and authority state for account-bound Search capabilities; accepted runtime integration remains incomplete.
+
+health:
+  health_endpoint: /healthz
+  readiness_endpoint: /api/v1/readiness
+
+continuity:
+  backup:
+    required: true
+    requirements:
+      - Protect native Search deployment configuration, approved provider policy/configuration, and durable account-bound Search state through the approved Everkeep recovery model.
+      - Keep reusable provider credentials and other secrets outside ordinary repository and portable backup evidence unless an explicitly protected recovery mechanism requires them.
+  restore:
+    required: true
+    requirements:
+      - Validate restoration of native Search configuration and durable state into an isolated clean environment before Stable or production acceptance.
+      - Verify provider policy, secret references, data-state integrity, and rollback behavior for the exact release candidate.
+  export:
+    required: true
+    requirements:
+      - Provide user-controlled export for durable Search preferences and history when those datasets are enabled and retained.
+      - Keep provider credentials, internal trust evidence, and unrelated administrative state out of user export payloads.
+  portability:
+    required: true
+    requirements:
+      - Keep Search-owned durable user data and migration-relevant configuration in documented versioned formats that do not require the transitional SearXNG product architecture.
+
+external_dependencies:
+  - name: production-approved-search-provider
+    purpose: At least one separately approved and accepted result provider is required for meaningful production search retrieval; no specific provider is currently selected by this Development manifest.
+    required: true
+    version_constraint: null
+
+compatibility:
+  platform_contract: '0.2'
+  glaze_ui_required: '1.1.0'
+  requires:
+    - goreecloud-platform-contract==0.2
+    - glaze-ui==1.1.0
+  provides:
+    - search-api-v1
+    - search-provider-contract-v1
+
+evidence:
+  acceptance_tests: []
+  release: []
+
+conformance:
+  status: nonconformant
+  validated_at: null
+  evidence:
+    - SPECIFICATIONS.md
+    - native/docs/PROVIDER-RUNTIME.md
+    - native/docs/CAPABILITY-EVIDENCE.md
+    - native/internal/platformstate/platformstate.go
+  blockers:
+    - GoreeCloud Manager operational integration and acceptance are incomplete.
+    - Producer-authoritative Privacy Shield runtime evidence and Search privacy acceptance are incomplete.
+    - Producer-authoritative Wardveil Security runtime evidence and Search security acceptance are incomplete.
+    - Everkeep backup, restore, recovery, migration, and rollback acceptance are incomplete.
+    - Current Stable GLAZE UI V1.1 / 1.1.0 source adoption and whole-application visual, accessibility, resilience, form-factor, and production acceptance are incomplete.
+    - GoreeCloud Mesh registration, coordination, dependency/event integration, and runtime acceptance are incomplete.
+    - GoreeCloud Identity account, authentication, authorization, session, and authority integration is incomplete for account-bound capabilities.
+    - No production-approved external Search provider, provider credentials integration, or provider-specific privacy, terms, rate-limit, abuse, timestamp-authority, live-result, and target-runtime acceptance is established.
+    - Live General, Images, Videos, News, and Files category acceptance against approved providers is incomplete.
+    - Native migration parity, controlled cutover from the transitional runtime, monitoring, alerting, rollback, exact-release provenance, and exact production deployment verification are incomplete.
+    - No Stable or production-approved GoreeCloud Search release evidence is declared.
