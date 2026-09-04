@@ -15,7 +15,7 @@ func ProviderBackedCategories(providers ...Provider) []string {
 				covered = append(covered, category)
 				break
 			}
-	}
+		}
 	}
 	return covered
 }
