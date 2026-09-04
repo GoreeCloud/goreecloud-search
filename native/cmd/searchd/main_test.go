@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoreeCloud/goreecloud-search/native/internal/buildinfo"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
@@ -45,6 +46,7 @@ func TestStatusAPIIdentifiesNativeDevelopmentContract(t *testing.T) {
 		`"lifecycle":"development"`,
 		`"machine_readable_search_api":true`,
 		`"production_approved":false`,
+		`"provenance_available":false`,
 		`"readiness":"/api/v1/readiness"`,
 		`"id":"search.query"`,
 		`"contract_version":"1"`,
@@ -57,8 +59,36 @@ func TestStatusAPIIdentifiesNativeDevelopmentContract(t *testing.T) {
 			t.Fatalf("status response missing %s: %s", required, body)
 		}
 	}
-	if strings.Contains(body, "ignored") {
-		t.Fatalf("status endpoint echoed query input: %s", body)
+	for _, forbidden := range []string{"ignored", "source_revision", "source_modified"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("status response exposed unavailable or unrelated value %q: %s", forbidden, body)
+		}
+	}
+}
+
+func TestStatusAPIExposesSanitizedExactBuildProvenance(t *testing.T) {
+	modified := false
+	app := server{
+		engine: searchcore.NewEngine(time.Second),
+		build: buildinfo.Provenance{
+			ProvenanceAvailable: true,
+			SourceRevision:      "0123456789abcdef0123456789abcdef01234567",
+			SourceModified:      &modified,
+		},
+	}
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/status", nil)
+	response := httptest.NewRecorder()
+	app.status(response, request)
+	body := response.Body.String()
+	for _, required := range []string{
+		`"provenance_available":true`,
+		`"source_revision":"0123456789abcdef0123456789abcdef01234567"`,
+		`"source_modified":false`,
+		`"production_approved":false`,
+	} {
+		if !strings.Contains(body, required) {
+			t.Fatalf("status response missing %s: %s", required, body)
+		}
 	}
 }
 
