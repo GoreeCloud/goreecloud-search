@@ -29,8 +29,9 @@ The Development artifact path:
 - preserves Go VCS revision metadata;
 - packages the native binary with its license and machine-readable artifact metadata;
 - emits SHA-256 checksums and `artifact-provenance.json`;
-- launches the packaged amd64 binary on a Linux CI runner; and
-- verifies health, status, local readiness, provider-definition, homepage, Preferences, and zero-provider fail-closed behavior from the packaged runtime.
+- launches the packaged amd64 binary on a Linux CI runner;
+- verifies health, status, local readiness, provider-definition, homepage, Preferences, and zero-provider fail-closed behavior from the packaged runtime; and
+- validates the release-provider structural coverage preflight without contacting an external provider.
 
 The provenance record deliberately remains `release_lifecycle: development`, `production_approved: false`, `release_candidate_declared: false`, `target_environment_validated: false`, and `platform_conformance: nonconformant`.
 
@@ -41,6 +42,10 @@ This advances native Search to a reviewable build/package evidence boundary. It 
 The native service defaults to `127.0.0.1:8080` through `GOREECLOUD_SEARCH_ADDR`. A non-loopback binding is not implied or approved merely because the environment variable can be changed.
 
 External native providers are deployment-controlled through `GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE`. The source accepts no configured providers by default. A configured provider must satisfy the native provider schema and transport controls, and optional bearer credentials are referenced by environment-variable name rather than embedded in provider configuration.
+
+`GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE` is an explicit structural preflight for a deployment intended to advance beyond the zero-provider Development boundary. Unset, `0`, or `false` preserves the Development default. `1` or `true` makes startup fail closed unless the configured provider set has an actual executable native path for every release-required category: General, Images, Videos, News, and Files. General's provider-free Development fallback does not satisfy this gate, and category metadata without a usable execution path does not count. An invalid flag value also fails initialization.
+
+This preflight does **not** approve the configured provider set. It does not test live provider responses, credentials, privacy/data-use terms, rate limits, timestamp authority, provider outages, target-host DNS/TLS, or production result quality. Those remain separate live-provider and target-environment acceptance gates.
 
 Secrets and reusable credentials must not be committed, copied into ordinary build artifacts, written into provenance metadata, or exposed through status/provider-definition responses.
 
@@ -70,7 +75,7 @@ Native source/runtime gates include, as applicable:
 
 - `goreecloud-native-foundation.yml` — native Go tests and source build;
 - `goreecloud-native-results-browser-acceptance.yml` — deterministic native results/image rendered acceptance;
-- `goreecloud-native-development-artifact.yml` — exact-revision Linux package provenance plus packaged-runtime CI acceptance;
+- `goreecloud-native-development-artifact.yml` — exact-revision Linux package provenance, packaged-runtime CI acceptance, and provider-coverage structural preflight;
 - platform/API/integration workflows that exercise GoreeCloud-owned native contracts.
 
 Transitional gates include retained SearXNG Integration, runtime-smoke, container-build, browser, provider, and compatibility checks. They remain useful for continuity and migration safety but do not establish native release acceptance.
@@ -83,7 +88,7 @@ The native provider runtime supports deployment-controlled category-aware provid
 
 Before native production cutover, each category selected for the release must have accepted live execution through an approved provider on the actual or representative target runtime. Acceptance must distinguish application defects from third-party throttling, access denial, CAPTCHA, rate limits, provider outages, malformed responses, timestamp-authority defects, or empty results.
 
-General, Images, Videos, News, and Files remain subject to live-provider acceptance for the selected release scope even though deterministic native test providers already exercise all category contracts in source CI.
+General, Images, Videos, News, and Files remain subject to live-provider acceptance for the selected release scope even though deterministic native test providers and the structural startup preflight already exercise all category contracts in source/packaged CI.
 
 ## Current Stable Glaze UI boundary
 
@@ -107,7 +112,7 @@ The packages are Development evidence. Do not rename them as a Release Candidate
 
 Release-critical artifacts must remain traceable to an exact source revision. A moving branch, `latest` tag, or unverified copied binary is not sufficient provenance.
 
-The new native Development package workflow intentionally uploads GitHub Actions artifacts rather than publishing a new production image or release. Registry publication, signing/attestation policy, immutable release identity, and target-host deployment remain later controlled gates once an actual Release Candidate is justified by evidence.
+The native Development package workflow intentionally uploads GitHub Actions artifacts rather than publishing a new production image or release. Registry publication, signing/attestation policy, immutable release identity, and target-host deployment remain later controlled gates once an actual Release Candidate is justified by evidence.
 
 Historical inherited `goreecloud-rc-publication.yml` behavior applies to the transitional SearXNG-derived release line and must not be interpreted as the native Search publication path.
 
