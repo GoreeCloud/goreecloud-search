@@ -68,6 +68,10 @@ func ResultsStyles(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/results.css", "text/css; charset=utf-8")
 }
 
+func ImageResultsStyles(w http.ResponseWriter, _ *http.Request) {
+	serveAsset(w, "assets/image-results.css", "text/css; charset=utf-8")
+}
+
 func ResultsScript(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/results.js", "text/javascript; charset=utf-8")
 }
