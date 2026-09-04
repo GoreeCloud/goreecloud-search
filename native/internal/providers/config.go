@@ -14,17 +14,18 @@ import (
 )
 
 const (
-	ProviderConfigEnvironment = "GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE"
-	ProviderConfigVersion     = 1
-	MaxProviderConfigBytes    = 256 << 10
-	MaxConfiguredProviders    = 32
+	ProviderConfigEnvironment                  = "GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE"
+	RequireReleaseProviderCoverageEnvironment = "GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE"
+	ProviderConfigVersion                      = 1
+	MaxProviderConfigBytes                     = 256 << 10
+	MaxConfiguredProviders                     = 32
 )
 
 var credentialEnvironmentName = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,127}$`)
 
 type providerConfigFile struct {
-	SchemaVersion int                   `json:"schema_version"`
-	Providers     []configuredProvider  `json:"providers"`
+	SchemaVersion int                  `json:"schema_version"`
+	Providers     []configuredProvider `json:"providers"`
 }
 
 type configuredProvider struct {
@@ -39,11 +40,58 @@ type configuredProvider struct {
 type environmentLookup func(string) (string, bool)
 
 func LoadFromEnvironment() ([]searchcore.Provider, error) {
-	path := strings.TrimSpace(os.Getenv(ProviderConfigEnvironment))
-	if path == "" {
-		return []searchcore.Provider{}, nil
+	requireCoverage, err := parseReleaseProviderCoverageRequirement(
+		os.Getenv(RequireReleaseProviderCoverageEnvironment),
+	)
+	if err != nil {
+		return nil, err
 	}
-	return LoadConfigFile(path, os.LookupEnv)
+
+	path := strings.TrimSpace(os.Getenv(ProviderConfigEnvironment))
+	configured := []searchcore.Provider{}
+	if path != "" {
+		configured, err = LoadConfigFile(path, os.LookupEnv)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if requireCoverage {
+		if err := validateReleaseProviderCoverage(configured); err != nil {
+			return nil, err
+		}
+	}
+	return configured, nil
+}
+
+func parseReleaseProviderCoverageRequirement(raw string) (bool, error) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", "0", "false":
+		return false, nil
+	case "1", "true":
+		return true, nil
+	default:
+		return false, errors.New("release provider coverage requirement is invalid")
+	}
+}
+
+func validateReleaseProviderCoverage(configured []searchcore.Provider) error {
+	covered := make(map[string]bool, len(searchcore.SupportedCategories))
+	for _, category := range searchcore.ProviderBackedCategories(configured...) {
+		covered[category] = true
+	}
+	missing := make([]string, 0, len(searchcore.SupportedCategories))
+	for _, category := range searchcore.SupportedCategories {
+		if !covered[category] {
+			missing = append(missing, category)
+		}
+	}
+	if len(missing) != 0 {
+		return fmt.Errorf(
+			"release provider coverage is incomplete; missing categories: %s",
+			strings.Join(missing, ", "),
+		)
+	}
+	return nil
 }
 
 func LoadConfigFile(path string, lookup environmentLookup) ([]searchcore.Provider, error) {

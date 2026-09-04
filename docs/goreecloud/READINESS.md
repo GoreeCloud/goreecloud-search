@@ -88,8 +88,13 @@ The runtime:
 - rejects malformed or unsupported configuration;
 - references optional bearer credentials by environment-variable name;
 - does not place credentials in sanitized provider definitions;
-- applies bounded HTTP transport, response, and result controls; and
+- applies bounded HTTP transport, response, and result controls;
+- provides an explicit `GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE` structural preflight; and
 - does not select or approve a real provider by itself.
+
+When the structural preflight is enabled with `1` or `true`, provider initialization fails closed unless the configured set has a valid executable provider path for General, Images, Videos, News, and Files. General's provider-free Development fallback is deliberately excluded from provider-backed coverage, and a multi-category declaration does not satisfy specialized coverage unless the provider exposes the required category-aware execution path. Unset, `0`, or `false` preserves the ordinary Development behavior. Any other flag value is invalid and fails initialization.
+
+This structural gate is not live-provider acceptance. It does not prove that an endpoint is reachable, credentials work, results are useful, provider terms/privacy behavior are acceptable, timestamps are authoritative, rate limits are acceptable, or the target host has accepted network behavior.
 
 Production-approved provider selection and credentials integration remain incomplete.
 
@@ -108,8 +113,9 @@ The workflow:
 - packages the binary with AGPL license and machine-readable metadata;
 - creates deterministic tar/gzip packages;
 - emits `SHA256SUMS` and `artifact-provenance.json`;
-- extracts the packaged Linux/amd64 runtime and starts that exact binary on loopback; and
-- validates health, canonical Development status, local readiness, zero-provider sanitized definitions, native homepage/Preferences, and fail-closed Images behavior without a configured provider.
+- extracts the packaged Linux/amd64 runtime and starts that exact binary on loopback;
+- validates health, canonical Development status, local readiness, zero-provider sanitized definitions, native homepage/Preferences, and fail-closed Images behavior without a configured provider; and
+- validates that the packaged binary accepts structurally complete synthetic all-category provider configuration under the release-coverage preflight and refuses incomplete coverage before listening, without sending a Search request to the synthetic provider endpoint.
 
 The provenance manifest deliberately records:
 
@@ -121,7 +127,7 @@ The provenance manifest deliberately records:
 - `live_provider_acceptance_validated: false`; and
 - platform conformance `nonconformant`.
 
-Successful completion may support the statements **source validated**, **build/package validated**, and **packaged runtime accepted on the CI Linux boundary** for that exact revision. It does not establish target-host acceptance, Release Candidate status, or production deployment.
+Successful completion may support the statements **source validated**, **build/package validated**, and **packaged runtime accepted on the CI Linux boundary** for that exact revision. It does not establish target-host acceptance, Release Candidate status, live-provider acceptance, or production deployment.
 
 The artifact path is documented in `native/docs/ARTIFACT-PROVENANCE.md`.
 
@@ -215,6 +221,8 @@ Before a native release can be accepted for production, each category selected f
 - timestamp-authority correctness where freshness is used;
 - absence of raw credentials or private query/result content in release evidence; and
 - exact artifact/runtime identity used during the test.
+
+Passing the structural release-provider coverage preflight is a prerequisite-style configuration check only. It does not satisfy any of the live evidence above.
 
 No provider becomes trusted merely because it implements the native interface.
 
