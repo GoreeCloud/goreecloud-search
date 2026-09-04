@@ -85,6 +85,18 @@ The runtime must continue to report `production_approved: false`, canonical life
 
 This establishes **build/package validation plus CI-Linux packaged-runtime acceptance** for the exact revision. It is not target-environment validation.
 
+## Release-provider structural coverage preflight
+
+The native provider loader supports an explicit fail-closed preflight through `GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE`.
+
+When the variable is unset, `0`, or `false`, the Development default remains unchanged: Search may start with zero configured providers and General retains its bounded empty-provider Development behavior.
+
+When the variable is `1` or `true`, startup requires the configured native provider set to contain a real executable provider path for every release-required Search category: General, Images, Videos, News, and Files. General's provider-free Development fallback does not count as provider coverage. A category declaration also does not count when the provider lacks the execution interface required to route that category. Missing coverage or an invalid requirement value causes startup initialization to fail before the HTTP service begins listening.
+
+The Development artifact workflow validates this packaged-binary behavior with synthetic provider configuration only. It confirms that a structurally complete all-category configuration starts and is represented through sanitized provider definitions, and that an incomplete configuration fails closed. The test deliberately does not send a Search request to the synthetic endpoint, does not use provider credentials, and does not establish any external network/provider acceptance.
+
+This preflight is only **configuration-structure and executable-path evidence**. It does not select or approve a real provider, validate provider terms or privacy behavior, prove credentials, test live results, establish timestamp authority, establish target-host networking, or set `live_provider_acceptance_validated` or `production_approved` to true.
+
 ## Configuration and secret boundary
 
 The package contains no production provider configuration, provider credentials, reusable secret, target-host reverse-proxy configuration, private DNS configuration, NetBird configuration, monitoring credentials, backup material, or production authorization.
