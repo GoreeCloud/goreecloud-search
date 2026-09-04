@@ -2,7 +2,7 @@
 
 ## Status
 
-The GoreeCloud-owned native Search service exposes a versioned API v1 development contract. These endpoints are implemented in `native/cmd/searchd` and remain **pre-Stable** with `production_approved: false` where lifecycle state is material.
+The GoreeCloud-owned native Search service exposes a versioned API v1 Development contract. These endpoints are implemented in `native/cmd/searchd` and remain non-production with `production_approved: false` where lifecycle state is material.
 
 Current native endpoints are:
 
@@ -52,7 +52,7 @@ Current fields include:
 - `service: "search"`;
 - `status: "ok"`;
 - `implementation: "native"`;
-- `lifecycle: "pre-stable"`;
+- `lifecycle: "development"`;
 - `production_approved: false`;
 - capability flags; and
 - canonical native endpoint paths.
@@ -77,7 +77,7 @@ Current native capability flags identify source-level availability of:
   "service": "search",
   "status": "ok",
   "implementation": "native",
-  "lifecycle": "pre-stable",
+  "lifecycle": "development",
   "production_approved": false,
   "capabilities": {
     "html_search": true,
@@ -156,7 +156,7 @@ Current source behavior includes:
 - conservative local correction metadata where supported by current result evidence; and
 - source provenance.
 
-General may return a valid empty development response when no native production provider is configured. Images, Videos, News, and Files return a bounded not-implemented response when the current native engine has no executable provider for the requested category rather than silently falling back to General or to the transitional runtime.
+General may return a valid empty Development response when no native production provider is configured. Images, Videos, News, and Files return a bounded not-implemented response when the current native engine has no executable provider for the requested category rather than silently falling back to General or to the transitional runtime.
 
 Production provider availability and category parity remain separate release gates.
 
@@ -183,7 +183,7 @@ It includes applicable:
 
 It must not expose provider credentials, secret headers, raw provider error strings, mutable management controls, or unnecessary endpoint configuration.
 
-A provider appearing here is not production approval.
+A provider appearing here is not production approval. Likewise, successful startup with `GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE=true` establishes only that the deployment-controlled configuration has an executable native path for General, Images, Videos, News, and Files. That structural startup preflight does not contact the provider, validate credentials, prove live result quality, or satisfy provider/privacy/security/target-runtime acceptance.
 
 ## `GET /api/v1/sync/capabilities`
 
@@ -209,7 +209,7 @@ External providers may observe requests from GoreeCloud infrastructure. API avai
 
 ## Security and authorization boundary
 
-The current native development service is not an unrestricted public API product.
+The current native Development service is not an unrestricted public API product.
 
 Before a consumer is production-approved, its contract must define applicable:
 
