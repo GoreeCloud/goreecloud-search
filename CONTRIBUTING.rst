@@ -138,10 +138,11 @@ details.
 Glaze UI
 ========
 
-Glaze UI 2.1.0 is the current Stable target for GoreeCloud-controlled Search
-surfaces. Glaze UI 2.2 is a Candidate/design-reference line and must not be used
-to claim current Stable consumer conformance before its own promotion and
-Search-specific adoption acceptance.
+GLAZE UI V1.1 / 1.1.0 is the current declared Stable consumer target for
+GoreeCloud-controlled Search surfaces. Final Search conformance must use the
+current authoritative immutable Stable Glaze contract and evidence available at
+the time of acceptance. A superseded, reset-baseline, Candidate, RC, or other
+non-Stable line must not be used to claim current Stable consumer conformance.
 
 Changes to the native interface must preserve the current semantic/material
 hierarchy, a 48px general interaction-target floor, intentional light and dark
@@ -170,6 +171,8 @@ green, including:
 - ``GoreeCloud API v1 service contract`` when API/readiness behavior changes;
 - ``GoreeCloud native results browser acceptance`` (currently expanded to cover
   the core native application surfaces);
+- ``GoreeCloud native development artifact`` when native source or release-
+  packaging boundaries change;
 - ``GoreeCloud platform integrations``;
 - ``GoreeCloud workflow supply-chain guard``;
 - applicable container/runtime checks; and
@@ -186,7 +189,7 @@ application defect.
 Passing CI establishes source confidence; it does not by itself authorize a
 production deployment. Production promotion remains subject to the readiness
 requirements in ``docs/goreecloud/READINESS.md`` and the governing GoreeCloud
-Stable-release standard.
+release-lifecycle and production-readiness standards.
 
 Security
 ========

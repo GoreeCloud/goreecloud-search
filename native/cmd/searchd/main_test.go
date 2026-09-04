@@ -27,7 +27,7 @@ func TestRequestedCategoryDefaultsToGeneral(t *testing.T) {
 	}
 }
 
-func TestStatusAPIIdentifiesNativePreStableContract(t *testing.T) {
+func TestStatusAPIIdentifiesNativeDevelopmentContract(t *testing.T) {
 	app := server{engine: searchcore.NewEngine(time.Second)}
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/status?ignored=query", nil)
 	response := httptest.NewRecorder()
@@ -42,7 +42,7 @@ func TestStatusAPIIdentifiesNativePreStableContract(t *testing.T) {
 	for _, required := range []string{
 		`"product":"GoreeCloud Search"`,
 		`"implementation":"native"`,
-		`"lifecycle":"pre-stable"`,
+		`"lifecycle":"development"`,
 		`"machine_readable_search_api":true`,
 		`"production_approved":false`,
 		`"readiness":"/api/v1/readiness"`,
@@ -62,7 +62,7 @@ func TestStatusAPIIdentifiesNativePreStableContract(t *testing.T) {
 	}
 }
 
-func TestSearchCapabilityEvidenceRemainsPreStable(t *testing.T) {
+func TestSearchCapabilityEvidenceRemainsDevelopmentOnly(t *testing.T) {
 	evidence := searchCapabilityEvidence()
 	if len(evidence) != 1 {
 		t.Fatalf("capability evidence count = %d, want 1", len(evidence))
@@ -72,7 +72,7 @@ func TestSearchCapabilityEvidenceRemainsPreStable(t *testing.T) {
 		t.Fatalf("unexpected Search query capability evidence: %+v", query)
 	}
 	if query.ProductionAccepted {
-		t.Fatal("pre-Stable Search must not claim production acceptance")
+		t.Fatal("Development Search must not claim production acceptance")
 	}
 	if query.Endpoint != "/api/v1/search" {
 		t.Fatalf("Search query endpoint = %q", query.Endpoint)
