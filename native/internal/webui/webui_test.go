@@ -42,6 +42,9 @@ func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) 
 	}
 	for _, expected := range []string{
 		"GoreeCloud Search",
+		`data-glaze-version="1.1"`,
+		`data-glaze-density-profile="comfortable"`,
+		`/assets/appearance.js`,
 		"result-card",
 		"example",
 		"2 sources agree",
@@ -132,6 +135,36 @@ func TestHomepageStylesAreServedAsCSS(t *testing.T) {
 	}
 }
 
+func TestAppStylesAdoptStableGlazeV11IdentityAndFallbacks(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	Styles(recorder, httptest.NewRequest(http.MethodGet, "/assets/app.css", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+	body := recorder.Body.String()
+	for _, expected := range []string{
+		`html[data-glaze-version="1.1"]`,
+		`--glz11-deep-teal:#0f6b6f`,
+		`--glz11-soft-amber:#d9a35f`,
+		`data-glz-appearance="dark"`,
+		`data-glz-appearance="deep-dark"`,
+		`data-glaze-density-profile="productive"`,
+		"prefers-reduced-motion:reduce",
+		"prefers-reduced-transparency:reduce",
+		"prefers-contrast:more",
+		"forced-colors:active",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("app stylesheet missing Glaze V1.1 contract %q", expected)
+		}
+	}
+	for _, legacy := range []string{"#5d62ff", "#7c4dff"} {
+		if strings.Contains(strings.ToLower(body), legacy) {
+			t.Fatalf("app stylesheet retained legacy violet identity %q", legacy)
+		}
+	}
+}
+
 func TestPreferencesStylesContainCompactNavigationOverflow(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	PreferencesStyles(recorder, httptest.NewRequest(http.MethodGet, "/assets/preferences.css", nil))
@@ -155,18 +188,64 @@ func TestPreferencesStylesContainCompactNavigationOverflow(t *testing.T) {
 	}
 }
 
-func TestHomepageKeepsTrustAndCategoryControlsScriptFree(t *testing.T) {
+func TestHomepageUsesOnlySharedLocalAppearanceBootstrap(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	Homepage(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
 	body := recorder.Body.String()
 
-	for _, expected := range []string{"/assets/home.css", "No advertising", "No click tracking", "Provider transparency", "name=\"category\"", "value=\"images\"", "value=\"news\""} {
+	for _, expected := range []string{
+		`data-glaze-version="1.1"`,
+		`data-glaze-density-profile="comfortable"`,
+		`/assets/appearance.js`,
+		"/assets/home.css",
+		"No advertising",
+		"No click tracking",
+		"Provider transparency",
+		"name=\"category\"",
+		"value=\"images\"",
+		"value=\"news\"",
+	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("homepage missing %q", expected)
 		}
 	}
-	if strings.Contains(strings.ToLower(body), "<script") {
-		t.Fatal("homepage unexpectedly executes client-side script")
+	if strings.Count(strings.ToLower(body), "<script") != 1 {
+		t.Fatal("homepage must execute only the shared local appearance bootstrap")
+	}
+	for _, forbidden := range []string{"/assets/preferences.js", "/assets/results.js", "http://", "https://"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("homepage unexpectedly references %q", forbidden)
+		}
+	}
+}
+
+func TestAppearanceScriptIsLocalOnlyAndGlazeV11Bound(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	AppearanceScript(recorder, httptest.NewRequest(http.MethodGet, "/assets/appearance.js", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", recorder.Code, http.StatusOK)
+	}
+	if got := recorder.Header().Get("Content-Type"); got != "text/javascript; charset=utf-8" {
+		t.Fatalf("Content-Type = %q", got)
+	}
+	body := recorder.Body.String()
+	for _, expected := range []string{
+		"goreecloud.search.preferences.v1",
+		`root.dataset.glazeVersion = "1.1"`,
+		`"deep-dark"`,
+		`comfortable: "comfortable"`,
+		`compact: "productive"`,
+		"localStorage",
+		"GoreeCloudSearchAppearance",
+	} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("appearance bootstrap missing %q", expected)
+		}
+	}
+	for _, forbidden := range []string{"fetch(", "XMLHttpRequest", "sendBeacon", "WebSocket", "http://", "https://"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("appearance bootstrap unexpectedly contains network primitive/reference %q", forbidden)
+		}
 	}
 }
 
@@ -187,6 +266,8 @@ func TestPreferencesScriptIsLocalOnlyAndSchemaBound(t *testing.T) {
 		"localStorage",
 		"privacy.recent_queries",
 		"search.autocomplete",
+		`"deep-dark"`,
+		"GoreeCloudSearchAppearance",
 	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("Preferences script missing %q", expected)
@@ -205,6 +286,8 @@ func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
 	body := recorder.Body.String()
 
 	for _, expected := range []string{
+		`data-glaze-version="1.1"`,
+		`/assets/appearance.js`,
 		"/assets/preferences.js",
 		"data-settings-filter",
 		"data-export-preferences",
@@ -212,6 +295,8 @@ func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
 		"data-reset-preferences",
 		"data-preference=\"search.autocomplete\"",
 		"data-preference=\"privacy.recent_queries\"",
+		`value="deep-dark"`,
+		"Glaze UI V1.1",
 	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("Preferences page missing %q", expected)
