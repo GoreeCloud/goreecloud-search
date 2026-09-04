@@ -1,0 +1,147 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* GoreeCloud Search — image-results compatibility and Glaze UI viewer surface. */
+
+/*
+ * The upstream image viewer is a fixed-position descendant of each image
+ * result. GoreeCloud's generic .result glass treatment applies backdrop-filter
+ * and hover transforms to every result; both properties create a containing
+ * block for fixed descendants in modern browsers. Keep the image-result shell
+ * neutral so the viewer remains viewport-fixed and image-grid geometry is not
+ * distorted by generic result padding/margins.
+ */
+article.result-images,
+article.result-images:hover,
+article.result-images:focus-within {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Preserve a visible, Glaze-aligned focus treatment without transforming the
+ * result ancestor that owns the fixed viewer. */
+article.result-images[data-vim-selected] > a:first-child,
+article.result-images > a:first-child:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--gc-accent) 70%, white);
+  outline-offset: 3px;
+  border-radius: var(--gc-radius-sm);
+}
+
+/* Present the selected image as a large viewport viewer instead of a narrow
+ * transformed-result side panel. The viewer itself may use glass treatment;
+ * only its ancestor must remain free of containing-block effects. */
+#results.image-detail-open article.result-images[data-vim-selected] .detail {
+  position: fixed !important;
+  top: clamp(4.75rem, 8vh, 6.5rem) !important;
+  right: clamp(1rem, 3vw, 2.5rem) !important;
+  bottom: clamp(1rem, 3vw, 2.5rem) !important;
+  left: clamp(1rem, 3vw, 2.5rem) !important;
+  width: auto !important;
+  max-width: 100rem;
+  margin: 0 auto;
+  padding: 4.5rem clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2.5rem) !important;
+  overflow: auto;
+  border: 1px solid var(--gc-border) !important;
+  border-radius: var(--gc-radius-xl);
+  background: var(--gc-surface-strong) !important;
+  box-shadow:
+    0 0 0 100vmax color-mix(in srgb, var(--gc-canvas) 72%, transparent),
+    var(--gc-shadow) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  z-index: 4000 !important;
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-images-source {
+  display: flex;
+  min-height: min(58vh, 42rem);
+  align-items: center;
+  justify-content: center;
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-images-source img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: min(62vh, 46rem) !important;
+  object-fit: contain;
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail .result-images-labels {
+  height: auto !important;
+  min-height: 0;
+  margin-top: 1rem;
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-detail-close,
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-detail-previous,
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-detail-next {
+  display: grid;
+  place-items: center;
+  width: var(--gc-target-comfortable);
+  height: var(--gc-target-comfortable);
+  min-width: var(--gc-target-comfortable);
+  min-height: var(--gc-target-comfortable);
+  box-sizing: border-box;
+  border: 1px solid var(--gc-border-strong);
+  background: var(--gc-surface-strong);
+  color: var(--gc-text);
+  filter: none;
+  box-shadow: var(--gc-shadow-soft);
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-detail-close {
+  top: 1rem;
+  left: 1rem;
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-detail-previous {
+  top: 1rem;
+  right: 4.75rem;
+}
+
+#results.image-detail-open article.result-images[data-vim-selected] .detail a.result-detail-next {
+  top: 1rem;
+  right: 1rem;
+}
+
+@media (max-width: 599px) {
+  #results.image-detail-open article.result-images[data-vim-selected] .detail {
+    inset: 0 !important;
+    max-width: none;
+    margin: 0;
+    padding: 4.75rem 1rem 1rem !important;
+    border: 0 !important;
+    border-radius: 0;
+  }
+
+  #results.image-detail-open article.result-images[data-vim-selected] .detail a.result-images-source {
+    min-height: 52vh;
+  }
+
+  #results.image-detail-open article.result-images[data-vim-selected] .detail a.result-images-source img {
+    max-height: 64vh !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  #results.image-detail-open article.result-images[data-vim-selected] .detail {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--gc-surface-strong) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  article.result-images,
+  article.result-images:hover,
+  article.result-images:focus-within {
+    transition: none !important;
+  }
+}
