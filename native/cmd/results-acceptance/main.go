@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -21,7 +22,10 @@ func main() {
 	mux.HandleFunc("GET /assets/preferences.css", webui.PreferencesStyles)
 	mux.HandleFunc("GET /assets/preferences.js", webui.PreferencesScript)
 	mux.HandleFunc("GET /assets/results.css", webui.ResultsStyles)
+	mux.HandleFunc("GET /assets/image-results.css", webui.ImageResultsStyles)
+	mux.HandleFunc("GET /assets/results.js", webui.ResultsScript)
 	mux.HandleFunc("GET /assets/categories.css", webui.CategoryStyles)
+	mux.HandleFunc("GET /fixture/image/", fixtureImage)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write([]byte("ok\n"))
@@ -55,6 +59,8 @@ func resultsFixture(w http.ResponseWriter, r *http.Request) {
 		response.Query = "goreecluod search privacy"
 		response.SuggestedQuery = "goreecloud search privacy"
 		webui.RenderResults(w, response)
+	case "images":
+		webui.RenderResultsWithMedia(w, representativeImageResponse(), func(raw string) string { return raw })
 	default:
 		webui.RenderResults(w, representativeResponse())
 	}
@@ -121,6 +127,71 @@ func representativeResponse() searchcore.Response {
 			{Name: "Research Catalog", State: searchcore.ProviderStateUnavailable, Code: searchcore.ProviderCodeTimeout, Count: 0},
 		},
 	}
+}
+
+func representativeImageResponse() searchcore.Response {
+	return searchcore.Response{
+		Query:    "macos golden gate",
+		Category: searchcore.CategoryImages,
+		Results: []searchcore.Result{
+			{
+				Title:    "Golden Gate morning",
+				URL:      "https://photos.goreecloud.example/golden-gate-morning",
+				Provider: "Image Catalog",
+				Media: &searchcore.Media{
+					Kind:         searchcore.MediaKindImage,
+					ThumbnailURL: "/fixture/image/1.svg",
+					ContentURL:   "/fixture/image/1.svg",
+					Width:        1600,
+					Height:       1000,
+					Alt:          "Golden Gate bridge in morning light",
+				},
+			},
+			{
+				Title:    "Golden Gate fog",
+				URL:      "https://photos.goreecloud.example/golden-gate-fog",
+				Provider: "Image Catalog",
+				Media: &searchcore.Media{
+					Kind:         searchcore.MediaKindImage,
+					ThumbnailURL: "/fixture/image/2.svg",
+					ContentURL:   "/fixture/image/2.svg",
+					Width:        1400,
+					Height:       1050,
+					Alt:          "Golden Gate bridge under fog",
+				},
+			},
+			{
+				Title:    "Golden Gate shoreline",
+				URL:      "https://photos.goreecloud.example/golden-gate-shoreline",
+				Provider: "Archive Images",
+				Media: &searchcore.Media{
+					Kind:         searchcore.MediaKindImage,
+					ThumbnailURL: "/fixture/image/3.svg",
+					ContentURL:   "/fixture/image/3.svg",
+					Width:        1800,
+					Height:       1200,
+					Alt:          "Golden Gate bridge from the shoreline",
+				},
+			},
+		},
+		Providers: []searchcore.ProviderStatus{
+			{Name: "Archive Images", State: searchcore.ProviderStateAvailable, Count: 1},
+			{Name: "Image Catalog", State: searchcore.ProviderStateAvailable, Count: 2},
+		},
+	}
+}
+
+func fixtureImage(w http.ResponseWriter, r *http.Request) {
+	label := "01"
+	switch r.URL.Path {
+	case "/fixture/image/2.svg":
+		label = "02"
+	case "/fixture/image/3.svg":
+		label = "03"
+	}
+	w.Header().Set("Content-Type", "image/svg+xml; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = fmt.Fprintf(w, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520"><rect width="800" height="520" fill="#dfe5ee"/><path d="M0 390 C180 320 300 370 440 310 C570 255 675 275 800 230 L800 520 L0 520 Z" fill="#aab7c8"/><path d="M110 345 L690 345" stroke="#7a8492" stroke-width="12"/><path d="M235 190 L235 395 M565 155 L565 395" stroke="#687487" stroke-width="22"/><path d="M235 205 C330 280 470 280 565 170" fill="none" stroke="#687487" stroke-width="8"/><text x="40" y="72" font-family="system-ui,sans-serif" font-size="44" fill="#2c3440">GoreeCloud image %s</text></svg>`, label)
 }
 
 func fixedPublishedAt(year int, month time.Month, day, hour, minute int) *time.Time {
