@@ -52,6 +52,10 @@ func Styles(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/app.css", "text/css; charset=utf-8")
 }
 
+func AppearanceScript(w http.ResponseWriter, _ *http.Request) {
+	serveAsset(w, "assets/appearance.js", "text/javascript; charset=utf-8")
+}
+
 func HomepageStyles(w http.ResponseWriter, _ *http.Request) {
 	serveAsset(w, "assets/home.css", "text/css; charset=utf-8")
 }
