@@ -64,8 +64,8 @@ build_target() {
   rm -rf "$repeat_dir"
 
   go version -m "$binary" > "${stage_dir}/BUILDINFO.txt"
-  grep -Fq $'vcs.revision\t'"${source_revision}" "${stage_dir}/BUILDINFO.txt"
-  grep -Fq $'vcs.modified\tfalse' "${stage_dir}/BUILDINFO.txt"
+  grep -Fq "vcs.revision=${source_revision}" "${stage_dir}/BUILDINFO.txt"
+  grep -Fq 'vcs.modified=false' "${stage_dir}/BUILDINFO.txt"
 
   cp "${repo_root}/LICENSE" "${stage_dir}/LICENSE"
 
