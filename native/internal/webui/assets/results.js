@@ -16,6 +16,12 @@
     if (close instanceof HTMLElement) close.focus();
   }
 
+  function restoreOpener(dialog) {
+    const opener = openerFor(dialog);
+    if (!(opener instanceof HTMLElement)) return;
+    requestAnimationFrame(() => opener.focus());
+  }
+
   function openDialog(dialog) {
     if (!(dialog instanceof HTMLDialogElement)) return;
     if (typeof dialog.showModal === "function") {
@@ -29,11 +35,11 @@
   function closeDialog(dialog, restoreFocus = true) {
     if (!(dialog instanceof HTMLDialogElement)) return;
     dialog.dataset.restoreFocus = restoreFocus ? "true" : "false";
-    if (dialog.open && typeof dialog.close === "function") dialog.close();
-    else dialog.removeAttribute("open");
-    if (restoreFocus) {
-      const opener = openerFor(dialog);
-      if (opener instanceof HTMLElement) opener.focus();
+    if (dialog.open && typeof dialog.close === "function") {
+      dialog.close();
+    } else {
+      dialog.removeAttribute("open");
+      if (restoreFocus) restoreOpener(dialog);
     }
   }
 
@@ -92,10 +98,7 @@
       }
     });
     dialog.addEventListener("close", () => {
-      if (dialog.dataset.restoreFocus !== "false") {
-        const opener = openerFor(dialog);
-        if (opener instanceof HTMLElement) opener.focus();
-      }
+      if (dialog.dataset.restoreFocus !== "false") restoreOpener(dialog);
       delete dialog.dataset.restoreFocus;
     });
   }
