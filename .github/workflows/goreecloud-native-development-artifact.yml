@@ -1,0 +1,219 @@
+---
+name: GoreeCloud native development artifact
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-native-development-artifact.yml'
+      - 'native/**'
+      - 'LICENSE'
+      - 'docs/goreecloud/DEPLOYMENT.md'
+      - 'docs/goreecloud/READINESS.md'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-native-development-artifact.yml'
+      - 'native/**'
+      - 'LICENSE'
+      - 'docs/goreecloud/DEPLOYMENT.md'
+      - 'docs/goreecloud/READINESS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  native-development-artifact:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out exact candidate revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ env.CANDIDATE_SHA }}
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00  # v6.0.0
+        with:
+          go-version: '1.25.x'
+          cache: false
+
+      - name: Verify exact checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test -z "$(git status --porcelain)"
+
+      - name: Test native source before packaging
+        working-directory: native
+        run: go test ./...
+
+      - name: Build reproducible Development packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/goreecloud-search-native-artifacts"
+          bash native/scripts/build-development-artifacts.sh "$CANDIDATE_SHA" "$output"
+          printf 'GOREECLOUD_NATIVE_ARTIFACT_DIR=%s\n' "$output" >> "$GITHUB_ENV"
+
+      - name: Validate artifact provenance and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GOREECLOUD_NATIVE_ARTIFACT_DIR"
+          sha256sum --check SHA256SUMS
+          CANDIDATE_SHA="$CANDIDATE_SHA" python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          root = Path('.')
+          manifest = json.loads((root / 'artifact-provenance.json').read_text(encoding='utf-8'))
+          assert manifest['schema_version'] == 1
+          assert manifest['product'] == 'GoreeCloud Search'
+          assert manifest['component'] == 'native-searchd'
+          assert manifest['source_repository'] == 'GoreeCloud/goreecloud-search'
+          assert manifest['source_revision'] == os.environ['CANDIDATE_SHA']
+          assert re.fullmatch(r'[0-9a-f]{40}', manifest['source_revision'])
+          assert manifest['release_lifecycle'] == 'development'
+          assert manifest['artifact_scope'] == 'ci-development-candidate'
+          assert manifest['production_approved'] is False
+          assert manifest['release_candidate_declared'] is False
+          assert manifest['target_environment_validated'] is False
+          assert manifest['live_provider_acceptance_validated'] is False
+          assert manifest['platform_conformance'] == 'nonconformant'
+          assert [(item['os'], item['arch']) for item in manifest['artifacts']] == [
+              ('linux', 'amd64'),
+              ('linux', 'arm64'),
+          ]
+          for item in manifest['artifacts']:
+              path = root / item['file']
+              assert path.is_file()
+              assert hashlib.sha256(path.read_bytes()).hexdigest() == item['sha256']
+          PY
+
+      - name: Accept packaged native runtime on CI Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_dir="${RUNNER_TEMP}/goreecloud-search-native-runtime"
+          rm -rf "$runtime_dir"
+          mkdir -p "$runtime_dir"
+          tar -xzf \
+            "$GOREECLOUD_NATIVE_ARTIFACT_DIR/goreecloud-search-linux-amd64.tar.gz" \
+            -C "$runtime_dir"
+          binary="$runtime_dir/goreecloud-search-linux-amd64/goreecloud-search"
+          test -x "$binary"
+
+          go version -m "$binary" > /tmp/goreecloud-native-buildinfo.txt
+          grep -Fq $'vcs.revision\t'"${CANDIDATE_SHA}" /tmp/goreecloud-native-buildinfo.txt
+          grep -Fq $'vcs.modified\tfalse' /tmp/goreecloud-native-buildinfo.txt
+
+          GOREECLOUD_SEARCH_ADDR=127.0.0.1:18080 \
+            "$binary" >/tmp/goreecloud-native-runtime.log 2>&1 &
+          native_pid=$!
+          cleanup() {
+            kill "$native_pid" >/dev/null 2>&1 || true
+            wait "$native_pid" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:18080/healthz >/tmp/native-health.json; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$native_pid" >/dev/null 2>&1; then
+              cat /tmp/goreecloud-native-runtime.log
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test "$ready" = '1'
+
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18080/api/v1/status >/tmp/native-status.json
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18080/api/v1/readiness >/tmp/native-readiness.json
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18080/api/v1/providers/definitions >/tmp/native-providers.json
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18080/ >/tmp/native-home.html
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18080/preferences >/tmp/native-preferences.html
+
+          images_status="$(curl --silent --show-error \
+            --output /tmp/native-images.json \
+            --write-out '%{http_code}' \
+            --get \
+            --data-urlencode 'q=artifact acceptance' \
+            --data-urlencode 'category=images' \
+            http://127.0.0.1:18080/api/v1/search)"
+          test "$images_status" = '501'
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          health = json.loads(Path('/tmp/native-health.json').read_text(encoding='utf-8'))
+          status = json.loads(Path('/tmp/native-status.json').read_text(encoding='utf-8'))
+          readiness = json.loads(Path('/tmp/native-readiness.json').read_text(encoding='utf-8'))
+          providers = json.loads(Path('/tmp/native-providers.json').read_text(encoding='utf-8'))
+          images = json.loads(Path('/tmp/native-images.json').read_text(encoding='utf-8'))
+
+          assert health['service'] == 'goreecloud-search'
+          assert health['production_approved'] is False
+          assert status['implementation'] == 'native'
+          assert status['lifecycle'] == 'development'
+          assert status['production_approved'] is False
+          assert readiness['ready'] is True
+          assert readiness['readiness_scope'] == 'local_native_application'
+          assert readiness['production_approved'] is False
+          assert providers['configured_provider_count'] == 0
+          assert providers['production_approved'] is False
+          assert providers['credentials_exposed'] is False
+          assert images['category'] == 'images'
+          assert 'not implemented' in images['error']
+          PY
+
+          grep -q 'GoreeCloud Search' /tmp/native-home.html
+          grep -q 'GoreeCloud Search' /tmp/native-preferences.html
+
+      - name: Show packaged runtime diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          cat /tmp/goreecloud-native-buildinfo.txt 2>/dev/null || true
+          cat /tmp/goreecloud-native-runtime.log 2>/dev/null || true
+          cat /tmp/native-health.json 2>/dev/null || true
+          cat /tmp/native-status.json 2>/dev/null || true
+          cat /tmp/native-readiness.json 2>/dev/null || true
+          cat /tmp/native-providers.json 2>/dev/null || true
+          cat /tmp/native-images.json 2>/dev/null || true
+
+      - name: Upload exact-revision Development artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: goreecloud-search-native-development-${{ env.CANDIDATE_SHA }}
+          path: |
+            ${{ env.GOREECLOUD_NATIVE_ARTIFACT_DIR }}/artifact-provenance.json
+            ${{ env.GOREECLOUD_NATIVE_ARTIFACT_DIR }}/SHA256SUMS
+            ${{ env.GOREECLOUD_NATIVE_ARTIFACT_DIR }}/goreecloud-search-linux-amd64.tar.gz
+            ${{ env.GOREECLOUD_NATIVE_ARTIFACT_DIR }}/goreecloud-search-linux-arm64.tar.gz
+          if-no-files-found: error
+          retention-days: 90
