@@ -16,7 +16,7 @@ It must provide:
 - prominent GoreeCloud Search identity and a focused primary search field;
 - keyboard-first and touch-first query entry;
 - clear access to General, Images, Videos, News, Files, and every other approved retained category;
-- excellent light and dark presentation;
+- excellent Light, Dark, and Deep Dark presentation under the current Stable Glaze UI appearance contract;
 - reduced-motion, reduced-transparency, increased-contrast, and forced-colors behavior;
 - responsive empty, loading, degraded-provider, offline, error, and no-results states;
 - accessible suggestions/autocomplete when enabled;
@@ -61,7 +61,7 @@ The inherited Preferences surface will be replaced with a first-party settings a
 
 ### Appearance
 
-- system, light, and dark appearance;
+- system, Light, Dark, and Deep Dark appearance;
 - Glaze UI density and responsive presentation options;
 - result-card and media presentation preferences;
 - appropriate application-level accessibility presentation controls.
@@ -110,6 +110,26 @@ The rebuild should add the following when supported by implementation and accept
 - strong content-security and outbound-request boundaries;
 - homepage and results performance budgets;
 - first-party components and tokens aligned with the current Glaze UI contract.
+
+## Current Stable Glaze UI V1.1 source-adoption tranche
+
+The native browser source now explicitly targets **GLAZE UI V1.1 / 1.1.0** while remaining a Development application.
+
+The source-level shell adoption includes:
+
+- `data-glaze-version="1.1"` on native Home, Preferences, and Results documents;
+- the current Stable Deep Teal (`#0f6b6f`) and Soft Amber (`#d9a35f`) environmental identity, with neutral structure remaining dominant;
+- bounded upper-left teal and restrained warm-amber atmospheric treatment rather than the previous violet application identity;
+- explicit Light, Dark, and Deep Dark mappings plus system-following behavior;
+- Glaze density mapping where Search `comfortable` maps to the Glaze comfortable profile and Search `compact` maps to the Glaze productive profile;
+- one small same-origin `appearance.js` bootstrap that reads only the schema-versioned local Search preference envelope and performs no network request;
+- a 48 px minimum primary interactive-target contract in shared and results-specific browser acceptance;
+- reduced-motion, reduced-transparency, increased-contrast, and forced-colors source fallbacks;
+- durable content surfaces that avoid unnecessary nested backdrop-filter materials;
+- automated Compact, Medium, Expanded, and Wide browser checks across Light, Dark, and Deep Dark for Home, Preferences, General Results, and Image Results; and
+- existing dedicated image-viewer keyboard/touch/focus acceptance alongside the shell checks.
+
+This is **source implementation and automated CI acceptance scope**, not a whole-application or production Glaze conformance claim. Fresh manual contextual visual review, remaining resilience evidence including RTL and 200% text, representative target-form-factor validation, target-environment acceptance, and production acceptance are still required before the `glaze_ui` platform-system result can become conformant.
 
 ## Feature-preservation gate
 
