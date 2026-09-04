@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/GoreeCloud/goreecloud-search/native/internal/buildinfo"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/mediaproxy"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/platformstate"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
@@ -30,6 +31,7 @@ type capabilityEvidence struct {
 type server struct {
 	engine *searchcore.Engine
 	media  *mediaproxy.Proxy
+	build  buildinfo.Provenance
 }
 
 func searchCapabilityEvidence() []capabilityEvidence {
@@ -55,7 +57,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("initialize GoreeCloud Search media boundary: %v", err)
 	}
-	app := server{engine: engine, media: mediaProxy}
+	app := server{
+		engine: engine,
+		media:  mediaProxy,
+		build:  buildinfo.Current(),
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", webui.Homepage)
@@ -114,6 +120,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 		"implementation":      "native",
 		"lifecycle":           "development",
 		"production_approved": false,
+		"build":               s.build,
 		"capabilities": map[string]bool{
 			"html_search":                 true,
 			"machine_readable_search_api": true,
