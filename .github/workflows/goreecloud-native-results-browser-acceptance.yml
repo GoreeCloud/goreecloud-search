@@ -41,7 +41,7 @@ jobs:
       - name: Validate native source and acceptance harness
         run: |
           set -euo pipefail
-          python -m py_compile native/browser_results_acceptance.py
+          python -m py_compile native/browser_results_acceptance.py native/browser_image_acceptance.py
           cd native
           go test ./...
           go build -o /tmp/goreecloud-search-results-acceptance ./cmd/results-acceptance
@@ -71,6 +71,12 @@ jobs:
           GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
           GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
         run: python native/browser_results_acceptance.py
+
+      - name: Run native image results browser acceptance
+        env:
+          GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
+          GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
+        run: python native/browser_image_acceptance.py
 
       - name: Preserve exact-head native results evidence
         if: always()
