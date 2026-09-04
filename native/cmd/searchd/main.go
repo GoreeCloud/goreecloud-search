@@ -10,6 +10,7 @@ import (
 	"github.com/GoreeCloud/goreecloud-search/native/internal/mediaproxy"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/platformstate"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
+	"github.com/GoreeCloud/goreecloud-search/native/internal/providers"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/syncstate"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
@@ -45,7 +46,11 @@ func searchCapabilityEvidence() []capabilityEvidence {
 }
 
 func main() {
-	engine := searchcore.NewEngine(8 * time.Second)
+	configuredProviders, err := providers.LoadFromEnvironment()
+	if err != nil {
+		log.Fatalf("initialize GoreeCloud Search providers: %v", err)
+	}
+	engine := searchcore.NewEngine(8*time.Second, configuredProviders...)
 	mediaProxy, err := mediaproxy.New()
 	if err != nil {
 		log.Fatalf("initialize GoreeCloud Search media boundary: %v", err)
@@ -236,11 +241,11 @@ func executableCategories(engine *searchcore.Engine) []string {
 }
 
 func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
-	providers := s.engine.ProviderDefinitions()
+	providerDefinitions := s.engine.ProviderDefinitions()
 	writeAPIV1JSON(w, http.StatusOK, map[string]any{
 		"schema_version":             1,
-		"providers":                  providers,
-		"configured_provider_count": len(providers),
+		"providers":                  providerDefinitions,
+		"configured_provider_count": len(providerDefinitions),
 		"supported_categories":      searchcore.SupportedCategories,
 		"executable_categories":     executableCategories(s.engine),
 		"category_execution_scope":  "current-native-engine",
