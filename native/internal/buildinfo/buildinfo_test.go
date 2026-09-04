@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-func boolValue(value bool) *bool { return &value }
-
 func TestFromSettingsAcceptsCanonicalCleanRevision(t *testing.T) {
 	got := fromSettings([]debug.BuildSetting{
 		{Key: "vcs.revision", Value: "0123456789abcdef0123456789abcdef01234567"},
