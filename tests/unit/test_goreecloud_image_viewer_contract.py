@@ -42,7 +42,7 @@ def test_detail_is_viewport_fixed() -> None:
     assert "max-height: min(62vh, 46rem) !important" in css
 
 
-def test_viewer_control_target_floor() -> None:
+def test_viewer_target_floor() -> None:
     css = IMAGE_STYLES.read_text(encoding="utf-8")
 
     assert "var(--gc-target-comfortable)" in css
