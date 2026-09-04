@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+"""Contract checks for GoreeCloud image-result viewer containment."""
+
 from pathlib import Path
 
 
@@ -7,7 +9,7 @@ BASE_TEMPLATE = ROOT / "searx" / "templates" / "simple" / "base.html"
 IMAGE_STYLES = ROOT / "searx" / "static" / "themes" / "simple" / "goreecloud-image-results.css"
 
 
-def test_image_result_styles_load_after_general_goreecloud_shell() -> None:
+def test_image_css_load_order() -> None:
     base = BASE_TEMPLATE.read_text(encoding="utf-8")
     image_link = "goreecloud-image-results.css"
     platform_link = "goreecloud-platform-shell.css"
@@ -17,7 +19,7 @@ def test_image_result_styles_load_after_general_goreecloud_shell() -> None:
     assert base.index(image_link) > base.index(platform_link)
 
 
-def test_image_result_ancestor_cannot_contain_fixed_viewer() -> None:
+def test_image_ancestor_is_neutral() -> None:
     css = IMAGE_STYLES.read_text(encoding="utf-8")
 
     assert "article.result-images" in css
@@ -28,7 +30,7 @@ def test_image_result_ancestor_cannot_contain_fixed_viewer() -> None:
     assert "margin: 0 !important" in css
 
 
-def test_selected_image_detail_is_explicitly_viewport_fixed() -> None:
+def test_detail_is_viewport_fixed() -> None:
     css = IMAGE_STYLES.read_text(encoding="utf-8")
     selector = "#results.image-detail-open article.result-images[data-vim-selected] .detail"
 
@@ -40,7 +42,7 @@ def test_selected_image_detail_is_explicitly_viewport_fixed() -> None:
     assert "max-height: min(62vh, 46rem) !important" in css
 
 
-def test_image_viewer_controls_meet_glaze_touch_target_floor() -> None:
+def test_viewer_control_target_floor() -> None:
     css = IMAGE_STYLES.read_text(encoding="utf-8")
 
     assert "var(--gc-target-comfortable)" in css
