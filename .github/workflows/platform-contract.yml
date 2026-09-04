@@ -1,6 +1,7 @@
+# yamllint disable rule:line-length
 name: Platform Contract
 
-on:
+"on":
   pull_request:
     paths:
       - goreecloud.platform.yaml
