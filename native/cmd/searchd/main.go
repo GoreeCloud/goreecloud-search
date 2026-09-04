@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/GoreeCloud/goreecloud-search/native/internal/mediaproxy"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/platformstate"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/preferences"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
@@ -27,6 +28,7 @@ type capabilityEvidence struct {
 
 type server struct {
 	engine *searchcore.Engine
+	media  *mediaproxy.Proxy
 }
 
 func searchCapabilityEvidence() []capabilityEvidence {
@@ -44,7 +46,11 @@ func searchCapabilityEvidence() []capabilityEvidence {
 
 func main() {
 	engine := searchcore.NewEngine(8 * time.Second)
-	app := server{engine: engine}
+	mediaProxy, err := mediaproxy.New()
+	if err != nil {
+		log.Fatalf("initialize GoreeCloud Search media boundary: %v", err)
+	}
+	app := server{engine: engine, media: mediaProxy}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", webui.Homepage)
@@ -55,7 +61,10 @@ func main() {
 	mux.HandleFunc("GET /assets/preferences.css", webui.PreferencesStyles)
 	mux.HandleFunc("GET /assets/preferences.js", webui.PreferencesScript)
 	mux.HandleFunc("GET /assets/results.css", webui.ResultsStyles)
+	mux.HandleFunc("GET /assets/image-results.css", webui.ImageResultsStyles)
+	mux.HandleFunc("GET /assets/results.js", webui.ResultsScript)
 	mux.HandleFunc("GET /assets/categories.css", webui.CategoryStyles)
+	mux.Handle("GET /media/image", mediaProxy)
 	mux.HandleFunc("GET /healthz", app.health)
 	mux.HandleFunc("GET /api/v1/status", app.status)
 	mux.HandleFunc("GET /api/v1/readiness", app.readiness)
@@ -178,6 +187,10 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 	response, err := s.engine.SearchCategory(r.Context(), r.URL.Query().Get("q"), category)
 	if err != nil {
 		webui.RenderSearchError(w, r.URL.Query().Get("q"), err)
+		return
+	}
+	if s.media != nil {
+		webui.RenderResultsWithMedia(w, response, s.media.URL)
 		return
 	}
 	webui.RenderResults(w, response)
