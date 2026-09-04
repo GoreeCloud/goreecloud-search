@@ -119,8 +119,8 @@ jobs:
           test -x "$binary"
 
           go version -m "$binary" > /tmp/goreecloud-native-buildinfo.txt
-          grep -Fq $'vcs.revision\t'"${CANDIDATE_SHA}" /tmp/goreecloud-native-buildinfo.txt
-          grep -Fq $'vcs.modified\tfalse' /tmp/goreecloud-native-buildinfo.txt
+          grep -Fq "vcs.revision=${CANDIDATE_SHA}" /tmp/goreecloud-native-buildinfo.txt
+          grep -Fq 'vcs.modified=false' /tmp/goreecloud-native-buildinfo.txt
 
           GOREECLOUD_SEARCH_ADDR=127.0.0.1:18080 \
             "$binary" >/tmp/goreecloud-native-runtime.log 2>&1 &
