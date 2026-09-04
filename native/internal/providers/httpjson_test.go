@@ -112,10 +112,14 @@ func TestHTTPProviderBoundsResponseAndResultFields(t *testing.T) {
 	longTitle := strings.Repeat("x", maxProviderTitleRunes+100)
 	longSnippet := strings.Repeat("y", maxProviderSnippetRunes+100)
 	items := make([]string, 0, searchcore.MaxResultsPerProvider+20)
-	for i := 0; i < searchcore.MaxResultsPerProvider+20; i++ {
-		items = append(items, `{"title":"`+longTitle+`","url":"https://example.com/item","snippet":"`+longSnippet+`"}`)
+	items = append(items, `{"title":"`+longTitle+`","url":"https://example.com/first","snippet":"`+longSnippet+`"}`)
+	for i := 1; i < searchcore.MaxResultsPerProvider+20; i++ {
+		items = append(items, `{"title":"result","url":"https://example.com/item","snippet":"summary"}`)
 	}
 	body := `{"schema_version":1,"results":[` + strings.Join(items, ",") + `]}`
+	if len(body) >= MaxProviderResponseBytes {
+		t.Fatal("test fixture unexpectedly exceeds provider body limit")
+	}
 	client := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
