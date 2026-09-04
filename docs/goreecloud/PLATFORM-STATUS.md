@@ -24,7 +24,7 @@ Glaze UI may present these states, but Search must not create, strengthen, merge
 
 ## Current Development state
 
-The shipped native handler deliberately uses an unavailable runtime-evidence source. Therefore current application behavior remains fail-conservative even though the source now contains deterministic projection logic:
+The shipped native handler deliberately uses an unavailable runtime-evidence source. Therefore current application behavior remains fail-conservative even though the source contains deterministic projection and provenance-validation logic:
 
 - Privacy Shield source integration is present, while application authorization evidence remains unavailable and state remains `unknown`.
 - Wardveil source integration is present, while deployed authoritative application/service evidence is unavailable and the default state remains `unknown` with `positive_claim: false`.
@@ -42,6 +42,29 @@ The default handler does not configure such a producer. Its source is unavailabl
 
 Adding a transport implementation later is a separate change. That implementation must follow the applicable producer, Identity, Mesh, privacy, security, freshness, and deployment contracts and must not use the existence of this interface as evidence that connectivity is accepted.
 
+## Mesh evidence-envelope boundary
+
+Search models the canonical GoreeCloud Mesh `goreecloud.evidence-envelope.v1` provenance, freshness, and minimization contract as an ingress-validation primitive. Mesh remains coordination/transport authority only; a structurally valid envelope cannot strengthen the producer-domain outcome carried by that envelope.
+
+The Search validator rejects envelopes with any of the following:
+
+- wrong envelope version;
+- missing or oversized identity/reference fields;
+- producer system, repository, producer contract, or authority domain that does not exactly match the consumer expectation;
+- producer revision that is not a canonical lowercase 40-character Git SHA;
+- wrong subject kind or Search subject ID;
+- wrong assertion family, producer outcome, or evidence reference;
+- future observation time;
+- invalid observation/validity ordering;
+- unsupported data class;
+- malformed optional SHA-256 payload digest;
+- user content; or
+- secret material.
+
+An expired envelope can remain structurally valid and auditable, but it cannot satisfy a current-state view. The domain projector is responsible for turning such evidence into `stale` rather than a positive state.
+
+Search does not treat Mesh provenance validation as proof that the producer-domain assertion is true. Wardveil Security, Privacy Shield, Everkeep, and GoreeCloud Identity retain their independent authorities.
+
 ## Privacy Shield projection
 
 The current Privacy Shield runtime-acceptance contract is a contract for minimized Privacy Shield evidence delivery through GoreeCloud Mesh. Its own boundary explicitly says that Mesh transport validity never creates consent, purpose authorization, retention authorization, or deletion authority.
@@ -57,22 +80,26 @@ Search requires a separate authoritative application-specific privacy/authorizat
 
 ## Wardveil Security projection
 
-Wardveil status follows `wardveil.status.schema.json` semantics and is additionally bound by Search to scope ID `goreecloud-search`.
+Wardveil status follows `wardveil.status.schema.json` semantics and is additionally bound by Search to scope ID `goreecloud-search` and a producer-authoritative Mesh evidence envelope.
 
 A positive `protected` projection requires all of the following:
 
 - contract version `0.1.0`;
 - scope kind `application` or `service`;
 - scope ID exactly `goreecloud-search`;
-- non-empty authority system and control;
+- authority system exactly `wardveil-security` plus a non-empty authority control;
 - authoritative authority evidence;
 - `state: protected`;
 - `protected_by_wardveil: true`;
 - `evidence.status: current`;
-- a non-future observation time; and
-- a `valid_until` value later than the evaluation time.
+- a non-future observation time;
+- a non-empty producer evidence reference;
+- a `valid_until` value later than the evaluation time; and
+- a structurally valid Mesh envelope bound to that exact Wardveil record.
 
-Contradictory protected state/claim values, invalid scope, future observation, unknown evidence status, missing authority, or expired protected evidence fail closed. Expired protected evidence becomes stale rather than leaving the displayed state protected.
+For the Wardveil record, the envelope must identify producer `wardveil-security`, repository `GoreeCloud/goreecloud-wardveil-security`, producer contract `contracts/wardveil.status.schema.json`, authority domain `security`, the same Search scope kind/ID, assertion family `security-status`, the same producer outcome, the same opaque evidence reference, and identical observation/validity times.
+
+Missing envelopes, wrong producer/repository/contract, invalid producer revisions, sensitive envelopes, mismatched outcomes/references/times, contradictory protected state/claim values, invalid scope, future observation, unknown evidence status, missing authority, or malformed provenance fail closed as unverified. A correctly bound but expired envelope/record remains auditable as stale and cannot remain protected.
 
 A valid Wardveil protected record may set the bounded platform `positive_claim`, but it still does not set Search `production_accepted`; release and production acceptance remain broader gates.
 
@@ -80,15 +107,21 @@ A valid Wardveil protected record may set the bounded platform `positive_claim`,
 
 A Search-level continuity-ready projection requires a complete, fresh application evidence set rather than one optimistic Everkeep record.
 
-The current consumer projection requires exactly one usable Search-scoped record for each of:
+The current continuity-status consumer projection requires exactly one usable Search-scoped record for each of:
 
 - `backup_coverage`;
 - `restore_capability`; and
 - `recovery_freshness`.
 
-Each required dimension must be `ready`, have a non-future observation, have a future `fresh_until`, provide a verification method, and include an evidence reference when the record says evidence is required. Duplicate required dimensions fail closed as `unverified` so contradictory evidence cannot be hidden by record ordering.
+Each required record must identify producer exactly `everkeep`, provide a unique non-empty record ID, target scope `goreecloud-search`, have a non-future observation, provide a bounded verification method, and—when ready—have a future `fresh_until` plus a unique non-empty bounded evidence reference. Duplicate required dimensions, duplicate record IDs, duplicate ready evidence references, wrong producer identity, malformed identifiers/references, or incomplete freshness/evidence fail closed as unverified.
 
 Only a complete fresh set can surface `state: ready` with a bounded positive continuity claim. It still cannot set Search `production_accepted` or `production_approved` by itself.
+
+### Everkeep Mesh contract boundary
+
+The current authoritative Everkeep Mesh integration identifies `contracts/continuity.status.schema.json` as its authoritative continuity contract and explicitly keeps authority transfer, runtime acceptance, and Stable acceptance false. This means a future approved Mesh-backed Everkeep adapter may carry continuity-status evidence through the canonical Mesh evidence envelope while Everkeep remains authoritative for the continuity outcome and evidence validity.
+
+The current Search handler still has no live Mesh transport adapter and does not manufacture an Everkeep envelope from local state. Any future adapter must validate producer identity, scope, freshness, minimization, and the canonical Mesh envelope before mapping producer-authoritative continuity evidence into Search’s bounded presentation state.
 
 ## Privacy and minimization
 
@@ -108,7 +141,7 @@ Unrelated query-string input is ignored and must not be echoed into the response
 
 `GET /api/v1/readiness` remains scoped to `local_native_application` readiness. Platform-status information does not change that scope and does not make local readiness equivalent to production readiness.
 
-A future authoritative runtime adapter may strengthen a bounded platform state only when the applicable producer contract, freshness, authority, scope, and Search-side projection rules are satisfied. Missing, malformed, stale, contradictory, unverified, or unavailable evidence must not be upgraded by Search.
+A future authoritative runtime adapter may strengthen a bounded platform state only when the applicable producer contract, provenance, freshness, authority, scope, and Search-side projection rules are satisfied. Missing, malformed, stale, contradictory, unverified, or unavailable evidence must not be upgraded by Search.
 
 ## Positive-claim requirements
 
@@ -119,7 +152,8 @@ Search must not claim Privacy Shield production acceptance, Wardveil protection,
 - Search CI is green;
 - a UI section displays the platform name;
 - a transport such as GoreeCloud Mesh can carry evidence;
-- a local adapter can parse a schema; or
+- a local adapter can parse a schema;
+- an envelope is structurally valid; or
 - deterministic tests can inject a synthetic accepted record.
 
 Any positive state remains limited to what current authoritative application/runtime evidence actually proves. Search release, production, and Stable claims remain separate exact-candidate gates.

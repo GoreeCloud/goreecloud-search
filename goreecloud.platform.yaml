@@ -55,19 +55,22 @@ platform_systems:
     version: null
     evidence:
       - SPECIFICATIONS.md
+      - docs/goreecloud/PLATFORM-STATUS.md
+      - native/internal/platformstate/mesh_envelope.go
       - native/internal/platformstate/platformstate.go
       - native/internal/platformstate/platformstate_test.go
       - native/internal/mediaproxy/proxy.go
       - native/internal/providers/httpjson.go
-    notes: Search implements bounded source-level security controls and a Wardveil evidence projection boundary, but producer-authoritative Wardveil runtime acceptance and production security validation remain incomplete.
+    notes: Search implements bounded source-level security controls plus producer-bound Mesh provenance validation for Wardveil evidence, but producer-authoritative Wardveil runtime acceptance and production security validation remain incomplete.
   everkeep:
     result: applicable-blocked
     version: null
     evidence:
       - SPECIFICATIONS.md
+      - docs/goreecloud/PLATFORM-STATUS.md
       - native/internal/platformstate/platformstate.go
       - native/internal/platformstate/platformstate_test.go
-    notes: Search can project supplied Everkeep continuity evidence, but accepted backup, restore, recovery, migration, and rollback evidence for the native application remains incomplete.
+    notes: Search can fail-closed project supplied Everkeep continuity evidence, but accepted backup, restore, recovery, migration, and rollback evidence for the native application remains incomplete.
   glaze_ui:
     result: applicable-migration-required
     version: null
@@ -82,8 +85,12 @@ platform_systems:
     version: null
     evidence:
       - SPECIFICATIONS.md
+      - docs/goreecloud/PLATFORM-STATUS.md
       - native/docs/CAPABILITY-EVIDENCE.md
-    notes: Search capability semantics exist locally, but accepted GoreeCloud Mesh registration, discovery, event, dependency, and runtime evidence integration remains incomplete.
+      - native/internal/platformstate/mesh_envelope.go
+      - native/internal/platformstate/platformstate.go
+      - native/internal/platformstate/platformstate_test.go
+    notes: Search capability semantics and fail-closed Mesh evidence-envelope validation exist in source, but accepted GoreeCloud Mesh registration, discovery, transport, event, dependency, and runtime evidence integration remains incomplete.
     capabilities:
       - search.query
       - search.preferences
@@ -150,8 +157,10 @@ conformance:
   validated_at: null
   evidence:
     - SPECIFICATIONS.md
+    - docs/goreecloud/PLATFORM-STATUS.md
     - native/docs/PROVIDER-RUNTIME.md
     - native/docs/CAPABILITY-EVIDENCE.md
+    - native/internal/platformstate/mesh_envelope.go
     - native/internal/platformstate/platformstate.go
     - native/internal/providers/runtime_test.go
     - native/cmd/searchd/category_acceptance_test.go
