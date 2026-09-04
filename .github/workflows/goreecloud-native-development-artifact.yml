@@ -194,6 +194,103 @@ jobs:
           grep -q 'GoreeCloud Search' /tmp/native-home.html
           grep -q 'GoreeCloud Search' /tmp/native-preferences.html
 
+      - name: Validate packaged release-provider coverage preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime_dir="${RUNNER_TEMP}/goreecloud-search-provider-coverage-runtime"
+          rm -rf "$runtime_dir"
+          mkdir -p "$runtime_dir"
+          tar -xzf \
+            "$GOREECLOUD_NATIVE_ARTIFACT_DIR/goreecloud-search-linux-amd64.tar.gz" \
+            -C "$runtime_dir"
+          binary="$runtime_dir/goreecloud-search-linux-amd64/goreecloud-search"
+          test -x "$binary"
+
+          coverage_config="${RUNNER_TEMP}/provider-coverage.json"
+          cat > "$coverage_config" <<'JSON'
+          {
+            "schema_version": 1,
+            "providers": [{
+              "name": "CI structural coverage fixture",
+              "adapter": "goreecloud-http-v1",
+              "endpoint": "https://provider.example/search",
+              "categories": ["general", "images", "videos", "news", "files"]
+            }]
+          }
+          JSON
+
+          GOREECLOUD_SEARCH_ADDR=127.0.0.1:18081 \
+          GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE="$coverage_config" \
+          GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE=true \
+            "$binary" >/tmp/goreecloud-native-provider-coverage.log 2>&1 &
+          coverage_pid=$!
+          cleanup_coverage() {
+            kill "$coverage_pid" >/dev/null 2>&1 || true
+            wait "$coverage_pid" >/dev/null 2>&1 || true
+          }
+          trap cleanup_coverage EXIT
+
+          ready=0
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:18081/api/v1/providers/definitions \
+              >/tmp/native-provider-coverage.json; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$coverage_pid" >/dev/null 2>&1; then
+              cat /tmp/goreecloud-native-provider-coverage.log
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test "$ready" = '1'
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          definitions = json.loads(
+              Path('/tmp/native-provider-coverage.json').read_text(encoding='utf-8')
+          )
+          assert definitions['configured_provider_count'] == 1
+          assert definitions['credentials_exposed'] is False
+          assert definitions['production_approved'] is False
+          assert definitions['executable_categories'] == [
+              'general', 'images', 'videos', 'news', 'files'
+          ]
+          assert definitions['providers'][0]['name'] == 'CI structural coverage fixture'
+          PY
+
+          cleanup_coverage
+          trap - EXIT
+
+          incomplete_config="${RUNNER_TEMP}/provider-coverage-incomplete.json"
+          cat > "$incomplete_config" <<'JSON'
+          {
+            "schema_version": 1,
+            "providers": [{
+              "name": "CI incomplete coverage fixture",
+              "adapter": "goreecloud-http-v1",
+              "endpoint": "https://provider.example/search",
+              "categories": ["general"]
+            }]
+          }
+          JSON
+
+          set +e
+          GOREECLOUD_SEARCH_ADDR=127.0.0.1:18082 \
+          GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE="$incomplete_config" \
+          GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE=true \
+            "$binary" >/tmp/goreecloud-native-provider-incomplete.log 2>&1
+          status=$?
+          set -e
+          test "$status" -ne 0
+          grep -Fq \
+            'release provider coverage is incomplete; missing categories: images, videos, news, files' \
+            /tmp/goreecloud-native-provider-incomplete.log
+
       - name: Show packaged runtime diagnostics on failure
         if: failure()
         shell: bash
@@ -205,6 +302,9 @@ jobs:
           cat /tmp/native-readiness.json 2>/dev/null || true
           cat /tmp/native-providers.json 2>/dev/null || true
           cat /tmp/native-images.json 2>/dev/null || true
+          cat /tmp/goreecloud-native-provider-coverage.log 2>/dev/null || true
+          cat /tmp/native-provider-coverage.json 2>/dev/null || true
+          cat /tmp/goreecloud-native-provider-incomplete.log 2>/dev/null || true
 
       - name: Upload exact-revision Development artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
