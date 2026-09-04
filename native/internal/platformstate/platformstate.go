@@ -43,20 +43,22 @@ type PrivacyShieldRuntimeAcceptance struct {
 }
 
 type WardveilStatusRecord struct {
-	ContractVersion         string
-	ScopeKind               string
-	ScopeID                 string
-	AuthoritySystem         string
-	AuthorityControl        string
-	AuthorityAuthoritative  bool
-	State                   string
-	EvidenceStatus          string
-	ObservedAt              time.Time
-	ValidUntil              time.Time
-	ProtectedByWardveil     bool
+	ContractVersion        string
+	ScopeKind              string
+	ScopeID                string
+	AuthoritySystem        string
+	AuthorityControl       string
+	AuthorityAuthoritative bool
+	State                  string
+	EvidenceStatus         string
+	ObservedAt             time.Time
+	ValidUntil             time.Time
+	EvidenceReference      string
+	ProtectedByWardveil    bool
 }
 
 type EverkeepContinuityRecord struct {
+	RecordID           string
 	Producer           string
 	Scope              string
 	Dimension          string
@@ -69,9 +71,10 @@ type EverkeepContinuityRecord struct {
 }
 
 type RuntimeEvidenceBundle struct {
-	PrivacyShield *PrivacyShieldRuntimeAcceptance
-	Wardveil      *WardveilStatusRecord
-	Everkeep      []EverkeepContinuityRecord
+	PrivacyShield    *PrivacyShieldRuntimeAcceptance
+	Wardveil         *WardveilStatusRecord
+	WardveilEnvelope *MeshEvidenceEnvelope
+	Everkeep         []EverkeepContinuityRecord
 }
 
 type RuntimeEvidenceSource interface {
@@ -96,7 +99,7 @@ func SnapshotWithEvidence(source RuntimeEvidenceSource, now time.Time) Snapshot 
 
 	evidence := source.Evidence()
 	snapshot.Systems[0] = projectPrivacyShield(snapshot.Systems[0], evidence.PrivacyShield)
-	snapshot.Systems[1] = projectWardveil(snapshot.Systems[1], evidence.Wardveil, now)
+	snapshot.Systems[1] = projectWardveil(snapshot.Systems[1], evidence.Wardveil, evidence.WardveilEnvelope, now)
 	snapshot.Systems[2] = projectEverkeep(snapshot.Systems[2], evidence.Everkeep, now)
 	return snapshot
 }
@@ -158,15 +161,41 @@ func projectPrivacyShield(status SystemStatus, evidence *PrivacyShieldRuntimeAcc
 	return status
 }
 
-func projectWardveil(status SystemStatus, evidence *WardveilStatusRecord, now time.Time) SystemStatus {
+func projectWardveil(
+	status SystemStatus,
+	evidence *WardveilStatusRecord,
+	envelope *MeshEvidenceEnvelope,
+	now time.Time,
+) SystemStatus {
 	if evidence == nil {
 		return status
 	}
 	if evidence.ContractVersion != "0.1.0" ||
 		(evidence.ScopeKind != "application" && evidence.ScopeKind != "service") ||
-		evidence.ScopeID != searchScopeID || evidence.AuthoritySystem == "" ||
-		evidence.AuthorityControl == "" || evidence.ObservedAt.IsZero() || evidence.ObservedAt.After(now) {
+		evidence.ScopeID != searchScopeID || evidence.AuthoritySystem != "wardveil-security" ||
+		evidence.AuthorityControl == "" || evidence.ObservedAt.IsZero() || evidence.ObservedAt.After(now) ||
+		evidence.EvidenceReference == "" {
 		status.RuntimeEvidence = "unverified"
+		return status
+	}
+	if !ValidateMeshEvidenceEnvelope(envelope, MeshEvidenceExpectation{
+		ProducerSystem:  "wardveil-security",
+		Repository:      "GoreeCloud/goreecloud-wardveil-security",
+		Contract:        "contracts/wardveil.status.schema.json",
+		AuthorityDomain: "security",
+		SubjectKind:     evidence.ScopeKind,
+		SubjectID:       searchScopeID,
+		Assertion:       "security-status",
+		Outcome:         evidence.State,
+		Source:          evidence.EvidenceReference,
+		ObservedAt:      evidence.ObservedAt,
+		ValidUntil:      evidence.ValidUntil,
+	}, now) {
+		status.RuntimeEvidence = "unverified"
+		return status
+	}
+	if !envelope.ValidUntil.After(now) {
+		status.RuntimeEvidence = "stale"
 		return status
 	}
 	if evidence.EvidenceStatus != "current" {
@@ -225,27 +254,42 @@ func projectEverkeep(status SystemStatus, evidence []EverkeepContinuityRecord, n
 		"restore_capability": false,
 		"recovery_freshness": false,
 	}
-	seen := make(map[string]bool, len(required))
+	seenDimensions := make(map[string]bool, len(required))
+	seenRecordIDs := make(map[string]bool, len(evidence))
+	seenReferences := make(map[string]bool, len(evidence))
 	for _, record := range evidence {
 		if _, relevant := required[record.Dimension]; !relevant {
 			continue
 		}
-		if seen[record.Dimension] {
+		if seenDimensions[record.Dimension] || !validBoundedEnvelopeText(record.RecordID, 160) ||
+			seenRecordIDs[record.RecordID] {
 			status.RuntimeEvidence = "unverified"
 			return status
 		}
-		seen[record.Dimension] = true
-		if record.Producer == "" || record.Scope != searchScopeID || record.ObservedAt.IsZero() ||
-			record.ObservedAt.After(now) || record.VerificationMethod == "" {
+		seenDimensions[record.Dimension] = true
+		seenRecordIDs[record.RecordID] = true
+		if record.Producer != "everkeep" || record.Scope != searchScopeID || record.ObservedAt.IsZero() ||
+			record.ObservedAt.After(now) || !validBoundedEnvelopeText(record.VerificationMethod, 500) {
 			status.RuntimeEvidence = "unverified"
 			return status
+		}
+		if record.EvidenceReference != "" && !validBoundedEnvelopeText(record.EvidenceReference, 1000) {
+			status.RuntimeEvidence = "unverified"
+			return status
+		}
+		if record.State == "ready" {
+			if record.FreshUntil.IsZero() || !record.FreshUntil.After(now) || record.EvidenceReference == "" ||
+				seenReferences[record.EvidenceReference] {
+				status.RuntimeEvidence = "unverified"
+				return status
+			}
+			seenReferences[record.EvidenceReference] = true
+			required[record.Dimension] = true
+			continue
 		}
 		if record.RequiredEvidence && record.EvidenceReference == "" {
 			status.RuntimeEvidence = "unverified"
 			return status
-		}
-		if record.State == "ready" && record.FreshUntil.After(now) {
-			required[record.Dimension] = true
 		}
 	}
 
