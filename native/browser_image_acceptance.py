@@ -155,8 +155,7 @@ def assert_image_page(driver: webdriver.Chrome, wait: WebDriverWait, viewport: V
 
     second_close.send_keys(Keys.ESCAPE)
     wait.until(lambda _driver: not _driver.execute_script("return arguments[0].open", second_dialog))
-    if driver.switch_to.active_element.get_attribute("id") != "image-opener-2":
-        raise AssertionError(f"{context}: closing the navigated viewer did not restore focus to its opener")
+    wait.until(lambda _driver: _driver.switch_to.active_element.get_attribute("id") == "image-opener-2")
     assert_no_horizontal_overflow(driver, f"{context} after viewer")
 
 
