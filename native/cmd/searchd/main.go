@@ -112,7 +112,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 		"service":             "search",
 		"status":              "ok",
 		"implementation":      "native",
-		"lifecycle":           "pre-stable",
+		"lifecycle":           "development",
 		"production_approved": false,
 		"capabilities": map[string]bool{
 			"html_search":                 true,
