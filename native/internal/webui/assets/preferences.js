@@ -15,7 +15,7 @@
   const allowed = {
     "search.default_category": ["general", "images", "videos", "news", "files"],
     "search.safe_search": ["off", "moderate", "strict"],
-    "appearance.theme": ["system", "light", "dark"],
+    "appearance.theme": ["system", "light", "dark", "deep-dark"],
     "appearance.result_density": ["comfortable", "compact"],
   };
 
@@ -56,9 +56,10 @@
     localStorage.setItem(storageKey, JSON.stringify({ schema_version: schemaVersion, preferences: sanitize(preferences) }));
   }
 
-  function applyTheme(theme) {
-    document.documentElement.dataset.theme = theme;
-    if (theme === "system") delete document.documentElement.dataset.theme;
+  function applyAppearance(preferences) {
+    const appearance = window.GoreeCloudSearchAppearance;
+    if (!appearance || typeof appearance.apply !== "function") return;
+    appearance.apply(preferences["appearance.theme"], preferences["appearance.result_density"]);
   }
 
   function bindSelect(element, preferences) {
@@ -69,7 +70,7 @@
       const next = readPreferences();
       next[key] = element.value;
       writePreferences(next);
-      if (key === "appearance.theme") applyTheme(element.value);
+      if (key === "appearance.theme" || key === "appearance.result_density") applyAppearance(next);
       announce("Preference saved on this device.");
     });
   }
@@ -183,7 +184,7 @@
   const preferences = readPreferences();
   document.querySelectorAll("select[data-preference]").forEach((element) => bindSelect(element, preferences));
   document.querySelectorAll("button.toggle[data-preference]").forEach((element) => bindToggle(element, preferences));
-  applyTheme(preferences["appearance.theme"]);
+  applyAppearance(preferences);
   bindFilter();
   bindSectionNavigation();
   bindPortability();
