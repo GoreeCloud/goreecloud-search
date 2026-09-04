@@ -62,7 +62,9 @@ The native ranking and correction paths are deterministic and request-local. The
 
 The provider result ceiling bounds Search-owned post-provider work; it cannot prevent an adapter or external provider implementation from allocating its own oversized response before returning. Production provider adapters therefore remain responsible for their own transport/body/result bounds in addition to this engine-level ceiling.
 
-No external provider is production-approved merely because the native provider interfaces exist. Provider selection, credentials, privacy policy, terms, health, rate limiting, degradation behavior, timestamp-authority review, and target-runtime evidence remain separate acceptance work.
+The native tree now also contains the GoreeCloud-owned deployment-controlled provider runtime under `native/internal/providers`. Source-level implementation includes the schema-versioned `goreecloud-http-v1` category-aware contract, an explicit provider-config-file activation boundary, zero configured providers by default, environment-only references for optional bearer credentials, fail-closed malformed or incomplete configured-provider startup, HTTPS/public-address-only outbound enforcement with connection-time DNS revalidation, redirect rejection, strict JSON response parsing, bounded provider response/result processing, and sanitized capability exposure that does not reveal endpoints or credentials. This source capability does not select or approve a real external provider.
+
+No external provider is production-approved merely because the native provider interfaces or runtime exist. Provider selection, credentials, privacy policy and data use, terms, health, rate limiting, degradation behavior, abuse controls, timestamp-authority review, live-provider behavior, and target-runtime evidence remain separate acceptance work.
 
 ## Native presentation and preferences
 
@@ -83,7 +85,9 @@ The native results surface now implements source-level scan-first presentation w
 - a 48px minimum interaction-target floor for the tested native results controls across Compact, Medium, Expanded, and Wide browser acceptance, plus visible focus and reduced-motion, increased-contrast, forced-colors, and reduced-transparency fallbacks;
 - script-free result rendering through Go `html/template`, preserving automatic escaping of query/provider/title/snippet/source content.
 
-Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is Glaze UI 2.1.0. Glaze UI 2.2 is the next-version Candidate/design-reference line and may guide future implementation work, but it cannot satisfy Stable consumer conformance until Glaze UI itself is formally promoted and Search has application-specific adoption evidence. Source structure, CSS implementation, unit tests, or bounded rendered acceptance alone do not establish whole-application visual/accessibility/device or production conformance.
+The native Images slice additionally contains bounded image media metadata, same-origin mediated image loading, a responsive image grid, full-image/source viewing, keyboard previous/next/Escape behavior, focus restoration, and deterministic browser acceptance across representative responsive and accessibility modes. Source integration of these capabilities does not establish live-provider or production deployment acceptance.
+
+Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is GLAZE UI V1.1 / 1.1.0. Reset-baseline, superseded, Candidate, RC, or earlier product-version evidence remains historical migration or audit evidence and does not establish current consumer conformance. Source structure, CSS implementation, unit tests, or bounded rendered acceptance alone do not establish whole-application visual/accessibility/device or production conformance.
 
 ## Sync boundary
 
@@ -118,7 +122,7 @@ External providers may observe requests from GoreeCloud infrastructure. Search m
 
 Wardveil Security is authoritative for GoreeCloud security acceptance. Search must fail closed on malformed native input/provider identities at enforced boundaries and must keep provider secrets outside source and user-visible diagnostics.
 
-Production acceptance still requires applicable Wardveil runtime/evidence integration, abuse controls, deployment hardening, and operational security validation.
+Production acceptance still requires applicable Wardveil runtime/evidence integration, provider-specific abuse controls, deployment hardening, and operational security validation. Generic provider-transport safeguards do not independently establish Wardveil acceptance for a selected provider or deployment.
 
 ## Continuity boundary
 
@@ -141,15 +145,15 @@ The inherited SearXNG-derived implementation remains a temporary migration depen
 
 Stable remains blocked by at least:
 
-- production-approved native provider adapters and credentials/secrets integration;
-- complete native category/provider coverage required for the selected release;
+- production-approved native provider adapters, provider selection, and credentials/secrets integration where required;
+- complete live native category/provider coverage required for the selected release;
 - production-reviewed provider timestamp authorities and live-provider acceptance for result classes where freshness is required; the source-level freshness contract/ranker alone is not production evidence;
-- accepted Glaze UI 2.1 whole-application native visual/accessibility/device evidence beyond the bounded results-renderer acceptance already present;
+- accepted GLAZE UI V1.1 / 1.1.0 whole-application native visual/accessibility/device evidence beyond the bounded results-renderer acceptance already present;
 - applicable Wardveil Security and Privacy Shield runtime/evidence integration;
 - Everkeep-backed backup/restore/migration/rollback acceptance;
 - GoreeCloud Identity and Mesh integration where the release uses account-bound capabilities;
 - migration parity and controlled cutover from the transitional runtime;
-- monitoring, alerting, provider-adapter resource/body bounds, abuse controls, target-host validation, and rollback evidence;
+- monitoring, alerting, provider-specific rate-limit/degradation/abuse/resource behavior, live target-runtime validation, and rollback evidence;
 - supported Browser/device/runtime acceptance;
 - exact-release provenance and production approval.
 
