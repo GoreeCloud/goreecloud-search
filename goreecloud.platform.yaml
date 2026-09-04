@@ -73,13 +73,16 @@ platform_systems:
     notes: Search can fail-closed project supplied Everkeep continuity evidence, but accepted backup, restore, recovery, migration, and rollback evidence for the native application remains incomplete.
   glaze_ui:
     result: applicable-migration-required
-    version: null
+    version: '1.1.0'
     evidence:
       - SPECIFICATIONS.md
       - native/internal/webui
+      - native/internal/webui/assets/appearance.js
+      - native/internal/webui/assets/app.css
       - native/browser_results_acceptance.py
       - native/browser_image_acceptance.py
-    notes: GoreeCloud-owned responsive browser surfaces and bounded accessibility acceptance exist, but the native application has not completed exact current-Stable GLAZE UI V1.1 / 1.1.0 source adoption and whole-application acceptance.
+      - native/browser_glaze_acceptance.py
+    notes: Native browser source now explicitly targets current Stable GLAZE UI V1.1 / 1.1.0 with Deep Teal and Soft Amber identity, Light/Dark/Deep Dark mappings, shared local appearance/density handling, accessibility fallbacks, and automated Compact/Medium/Expanded/Wide browser checks. Whole-application manual visual approval, remaining resilience/RTL/200%-text/form-factor evidence, target-environment validation, and production acceptance are still incomplete, so Glaze conformance is not claimed.
   mesh:
     result: applicable-blocked
     version: null
@@ -169,7 +172,7 @@ conformance:
     - Producer-authoritative Privacy Shield runtime evidence and Search privacy acceptance are incomplete.
     - Producer-authoritative Wardveil Security runtime evidence and Search security acceptance are incomplete.
     - Everkeep backup, restore, recovery, migration, and rollback acceptance are incomplete.
-    - Current Stable GLAZE UI V1.1 / 1.1.0 source adoption and whole-application visual, accessibility, resilience, form-factor, and production acceptance are incomplete.
+    - Current Stable GLAZE UI V1.1 / 1.1.0 source shell adoption is implemented, but whole-application manual visual approval, remaining accessibility/resilience/RTL/200%-text/form-factor evidence, target-environment validation, and production acceptance are incomplete.
     - GoreeCloud Mesh registration, coordination, dependency/event integration, and runtime acceptance are incomplete.
     - GoreeCloud Identity account, authentication, authorization, session, and authority integration is incomplete for account-bound capabilities.
     - No production-approved external Search provider, provider credentials integration, or provider-specific privacy, terms, rate-limit, abuse, timestamp-authority, live-result, and target-runtime acceptance is established.
