@@ -53,6 +53,7 @@ jobs:
               'goreecloud-first-stable-readiness.yml',
               'goreecloud-foundation.yml',
               'goreecloud-home-preferences-v2.yml',
+              'goreecloud-native-container-development.yml',
               'goreecloud-provider-acceptance.yml',
               'goreecloud-provider-result-integrity-audit.yml',
               'goreecloud-rc-publication.yml',
