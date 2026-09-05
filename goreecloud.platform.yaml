@@ -142,6 +142,10 @@ external_dependencies:
     purpose: At least one separately approved and accepted result provider is required for meaningful production search retrieval; no specific provider is currently selected by this Development manifest.
     required: true
     version_constraint: null
+  - name: distroless-static-debian13-nonroot
+    purpose: Minimal third-party runtime base for the optional native Development OCI packaging path; it remains subordinate to the GoreeCloud-owned application binary and is pinned by immutable digest.
+    required: false
+    version_constraint: sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6
 
 compatibility:
   platform_contract: '0.2'
@@ -163,8 +167,14 @@ conformance:
   evidence:
     - SPECIFICATIONS.md
     - docs/goreecloud/PLATFORM-STATUS.md
+    - docs/goreecloud/DEPLOYMENT.md
     - native/docs/PROVIDER-RUNTIME.md
     - native/docs/CAPABILITY-EVIDENCE.md
+    - native/docs/ARTIFACT-PROVENANCE.md
+    - native/docs/CONTAINER-PROVENANCE.md
+    - native/container/Containerfile
+    - .github/workflows/goreecloud-native-development-artifact.yml
+    - .github/workflows/goreecloud-native-container-development.yml
     - native/internal/platformstate/mesh_envelope.go
     - native/internal/platformstate/platformstate.go
     - native/internal/providers/runtime_test.go
@@ -179,5 +189,5 @@ conformance:
     - GoreeCloud Identity account, authentication, authorization, session, and authority integration is incomplete for account-bound capabilities.
     - No production-approved external Search provider, provider credentials integration, or provider-specific privacy, terms, rate-limit, abuse, timestamp-authority, live-result, and target-runtime acceptance is established.
     - Live General, Images, Videos, News, and Files category acceptance against approved providers is incomplete.
-    - Native migration parity, controlled cutover from the transitional runtime, monitoring, alerting, rollback, exact-release provenance, and exact production deployment verification are incomplete.
+    - Native Development binary and OCI packaging provenance exist, but Release Candidate publication/signing or attestation policy, immutable production release identity, target-host deployment provenance, migration parity, controlled cutover from the transitional runtime, monitoring, alerting, rollback, and exact production deployment verification remain incomplete.
     - No Stable or production-approved GoreeCloud Search release evidence is declared.

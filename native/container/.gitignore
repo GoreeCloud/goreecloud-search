@@ -1,0 +1,4 @@
+goreecloud-search
+*.oci.tar
+native-container-provenance.json
+SHA256SUMS

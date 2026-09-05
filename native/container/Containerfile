@@ -1,0 +1,22 @@
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6
+
+ARG SOURCE_REVISION
+ARG IMAGE_VERSION
+
+LABEL org.opencontainers.image.title="GoreeCloud Search Native Development" \
+      org.opencontainers.image.description="Native GoreeCloud Search Development runtime; not production-approved" \
+      org.opencontainers.image.source="https://github.com/GoreeCloud/goreecloud-search" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.version="${IMAGE_VERSION}" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later" \
+      org.goreecloud.product="GoreeCloud Search" \
+      org.goreecloud.component="native-searchd" \
+      org.goreecloud.lifecycle="development" \
+      org.goreecloud.production-approved="false" \
+      org.goreecloud.release-candidate="false"
+
+COPY --chown=65532:65532 goreecloud-search /usr/local/bin/goreecloud-search
+
+USER 65532:65532
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/goreecloud-search"]
