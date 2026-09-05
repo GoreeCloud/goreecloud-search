@@ -1,0 +1,483 @@
+---
+name: GoreeCloud native Development container
+
+# yamllint disable-line rule:truthy
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-native-container-development.yml'
+      - '.github/workflows/goreecloud-workflow-supply-chain.yml'
+      - 'native/**'
+      - 'LICENSE'
+      - 'SPECIFICATIONS.md'
+      - 'FEATURES.md'
+      - 'goreecloud.platform.yaml'
+      - 'docs/goreecloud/DEPLOYMENT.md'
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/goreecloud-native-container-development.yml'
+      - '.github/workflows/goreecloud-workflow-supply-chain.yml'
+      - 'native/**'
+      - 'LICENSE'
+      - 'SPECIFICATIONS.md'
+      - 'FEATURES.md'
+      - 'goreecloud.platform.yaml'
+      - 'docs/goreecloud/DEPLOYMENT.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  RUNTIME_IMAGE: >-
+    gcr.io/distroless/static-debian13:nonroot@sha256:f7f8f729987ad0fdf6b05eeeae94b26e6a0f613bdf46feea7fc40f7bd72953e6
+
+jobs:
+  native-development-container:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out exact candidate revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ env.CANDIDATE_SHA }}
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00  # v6.0.0
+        with:
+          go-version: '1.25.x'
+          cache: false
+
+      - name: Verify exact checkout and container source boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test -z "$(git status --porcelain)"
+          grep -Fxq "FROM ${RUNTIME_IMAGE}" native/container/Containerfile
+          grep -Fq 'USER 65532:65532' native/container/Containerfile
+          grep -Fq 'ENTRYPOINT ["/usr/local/bin/goreecloud-search"]' \
+            native/container/Containerfile
+          if grep -Eqi '(password|token|secret|credential)[[:space:]]*=' \
+            native/container/Containerfile; then
+            echo 'secret-like assignment found in native Containerfile' >&2
+            exit 1
+          fi
+
+      - name: Test native source before packaging
+        working-directory: native
+        run: go test ./...
+
+      - name: Build exact-source native Development package
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="${RUNNER_TEMP}/goreecloud-search-native-packages"
+          bash native/scripts/build-development-artifacts.sh "$CANDIDATE_SHA" "$output"
+          runtime_dir="${RUNNER_TEMP}/goreecloud-search-native-runtime"
+          mkdir -p "$runtime_dir"
+          tar -xzf "$output/goreecloud-search-linux-amd64.tar.gz" -C "$runtime_dir"
+          binary="$runtime_dir/goreecloud-search-linux-amd64/goreecloud-search"
+          test -x "$binary"
+          go version -m "$binary" > /tmp/goreecloud-native-container-buildinfo.txt
+          grep -Fq "vcs.revision=${CANDIDATE_SHA}" \
+            /tmp/goreecloud-native-container-buildinfo.txt
+          grep -Fq 'vcs.modified=false' /tmp/goreecloud-native-container-buildinfo.txt
+          cp "$binary" native/container/goreecloud-search
+          chmod 0755 native/container/goreecloud-search
+          printf 'GOREECLOUD_NATIVE_PACKAGE_DIR=%s\n' "$output" >> "$GITHUB_ENV"
+
+      - name: Pull immutable runtime base and build local image
+        shell: bash
+        run: |
+          set -euo pipefail
+          podman pull "$RUNTIME_IMAGE"
+          image="localhost/goreecloud-search-native-development:${CANDIDATE_SHA}"
+          version="development-${CANDIDATE_SHA:0:12}"
+          podman build \
+            --pull=never \
+            --no-cache \
+            --timestamp=0 \
+            --build-arg SOURCE_REVISION="$CANDIDATE_SHA" \
+            --build-arg IMAGE_VERSION="$version" \
+            --tag "$image" \
+            --file native/container/Containerfile \
+            native/container
+          rm -f native/container/goreecloud-search
+          printf 'GOREECLOUD_NATIVE_CONTAINER_IMAGE=%s\n' "$image" >> "$GITHUB_ENV"
+          printf 'GOREECLOUD_NATIVE_CONTAINER_VERSION=%s\n' "$version" >> "$GITHUB_ENV"
+
+      - name: Validate image identity and minimal runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          podman image inspect "$GOREECLOUD_NATIVE_CONTAINER_IMAGE" \
+            >/tmp/goreecloud-native-container-image.json
+          CANDIDATE_SHA="$CANDIDATE_SHA" \
+          IMAGE_VERSION="$GOREECLOUD_NATIVE_CONTAINER_VERSION" \
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          image = json.loads(
+              Path('/tmp/goreecloud-native-container-image.json').read_text(encoding='utf-8')
+          )[0]
+          config = image['Config']
+          labels = config.get('Labels') or {}
+          assert config['User'] == '65532:65532'
+          assert config['Entrypoint'] == ['/usr/local/bin/goreecloud-search']
+          assert labels['org.opencontainers.image.title'] == 'GoreeCloud Search Native Development'
+          assert labels['org.opencontainers.image.source'] == (
+              'https://github.com/GoreeCloud/goreecloud-search'
+          )
+          assert labels['org.opencontainers.image.revision'] == os.environ['CANDIDATE_SHA']
+          assert labels['org.opencontainers.image.version'] == os.environ['IMAGE_VERSION']
+          assert labels['org.opencontainers.image.licenses'] == 'AGPL-3.0-or-later'
+          assert labels['org.goreecloud.product'] == 'GoreeCloud Search'
+          assert labels['org.goreecloud.component'] == 'native-searchd'
+          assert labels['org.goreecloud.lifecycle'] == 'development'
+          assert labels['org.goreecloud.production-approved'] == 'false'
+          assert labels['org.goreecloud.release-candidate'] == 'false'
+          secret_terms = ('password', 'token', 'secret', 'credential')
+          for key, value in labels.items():
+              combined = f'{key}={value}'.lower()
+              assert not any(term in combined for term in secret_terms)
+          for value in config.get('Env') or []:
+              key = value.split('=', 1)[0].lower()
+              assert not any(term in key for term in secret_terms)
+          PY
+
+          set +e
+          podman run --rm --entrypoint /bin/sh \
+            "$GOREECLOUD_NATIVE_CONTAINER_IMAGE" -c true \
+            >/tmp/goreecloud-native-shell.out 2>/tmp/goreecloud-native-shell.err
+          shell_status=$?
+          set -e
+          test "$shell_status" -ne 0
+
+      - name: Run hardened loopback-only native container
+        shell: bash
+        run: |
+          set -euo pipefail
+          podman run --detach \
+            --name goreecloud-search-native-development \
+            --publish 127.0.0.1:18888:8080 \
+            --env GOREECLOUD_SEARCH_ADDR=0.0.0.0:8080 \
+            --read-only \
+            --cap-drop=all \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 \
+            "$GOREECLOUD_NATIVE_CONTAINER_IMAGE"
+
+          ready=0
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:18888/healthz >/tmp/native-container-health.json; then
+              ready=1
+              break
+            fi
+            if [ "$(podman inspect -f '{{.State.Running}}' \
+              goreecloud-search-native-development)" != 'true' ]; then
+              podman logs goreecloud-search-native-development
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test "$ready" = '1'
+
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18888/api/v1/status >/tmp/native-container-status.json
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18888/api/v1/readiness >/tmp/native-container-readiness.json
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18888/api/v1/providers/definitions \
+            >/tmp/native-container-providers.json
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18888/ >/tmp/native-container-home.html
+          curl --fail --silent --show-error \
+            http://127.0.0.1:18888/preferences >/tmp/native-container-preferences.html
+          images_status="$(curl --silent --show-error \
+            --output /tmp/native-container-images.json \
+            --write-out '%{http_code}' \
+            --get \
+            --data-urlencode 'q=container acceptance' \
+            --data-urlencode 'category=images' \
+            http://127.0.0.1:18888/api/v1/search)"
+          test "$images_status" = '501'
+
+          podman inspect goreecloud-search-native-development \
+            >/tmp/goreecloud-native-container-runtime.json
+
+      - name: Validate runtime state and hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          CANDIDATE_SHA="$CANDIDATE_SHA" python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          health = json.loads(Path('/tmp/native-container-health.json').read_text(encoding='utf-8'))
+          status = json.loads(Path('/tmp/native-container-status.json').read_text(encoding='utf-8'))
+          readiness = json.loads(
+              Path('/tmp/native-container-readiness.json').read_text(encoding='utf-8')
+          )
+          providers = json.loads(
+              Path('/tmp/native-container-providers.json').read_text(encoding='utf-8')
+          )
+          images = json.loads(Path('/tmp/native-container-images.json').read_text(encoding='utf-8'))
+          runtime = json.loads(
+              Path('/tmp/goreecloud-native-container-runtime.json').read_text(encoding='utf-8')
+          )[0]
+
+          assert health['service'] == 'goreecloud-search'
+          assert health['production_approved'] is False
+          assert status['implementation'] == 'native'
+          assert status['lifecycle'] == 'development'
+          assert status['production_approved'] is False
+          assert status['build'] == {
+              'provenance_available': True,
+              'source_revision': os.environ['CANDIDATE_SHA'],
+              'source_modified': False,
+          }
+          assert readiness['ready'] is True
+          assert readiness['readiness_scope'] == 'local_native_application'
+          assert readiness['production_approved'] is False
+          assert providers['configured_provider_count'] == 0
+          assert providers['credentials_exposed'] is False
+          assert providers['production_approved'] is False
+          assert images['category'] == 'images'
+          assert 'not implemented' in images['error']
+
+          host = runtime['HostConfig']
+          assert host['ReadonlyRootfs'] is True
+          assert 'ALL' in [item.upper() for item in (host.get('CapDrop') or [])]
+          assert any(
+              item.lower() == 'no-new-privileges'
+              for item in (host.get('SecurityOpt') or [])
+          )
+          bindings = host['PortBindings']['8080/tcp']
+          assert bindings == [{'HostIp': '127.0.0.1', 'HostPort': '18888'}]
+          assert runtime['Config']['User'] == '65532:65532'
+          PY
+
+          grep -Fq 'GoreeCloud Search' /tmp/native-container-home.html
+          grep -Fq 'GoreeCloud Search' /tmp/native-container-preferences.html
+
+      - name: Validate release-provider structural coverage in container
+        shell: bash
+        run: |
+          set -euo pipefail
+          coverage_config="${RUNNER_TEMP}/native-container-provider-coverage.json"
+          cat > "$coverage_config" <<'JSON'
+          {
+            "schema_version": 1,
+            "providers": [{
+              "name": "CI container structural coverage fixture",
+              "adapter": "goreecloud-http-v1",
+              "endpoint": "https://provider.example/search",
+              "categories": ["general", "images", "videos", "news", "files"]
+            }]
+          }
+          JSON
+          chmod 0444 "$coverage_config"
+
+          podman run --detach \
+            --name goreecloud-search-native-provider-coverage \
+            --publish 127.0.0.1:18889:8080 \
+            --env GOREECLOUD_SEARCH_ADDR=0.0.0.0:8080 \
+            --env GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE=/run/goreecloud/providers.json \
+            --env GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE=true \
+            --mount "type=bind,src=${coverage_config},dst=/run/goreecloud/providers.json,ro" \
+            --read-only \
+            --cap-drop=all \
+            --security-opt=no-new-privileges \
+            --pids-limit=256 \
+            "$GOREECLOUD_NATIVE_CONTAINER_IMAGE"
+
+          ready=0
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error \
+              http://127.0.0.1:18889/api/v1/providers/definitions \
+              >/tmp/native-container-provider-coverage.json; then
+              ready=1
+              break
+            fi
+            if [ "$(podman inspect -f '{{.State.Running}}' \
+              goreecloud-search-native-provider-coverage)" != 'true' ]; then
+              podman logs goreecloud-search-native-provider-coverage
+              exit 1
+            fi
+            sleep 0.25
+          done
+          test "$ready" = '1'
+
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          definitions = json.loads(
+              Path('/tmp/native-container-provider-coverage.json').read_text(encoding='utf-8')
+          )
+          assert definitions['configured_provider_count'] == 1
+          assert definitions['credentials_exposed'] is False
+          assert definitions['production_approved'] is False
+          assert definitions['executable_categories'] == [
+              'general', 'images', 'videos', 'news', 'files'
+          ]
+          assert definitions['providers'][0]['name'] == (
+              'CI container structural coverage fixture'
+          )
+          PY
+
+          podman rm --force goreecloud-search-native-provider-coverage
+
+          incomplete_config="${RUNNER_TEMP}/native-container-provider-incomplete.json"
+          cat > "$incomplete_config" <<'JSON'
+          {
+            "schema_version": 1,
+            "providers": [{
+              "name": "CI incomplete container coverage fixture",
+              "adapter": "goreecloud-http-v1",
+              "endpoint": "https://provider.example/search",
+              "categories": ["general"]
+            }]
+          }
+          JSON
+          chmod 0444 "$incomplete_config"
+
+          set +e
+          podman run --rm \
+            --env GOREECLOUD_SEARCH_ADDR=0.0.0.0:8080 \
+            --env GOREECLOUD_SEARCH_PROVIDER_CONFIG_FILE=/run/goreecloud/providers.json \
+            --env GOREECLOUD_SEARCH_REQUIRE_RELEASE_PROVIDER_COVERAGE=true \
+            --mount "type=bind,src=${incomplete_config},dst=/run/goreecloud/providers.json,ro" \
+            --read-only \
+            --cap-drop=all \
+            --security-opt=no-new-privileges \
+            "$GOREECLOUD_NATIVE_CONTAINER_IMAGE" \
+            >/tmp/native-container-provider-incomplete.log 2>&1
+          incomplete_status=$?
+          set -e
+          test "$incomplete_status" -ne 0
+          grep -Fq \
+            'release provider coverage is incomplete; missing categories: images, videos, news, files' \
+            /tmp/native-container-provider-incomplete.log
+
+      - name: Create sanitized Development container provenance artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact_dir="${RUNNER_TEMP}/goreecloud-search-native-container-artifact"
+          mkdir -p "$artifact_dir"
+          archive="goreecloud-search-native-development-${CANDIDATE_SHA}.oci.tar"
+          podman save --format oci-archive \
+            --output "$artifact_dir/$archive" \
+            "$GOREECLOUD_NATIVE_CONTAINER_IMAGE"
+          image_id="$(podman image inspect --format '{{.Id}}' \
+            "$GOREECLOUD_NATIVE_CONTAINER_IMAGE")"
+          archive_sha="$(sha256sum "$artifact_dir/$archive" | awk '{print $1}')"
+
+          CANDIDATE_SHA="$CANDIDATE_SHA" \
+          IMAGE_VERSION="$GOREECLOUD_NATIVE_CONTAINER_VERSION" \
+          IMAGE_ID="$image_id" \
+          ARCHIVE="$archive" \
+          ARCHIVE_SHA="$archive_sha" \
+          RUNTIME_IMAGE="$RUNTIME_IMAGE" \
+          ARTIFACT_DIR="$artifact_dir" \
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = {
+              'schema_version': 1,
+              'product': 'GoreeCloud Search',
+              'component': 'native-searchd-container',
+              'source_repository': 'GoreeCloud/goreecloud-search',
+              'source_revision': os.environ['CANDIDATE_SHA'],
+              'release_lifecycle': 'development',
+              'artifact_scope': 'ci-native-container-development',
+              'image_version': os.environ['IMAGE_VERSION'],
+              'runtime_base': os.environ['RUNTIME_IMAGE'],
+              'local_image_id': os.environ['IMAGE_ID'],
+              'oci_archive': {
+                  'file': os.environ['ARCHIVE'],
+                  'sha256': os.environ['ARCHIVE_SHA'],
+              },
+              'runtime_acceptance': {
+                  'non_root': True,
+                  'read_only_rootfs': True,
+                  'capabilities_dropped': True,
+                  'no_new_privileges': True,
+                  'loopback_host_publication': True,
+                  'health_verified': True,
+                  'local_readiness_verified': True,
+                  'source_revision_verified': True,
+                  'zero_provider_fail_closed_verified': True,
+                  'release_provider_structural_coverage_verified': True,
+              },
+              'production_approved': False,
+              'release_candidate_declared': False,
+              'registry_published': False,
+              'target_environment_validated': False,
+              'live_provider_acceptance_validated': False,
+              'platform_conformance': 'nonconformant',
+          }
+          path = Path(os.environ['ARTIFACT_DIR']) / 'native-container-provenance.json'
+          path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+
+          (
+            cd "$artifact_dir"
+            sha256sum "$archive" native-container-provenance.json > SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          printf 'GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR=%s\n' "$artifact_dir" \
+            >> "$GITHUB_ENV"
+
+      - name: Show native container diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          cat /tmp/goreecloud-native-container-buildinfo.txt 2>/dev/null || true
+          cat /tmp/goreecloud-native-shell.err 2>/dev/null || true
+          cat /tmp/native-container-health.json 2>/dev/null || true
+          cat /tmp/native-container-status.json 2>/dev/null || true
+          cat /tmp/native-container-readiness.json 2>/dev/null || true
+          cat /tmp/native-container-providers.json 2>/dev/null || true
+          cat /tmp/native-container-images.json 2>/dev/null || true
+          cat /tmp/native-container-provider-coverage.json 2>/dev/null || true
+          cat /tmp/native-container-provider-incomplete.log 2>/dev/null || true
+          podman image ls || true
+          podman ps -a || true
+          podman logs goreecloud-search-native-development 2>/dev/null || true
+          podman logs goreecloud-search-native-provider-coverage 2>/dev/null || true
+
+      - name: Remove validation containers
+        if: always()
+        shell: bash
+        run: |
+          podman rm --force goreecloud-search-native-development \
+            goreecloud-search-native-provider-coverage >/dev/null 2>&1 || true
+          rm -f native/container/goreecloud-search
+
+      - name: Upload exact-revision native Development container artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: goreecloud-search-native-container-development-${{ env.CANDIDATE_SHA }}
+          path: |
+            ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR }}/native-container-provenance.json
+            ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR }}/SHA256SUMS
+            ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR }}/goreecloud-search-native-development-${{ env.CANDIDATE_SHA }}.oci.tar
+          if-no-files-found: error
+          retention-days: 90
