@@ -55,7 +55,20 @@ This file records Search functionality and implementation state. A listed capabi
 - Script-free Go-template result rendering with automatic escaping of provider/query/result content.
 - First-party preference state and organization.
 - GoreeCloud product identity rather than an upstream-only shell.
-- Native-first development direction governed by the latest applicable Stable Glaze UI contract; Glaze UI 2.1.0 is the current required production target. Glaze UI 2.2 is Candidate/design-reference work and is not a Stable consumer target. Application-specific whole-application and physical-device acceptance remain incomplete.
+- Native-first development direction governed by the latest applicable Stable Glaze UI contract; GLAZE UI V1.1 / 1.1.0 is the current required production target. Candidate or later unpromoted Glaze work is design/reference material only and is not a Stable consumer target. Application-specific whole-application and physical-device acceptance remain incomplete.
+
+### Native Development build and runtime evidence
+
+- Exact-revision Linux amd64 and arm64 native Development packages with reproducible binary checks, Go VCS revision metadata, deterministic package archives, SHA-256 checksums, and sanitized artifact provenance.
+- Packaged amd64 binary runtime acceptance for health, native status/build provenance, bounded local readiness, provider definitions, Home, Preferences, and zero-provider fail-closed behavior.
+- Release-provider structural coverage startup preflight for General, Images, Videos, News, and Files without contacting an external provider.
+- Digest-pinned native Development OCI runtime definition under `native/container/Containerfile`, using a minimal distroless non-root base and the already-built exact-source native binary.
+- Native Development container acceptance with explicit UID/GID `65532:65532`, read-only root filesystem, all Linux capabilities dropped, `no-new-privileges`, bounded PIDs, loopback-only host publication, and absence of a runtime shell.
+- Container runtime validation for health, native status/build provenance, bounded local readiness, provider definitions, Home, Preferences, zero-provider fail-closed behavior, and complete/incomplete structural release-provider coverage.
+- Sanitized native container provenance with exact source revision, exact immutable runtime-base reference, local image identity, OCI archive SHA-256, and explicit Development/non-production/non-RC/non-registry/non-target-environment state.
+- Native Development container CI has read-only repository permission and no registry package-write authority. It does not publish a Release Candidate or production image.
+
+These build/package/container capabilities establish Development evidence only. They do not establish live-provider acceptance, target-host validation, recovery/rollback, production deployment, or Stable qualification.
 
 ### Privacy-first behavior
 
@@ -96,7 +109,7 @@ Inherited capability presence is transitional evidence, not the target applicati
 - Production-reviewed timestamp authority and live-provider freshness acceptance for result classes where recency is required; the source-level freshness contract is implemented but no provider is production-approved by that fact alone.
 - Optional semantic retrieval/reranking only if implemented through an approved privacy-preserving GoreeCloud-controlled path and validated against deterministic fallback behavior.
 - Completed feature-parity migration from the inherited runtime.
-- Full native Glaze UI 2.1 whole-application visual/accessibility/device acceptance beyond the bounded native results evidence already implemented.
+- Full native GLAZE UI V1.1 / 1.1.0 whole-application visual/accessibility/device acceptance beyond the bounded native results, whole-shell resilience, and large-text evidence already implemented.
 - Complete Privacy Shield, Wardveil Security, Everkeep, GoreeCloud Identity, and GoreeCloud Mesh runtime/evidence integration where applicable.
 - Production-approved account search history, saved searches, synchronization, or personalization.
 - Governed machine-readable Search API for approved first-party/AI/research consumers.
