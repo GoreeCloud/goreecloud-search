@@ -126,10 +126,12 @@ The source-level shell adoption includes:
 - a 48 px minimum primary interactive-target contract in shared and results-specific browser acceptance;
 - reduced-motion, reduced-transparency, increased-contrast, and forced-colors source fallbacks;
 - durable content surfaces that avoid unnecessary nested backdrop-filter materials;
-- automated Compact, Medium, Expanded, and Wide browser checks across Light, Dark, and Deep Dark for Home, Preferences, General Results, and Image Results; and
+- automated Compact, Medium, Expanded, and Wide browser checks across Light, Dark, and Deep Dark for Home, Preferences, General Results, and Image Results;
+- deterministic RTL structural stress checks on Compact and Wide layouts for Home, Preferences, General Results, and Image Results, without claiming Arabic localization acceptance;
+- deterministic 2x device-scale / 640 CSS-pixel reflow checks across those same native surfaces, without representing them as manual browser 200% zoom acceptance; and
 - existing dedicated image-viewer keyboard/touch/focus acceptance alongside the shell checks.
 
-This is **source implementation and automated CI acceptance scope**, not a whole-application or production Glaze conformance claim. Fresh manual contextual visual review, remaining resilience evidence including RTL and 200% text, representative target-form-factor validation, target-environment acceptance, and production acceptance are still required before the `glaze_ui` platform-system result can become conformant.
+This is **source implementation and automated CI acceptance scope**, not a whole-application or production Glaze conformance claim. Fresh manual contextual visual review, actual localization/RTL acceptance, manual browser 200% zoom/text review, representative physical target-form-factor validation, target-environment acceptance, and production acceptance are still required before the `glaze_ui` platform-system result can become conformant.
 
 ## Feature-preservation gate
 
