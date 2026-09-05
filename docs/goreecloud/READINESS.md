@@ -133,9 +133,9 @@ The artifact path is documented in `native/docs/ARTIFACT-PROVENANCE.md`.
 
 ## Transitional artifact distinction
 
-Inherited SearXNG container build, provider acceptance, historical Release Candidate publication, and first-Stable audit workflows remain in the repository for transitional continuity, provenance, and migration history.
+Inherited SearXNG container build and provider-acceptance paths remain transitional continuity and migration material. Historical SearXNG Release Candidate publication and RC08/RC09 receipt definitions and their accepted evidence remain preserved in Git history and historical records, but those executable workflow files are intentionally retired from the current native development line.
 
-Those artifacts and workflows belong to the inherited SearXNG-derived runtime boundary. They must not be represented as native Search build/package or release evidence.
+The historical Release Candidate artifacts must not be represented as native Search build/package or release evidence, and the native line must not reactivate the inherited SearXNG RC publication or receipt paths. The workflow supply-chain guard enforces that retirement and no longer carries their package-write or issue-write exceptions.
 
 The previous known-good transitional deployment remains a rollback dependency until native migration and recovery requirements are satisfied.
 
