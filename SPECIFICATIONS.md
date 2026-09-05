@@ -89,6 +89,31 @@ The native Images slice additionally contains bounded image media metadata, same
 
 Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is GLAZE UI V1.1 / 1.1.0. Reset-baseline, superseded, Candidate, RC, or earlier product-version evidence remains historical migration or audit evidence and does not establish current consumer conformance. Source structure, CSS implementation, unit tests, or bounded rendered acceptance alone do not establish whole-application visual/accessibility/device or production conformance.
 
+## Native Development build, package, and container evidence
+
+Native Development build provenance is intentionally separate from release and production provenance.
+
+The exact-revision package path under `native/scripts/build-development-artifacts.sh` and `.github/workflows/goreecloud-native-development-artifact.yml` currently provides:
+
+- Linux amd64 and arm64 CGO-disabled native packages built from an exact clean 40-character source revision;
+- duplicate per-architecture builds that must be byte-identical before packaging;
+- `-trimpath`, Go VCS revision metadata, deterministic tar/gzip metadata, SHA-256 package checksums, and sanitized artifact provenance;
+- packaged amd64 runtime acceptance for health, native status/build identity, bounded local readiness, provider definitions, Home, Preferences, zero-provider fail-closed behavior, and structural release-category coverage.
+
+The native Development OCI path under `native/container/Containerfile`, `native/docs/CONTAINER-PROVENANCE.md`, and `.github/workflows/goreecloud-native-container-development.yml` additionally provides:
+
+- a digest-pinned `gcr.io/distroless/static-debian13:nonroot` runtime base;
+- the already-built exact-source native binary as the only GoreeCloud application payload in the runtime image;
+- explicit UID/GID `65532:65532`, no runtime shell, and Development/non-production OCI/GoreeCloud labels;
+- local image construction only, with no registry login or package-write authority;
+- isolated read-only container runtime acceptance with all Linux capabilities dropped, `no-new-privileges`, a bounded PID limit, and host publication restricted to loopback;
+- verification of health, status/build provenance, bounded local readiness, provider definitions, Home, Preferences, zero-provider fail-closed behavior, and complete/incomplete structural release-provider coverage; and
+- a retained OCI archive, SHA-256 checksums, and sanitized `native-container-provenance.json` recording exact source/base/image/archive identity and explicit Development/non-production/non-RC/non-registry/non-target-environment state.
+
+The container-specific acceptance sets `GOREECLOUD_SEARCH_ADDR=0.0.0.0:8080` only inside the isolated container network namespace and keeps the host publication on `127.0.0.1`. It does not change the normal native binary default or authorize public application-port exposure.
+
+These package and container paths establish source/build/package/runtime Development evidence only. They do not establish a Release Candidate, registry-published production artifact, target-host validation, live-provider acceptance, recovery/rollback, production deployment, or Stable qualification.
+
 ## Sync boundary
 
 Search owns the semantics of `search.history`; GoreeCloud Sync coordinates authorized replication.
@@ -122,7 +147,7 @@ External providers may observe requests from GoreeCloud infrastructure. Search m
 
 Wardveil Security is authoritative for GoreeCloud security acceptance. Search must fail closed on malformed native input/provider identities at enforced boundaries and must keep provider secrets outside source and user-visible diagnostics.
 
-Production acceptance still requires applicable Wardveil runtime/evidence integration, provider-specific abuse controls, deployment hardening, and operational security validation. Generic provider-transport safeguards do not independently establish Wardveil acceptance for a selected provider or deployment.
+Production acceptance still requires applicable Wardveil runtime/evidence integration, provider-specific abuse controls, deployment hardening, and operational security validation. Generic provider-transport safeguards and isolated Development container hardening do not independently establish Wardveil acceptance for a selected provider or deployment.
 
 ## Continuity boundary
 
@@ -148,13 +173,13 @@ Stable remains blocked by at least:
 - production-approved native provider adapters, provider selection, and credentials/secrets integration where required;
 - complete live native category/provider coverage required for the selected release;
 - production-reviewed provider timestamp authorities and live-provider acceptance for result classes where freshness is required; the source-level freshness contract/ranker alone is not production evidence;
-- accepted GLAZE UI V1.1 / 1.1.0 whole-application native visual/accessibility/device evidence beyond the bounded results-renderer acceptance already present;
+- accepted GLAZE UI V1.1 / 1.1.0 whole-application native visual/accessibility/device evidence beyond the bounded rendered/resilience evidence already present;
 - applicable Wardveil Security and Privacy Shield runtime/evidence integration;
 - Everkeep-backed backup/restore/migration/rollback acceptance;
 - GoreeCloud Identity and Mesh integration where the release uses account-bound capabilities;
 - migration parity and controlled cutover from the transitional runtime;
 - monitoring, alerting, provider-specific rate-limit/degradation/abuse/resource behavior, live target-runtime validation, and rollback evidence;
 - supported Browser/device/runtime acceptance;
-- exact-release provenance and production approval.
+- native Release Candidate publication/signing or attestation policy, immutable release identity, target-host deployment provenance, exact production deployment verification, and production approval.
 
 A lower lifecycle state must never be represented as a higher one.
