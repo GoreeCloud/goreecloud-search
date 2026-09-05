@@ -260,7 +260,8 @@ jobs:
 
           host = runtime['HostConfig']
           assert host['ReadonlyRootfs'] is True
-          assert 'ALL' in [item.upper() for item in (host.get('CapDrop') or [])]
+          assert runtime.get('EffectiveCaps') == []
+          assert not (host.get('CapAdd') or [])
           assert any(
               item.lower() == 'no-new-privileges'
               for item in (host.get('SecurityOpt') or [])
@@ -458,6 +459,7 @@ jobs:
           cat /tmp/native-container-readiness.json 2>/dev/null || true
           cat /tmp/native-container-providers.json 2>/dev/null || true
           cat /tmp/native-container-images.json 2>/dev/null || true
+          cat /tmp/goreecloud-native-container-runtime.json 2>/dev/null || true
           cat /tmp/native-container-provider-coverage.json 2>/dev/null || true
           cat /tmp/native-container-provider-incomplete.log 2>/dev/null || true
           podman image ls || true
