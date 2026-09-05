@@ -141,7 +141,8 @@ jobs:
           grep -q 'GLAZE UI V1.1 / 1.1.0 is the current declared Stable consumer target' CONTRIBUTING.rst
           grep -q 'reset-baseline, Candidate, RC' CONTRIBUTING.rst
           grep -q 'TARGET_FLOOR = 48.0' native/browser_results_acceptance.py
-          grep -q 'min-height:48px' "$native_app"
+          grep -q -- '--glz11-target-min:48px' "$native_app"
+          grep -q 'min-height:var(--glz11-target-min)' "$native_app"
           grep -q 'min-height:48px' "$native_results"
           if grep -q 'min-height:44px' "$native_results"; then
             echo 'Native results must not regress below the current Stable 48px target floor.' >&2
