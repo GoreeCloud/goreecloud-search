@@ -444,6 +444,8 @@ jobs:
           )
           printf 'GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR=%s\n' "$artifact_dir" \
             >> "$GITHUB_ENV"
+          printf 'GOREECLOUD_NATIVE_CONTAINER_ARCHIVE=%s\n' "$artifact_dir/$archive" \
+            >> "$GITHUB_ENV"
 
       - name: Show native container diagnostics on failure
         if: failure()
@@ -478,6 +480,6 @@ jobs:
           path: |
             ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR }}/native-container-provenance.json
             ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR }}/SHA256SUMS
-            ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARTIFACT_DIR }}/goreecloud-search-native-development-${{ env.CANDIDATE_SHA }}.oci.tar
+            ${{ env.GOREECLOUD_NATIVE_CONTAINER_ARCHIVE }}
           if-no-files-found: error
           retention-days: 90
