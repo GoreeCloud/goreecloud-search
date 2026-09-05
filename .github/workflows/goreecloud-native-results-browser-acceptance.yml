@@ -45,7 +45,8 @@ jobs:
             native/browser_results_acceptance.py \
             native/browser_image_acceptance.py \
             native/browser_glaze_acceptance.py \
-            native/browser_glaze_resilience_acceptance.py
+            native/browser_glaze_resilience_acceptance.py \
+            native/browser_glaze_large_text_acceptance.py
           cd native
           go test ./...
           go build -o /tmp/goreecloud-search-results-acceptance ./cmd/results-acceptance
@@ -93,6 +94,12 @@ jobs:
           GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
           GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
         run: python native/browser_glaze_resilience_acceptance.py
+
+      - name: Run native Glaze UI 1.1 200% text stress acceptance
+        env:
+          GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
+          GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
+        run: python native/browser_glaze_large_text_acceptance.py
 
       - name: Preserve exact-head native results evidence
         if: always()

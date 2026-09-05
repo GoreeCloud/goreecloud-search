@@ -83,7 +83,8 @@ platform_systems:
       - native/browser_image_acceptance.py
       - native/browser_glaze_acceptance.py
       - native/browser_glaze_resilience_acceptance.py
-    notes: Native browser source explicitly targets current Stable GLAZE UI V1.1 / 1.1.0 with Deep Teal and Soft Amber identity, Light/Dark/Deep Dark mappings, shared local appearance/density handling, accessibility fallbacks, Compact/Medium/Expanded/Wide browser checks, bounded RTL structural stress checks, and deterministic 2x device-scale/640-CSS-pixel reflow checks. RTL localization acceptance, manual browser 200% zoom/text review, contextual whole-application visual approval, physical form-factor evidence, target-environment validation, and production acceptance remain incomplete, so Glaze conformance is not claimed.
+      - native/browser_glaze_large_text_acceptance.py
+    notes: Native browser source explicitly targets current Stable GLAZE UI V1.1 / 1.1.0 with Deep Teal and Soft Amber identity, Light/Dark/Deep Dark mappings, shared local appearance/density handling, accessibility fallbacks, Compact/Medium/Expanded/Wide browser checks, bounded RTL structural stress checks, deterministic 2x device-scale/640-CSS-pixel reflow checks, and deterministic 200% text-only scaling stress checks. RTL localization acceptance, manual browser zoom and assistive-technology review, contextual whole-application visual approval, physical form-factor evidence, target-environment validation, and production acceptance remain incomplete, so Glaze conformance is not claimed.
   mesh:
     result: applicable-blocked
     version: null
@@ -173,7 +174,7 @@ conformance:
     - Producer-authoritative Privacy Shield runtime evidence and Search privacy acceptance are incomplete.
     - Producer-authoritative Wardveil Security runtime evidence and Search security acceptance are incomplete.
     - Everkeep backup, restore, recovery, migration, and rollback acceptance are incomplete.
-    - Current Stable GLAZE UI V1.1 / 1.1.0 source shell adoption and deterministic resilience checks are implemented, but RTL localization acceptance, manual browser 200% zoom/text review, contextual whole-application visual approval, physical form-factor evidence, target-environment validation, and production acceptance are incomplete.
+    - Current Stable GLAZE UI V1.1 / 1.1.0 source shell adoption and deterministic resilience checks, including bounded RTL, 2x reflow, and 200% text-only stress, are implemented, but RTL localization acceptance, manual browser zoom and assistive-technology review, contextual whole-application visual approval, physical form-factor evidence, target-environment validation, and production acceptance are incomplete.
     - GoreeCloud Mesh registration, coordination, dependency/event integration, and runtime acceptance are incomplete.
     - GoreeCloud Identity account, authentication, authorization, session, and authority integration is incomplete for account-bound capabilities.
     - No production-approved external Search provider, provider credentials integration, or provider-specific privacy, terms, rate-limit, abuse, timestamp-authority, live-result, and target-runtime acceptance is established.
