@@ -56,14 +56,20 @@ jobs:
               'goreecloud-native-container-development.yml',
               'goreecloud-provider-acceptance.yml',
               'goreecloud-provider-result-integrity-audit.yml',
-              'goreecloud-rc-publication.yml',
-              'goreecloud-rc08-publication-receipt.yml',
-              'goreecloud-rc09-publication-receipt.yml',
               'goreecloud-runtime-smoke.yml',
               'goreecloud-workflow-supply-chain.yml',
           }
+          retired_workflows = {
+              'goreecloud-rc-publication.yml',
+              'goreecloud-rc08-publication-receipt.yml',
+              'goreecloud-rc09-publication-receipt.yml',
+          }
           assert required_workflows <= set(workflows), (
               f'missing required GoreeCloud workflow(s): {sorted(required_workflows - set(workflows))}'
+          )
+          assert not retired_workflows & set(workflows), (
+              'historical SearXNG Release Candidate workflow(s) must remain retired on the '
+              f'native development line: {sorted(retired_workflows & set(workflows))}'
           )
 
           exact_checkout = 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
@@ -80,20 +86,6 @@ jobs:
               'goreecloud-provider-acceptance.yml': {
                   'contents': 'read',
                   'packages': 'read',
-              },
-              'goreecloud-rc-publication.yml': {
-                  'contents': 'read',
-                  'packages': 'write',
-              },
-              'goreecloud-rc08-publication-receipt.yml': {
-                  'contents': 'read',
-                  'packages': 'read',
-                  'issues': 'write',
-              },
-              'goreecloud-rc09-publication-receipt.yml': {
-                  'contents': 'read',
-                  'packages': 'read',
-                  'issues': 'write',
               },
           }
 
@@ -164,6 +156,7 @@ jobs:
 
           print(
               f'Validated all {len(workflows)} GoreeCloud workflows with immutable dependencies, '
-              'least-privilege token permissions, and non-persisted checkout credentials.'
+              'least-privilege token permissions, retired historical RC publication paths, and '
+              'non-persisted checkout credentials.'
           )
           PY
