@@ -96,30 +96,28 @@ def assert_target(element, context: str) -> None:
         raise AssertionError(f"{context}: target {width:.1f}x{height:.1f}px; expected >= 48px")
 
 
-def assert_reachable_without_document_overflow(driver: webdriver.Chrome, element, context: str) -> None:
-    x, width, viewport, intentionally_scrollable = driver.execute_script(
-        """
-        const element = arguments[0];
-        const rect = element.getBoundingClientRect();
-        let ancestor = element.parentElement;
-        let intentionallyScrollable = false;
-        while (ancestor) {
-          const style = getComputedStyle(ancestor);
-          if ((style.overflowX === 'auto' || style.overflowX === 'scroll') &&
-              ancestor.scrollWidth > ancestor.clientWidth + 1) {
-            intentionallyScrollable = true;
-            break;
-          }
-          ancestor = ancestor.parentElement;
-        }
-        return [rect.x, rect.width, window.innerWidth, intentionallyScrollable];
-        """,
+def viewport_rect(driver: webdriver.Chrome, element) -> tuple[float, float, float]:
+    x, width, viewport = driver.execute_script(
+        "const r=arguments[0].getBoundingClientRect(); return [r.x, r.width, window.innerWidth];",
         element,
     )
+    return float(x), float(width), float(viewport)
+
+
+def assert_reachable_without_document_overflow(driver: webdriver.Chrome, element, context: str) -> None:
+    x, width, viewport = viewport_rect(driver, element)
     escaped = x < -2 or x + width > viewport + 2
-    if escaped and not intentionally_scrollable:
+    if escaped:
+        driver.execute_script(
+            "arguments[0].scrollIntoView({block:'nearest', inline:'nearest', behavior:'auto'});",
+            element,
+        )
+        assert_no_horizontal_overflow(driver, f"{context} after reachability scroll")
+        x, width, viewport = viewport_rect(driver, element)
+        escaped = x < -2 or x + width > viewport + 2
+    if escaped:
         raise AssertionError(
-            f"{context}: control escaped viewport without an intentional horizontal scroller: "
+            f"{context}: control cannot be brought into the viewport without document overflow: "
             f"x={x:.1f}, width={width:.1f}, viewport={viewport:.1f}"
         )
 
