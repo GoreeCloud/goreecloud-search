@@ -98,13 +98,43 @@ def capture(driver: webdriver.Chrome, name: str) -> None:
     driver.save_screenshot(str(output / f"{name}.png"))
 
 
+def horizontal_overflowers(driver: webdriver.Chrome) -> list[dict[str, object]]:
+    return driver.execute_script(
+        """
+        const viewport = document.documentElement.clientWidth;
+        const problems = [];
+        for (const element of document.body.querySelectorAll('*')) {
+          if (problems.length >= 12) break;
+          const style = getComputedStyle(element);
+          if (style.display === 'none' || style.visibility === 'hidden') continue;
+          const rect = element.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) continue;
+          if (rect.left < -2 || rect.right > viewport + 2) {
+            problems.push({
+              tag: element.tagName.toLowerCase(),
+              id: element.id || '',
+              className: typeof element.className === 'string' ? element.className : '',
+              left: Math.round(rect.left * 10) / 10,
+              right: Math.round(rect.right * 10) / 10,
+              width: Math.round(rect.width * 10) / 10,
+              viewport,
+              text: (element.innerText || '').trim().slice(0, 80),
+            });
+          }
+        }
+        return problems;
+        """
+    )
+
+
 def assert_no_horizontal_overflow(driver: webdriver.Chrome, context: str) -> None:
     scroll_width, client_width = driver.execute_script(
         "return [document.documentElement.scrollWidth, document.documentElement.clientWidth];"
     )
     if scroll_width > client_width + 2:
         raise AssertionError(
-            f"{context}: horizontal overflow {scroll_width}px > {client_width}px"
+            f"{context}: horizontal overflow {scroll_width}px > {client_width}px; "
+            f"offenders={horizontal_overflowers(driver)!r}"
         )
 
 
@@ -252,10 +282,10 @@ def assert_two_x_text_resilience() -> None:
                 apply_two_x_text_scale(driver, marker)
                 if root.get_attribute("data-goreecloud-text-scale") != "200":
                     raise AssertionError(f"{context}: deterministic 200% text marker missing")
+                capture(driver, f"glaze-v1-1-text-200-{viewport.name}-{name}")
                 assert_no_horizontal_overflow(driver, context)
                 assert_controls(driver, targets, context)
                 assert_no_hidden_text_clipping(driver, context)
-                capture(driver, f"glaze-v1-1-text-200-{viewport.name}-{name}")
         finally:
             driver.quit()
 
