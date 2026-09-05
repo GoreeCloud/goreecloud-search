@@ -128,10 +128,11 @@ The source-level shell adoption includes:
 - durable content surfaces that avoid unnecessary nested backdrop-filter materials;
 - automated Compact, Medium, Expanded, and Wide browser checks across Light, Dark, and Deep Dark for Home, Preferences, General Results, and Image Results;
 - deterministic RTL structural stress checks on Compact and Wide layouts for Home, Preferences, General Results, and Image Results, without claiming Arabic localization acceptance;
-- deterministic 2x device-scale / 640 CSS-pixel reflow checks across those same native surfaces, without representing them as manual browser 200% zoom acceptance; and
+- deterministic 2x device-scale / 640 CSS-pixel reflow checks across those same native surfaces, without representing them as manual browser 200% zoom acceptance;
+- deterministic 200% text-only scaling stress across Compact, Medium, Expanded, and Wide for Home, Preferences, General Results, and Image Results, including document-overflow, critical-control reachability, 48 px target, and hidden/clip text-overflow checks, without representing the synthetic text transform as manual browser zoom, assistive-technology, localization, or physical-device acceptance; and
 - existing dedicated image-viewer keyboard/touch/focus acceptance alongside the shell checks.
 
-This is **source implementation and automated CI acceptance scope**, not a whole-application or production Glaze conformance claim. Fresh manual contextual visual review, actual localization/RTL acceptance, manual browser 200% zoom/text review, representative physical target-form-factor validation, target-environment acceptance, and production acceptance are still required before the `glaze_ui` platform-system result can become conformant.
+This is **source implementation and automated CI acceptance scope**, not a whole-application or production Glaze conformance claim. Fresh manual contextual visual review, actual localization/RTL acceptance, manual browser zoom and assistive-technology review, representative physical target-form-factor validation, target-environment acceptance, and production acceptance are still required before the `glaze_ui` platform-system result can become conformant.
 
 ## Feature-preservation gate
 
