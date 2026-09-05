@@ -260,8 +260,24 @@ jobs:
 
           host = runtime['HostConfig']
           assert host['ReadonlyRootfs'] is True
-          assert runtime.get('EffectiveCaps') == []
+          expected_dropped = {
+              'CAP_CHOWN',
+              'CAP_DAC_OVERRIDE',
+              'CAP_FOWNER',
+              'CAP_FSETID',
+              'CAP_KILL',
+              'CAP_NET_BIND_SERVICE',
+              'CAP_SETFCAP',
+              'CAP_SETGID',
+              'CAP_SETPCAP',
+              'CAP_SETUID',
+              'CAP_SYS_CHROOT',
+          }
+          assert expected_dropped <= set(host.get('CapDrop') or [])
+          assert runtime.get('EffectiveCaps') in (None, [])
+          assert runtime.get('BoundingCaps') in (None, [])
           assert not (host.get('CapAdd') or [])
+          assert '--cap-drop=all' in runtime['Config']['CreateCommand']
           assert any(
               item.lower() == 'no-new-privileges'
               for item in (host.get('SecurityOpt') or [])
