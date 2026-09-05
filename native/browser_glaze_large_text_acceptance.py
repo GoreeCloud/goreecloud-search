@@ -233,37 +233,69 @@ def apply_two_x_text_scale(driver: webdriver.Chrome, marker_selector: str) -> No
 def assert_no_hidden_text_clipping(driver: webdriver.Chrome, context: str) -> None:
     problems = driver.execute_script(
         """
-        const nodes = [...document.body.querySelectorAll('*')];
+        const clippingValues = new Set(['hidden', 'clip']);
+        const scrollValues = new Set(['hidden', 'clip', 'auto', 'scroll']);
         const problems = [];
-        for (const element of nodes) {
+
+        function nestedClipBetween(node, ancestor, axis) {
+          let current = node.parentElement;
+          while (current && current !== ancestor) {
+            const style = getComputedStyle(current);
+            const overflow = axis === 'x' ? style.overflowX : style.overflowY;
+            if (scrollValues.has(overflow)) return true;
+            current = current.parentElement;
+          }
+          return false;
+        }
+
+        for (const element of document.body.querySelectorAll('*')) {
           if (problems.length >= 12) break;
-          const text = (element.innerText || '').trim();
-          if (!text) continue;
+          if (element.classList.contains('sr-only')) continue;
           const style = getComputedStyle(element);
           if (style.display === 'none' || style.visibility === 'hidden') continue;
-          const clipsX = (style.overflowX === 'hidden' || style.overflowX === 'clip') &&
-            element.scrollWidth > element.clientWidth + 2;
-          const clipsY = (style.overflowY === 'hidden' || style.overflowY === 'clip') &&
-            element.scrollHeight > element.clientHeight + 2;
-          if (clipsX || clipsY) {
-            problems.push({
-              tag: element.tagName.toLowerCase(),
-              id: element.id || '',
-              className: typeof element.className === 'string' ? element.className : '',
-              clipsX,
-              clipsY,
-              scrollWidth: element.scrollWidth,
-              clientWidth: element.clientWidth,
-              scrollHeight: element.scrollHeight,
-              clientHeight: element.clientHeight,
-            });
+          const clipsX = clippingValues.has(style.overflowX);
+          const clipsY = clippingValues.has(style.overflowY);
+          if (!clipsX && !clipsY) continue;
+
+          const elementRect = element.getBoundingClientRect();
+          const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+          let textNode = walker.nextNode();
+          while (textNode && problems.length < 12) {
+            if ((textNode.textContent || '').trim()) {
+              const nestedX = clipsX && nestedClipBetween(textNode, element, 'x');
+              const nestedY = clipsY && nestedClipBetween(textNode, element, 'y');
+              const range = document.createRange();
+              range.selectNodeContents(textNode);
+              for (const rect of range.getClientRects()) {
+                const clippedX = clipsX && !nestedX &&
+                  (rect.left < elementRect.left - 2 || rect.right > elementRect.right + 2);
+                const clippedY = clipsY && !nestedY &&
+                  (rect.top < elementRect.top - 2 || rect.bottom > elementRect.bottom + 2);
+                if (clippedX || clippedY) {
+                  problems.push({
+                    tag: element.tagName.toLowerCase(),
+                    id: element.id || '',
+                    className: typeof element.className === 'string' ? element.className : '',
+                    clippedX,
+                    clippedY,
+                    text: (textNode.textContent || '').trim().slice(0, 80),
+                    elementLeft: Math.round(elementRect.left * 10) / 10,
+                    elementRight: Math.round(elementRect.right * 10) / 10,
+                    textLeft: Math.round(rect.left * 10) / 10,
+                    textRight: Math.round(rect.right * 10) / 10,
+                  });
+                  break;
+                }
+              }
+            }
+            textNode = walker.nextNode();
           }
         }
         return problems;
         """
     )
     if problems:
-        raise AssertionError(f"{context}: hidden/clip text overflow detected: {problems!r}")
+        raise AssertionError(f"{context}: clipped visible text detected: {problems!r}")
 
 
 def assert_two_x_text_resilience() -> None:
