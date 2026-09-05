@@ -96,14 +96,31 @@ def assert_target(element, context: str) -> None:
         raise AssertionError(f"{context}: target {width:.1f}x{height:.1f}px; expected >= 48px")
 
 
-def assert_inside_viewport(driver: webdriver.Chrome, element, context: str) -> None:
-    x, width, viewport = driver.execute_script(
-        "const r=arguments[0].getBoundingClientRect(); return [r.x, r.width, window.innerWidth];",
+def assert_reachable_without_document_overflow(driver: webdriver.Chrome, element, context: str) -> None:
+    x, width, viewport, intentionally_scrollable = driver.execute_script(
+        """
+        const element = arguments[0];
+        const rect = element.getBoundingClientRect();
+        let ancestor = element.parentElement;
+        let intentionallyScrollable = false;
+        while (ancestor) {
+          const style = getComputedStyle(ancestor);
+          if ((style.overflowX === 'auto' || style.overflowX === 'scroll') &&
+              ancestor.scrollWidth > ancestor.clientWidth + 1) {
+            intentionallyScrollable = true;
+            break;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        return [rect.x, rect.width, window.innerWidth, intentionallyScrollable];
+        """,
         element,
     )
-    if x < -2 or x + width > viewport + 2:
+    escaped = x < -2 or x + width > viewport + 2
+    if escaped and not intentionally_scrollable:
         raise AssertionError(
-            f"{context}: visible control escaped viewport: x={x:.1f}, width={width:.1f}, viewport={viewport:.1f}"
+            f"{context}: control escaped viewport without an intentional horizontal scroller: "
+            f"x={x:.1f}, width={width:.1f}, viewport={viewport:.1f}"
         )
 
 
@@ -113,7 +130,9 @@ def assert_controls(driver: webdriver.Chrome, selectors: tuple[str, ...], contex
             if not element.is_displayed():
                 continue
             assert_target(element, f"{context} {selector} #{index}")
-            assert_inside_viewport(driver, element, f"{context} {selector} #{index}")
+            assert_reachable_without_document_overflow(
+                driver, element, f"{context} {selector} #{index}"
+            )
 
 
 def assert_rtl_resilience() -> None:
