@@ -4,7 +4,7 @@
 
 Development documentation. Production cutover is not approved by this file.
 
-The current source-versus-production readiness contract is maintained in `docs/goreecloud/READINESS.md`. Native build/package provenance is described in `native/docs/ARTIFACT-PROVENANCE.md`.
+The current source-versus-production readiness contract is maintained in `docs/goreecloud/READINESS.md`. Native build/package provenance is described in `native/docs/ARTIFACT-PROVENANCE.md`, and native Development container provenance is described in `native/docs/CONTAINER-PROVENANCE.md`.
 
 ## Current runtime model
 
@@ -37,6 +37,30 @@ The provenance record deliberately remains `release_lifecycle: development`, `pr
 
 This advances native Search to a reviewable build/package evidence boundary. It does **not** prove a target server, container platform, private route, provider, backup/restore path, monitoring system, or production cutover.
 
+## Native Development container boundary
+
+`.github/workflows/goreecloud-native-container-development.yml` packages the exact-source Linux amd64 native Development binary into a local, non-root OCI runtime using `native/container/Containerfile`.
+
+The container definition pins `gcr.io/distroless/static-debian13:nonroot` by immutable SHA-256 digest, copies only the prebuilt Search binary into the runtime layer, runs as UID/GID `65532:65532`, and carries source revision, Development version, license, lifecycle, and explicit non-production OCI/GoreeCloud labels. It does not contain a shell, compiler, package-manager step, provider credentials, production configuration, or production authorization marker.
+
+The Development container workflow:
+
+- verifies the exact clean source revision and native Go tests;
+- reuses the existing exact-source Development package output instead of compiling an unrelated binary inside the image build;
+- verifies embedded Go VCS revision metadata before containerization;
+- pulls the exact digest-pinned runtime base and builds the image locally without registry login or publication;
+- validates OCI/GoreeCloud identity, the non-root user, and secret-minimized image configuration;
+- launches the native image read-only with all Linux capabilities dropped, `no-new-privileges`, a bounded PID limit, and host publication restricted to loopback;
+- validates health, status/build provenance, local readiness, provider definitions, Home, Preferences, and zero-provider fail-closed behavior;
+- validates complete and incomplete release-provider structural coverage with read-only synthetic provider configuration and no external provider request; and
+- saves a local OCI archive with SHA-256 checksums and `native-container-provenance.json` as a retained Development artifact.
+
+The provenance record remains `release_lifecycle: development`, `production_approved: false`, `release_candidate_declared: false`, `registry_published: false`, `target_environment_validated: false`, `live_provider_acceptance_validated: false`, and `platform_conformance: nonconformant`.
+
+The local image ID and CI OCI archive are Development evidence, not a production registry digest. The workflow has read-only repository authority and no package-write permission. It does not publish a Release Candidate, alter GHCR, or authorize target-host deployment.
+
+Container acceptance sets `GOREECLOUD_SEARCH_ADDR=0.0.0.0:8080` only inside the isolated container namespace so Podman can forward the container port. The corresponding host port is bound only to `127.0.0.1`. This does not change the native binary's normal default bind or authorize direct public application-port exposure.
+
 ## Native runtime configuration
 
 The native service defaults to `127.0.0.1:8080` through `GOREECLOUD_SEARCH_ADDR`. A non-loopback binding is not implied or approved merely because the environment variable can be changed.
@@ -49,7 +73,7 @@ This preflight does **not** approve the configured provider set. It does not tes
 
 Secrets and reusable credentials must not be committed, copied into ordinary build artifacts, written into provenance metadata, or exposed through status/provider-definition responses.
 
-The native package intentionally does not include production provider configuration, provider credentials, Caddy configuration, private DNS state, NetBird state, monitoring credentials, backup material, firewall rules, or a production authorization marker.
+The native package and Development container intentionally do not include production provider configuration, provider credentials, Caddy configuration, private DNS state, NetBird state, monitoring credentials, backup material, firewall rules, or a production authorization marker.
 
 ## Native private-publication boundary
 
@@ -57,7 +81,7 @@ The intended GoreeCloud user path remains a reviewed private-access architecture
 
 Target-host acceptance must separately prove the actual private DNS, TLS/reverse proxy, NetBird/private networking or equivalent access boundary, firewall/open-port state, individual attribution/access requirements, and service identity used by that deployment.
 
-The CI Development artifact does not establish those controls because a GitHub-hosted runner is not the production target environment.
+CI Development package/container evidence does not establish those controls because a GitHub-hosted runner is not the production target environment.
 
 ## Transitional SearXNG deployment boundary
 
@@ -76,6 +100,7 @@ Native source/runtime gates include, as applicable:
 - `goreecloud-native-foundation.yml` — native Go tests and source build;
 - `goreecloud-native-results-browser-acceptance.yml` — deterministic native results/image rendered acceptance;
 - `goreecloud-native-development-artifact.yml` — exact-revision Linux package provenance, packaged-runtime CI acceptance, and provider-coverage structural preflight;
+- `goreecloud-native-container-development.yml` — digest-pinned non-root native Development OCI packaging, isolated hardened runtime acceptance, container provenance, and provider-coverage structural preflight;
 - platform/API/integration workflows that exercise GoreeCloud-owned native contracts.
 
 Transitional gates include retained SearXNG Integration, runtime-smoke, container-build, browser, provider, and compatibility checks. They remain useful for continuity and migration safety but do not establish native release acceptance.
@@ -88,7 +113,7 @@ The native provider runtime supports deployment-controlled category-aware provid
 
 Before native production cutover, each category selected for the release must have accepted live execution through an approved provider on the actual or representative target runtime. Acceptance must distinguish application defects from third-party throttling, access denial, CAPTCHA, rate limits, provider outages, malformed responses, timestamp-authority defects, or empty results.
 
-General, Images, Videos, News, and Files remain subject to live-provider acceptance for the selected release scope even though deterministic native test providers and the structural startup preflight already exercise all category contracts in source/packaged CI.
+General, Images, Videos, News, and Files remain subject to live-provider acceptance for the selected release scope even though deterministic native test providers and the structural startup preflight already exercise all category contracts in source/packaged/container CI.
 
 ## Current Stable Glaze UI boundary
 
@@ -108,11 +133,13 @@ The script requires a canonical exact revision and a clean working tree. It writ
 
 The packages are Development evidence. Do not rename them as a Release Candidate, publish them as Stable, or use them as a production approval record without the separately required lifecycle and acceptance process.
 
+The native Development OCI workflow is intentionally CI-owned because it must prove exact package-to-image provenance and container hardening. A locally built image remains an unaccepted Development artifact unless the same controlled evidence requirements are satisfied.
+
 ## Release and artifact provenance
 
 Release-critical artifacts must remain traceable to an exact source revision. A moving branch, `latest` tag, or unverified copied binary is not sufficient provenance.
 
-The native Development package workflow intentionally uploads GitHub Actions artifacts rather than publishing a new production image or release. Registry publication, signing/attestation policy, immutable release identity, and target-host deployment remain later controlled gates once an actual Release Candidate is justified by evidence.
+The native Development package and native Development container workflows intentionally upload GitHub Actions artifacts rather than publishing a new production image or release. Registry publication, signing/attestation policy, immutable release identity, and target-host deployment remain later controlled gates once an actual Release Candidate is justified by evidence.
 
 Historical inherited `goreecloud-rc-publication.yml` behavior applies to the transitional SearXNG-derived release line and must not be interpreted as the native Search publication path.
 
@@ -129,7 +156,7 @@ Before production approval, native Search still requires evidence-backed:
 - rollback to a known-good native or transitional baseline as appropriate; and
 - migration rollback while the incumbent remains available.
 
-A package that starts successfully on a CI runner is not recovery evidence.
+A package or Development container that starts successfully on a CI runner is not recovery evidence.
 
 ## Production acceptance
 
@@ -150,4 +177,4 @@ Before replacing the transitional runtime, the exact native deployment must vali
 13. exact target-host deployment identity and configuration evidence; and
 14. representative post-cutover production acceptance with the previous known-good deployment preserved until rollback requirements are satisfied.
 
-No DNS, Caddy, firewall, NetBird, provider credential, monitoring, backup, or current production runtime state should be changed merely because a Development artifact workflow passes.
+No DNS, Caddy, firewall, NetBird, provider credential, monitoring, backup, or current production runtime state should be changed merely because a Development artifact or container workflow passes.
