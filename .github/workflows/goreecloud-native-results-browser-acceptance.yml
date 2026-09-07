@@ -83,19 +83,19 @@ jobs:
           GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
         run: python native/browser_image_acceptance.py
 
-      - name: Run native Glaze UI 1.1 whole-shell browser acceptance
+      - name: Run native Glaze UI 1.2 whole-shell browser acceptance
         env:
           GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
           GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
         run: python native/browser_glaze_acceptance.py
 
-      - name: Run native Glaze UI 1.1 resilience browser acceptance
+      - name: Run native Glaze UI 1.2 resilience browser acceptance
         env:
           GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
           GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
         run: python native/browser_glaze_resilience_acceptance.py
 
-      - name: Run native Glaze UI 1.1 200% text stress acceptance
+      - name: Run native Glaze UI 1.2 200% text stress acceptance
         env:
           GOREECLOUD_SEARCH_NATIVE_RESULTS_TEST_URL: http://127.0.0.1:8091
           GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR: /tmp/goreecloud-search-native-results-screenshots
@@ -105,7 +105,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
-          name: goreecloud-search-native-results-${{ github.event.pull_request.head.sha || github.sha }}
+          name: goreecloud-search-native-results-glaze-v1-2-${{ github.event.pull_request.head.sha || github.sha }}
           path: /tmp/goreecloud-search-native-results-screenshots
           if-no-files-found: error
           retention-days: 7
