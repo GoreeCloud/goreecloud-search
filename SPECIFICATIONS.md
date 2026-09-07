@@ -87,7 +87,7 @@ The native results surface now implements source-level scan-first presentation w
 
 The native Images slice additionally contains bounded image media metadata, same-origin mediated image loading, a responsive image grid, full-image/source viewing, keyboard previous/next/Escape behavior, focus restoration, and deterministic browser acceptance across representative responsive and accessibility modes. Source integration of these capabilities does not establish live-provider or production deployment acceptance.
 
-Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is GLAZE UI V1.1 / 1.1.0. Reset-baseline, superseded, Candidate, RC, or earlier product-version evidence remains historical migration or audit evidence and does not establish current consumer conformance. Source structure, CSS implementation, unit tests, or bounded rendered acceptance alone do not establish whole-application visual/accessibility/device or production conformance.
+Search-owned surfaces must use the latest approved Stable Glaze UI contract when production acceptance is evaluated. The current required application target is GLAZE UI V1.2 / 1.2.0. This Development line includes an explicit Search-owned reconciliation layer that maps the existing component vocabulary onto the V1.2 neutral/frosted material direction, but source adoption does not by itself establish whole-application conformance. Reset-baseline, superseded, Candidate, RC, or earlier product-version evidence remains historical migration or audit evidence and does not establish current consumer conformance. Source structure, CSS implementation, unit tests, or bounded rendered acceptance alone do not establish whole-application visual/accessibility/device or production conformance.
 
 ## Native Development build, package, and container evidence
 
@@ -173,7 +173,7 @@ Stable remains blocked by at least:
 - production-approved native provider adapters, provider selection, and credentials/secrets integration where required;
 - complete live native category/provider coverage required for the selected release;
 - production-reviewed provider timestamp authorities and live-provider acceptance for result classes where freshness is required; the source-level freshness contract/ranker alone is not production evidence;
-- accepted GLAZE UI V1.1 / 1.1.0 whole-application native visual/accessibility/device evidence beyond the bounded rendered/resilience evidence already present;
+- accepted GLAZE UI V1.2 / 1.2.0 whole-application native visual/accessibility/device evidence beyond the source reconciliation and bounded rendered/resilience evidence already present;
 - applicable Wardveil Security and Privacy Shield runtime/evidence integration;
 - Everkeep-backed backup/restore/migration/rollback acceptance;
 - GoreeCloud Identity and Mesh integration where the release uses account-bound capabilities;
