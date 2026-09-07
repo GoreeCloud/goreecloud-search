@@ -42,7 +42,7 @@ func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) 
 	}
 	for _, expected := range []string{
 		"GoreeCloud Search",
-		`data-glaze-version="1.1"`,
+		`data-glaze-version="1.2"`,
 		`data-glaze-density-profile="comfortable"`,
 		`/assets/appearance.js`,
 		"result-card",
@@ -135,7 +135,7 @@ func TestHomepageStylesAreServedAsCSS(t *testing.T) {
 	}
 }
 
-func TestAppStylesAdoptStableGlazeV11IdentityAndFallbacks(t *testing.T) {
+func TestAppStylesAdoptStableGlazeV12IdentityAndFallbacks(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	Styles(recorder, httptest.NewRequest(http.MethodGet, "/assets/app.css", nil))
 	if recorder.Code != http.StatusOK {
@@ -143,19 +143,20 @@ func TestAppStylesAdoptStableGlazeV11IdentityAndFallbacks(t *testing.T) {
 	}
 	body := recorder.Body.String()
 	for _, expected := range []string{
-		`html[data-glaze-version="1.1"]`,
-		`--glz11-deep-teal:#0f6b6f`,
-		`--glz11-soft-amber:#d9a35f`,
+		`html[data-glaze-version="1.2"]`,
+		`--glz12-frost-white: #f4f8fa`,
+		`--glz12-clear-sky-blue: #68aee0`,
+		`--glz11-deep-teal: var(--glz12-clear-sky-blue)`,
 		`data-glz-appearance="dark"`,
 		`data-glz-appearance="deep-dark"`,
 		`data-glaze-density-profile="productive"`,
 		"prefers-reduced-motion:reduce",
-		"prefers-reduced-transparency:reduce",
+		"prefers-reduced-transparency: reduce",
 		"prefers-contrast:more",
-		"forced-colors:active",
+		"forced-colors: active",
 	} {
 		if !strings.Contains(body, expected) {
-			t.Fatalf("app stylesheet missing Glaze V1.1 contract %q", expected)
+			t.Fatalf("app stylesheet missing Glaze V1.2 contract %q", expected)
 		}
 	}
 	for _, legacy := range []string{"#5d62ff", "#7c4dff"} {
@@ -194,7 +195,7 @@ func TestHomepageUsesOnlySharedLocalAppearanceBootstrap(t *testing.T) {
 	body := recorder.Body.String()
 
 	for _, expected := range []string{
-		`data-glaze-version="1.1"`,
+		`data-glaze-version="1.2"`,
 		`data-glaze-density-profile="comfortable"`,
 		`/assets/appearance.js`,
 		"/assets/home.css",
@@ -219,7 +220,7 @@ func TestHomepageUsesOnlySharedLocalAppearanceBootstrap(t *testing.T) {
 	}
 }
 
-func TestAppearanceScriptIsLocalOnlyAndGlazeV11Bound(t *testing.T) {
+func TestAppearanceScriptIsLocalOnlyAndGlazeV12Bound(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	AppearanceScript(recorder, httptest.NewRequest(http.MethodGet, "/assets/appearance.js", nil))
 	if recorder.Code != http.StatusOK {
@@ -231,7 +232,7 @@ func TestAppearanceScriptIsLocalOnlyAndGlazeV11Bound(t *testing.T) {
 	body := recorder.Body.String()
 	for _, expected := range []string{
 		"goreecloud.search.preferences.v1",
-		`root.dataset.glazeVersion = "1.1"`,
+		`root.dataset.glazeVersion = "1.2"`,
 		`"deep-dark"`,
 		`comfortable: "comfortable"`,
 		`compact: "productive"`,
@@ -286,7 +287,7 @@ func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
 	body := recorder.Body.String()
 
 	for _, expected := range []string{
-		`data-glaze-version="1.1"`,
+		`data-glaze-version="1.2"`,
 		`/assets/appearance.js`,
 		"/assets/preferences.js",
 		"data-settings-filter",
@@ -296,7 +297,7 @@ func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
 		"data-preference=\"search.autocomplete\"",
 		"data-preference=\"privacy.recent_queries\"",
 		`value="deep-dark"`,
-		"Glaze UI V1.1",
+		"Glaze UI V1.2",
 	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("Preferences page missing %q", expected)
