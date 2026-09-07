@@ -1,0 +1,211 @@
+/*
+ * GoreeCloud Search — Glaze UI 1.2.0 Stable reconciliation layer.
+ *
+ * This layer maps the existing Search component vocabulary onto Glaze UI
+ * 1.2's promoted neutral/frosted material direction without claiming
+ * whole-application conformance. Browser, assistive-technology, physical
+ * device, and production acceptance remain independent lifecycle gates.
+ *
+ * Governing material rule: Neutral glass is the material. Color is an accent.
+ */
+
+html[data-glaze-version="1.2"] {
+  color-scheme: light dark;
+
+  /* V1.2 optical palette. */
+  --glz12-frost-white: #f4f8fa;
+  --glz12-crystal-white: #fbfdfe;
+  --glz12-ice-blue: #dcecf6;
+  --glz12-glacier-blue: #8fc4e8;
+  --glz12-clear-sky-blue: #68aee0;
+  --glz12-cloud-gray: #dce3e8;
+  --glz12-slate-gray: #7e8d99;
+  --glz12-cool-graphite: #151c22;
+  --glz12-deep-graphite: #0e1419;
+  --glz12-blue-black: #070c11;
+
+  /* Promoted neutral glass material values. */
+  --glz12-base-glass: rgba(255, 255, 255, 0.58);
+  --glz12-raised-glass: rgba(255, 255, 255, 0.72);
+  --glz12-overlay-glass: rgba(250, 250, 250, 0.82);
+  --glz12-panel-glass: rgba(255, 255, 255, 0.76);
+  --glz12-specular-border: rgba(255, 255, 255, 0.52);
+  --glz12-structural-border: rgba(80, 80, 80, 0.10);
+  --glz12-shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.11);
+  --glz12-shadow-float: 0 28px 76px rgba(0, 0, 0, 0.16);
+  --glz12-blur-soft: 24px;
+  --glz12-blur-standard: 28px;
+  --glz12-blur-heavy: 44px;
+
+  /* Search-facing semantic roles. */
+  --bg: var(--glz12-frost-white);
+  --surface: var(--glz12-base-glass);
+  --surface-strong: var(--glz12-raised-glass);
+  --surface-durable: var(--glz12-crystal-white);
+  --text: var(--glz12-cool-graphite);
+  --muted: var(--glz12-slate-gray);
+  --line: var(--glz12-structural-border);
+  --accent: var(--glz12-clear-sky-blue);
+  --accent-hover: color-mix(in srgb, var(--glz12-clear-sky-blue) 82%, var(--glz12-cool-graphite));
+  --accent-2: var(--glz12-glacier-blue);
+  --warm-accent: var(--glz12-glacier-blue);
+  --glaze-bg: var(--glz12-base-glass);
+  --glaze-panel: var(--glz12-panel-glass);
+  --shadow: var(--glz12-shadow-soft);
+  --shadow-float: var(--glz12-shadow-float);
+
+  /* Compatibility aliases used by the pre-migration component stylesheet. */
+  --glz11-canvas-black: var(--glz12-blue-black);
+  --glz11-deep-graphite: var(--glz12-deep-graphite);
+  --glz11-slate-graphite: var(--glz12-cool-graphite);
+  --glz11-deep-teal: var(--glz12-clear-sky-blue);
+  --glz11-mineral-teal: var(--glz12-glacier-blue);
+  --glz11-soft-aqua: var(--glz12-ice-blue);
+  --glz11-soft-amber: var(--glz12-glacier-blue);
+  --glz11-champagne-gold: var(--glz12-cloud-gray);
+  --glz11-warm-glow: var(--glz12-crystal-white);
+  --glz11-radius-micro: 8px;
+  --glz11-radius-control: 16px;
+  --glz11-radius-container: 24px;
+  --glz11-radius-hero: 32px;
+  --glz11-radius-capsule: 999px;
+  --glz11-target-min: 48px;
+  --radius: var(--glz11-radius-container);
+  --radius-sm: var(--glz11-radius-control);
+  --radius-hero: var(--glz11-radius-hero);
+  --density-gap: 20px;
+  --density-section: 40px;
+
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html[data-glaze-version="1.2"][data-glaze-density-profile="standard"] {
+  --density-gap: 16px;
+  --density-section: 32px;
+}
+
+html[data-glaze-version="1.2"][data-glaze-density-profile="productive"] {
+  --density-gap: 12px;
+  --density-section: 24px;
+}
+
+html[data-glaze-version="1.2"][data-glaze-density-profile="immersive"] {
+  --density-gap: 24px;
+  --density-section: 48px;
+}
+
+html[data-glaze-version="1.2"][data-glz-appearance="light"] {
+  color-scheme: light;
+}
+
+html[data-glaze-version="1.2"][data-glz-appearance="dark"] {
+  color-scheme: dark;
+  --glz12-base-glass: rgba(25, 25, 27, 0.62);
+  --glz12-raised-glass: rgba(38, 38, 41, 0.72);
+  --glz12-overlay-glass: rgba(42, 42, 45, 0.82);
+  --glz12-panel-glass: rgba(34, 34, 37, 0.76);
+  --glz12-specular-border: rgba(255, 255, 255, 0.12);
+  --glz12-structural-border: rgba(255, 255, 255, 0.10);
+  --bg: var(--glz12-cool-graphite);
+  --surface: var(--glz12-base-glass);
+  --surface-strong: var(--glz12-raised-glass);
+  --surface-durable: #1b2228;
+  --text: var(--glz12-crystal-white);
+  --muted: #b8c2ca;
+  --line: var(--glz12-structural-border);
+  --glaze-bg: var(--glz12-base-glass);
+  --glaze-panel: var(--glz12-panel-glass);
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.30);
+  --shadow-float: 0 30px 86px rgba(0, 0, 0, 0.44);
+}
+
+html[data-glaze-version="1.2"][data-glz-appearance="deep-dark"] {
+  color-scheme: dark;
+  --glz12-base-glass: rgba(14, 14, 16, 0.72);
+  --glz12-raised-glass: rgba(22, 22, 25, 0.78);
+  --glz12-overlay-glass: rgba(24, 24, 27, 0.86);
+  --glz12-panel-glass: rgba(18, 18, 21, 0.82);
+  --glz12-specular-border: rgba(255, 255, 255, 0.11);
+  --glz12-structural-border: rgba(255, 255, 255, 0.09);
+  --bg: var(--glz12-blue-black);
+  --surface: var(--glz12-base-glass);
+  --surface-strong: var(--glz12-raised-glass);
+  --surface-durable: var(--glz12-deep-graphite);
+  --text: var(--glz12-crystal-white);
+  --muted: #aeb9c2;
+  --line: var(--glz12-structural-border);
+  --glaze-bg: var(--glz12-base-glass);
+  --glaze-panel: var(--glz12-panel-glass);
+  --shadow: 0 20px 54px rgba(0, 0, 0, 0.38);
+  --shadow-float: 0 34px 96px rgba(0, 0, 0, 0.52);
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-glaze-version="1.2"]:not([data-glz-appearance]) {
+    --glz12-base-glass: rgba(25, 25, 27, 0.62);
+    --glz12-raised-glass: rgba(38, 38, 41, 0.72);
+    --glz12-panel-glass: rgba(34, 34, 37, 0.76);
+    --glz12-structural-border: rgba(255, 255, 255, 0.10);
+    --bg: var(--glz12-cool-graphite);
+    --surface: var(--glz12-base-glass);
+    --surface-strong: var(--glz12-raised-glass);
+    --surface-durable: #1b2228;
+    --text: var(--glz12-crystal-white);
+    --muted: #b8c2ca;
+    --line: var(--glz12-structural-border);
+    --glaze-bg: var(--glz12-base-glass);
+    --glaze-panel: var(--glz12-panel-glass);
+    --shadow: 0 18px 48px rgba(0, 0, 0, 0.30);
+    --shadow-float: 0 30px 86px rgba(0, 0, 0, 0.44);
+  }
+}
+
+html[data-glaze-version="1.2"] body {
+  background:
+    radial-gradient(circle at 12% -6%, rgba(220, 236, 246, 0.72), transparent 38rem),
+    radial-gradient(circle at 92% 106%, rgba(143, 196, 232, 0.10), transparent 34rem),
+    var(--bg);
+}
+
+html[data-glaze-version="1.2"] .topbar {
+  background: var(--glaze-bg);
+  border-bottom-color: var(--line);
+  backdrop-filter: blur(var(--glz12-blur-soft)) saturate(1.08);
+}
+
+html[data-glaze-version="1.2"] .search-box,
+html[data-glaze-version="1.2"] .feature-card,
+html[data-glaze-version="1.2"] .status-panel,
+html[data-glaze-version="1.2"] .settings-section {
+  border-color: var(--line);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-glaze-version="1.2"] {
+    --surface: var(--surface-durable);
+    --surface-strong: var(--surface-durable);
+    --glaze-bg: var(--surface-durable);
+    --glaze-panel: var(--surface-durable);
+  }
+
+  html[data-glaze-version="1.2"] .topbar {
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html[data-glaze-version="1.2"] {
+    --accent: LinkText;
+    --accent-hover: LinkText;
+    --line: CanvasText;
+    --surface: Canvas;
+    --surface-strong: Canvas;
+    --surface-durable: Canvas;
+    --text: CanvasText;
+    --muted: CanvasText;
+  }
+
+  html[data-glaze-version="1.2"] .topbar {
+    backdrop-filter: none;
+  }
+}
