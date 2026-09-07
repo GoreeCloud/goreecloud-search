@@ -33,7 +33,7 @@
 
   function apply(theme = defaultTheme, density = defaultDensity) {
     const root = document.documentElement;
-    root.dataset.glazeVersion = "1.1";
+    root.dataset.glazeVersion = "1.2";
 
     if (themes.has(theme) && theme !== "system") {
       root.dataset.glzAppearance = theme;
