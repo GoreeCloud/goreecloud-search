@@ -1,0 +1,211 @@
+/*
+ * GoreeCloud Search — GLAZE UI V1.3 / 1.3.0 Adaptive Resonance source mapping.
+ *
+ * Stable Glaze authority: GoreeCloud/goreecloud-glaze-ui v1.3.0
+ * implementation integration anchor: fc7cc91d2eace8da2371371c2855c24cbcb326a1.
+ *
+ * V1.3 Stable inherits the V1.2 neutral/frosted rendering foundation. Search adopts that
+ * inherited material baseline here while keeping adaptive expression deliberately bounded:
+ * no wallpaper/environment sampling, remote dynamic color, contextual intelligence,
+ * personalization persistence, or system-shell authority is introduced by this stylesheet.
+ * Accessibility, legibility, task completion, and product truth remain higher authority.
+ */
+
+html[data-glaze-version="1.3"] {
+  color-scheme: light dark;
+
+  /* Inherited V1.2 Stable material foundation used by the V1.3 Stable web entrypoint. */
+  --glz13-frost-white: #f4f8fa;
+  --glz13-crystal-white: #fbfdfe;
+  --glz13-ice-blue: #dcecf6;
+  --glz13-glacier-blue: #8fc4e8;
+  --glz13-clear-sky-blue: #68aee0;
+  --glz13-cloud-gray: #dce3e8;
+  --glz13-slate-gray: #7e8d99;
+  --glz13-cool-graphite: #151c22;
+  --glz13-deep-graphite: #0e1419;
+  --glz13-blue-black: #070c11;
+
+  --glz13-base-glass: rgba(255, 255, 255, 0.58);
+  --glz13-raised-glass: rgba(255, 255, 255, 0.72);
+  --glz13-overlay-glass: rgba(250, 250, 250, 0.82);
+  --glz13-panel-glass: rgba(255, 255, 255, 0.76);
+  --glz13-specular-border: rgba(255, 255, 255, 0.52);
+  --glz13-structural-border: rgba(80, 80, 80, 0.10);
+  --glz13-shadow-soft: 0 14px 38px rgba(0, 0, 0, 0.11);
+  --glz13-shadow-float: 0 28px 76px rgba(0, 0, 0, 0.16);
+  --glz13-blur-soft: 24px;
+
+  /* Search-owned semantic projection. Neutral material remains primary; color is accent only. */
+  --bg: var(--glz13-frost-white);
+  --surface: var(--glz13-base-glass);
+  --surface-strong: var(--glz13-raised-glass);
+  --surface-durable: var(--glz13-crystal-white);
+  --text: var(--glz13-cool-graphite);
+  --muted: var(--glz13-slate-gray);
+  --line: var(--glz13-structural-border);
+  --accent: var(--glz13-clear-sky-blue);
+  --accent-hover: color-mix(in srgb, var(--glz13-clear-sky-blue) 82%, var(--glz13-cool-graphite));
+  --accent-2: var(--glz13-glacier-blue);
+  --warm-accent: var(--glz13-glacier-blue);
+  --glaze-bg: var(--glz13-base-glass);
+  --glaze-panel: var(--glz13-panel-glass);
+  --shadow: var(--glz13-shadow-soft);
+  --shadow-float: var(--glz13-shadow-float);
+
+  /* Compatibility aliases for the pre-migration Search component vocabulary. */
+  --glz11-canvas-black: var(--glz13-blue-black);
+  --glz11-deep-graphite: var(--glz13-deep-graphite);
+  --glz11-slate-graphite: var(--glz13-cool-graphite);
+  --glz11-deep-teal: var(--glz13-clear-sky-blue);
+  --glz11-mineral-teal: var(--glz13-glacier-blue);
+  --glz11-soft-aqua: var(--glz13-ice-blue);
+  --glz11-soft-amber: var(--glz13-glacier-blue);
+  --glz11-champagne-gold: var(--glz13-cloud-gray);
+  --glz11-warm-glow: var(--glz13-crystal-white);
+  --glz11-radius-micro: 8px;
+  --glz11-radius-control: 16px;
+  --glz11-radius-container: 24px;
+  --glz11-radius-hero: 32px;
+  --glz11-radius-capsule: 999px;
+  --glz11-target-min: 48px;
+  --radius: var(--glz11-radius-container);
+  --radius-sm: var(--glz11-radius-control);
+  --radius-hero: var(--glz11-radius-hero);
+  --density-gap: 20px;
+  --density-section: 40px;
+
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html[data-glaze-version="1.3"][data-glaze-density-profile="standard"] {
+  --density-gap: 16px;
+  --density-section: 32px;
+}
+
+html[data-glaze-version="1.3"][data-glaze-density-profile="productive"] {
+  --density-gap: 12px;
+  --density-section: 24px;
+}
+
+html[data-glaze-version="1.3"][data-glaze-density-profile="immersive"] {
+  --density-gap: 24px;
+  --density-section: 48px;
+}
+
+html[data-glaze-version="1.3"][data-glz-appearance="light"] {
+  color-scheme: light;
+}
+
+html[data-glaze-version="1.3"][data-glz-appearance="dark"] {
+  color-scheme: dark;
+  --glz13-base-glass: rgba(25, 25, 27, 0.62);
+  --glz13-raised-glass: rgba(38, 38, 41, 0.72);
+  --glz13-overlay-glass: rgba(42, 42, 45, 0.82);
+  --glz13-panel-glass: rgba(34, 34, 37, 0.76);
+  --glz13-specular-border: rgba(255, 255, 255, 0.12);
+  --glz13-structural-border: rgba(255, 255, 255, 0.10);
+  --bg: var(--glz13-cool-graphite);
+  --surface: var(--glz13-base-glass);
+  --surface-strong: var(--glz13-raised-glass);
+  --surface-durable: #1b2228;
+  --text: var(--glz13-crystal-white);
+  --muted: #b8c2ca;
+  --line: var(--glz13-structural-border);
+  --glaze-bg: var(--glz13-base-glass);
+  --glaze-panel: var(--glz13-panel-glass);
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.30);
+  --shadow-float: 0 30px 86px rgba(0, 0, 0, 0.44);
+}
+
+html[data-glaze-version="1.3"][data-glz-appearance="deep-dark"] {
+  color-scheme: dark;
+  --glz13-base-glass: rgba(14, 14, 16, 0.72);
+  --glz13-raised-glass: rgba(22, 22, 25, 0.78);
+  --glz13-overlay-glass: rgba(24, 24, 27, 0.86);
+  --glz13-panel-glass: rgba(18, 18, 21, 0.82);
+  --glz13-specular-border: rgba(255, 255, 255, 0.11);
+  --glz13-structural-border: rgba(255, 255, 255, 0.09);
+  --bg: var(--glz13-blue-black);
+  --surface: var(--glz13-base-glass);
+  --surface-strong: var(--glz13-raised-glass);
+  --surface-durable: var(--glz13-deep-graphite);
+  --text: var(--glz13-crystal-white);
+  --muted: #aeb9c2;
+  --line: var(--glz13-structural-border);
+  --glaze-bg: var(--glz13-base-glass);
+  --glaze-panel: var(--glz13-panel-glass);
+  --shadow: 0 20px 54px rgba(0, 0, 0, 0.38);
+  --shadow-float: 0 34px 96px rgba(0, 0, 0, 0.52);
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-glaze-version="1.3"]:not([data-glz-appearance]) {
+    --glz13-base-glass: rgba(25, 25, 27, 0.62);
+    --glz13-raised-glass: rgba(38, 38, 41, 0.72);
+    --glz13-panel-glass: rgba(34, 34, 37, 0.76);
+    --glz13-structural-border: rgba(255, 255, 255, 0.10);
+    --bg: var(--glz13-cool-graphite);
+    --surface: var(--glz13-base-glass);
+    --surface-strong: var(--glz13-raised-glass);
+    --surface-durable: #1b2228;
+    --text: var(--glz13-crystal-white);
+    --muted: #b8c2ca;
+    --line: var(--glz13-structural-border);
+    --glaze-bg: var(--glz13-base-glass);
+    --glaze-panel: var(--glz13-panel-glass);
+    --shadow: 0 18px 48px rgba(0, 0, 0, 0.30);
+    --shadow-float: 0 30px 86px rgba(0, 0, 0, 0.44);
+  }
+}
+
+html[data-glaze-version="1.3"] body {
+  background:
+    radial-gradient(circle at 12% -6%, rgba(220, 236, 246, 0.72), transparent 38rem),
+    radial-gradient(circle at 92% 106%, rgba(143, 196, 232, 0.10), transparent 34rem),
+    var(--bg);
+}
+
+html[data-glaze-version="1.3"] .topbar {
+  background: var(--glaze-bg);
+  border-bottom-color: var(--line);
+  backdrop-filter: blur(var(--glz13-blur-soft)) saturate(1.08);
+}
+
+html[data-glaze-version="1.3"] .search-box,
+html[data-glaze-version="1.3"] .feature-card,
+html[data-glaze-version="1.3"] .status-panel,
+html[data-glaze-version="1.3"] .settings-section {
+  border-color: var(--line);
+}
+
+/* V1.3 accessibility/resilience precedence: degrade expression before meaning. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-glaze-version="1.3"] {
+    --surface: var(--surface-durable);
+    --surface-strong: var(--surface-durable);
+    --glaze-bg: var(--surface-durable);
+    --glaze-panel: var(--surface-durable);
+  }
+
+  html[data-glaze-version="1.3"] .topbar {
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html[data-glaze-version="1.3"] {
+    --accent: LinkText;
+    --accent-hover: LinkText;
+    --line: CanvasText;
+    --surface: Canvas;
+    --surface-strong: Canvas;
+    --surface-durable: Canvas;
+    --text: CanvasText;
+    --muted: CanvasText;
+  }
+
+  html[data-glaze-version="1.3"] .topbar {
+    backdrop-filter: none;
+  }
+}
