@@ -54,7 +54,7 @@ func Styles(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
-	reconciliation, err := assets.ReadFile("assets/glaze-v1.2.css")
+	reconciliation, err := assets.ReadFile("assets/glaze-v1.3.css")
 	if err != nil {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
