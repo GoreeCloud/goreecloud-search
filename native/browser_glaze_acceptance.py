@@ -63,8 +63,8 @@ def store_preferences(driver: webdriver.Chrome, appearance: str, density: str = 
 
 def assert_glaze_root(driver: webdriver.Chrome, appearance: str, density: str, context: str) -> None:
     root = driver.find_element(By.TAG_NAME, "html")
-    if root.get_attribute("data-glaze-version") != "1.2":
-        raise AssertionError(f"{context}: missing Glaze UI V1.2 root contract")
+    if root.get_attribute("data-glaze-version") != "1.3":
+        raise AssertionError(f"{context}: missing GLAZE UI V1.3 root contract")
     if root.get_attribute("data-glz-appearance") != appearance:
         raise AssertionError(
             f"{context}: appearance = {root.get_attribute('data-glz-appearance')!r}, want {appearance!r}"
@@ -123,7 +123,7 @@ def exercise_page(
         for index, element in enumerate(driver.find_elements(By.CSS_SELECTOR, selector), start=1):
             if element.is_displayed():
                 assert_target(element, f"{context} {selector} #{index}")
-    capture(driver, f"glaze-v1-2-{viewport.name}-{appearance}-{name}")
+    capture(driver, f"glaze-v1-3-{viewport.name}-{appearance}-{name}")
 
 
 def assert_live_preferences_mapping(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
@@ -144,7 +144,7 @@ def assert_live_preferences_mapping(driver: webdriver.Chrome, wait: WebDriverWai
         raise AssertionError("live Preferences mapping did not persist Deep Dark")
     if envelope["preferences"]["appearance.result_density"] != "compact":
         raise AssertionError("live Preferences mapping did not persist compact density")
-    capture(driver, "glaze-v1-2-compact-live-deep-dark-productive")
+    capture(driver, "glaze-v1-3-compact-live-deep-dark-productive")
 
 
 def main() -> int:
@@ -167,7 +167,7 @@ def main() -> int:
         finally:
             driver.quit()
 
-    print("native Glaze UI V1.2 shell browser acceptance passed")
+    print("native GLAZE UI V1.3 shell browser acceptance passed")
     return 0
 
 
