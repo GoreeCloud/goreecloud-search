@@ -26,14 +26,16 @@ const (
 )
 
 type TinyFishAgentConfig struct {
-	APIKey       string
-	PollInterval time.Duration
+	APIKey            string
+	PollInterval      time.Duration
+	AllowBetaMaxSteps bool
 }
 
 type TinyFishAgent struct {
-	apiKey       string
-	client       *http.Client
-	pollInterval time.Duration
+	apiKey            string
+	client            *http.Client
+	pollInterval      time.Duration
+	allowBetaMaxSteps bool
 }
 
 type tinyFishAgentConfig struct {
@@ -50,13 +52,19 @@ type tinyFishAgentRequest struct {
 	ProfileID         string              `json:"profile_id,omitempty"`
 	UseVault          bool                `json:"use_vault,omitempty"`
 	CredentialItemIDs []string            `json:"credential_item_ids,omitempty"`
+	OutputSchema      json.RawMessage     `json:"output_schema,omitempty"`
 }
 
 type tinyFishRun struct {
-	RunID  string          `json:"run_id"`
-	Status string          `json:"status"`
-	Result json.RawMessage `json:"result"`
-	Error  json.RawMessage `json:"error"`
+	RunID      string          `json:"run_id"`
+	Status     string          `json:"status"`
+	Result     json.RawMessage `json:"result"`
+	ResultJSON json.RawMessage `json:"result_json"`
+	Error      json.RawMessage `json:"error"`
+}
+
+type tinyFishRunError struct {
+	Code string `json:"code"`
 }
 
 func NewTinyFishAgent(config TinyFishAgentConfig) (*TinyFishAgent, error) {
@@ -71,7 +79,12 @@ func NewTinyFishAgent(config TinyFishAgentConfig) (*TinyFishAgent, error) {
 	if pollInterval < 10*time.Millisecond || pollInterval > 30*time.Second {
 		return nil, fmt.Errorf("%w: TinyFish poll interval is invalid", ErrInvalidRequest)
 	}
-	return &TinyFishAgent{apiKey: apiKey, client: secureTinyFishAgentClient(), pollInterval: pollInterval}, nil
+	return &TinyFishAgent{
+		apiKey:            apiKey,
+		client:            secureTinyFishAgentClient(),
+		pollInterval:      pollInterval,
+		allowBetaMaxSteps: config.AllowBetaMaxSteps,
+	}, nil
 }
 
 func newTinyFishAgentWithHTTPClient(config TinyFishAgentConfig, client *http.Client) (*TinyFishAgent, error) {
@@ -94,16 +107,28 @@ func (a *TinyFishAgent) Run(ctx context.Context, input Request) (Result, error) 
 	if request.Capability != CapabilityAgent {
 		return Result{}, fmt.Errorf("%w: TinyFish Agent only implements agent capability", ErrCapabilityUnavailable)
 	}
+	if request.MaxSteps > 0 && !a.allowBetaMaxSteps {
+		// TinyFish currently documents max_steps as beta-only. Do not silently
+		// drop a caller's requested execution bound because that weakens the
+		// authorized operation. The runtime must explicitly enable the reviewed
+		// beta contract before this field can cross the provider boundary.
+		return Result{}, fmt.Errorf("%w: TinyFish max-steps control is not enabled", ErrProviderControlUnavailable)
+	}
 
+	agentConfig := tinyFishAgentConfig{MaxDurationSeconds: durationSeconds(request.MaxDuration)}
+	if a.allowBetaMaxSteps {
+		agentConfig.MaxSteps = request.MaxSteps
+	}
 	payload, err := json.Marshal(tinyFishAgentRequest{
-		URL:            request.URL,
-		Goal:           request.Goal,
-		BrowserProfile: string(request.BrowserProfile),
-		AgentConfig: tinyFishAgentConfig{MaxSteps: request.MaxSteps, MaxDurationSeconds: durationSeconds(request.MaxDuration)},
+		URL:               request.URL,
+		Goal:              tinyFishGoal(request),
+		BrowserProfile:    string(request.BrowserProfile),
+		AgentConfig:       agentConfig,
 		UseProfile:        request.UseProfile,
 		ProfileID:         request.ProfileID,
 		UseVault:          request.UseVault,
 		CredentialItemIDs: request.CredentialItemIDs,
+		OutputSchema:      request.OutputSchema,
 	})
 	if err != nil {
 		return Result{}, fmt.Errorf("%w: encode provider request", ErrInvalidRequest)
@@ -116,6 +141,9 @@ func (a *TinyFishAgent) Run(ctx context.Context, input Request) (Result, error) 
 	var run tinyFishRun
 	if err := json.Unmarshal(started, &run); err != nil {
 		return Result{}, fmt.Errorf("%w: provider start response is invalid", ErrAutomationFailed)
+	}
+	if providerErr := mapTinyFishRunError(run.Error); providerErr != nil {
+		return Result{}, providerErr
 	}
 	runID := strings.TrimSpace(run.RunID)
 	if !validRunID(runID) {
@@ -131,7 +159,7 @@ func (a *TinyFishAgent) Run(ctx context.Context, input Request) (Result, error) 
 			if ctx.Err() != nil {
 				return Result{}, ctx.Err()
 			}
-			return Result{}, fmt.Errorf("%w: provider run timed out", ErrAutomationFailed)
+			return Result{}, fmt.Errorf("%w: provider run timed out", ErrAutomationLimit)
 		case <-time.After(a.pollInterval):
 		}
 
@@ -142,7 +170,7 @@ func (a *TinyFishAgent) Run(ctx context.Context, input Request) (Result, error) 
 				if ctx.Err() != nil {
 					return Result{}, ctx.Err()
 				}
-				return Result{}, fmt.Errorf("%w: provider run timed out", ErrAutomationFailed)
+				return Result{}, fmt.Errorf("%w: provider run timed out", ErrAutomationLimit)
 			}
 			return Result{}, stateErr
 		}
@@ -152,20 +180,73 @@ func (a *TinyFishAgent) Run(ctx context.Context, input Request) (Result, error) 
 		if strings.TrimSpace(run.RunID) != "" && strings.TrimSpace(run.RunID) != runID {
 			return Result{}, fmt.Errorf("%w: provider run identity changed", ErrAutomationFailed)
 		}
+		if providerErr := mapTinyFishRunError(run.Error); providerErr != nil {
+			return Result{}, providerErr
+		}
 		switch strings.ToUpper(strings.TrimSpace(run.Status)) {
 		case "PENDING", "RUNNING":
 			continue
 		case "COMPLETED":
-			output, normalizeErr := normalizeTinyFishOutput(run.Result)
+			output, normalizeErr := normalizeTinyFishOutput(preferredTinyFishResult(run))
 			if normalizeErr != nil {
 				return Result{}, normalizeErr
 			}
 			return Result{Capability: CapabilityAgent, Output: output}, nil
-		case "FAILED", "CANCELLED":
-			return Result{}, fmt.Errorf("%w: provider run ended with %s", ErrAutomationFailed, strings.ToLower(strings.TrimSpace(run.Status)))
+		case "FAILED":
+			return Result{}, ErrAutomationFailed
+		case "CANCELLED":
+			return Result{}, context.Canceled
 		default:
 			return Result{}, fmt.Errorf("%w: provider returned unknown run status", ErrAutomationFailed)
 		}
+	}
+}
+
+func tinyFishGoal(request Request) string {
+	parts := []string{request.Goal}
+	if request.UseProfile {
+		parts = append(parts, "Start from the supplied saved browser session and treat that existing session as the primary authentication state.")
+	}
+	if request.UseProfile && request.UseVault {
+		parts = append(parts, "Use only the supplied scoped vault credential if the saved session requires reauthentication; do not log in from scratch unless reauthentication is actually necessary.")
+	} else if request.UseVault {
+		parts = append(parts, "If authentication is required, use only the supplied scoped vault credential. Do not request, reveal, copy, or return credential values.")
+	}
+	parts = append(parts, "After navigation, wait for dynamic content to load and use visible site navigation, scrolling, and pagination when needed. If the site presents a CAPTCHA, access-denied page, bot block, or another automation barrier, stop and report the barrier instead of looping or repeatedly attempting sign-in.")
+	return strings.Join(parts, "\n\n")
+}
+
+func preferredTinyFishResult(run tinyFishRun) json.RawMessage {
+	if value := bytes.TrimSpace(run.ResultJSON); len(value) > 0 && !bytes.Equal(value, []byte("null")) {
+		return run.ResultJSON
+	}
+	return run.Result
+}
+
+func mapTinyFishRunError(raw json.RawMessage) error {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) {
+		return nil
+	}
+	var providerError tinyFishRunError
+	if err := json.Unmarshal(trimmed, &providerError); err != nil {
+		return ErrAutomationFailed
+	}
+	switch strings.ToUpper(strings.TrimSpace(providerError.Code)) {
+	case "":
+		return ErrAutomationFailed
+	case "SITE_BLOCKED":
+		return ErrSiteBlocked
+	case "TASK_FAILED":
+		return ErrGoalFailed
+	case "MAX_STEPS_EXCEEDED", "TIMEOUT":
+		return ErrAutomationLimit
+	case "BILLING_REJECTED", "INSUFFICIENT_CREDITS", "OUT":
+		return ErrBillingRejected
+	case "CANCELLED":
+		return context.Canceled
+	default:
+		return ErrAutomationFailed
 	}
 }
 
