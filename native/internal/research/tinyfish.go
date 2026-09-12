@@ -109,6 +109,9 @@ func (r *TinyFishResearcher) Research(ctx context.Context, input Request) (Resul
 
 	response, err := r.client.Do(httpRequest)
 	if err != nil {
+		if ctx.Err() != nil {
+			return Result{}, ctx.Err()
+		}
 		if errors.Is(providerContext.Err(), context.DeadlineExceeded) || errors.Is(err, context.DeadlineExceeded) {
 			return Result{}, fmt.Errorf("%w: request timed out", ErrUnavailable)
 		}
