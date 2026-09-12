@@ -1,7 +1,9 @@
 package webautomation
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/netip"
@@ -17,6 +19,7 @@ const (
 	MaxProfileIDRunes        = 256
 	MaxCredentialItemIDRunes = 256
 	MaxCredentialItems       = 16
+	MaxOutputSchemaBytes     = 16 << 10
 	MaxAgentSteps            = 50
 	DefaultMaxDuration       = 3 * time.Minute
 	MaxMaxDuration           = 10 * time.Minute
@@ -38,15 +41,24 @@ const (
 )
 
 var (
-	ErrInvalidRequest        = errors.New("web automation request is invalid")
-	ErrNotAuthorized         = errors.New("web automation is not authorized")
-	ErrCapabilityUnavailable = errors.New("web automation capability is unavailable")
-	ErrAutomationFailed      = errors.New("web automation failed")
+	ErrInvalidRequest            = errors.New("web automation request is invalid")
+	ErrNotAuthorized             = errors.New("web automation is not authorized")
+	ErrCapabilityUnavailable     = errors.New("web automation capability is unavailable")
+	ErrProviderControlUnavailable = errors.New("web automation provider control is unavailable")
+	ErrAutomationFailed          = errors.New("web automation failed")
+	ErrGoalFailed                = errors.New("web automation goal failed")
+	ErrSiteBlocked               = errors.New("web automation site blocked")
+	ErrAutomationLimit           = errors.New("web automation execution limit reached")
+	ErrBillingRejected           = errors.New("web automation provider billing rejected")
 )
 
 // Request is GoreeCloud's provider-neutral web-automation request. Purpose is a
 // local authorization/audit binding and must not be forwarded to an external
 // provider unless a separately reviewed provider contract explicitly requires it.
+//
+// Vault access is intentionally narrower than TinyFish's permissive API surface:
+// every Vault-enabled request must name explicit credential item IDs. GoreeCloud
+// does not authorize "all enabled vault items" execution by omission.
 type Request struct {
 	URL               string
 	Goal              string
@@ -57,6 +69,7 @@ type Request struct {
 	ProfileID         string
 	UseVault          bool
 	CredentialItemIDs []string
+	OutputSchema      json.RawMessage
 	MaxSteps          int
 	MaxDuration       time.Duration
 }
@@ -177,6 +190,14 @@ func normalizeRequest(input Request) (Request, error) {
 	if len(credentialIDs) > 0 && !input.UseVault {
 		return Request{}, fmt.Errorf("%w: credential item IDs require Vault", ErrInvalidRequest)
 	}
+	if input.UseVault && len(credentialIDs) == 0 {
+		return Request{}, fmt.Errorf("%w: Vault use requires explicitly scoped credential item IDs", ErrInvalidRequest)
+	}
+
+	outputSchema, err := normalizeOutputSchema(input.OutputSchema)
+	if err != nil {
+		return Request{}, err
+	}
 
 	if input.MaxSteps < 0 || input.MaxSteps > MaxAgentSteps {
 		return Request{}, fmt.Errorf("%w: max steps must be between 0 and %d", ErrInvalidRequest, MaxAgentSteps)
@@ -199,9 +220,30 @@ func normalizeRequest(input Request) (Request, error) {
 		ProfileID:         profileID,
 		UseVault:          input.UseVault,
 		CredentialItemIDs: credentialIDs,
+		OutputSchema:      outputSchema,
 		MaxSteps:          input.MaxSteps,
 		MaxDuration:       maxDuration,
 	}, nil
+}
+
+func normalizeOutputSchema(raw json.RawMessage) (json.RawMessage, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return nil, nil
+	}
+	if len(trimmed) > MaxOutputSchemaBytes || !json.Valid(trimmed) || trimmed[0] != '{' {
+		return nil, fmt.Errorf("%w: output schema must be a bounded JSON object", ErrInvalidRequest)
+	}
+	var schema map[string]any
+	if err := json.Unmarshal(trimmed, &schema); err != nil || schema == nil {
+		return nil, fmt.Errorf("%w: output schema is invalid", ErrInvalidRequest)
+	}
+	if schemaType, ok := schema["type"]; !ok || schemaType != "object" {
+		return nil, fmt.Errorf("%w: output schema must declare type object", ErrInvalidRequest)
+	}
+	copyOfSchema := make(json.RawMessage, len(trimmed))
+	copy(copyOfSchema, trimmed)
+	return copyOfSchema, nil
 }
 
 func normalizeTargetURL(raw string) (string, error) {
