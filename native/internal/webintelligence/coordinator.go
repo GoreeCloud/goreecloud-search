@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	ErrExecutorContract    = errors.New("web intelligence executor contract is invalid")
-	ErrExecutorUnavailable = errors.New("web intelligence executor is unavailable")
-	ErrExecutionFailed     = errors.New("web intelligence execution failed")
+	ErrExecutorContract     = errors.New("web intelligence executor contract is invalid")
+	ErrExecutorUnavailable  = errors.New("web intelligence executor is unavailable")
+	ErrExecutionFailed      = errors.New("web intelligence execution failed")
+	ErrCostEvidenceRequired = errors.New("metered web intelligence cost evidence is required")
 )
 
 // Executor is a provider-specific execution boundary registered under one exact
@@ -26,10 +27,13 @@ type Executor interface {
 
 // ExecutionResult contains only the opaque provider result and actual metered
 // cost reported by the executor. CostMicros must be zero for providers declared
-// free in the Controller configuration.
+// free in the Controller configuration. Metered providers must set CostObserved
+// only when CostMicros is backed by provider/runtime billing evidence for the
+// completed attempt; zero is valid only when the evidence proves zero cost.
 type ExecutionResult struct {
-	Value      any
-	CostMicros uint64
+	Value        any
+	CostMicros   uint64
+	CostObserved bool
 }
 
 // Result is returned only after a provider succeeds and budget accounting has
@@ -103,8 +107,8 @@ func (c *Coordinator) Execute(ctx context.Context, request Request, input any) (
 	}
 
 	var (
-		spentMicros     uint64
-		meteredAttempt  bool
+		spentMicros      uint64
+		meteredAttempt   bool
 		executorAttempts int
 	)
 
@@ -152,6 +156,14 @@ func (c *Coordinator) Execute(ctx context.Context, request Request, input any) (
 
 		if provider.Metered {
 			meteredAttempt = true
+			if !attemptResult.CostObserved {
+				// Metered work has already crossed the provider boundary, so an
+				// unverified zero must not be treated as actual cost. Keep the
+				// controller reservation outstanding as conservative evidence of
+				// unsettled cost and fail closed for further execution.
+				_ = c.controller.Record(provider.ID, OutcomeRejected, duration)
+				return Result{}, ErrCostEvidenceRequired
+			}
 			var overflow bool
 			spentMicros, overflow = addMicros(spentMicros, attemptResult.CostMicros)
 			if overflow {
