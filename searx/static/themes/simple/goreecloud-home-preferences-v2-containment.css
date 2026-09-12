@@ -49,7 +49,47 @@
   background: transparent;
 }
 
+/*
+ * Compact Android/WebView performance fallback.
+ *
+ * Large backdrop-filter surfaces require the compositor to continuously
+ * resample page content while the document moves underneath them. Physical
+ * Android testing reported severe bidirectional scroll stutter on the Home
+ * and long Preferences surfaces. Compact layouts keep the Glaze hierarchy but
+ * use durable surfaces and bounded shadows so scrolling does not depend on
+ * real-time background blur. Reduced-transparency and forced-colors behavior
+ * in the owning stylesheet remains authoritative and compatible with this
+ * effects-reduced default.
+ */
 @media (max-width: 599px) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  #main_index .goreecloud-index-shell::before,
+  #main_index .goreecloud-index-shell::after {
+    display: none;
+  }
+
+  #main_index .index #search_header,
+  #main_index .goreecloud-index-principle,
+  #main_preferences #search_form > .tabs > section,
+  footer.goreecloud-footer {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--gc-surface-strong) !important;
+  }
+
+  #main_index .index #search_header {
+    box-shadow: 0 8px 24px rgba(37, 55, 82, 0.08);
+  }
+
+  #main_index .goreecloud-index-principle,
+  #main_preferences #search_form > .tabs > section,
+  footer.goreecloud-footer {
+    box-shadow: 0 6px 20px rgba(37, 55, 82, 0.055);
+  }
+
   #main_index #send_search {
     width: 44px;
     min-width: 44px;
