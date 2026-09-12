@@ -14,6 +14,7 @@ import (
 	"github.com/GoreeCloud/goreecloud-search/native/internal/providers"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/syncstate"
+	"github.com/GoreeCloud/goreecloud-search/native/internal/webintelligence"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
 )
 
@@ -29,9 +30,11 @@ type capabilityEvidence struct {
 }
 
 type server struct {
-	engine *searchcore.Engine
-	media  *mediaproxy.Proxy
-	build  buildinfo.Provenance
+	engine                  *searchcore.Engine
+	media                   *mediaproxy.Proxy
+	build                   buildinfo.Provenance
+	webIntelligence         *webintelligence.Controller
+	webIntelligenceConfigured bool
 }
 
 func searchCapabilityEvidence() []capabilityEvidence {
@@ -52,15 +55,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("initialize GoreeCloud Search providers: %v", err)
 	}
+	webIntelligenceController, webIntelligenceConfigured, err := webintelligence.LoadFromEnvironment()
+	if err != nil {
+		log.Fatalf("initialize GoreeCloud web intelligence control plane: %v", err)
+	}
 	engine := searchcore.NewEngine(8*time.Second, configuredProviders...)
 	mediaProxy, err := mediaproxy.New()
 	if err != nil {
 		log.Fatalf("initialize GoreeCloud Search media boundary: %v", err)
 	}
 	app := server{
-		engine: engine,
-		media:  mediaProxy,
-		build:  buildinfo.Current(),
+		engine:                    engine,
+		media:                     mediaProxy,
+		build:                     buildinfo.Current(),
+		webIntelligence:           webIntelligenceController,
+		webIntelligenceConfigured: webIntelligenceConfigured,
 	}
 
 	mux := http.NewServeMux()
@@ -83,6 +92,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
+	mux.HandleFunc("GET /api/v1/web-intelligence/status", app.webIntelligenceStatus)
 	mux.HandleFunc("GET /api/v1/sync/capabilities", app.syncCapabilities)
 	mux.HandleFunc("GET /api/v1/platform/status", platformstate.Handler)
 
@@ -127,6 +137,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 			"machine_readable_search_api": true,
 			"preferences_definitions":     true,
 			"provider_definitions":        true,
+			"web_intelligence_status":     true,
 			"sync_capabilities":           true,
 			"platform_status":             true,
 		},
@@ -139,6 +150,7 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 			"interactive_search":      "/search",
 			"preferences_definitions": "/api/v1/preferences/definitions",
 			"provider_definitions":    "/api/v1/providers/definitions",
+			"web_intelligence_status": "/api/v1/web-intelligence/status",
 			"sync_capabilities":       "/api/v1/sync/capabilities",
 			"platform_status":         "/api/v1/platform/status",
 		},
@@ -261,6 +273,20 @@ func (s server) providerDefinitions(w http.ResponseWriter, _ *http.Request) {
 		"credentials_exposed":       false,
 		"production_approved":       false,
 	})
+}
+
+func (s server) webIntelligenceStatus(w http.ResponseWriter, _ *http.Request) {
+	response := map[string]any{
+		"schema_version":       1,
+		"configured":           s.webIntelligenceConfigured,
+		"management_scope":     "development-control-plane",
+		"credentials_exposed": false,
+		"production_approved": false,
+	}
+	if s.webIntelligence != nil {
+		response["snapshot"] = s.webIntelligence.Snapshot()
+	}
+	writeAPIV1JSON(w, http.StatusOK, response)
 }
 
 func (s server) syncCapabilities(w http.ResponseWriter, _ *http.Request) {
