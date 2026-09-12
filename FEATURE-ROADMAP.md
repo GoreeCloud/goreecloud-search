@@ -17,7 +17,7 @@ This file is the repository-side feature roadmap control for GoreeCloud Search. 
 | FR-001 | Reconcile and maintain every current planned or recommended GoreeCloud Search feature from the authoritative project record and verified repository evidence in this roadmap. | High | Ongoing control |
 | FR-002 | Move actionable feature obligations into GoreeCloud Tasks Management when required, preserving priority, dependency, and lifecycle disposition. | High | Ongoing control |
 | FR-003 | Do not mark features implemented, complete, cancelled, or superseded without authoritative evidence and synchronized repository/Drive roadmap updates. | High | Ongoing control |
-| FR-004 | Implement and validate the native `tinyfish-search-v1` provider adapter for TinyFish Search, initially limited to General/web and News with deployment-controlled API-key authentication and fail-closed category claims. | High | In Progress |
+| FR-004 | Implement and validate the native `tinyfish-search-v1` provider adapter for TinyFish Search, initially limited to General/web and News with deployment-controlled API-key authentication and fail-closed category claims. | High | Development merged; production acceptance pending |
 | FR-005 | Add a bounded TinyFish Fetch retrieval stage behind a GoreeCloud-owned retrieval contract for approved URL extraction after discovery. | High | Planned |
 | FR-006 | Route TinyFish Research behind GoreeCloud Search for source-backed research without creating a direct permanent GoreeCloud AI dependency on TinyFish. | High | Planned |
 | FR-007 | Add policy-controlled TinyFish Agent and Browser escalation with separate Browser Context Profiles, approved Vault usage, and explicit Privacy Shield/Wardveil boundaries. | Medium | Planned |
