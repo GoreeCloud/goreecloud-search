@@ -63,6 +63,8 @@ The source uses integer micro-units for accounting so policy does not depend on 
 
 A plan reserves the maximum estimated cost for all metered attempts selected into that plan. This is intentionally conservative. If an operation does not use the whole reservation, the caller must release or commit it. When actual spend exceeds the reservation, the controller records the real spend and returns an overrun error instead of hiding the policy violation.
 
+TinyFish wallet balances and product rates are mutable external state and must not be hard-coded into GoreeCloud source. The Development controller therefore accepts caller-supplied cost estimates and policy limits rather than embedding provider pricing. A future production integration must obtain rates and wallet/billing evidence through an approved, current source and record evidence freshness before using those values for operational decisions.
+
 The current source budget is an in-process accounting primitive. It is not yet a durable ledger, TinyFish wallet reconciliation service, billing authority, multi-instance quota system, or production financial control.
 
 ## Provider health and fallback
