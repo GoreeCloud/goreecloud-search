@@ -77,12 +77,35 @@ func TestNormalizeRequestRejectsUnsafeSessionInputs(t *testing.T) {
 		{URL: "https://example.com", Goal: "x", Purpose: "y", UseProfile: true},
 		{URL: "https://example.com", Goal: "x", Purpose: "y", ProfileID: "profile-without-use"},
 		{URL: "https://example.com", Goal: "x", Purpose: "y", CredentialItemIDs: []string{"cred"}},
+		{URL: "https://example.com", Goal: "x", Purpose: "y", UseVault: true},
+		{URL: "https://example.com", Goal: "x", Purpose: "y", OutputSchema: json.RawMessage(`{"type":"array"}`)},
+		{URL: "https://example.com", Goal: "x", Purpose: "y", OutputSchema: json.RawMessage(`not-json`)},
 		{URL: "https://example.com", Goal: "x", Purpose: "y", MaxSteps: MaxAgentSteps + 1},
 	}
 	for index, request := range tests {
 		if _, err := normalizeRequest(request); !errors.Is(err, ErrInvalidRequest) {
 			t.Fatalf("case %d: expected invalid request, got %v", index, err)
 		}
+	}
+}
+
+func TestNormalizeRequestAllowsScopedVaultAndObjectSchema(t *testing.T) {
+	request, err := normalizeRequest(Request{
+		URL:               "https://example.com",
+		Goal:              "inspect",
+		Purpose:           "test",
+		UseVault:          true,
+		CredentialItemIDs: []string{"cred-1", " cred-1 ", "cred-2"},
+		OutputSchema:      json.RawMessage(`{"type":"object","properties":{"state":{"type":"string"}}}`),
+	})
+	if err != nil {
+		t.Fatalf("normalize request: %v", err)
+	}
+	if len(request.CredentialItemIDs) != 2 || request.CredentialItemIDs[0] != "cred-1" || request.CredentialItemIDs[1] != "cred-2" {
+		t.Fatalf("unexpected credential scope: %#v", request.CredentialItemIDs)
+	}
+	if len(request.OutputSchema) == 0 {
+		t.Fatal("output schema was not preserved")
 	}
 }
 
@@ -99,8 +122,12 @@ func TestTinyFishAgentMapsBoundedRequestAndPolls(t *testing.T) {
 			if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
 				t.Fatalf("decode request: %v", err)
 			}
-			if payload["url"] != "https://example.com/path" || payload["goal"] != "check status" {
-				t.Fatalf("unexpected request payload: %#v", payload)
+			if payload["url"] != "https://example.com/path" {
+				t.Fatalf("unexpected request URL: %#v", payload)
+			}
+			goal, ok := payload["goal"].(string)
+			if !ok || !strings.Contains(goal, "check status") || !strings.Contains(goal, "saved browser session") || !strings.Contains(goal, "scoped vault credential") {
+				t.Fatalf("unexpected reliability goal: %#v", payload["goal"])
 			}
 			if payload["browser_profile"] != "lite" || payload["use_profile"] != true || payload["profile_id"] != "prof-1" {
 				t.Fatalf("unexpected profile mapping: %#v", payload)
@@ -119,6 +146,10 @@ func TestTinyFishAgentMapsBoundedRequestAndPolls(t *testing.T) {
 			if !ok || config["max_steps"] != float64(12) || config["max_duration_seconds"] != float64(120) {
 				t.Fatalf("unexpected agent_config: %#v", payload["agent_config"])
 			}
+			schema, ok := payload["output_schema"].(map[string]any)
+			if !ok || schema["type"] != "object" {
+				t.Fatalf("unexpected output schema: %#v", payload["output_schema"])
+			}
 			return jsonResponse(http.StatusOK, `{"run_id":"run_123","status":"PENDING"}`), nil
 		case request.Method == http.MethodGet && request.URL.String() == TinyFishAgentRunsBaseURL+"run_123":
 			mu.Lock()
@@ -127,14 +158,14 @@ func TestTinyFishAgentMapsBoundedRequestAndPolls(t *testing.T) {
 			if polls == 1 {
 				return jsonResponse(http.StatusOK, `{"run_id":"run_123","status":"RUNNING"}`), nil
 			}
-			return jsonResponse(http.StatusOK, `{"run_id":"run_123","status":"COMPLETED","result":{"state":"ok"}}`), nil
+			return jsonResponse(http.StatusOK, `{"run_id":"run_123","status":"COMPLETED","result_json":{"state":"ok"}}`), nil
 		default:
 			t.Fatalf("unexpected provider request: %s %s", request.Method, request.URL)
 			return nil, nil
 		}
 	})}
 
-	agent, err := newTinyFishAgentWithHTTPClient(TinyFishAgentConfig{APIKey: "secret-key", PollInterval: 10 * time.Millisecond}, client)
+	agent, err := newTinyFishAgentWithHTTPClient(TinyFishAgentConfig{APIKey: "secret-key", PollInterval: 10 * time.Millisecond, AllowBetaMaxSteps: true}, client)
 	if err != nil {
 		t.Fatalf("construct agent: %v", err)
 	}
@@ -146,6 +177,7 @@ func TestTinyFishAgentMapsBoundedRequestAndPolls(t *testing.T) {
 		ProfileID:         "prof-1",
 		UseVault:          true,
 		CredentialItemIDs: []string{"cred-1"},
+		OutputSchema:      json.RawMessage(`{"type":"object","properties":{"state":{"type":"string"}}}`),
 		MaxSteps:          12,
 		MaxDuration:       2 * time.Minute,
 	})
@@ -154,6 +186,25 @@ func TestTinyFishAgentMapsBoundedRequestAndPolls(t *testing.T) {
 	}
 	if result.Capability != CapabilityAgent || result.Output != `{"state":"ok"}` {
 		t.Fatalf("unexpected result: %#v", result)
+	}
+}
+
+func TestTinyFishAgentFailsClosedWhenBetaMaxStepsIsNotEnabled(t *testing.T) {
+	called := false
+	client := &http.Client{Transport: roundTripFunc(func(_ *http.Request) (*http.Response, error) {
+		called = true
+		return nil, errors.New("must not call provider")
+	})}
+	agent, err := newTinyFishAgentWithHTTPClient(TinyFishAgentConfig{APIKey: "key"}, client)
+	if err != nil {
+		t.Fatalf("construct agent: %v", err)
+	}
+	_, err = agent.Run(context.Background(), Request{URL: "https://example.com", Goal: "work", Purpose: "test", MaxSteps: 10})
+	if !errors.Is(err, ErrProviderControlUnavailable) {
+		t.Fatalf("expected provider-control error, got %v", err)
+	}
+	if called {
+		t.Fatal("provider was called even though max_steps was not authorized")
 	}
 }
 
@@ -205,6 +256,40 @@ func TestTinyFishAgentSanitizesProviderFailure(t *testing.T) {
 	}
 	if strings.Contains(err.Error(), "secret provider detail") {
 		t.Fatal("provider error body leaked through GoreeCloud error")
+	}
+}
+
+func TestTinyFishAgentClassifiesRunLevelFailuresReturnedWithHTTP200(t *testing.T) {
+	tests := []struct {
+		code string
+		want error
+	}{
+		{code: "SITE_BLOCKED", want: ErrSiteBlocked},
+		{code: "TASK_FAILED", want: ErrGoalFailed},
+		{code: "MAX_STEPS_EXCEEDED", want: ErrAutomationLimit},
+		{code: "TIMEOUT", want: ErrAutomationLimit},
+		{code: "BILLING_REJECTED", want: ErrBillingRejected},
+	}
+	for _, test := range tests {
+		t.Run(test.code, func(t *testing.T) {
+			client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+				if request.Method == http.MethodPost {
+					return jsonResponse(http.StatusOK, `{"run_id":"run_error","status":"PENDING"}`), nil
+				}
+				return jsonResponse(http.StatusOK, `{"run_id":"run_error","status":"COMPLETED","error":{"code":"`+test.code+`","message":"provider detail must not escape"}}`), nil
+			})}
+			agent, err := newTinyFishAgentWithHTTPClient(TinyFishAgentConfig{APIKey: "key", PollInterval: 10 * time.Millisecond}, client)
+			if err != nil {
+				t.Fatalf("construct agent: %v", err)
+			}
+			_, err = agent.Run(context.Background(), Request{URL: "https://example.com", Goal: "work", Purpose: "test"})
+			if !errors.Is(err, test.want) {
+				t.Fatalf("error = %v, want %v", err, test.want)
+			}
+			if strings.Contains(err.Error(), "provider detail") {
+				t.Fatal("provider error detail leaked through normalized error")
+			}
+		})
 	}
 }
 
