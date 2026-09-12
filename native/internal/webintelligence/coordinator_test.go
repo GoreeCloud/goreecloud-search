@@ -13,8 +13,8 @@ type fakeExecutor struct {
 	run   func(context.Context, any) (ExecutionResult, error)
 }
 
-func (f *fakeExecutor) ProviderID() string       { return f.id }
-func (f *fakeExecutor) Capability() Capability   { return f.cap }
+func (f *fakeExecutor) ProviderID() string     { return f.id }
+func (f *fakeExecutor) Capability() Capability { return f.cap }
 func (f *fakeExecutor) Execute(ctx context.Context, input any) (ExecutionResult, error) {
 	f.calls++
 	if f.run == nil {
@@ -51,7 +51,7 @@ func TestCoordinatorPrefersFreeProvider(t *testing.T) {
 		return ExecutionResult{Value: "free"}, nil
 	}}
 	metered := &fakeExecutor{id: "metered-search", cap: CapabilitySearch, run: func(context.Context, any) (ExecutionResult, error) {
-		return ExecutionResult{Value: "metered", CostMicros: 100}, nil
+		return ExecutionResult{Value: "metered", CostMicros: 100, CostObserved: true}, nil
 	}}
 	coordinator, err := NewCoordinator(controller, []Executor{free, metered})
 	if err != nil {
@@ -156,7 +156,7 @@ func TestCoordinatorCommitsMeteredActualCost(t *testing.T) {
 		LimitMicros: 1000, PerOperationMicros: 500,
 	})
 	executor := &fakeExecutor{id: "research", cap: CapabilityResearch, run: func(context.Context, any) (ExecutionResult, error) {
-		return ExecutionResult{Value: "report", CostMicros: 300}, nil
+		return ExecutionResult{Value: "report", CostMicros: 300, CostObserved: true}, nil
 	}}
 	coordinator, err := NewCoordinator(controller, []Executor{executor})
 	if err != nil {
@@ -183,10 +183,10 @@ func TestCoordinatorCommitsFailedMeteredAttemptBeforeFallback(t *testing.T) {
 		{ID: "research-b", Capability: CapabilityResearch, Metered: true, Priority: 2},
 	}, BudgetPolicy{LimitMicros: 2000, PerOperationMicros: 1000})
 	first := &fakeExecutor{id: "research-a", cap: CapabilityResearch, run: func(context.Context, any) (ExecutionResult, error) {
-		return ExecutionResult{CostMicros: 100}, errors.New("failed after metered work")
+		return ExecutionResult{CostMicros: 100, CostObserved: true}, errors.New("failed after metered work")
 	}}
 	second := &fakeExecutor{id: "research-b", cap: CapabilityResearch, run: func(context.Context, any) (ExecutionResult, error) {
-		return ExecutionResult{Value: "ok", CostMicros: 200}, nil
+		return ExecutionResult{Value: "ok", CostMicros: 200, CostObserved: true}, nil
 	}}
 	coordinator, err := NewCoordinator(controller, []Executor{first, second})
 	if err != nil {
@@ -212,7 +212,7 @@ func TestCoordinatorReleasesUnusedMeteredReservationAfterFreeSuccess(t *testing.
 		return ExecutionResult{Value: "ok"}, nil
 	}}
 	metered := &fakeExecutor{id: "metered", cap: CapabilitySearch, run: func(context.Context, any) (ExecutionResult, error) {
-		return ExecutionResult{CostMicros: 100}, nil
+		return ExecutionResult{CostMicros: 100, CostObserved: true}, nil
 	}}
 	coordinator, err := NewCoordinator(controller, []Executor{free, metered})
 	if err != nil {
@@ -238,7 +238,7 @@ func TestCoordinatorPreservesCancellationAndAccountsCost(t *testing.T) {
 		LimitMicros: 1000, PerOperationMicros: 500,
 	})
 	executor := &fakeExecutor{id: "agent", cap: CapabilityAgent, run: func(context.Context, any) (ExecutionResult, error) {
-		return ExecutionResult{CostMicros: 50}, context.Canceled
+		return ExecutionResult{CostMicros: 50, CostObserved: true}, context.Canceled
 	}}
 	coordinator, err := NewCoordinator(controller, []Executor{executor})
 	if err != nil {
@@ -255,6 +255,32 @@ func TestCoordinatorPreservesCancellationAndAccountsCost(t *testing.T) {
 	}
 	if observationCount(controller.Snapshot(), "agent", OutcomeCancelled) != 1 {
 		t.Fatalf("cancellation observation missing")
+	}
+}
+
+func TestCoordinatorRetainsReservationWhenMeteredCostUnverified(t *testing.T) {
+	controller := mustController(t, []Provider{{ID: "agent", Capability: CapabilityAgent, Metered: true}}, BudgetPolicy{
+		LimitMicros: 1000, PerOperationMicros: 500,
+	})
+	executor := &fakeExecutor{id: "agent", cap: CapabilityAgent, run: func(context.Context, any) (ExecutionResult, error) {
+		return ExecutionResult{Value: "provider says success but billing is unresolved"}, nil
+	}}
+	coordinator, err := NewCoordinator(controller, []Executor{executor})
+	if err != nil {
+		t.Fatalf("NewCoordinator() error = %v", err)
+	}
+	_, err = coordinator.Execute(context.Background(), Request{
+		Capability: CapabilityAgent, AllowMetered: true, EstimatedCostMicros: 100,
+	}, nil)
+	if !errors.Is(err, ErrCostEvidenceRequired) {
+		t.Fatalf("Execute() error = %v, want ErrCostEvidenceRequired", err)
+	}
+	budget := controller.Snapshot().Budget
+	if budget.ReservedMicros != 100 || budget.SpentMicros != 0 || budget.AvailableMicros != 900 {
+		t.Fatalf("budget = %#v", budget)
+	}
+	if observationCount(controller.Snapshot(), "agent", OutcomeRejected) != 1 {
+		t.Fatalf("unverified-cost rejection missing")
 	}
 }
 
