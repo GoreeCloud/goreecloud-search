@@ -187,7 +187,11 @@ func (a *TinyFishAgent) Run(ctx context.Context, input Request) (Result, error) 
 		case "PENDING", "RUNNING":
 			continue
 		case "COMPLETED":
-			output, normalizeErr := normalizeTinyFishOutput(preferredTinyFishResult(run))
+			rawResult := preferredTinyFishResult(run)
+			if outcomeErr := classifyTinyFishCompletedOutcome(rawResult); outcomeErr != nil {
+				return Result{}, outcomeErr
+			}
+			output, normalizeErr := normalizeTinyFishOutput(rawResult)
 			if normalizeErr != nil {
 				return Result{}, normalizeErr
 			}
