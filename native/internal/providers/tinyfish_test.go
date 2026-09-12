@@ -10,12 +10,6 @@ import (
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (fn roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
-	return fn(request)
-}
-
 func TestTinyFishSearchMapsGeneralRequestAndResults(t *testing.T) {
 	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 		if request.Method != http.MethodGet {
