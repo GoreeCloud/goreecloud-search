@@ -52,13 +52,16 @@ Metered reservations are created by the existing controller before provider exec
 The coordinator:
 
 - accumulates actual metered cost reported by every attempted metered executor, including failed attempts;
-- commits actual accumulated cost when metered work was attempted;
+- requires each attempted metered executor to explicitly state that its returned cost is backed by provider/runtime billing evidence;
+- treats an evidence-backed zero as zero cost, rather than assuming that an omitted or unknown cost is free;
+- commits actual accumulated cost when metered work was attempted and all attempted metered costs are observed;
 - releases an unused metered reservation when execution succeeds or terminates before any metered provider is attempted;
+- retains the reservation and fails closed if metered execution has occurred but actual cost evidence is unavailable, preventing an unverified zero from being recorded as spend;
 - rejects non-zero cost reported by a provider configured as free;
 - surfaces controller budget-overrun errors instead of hiding them; and
 - never reads or modifies a TinyFish wallet directly.
 
-Provider rates and wallet balances remain mutable external state and are not hard-coded in this coordinator.
+Provider rates and wallet balances remain mutable external state and are not hard-coded in this coordinator. The current retained-reservation behavior is deliberately conservative Development behavior; a future durable billing reconciliation mechanism must settle or release unresolved reservations from authoritative provider evidence before production use.
 
 ## Privacy and security
 
@@ -73,7 +76,7 @@ Its operational evidence remains limited to the existing controller model:
 
 It does not add query text, URLs, research prompts, Agent goals, Browser session state, page content, citations, cookies, credentials, Vault references, Browser Context Profile IDs, or provider response bodies to web-intelligence observations.
 
-Provider executors remain responsible for their own transport security, credential boundaries, host pinning, redirect policy, response limits, public-target rules, untrusted-content handling, and service-specific validation.
+Provider executors remain responsible for their own transport security, credential boundaries, host pinning, redirect policy, response limits, public-target rules, untrusted-content handling, service-specific validation, and authoritative billing/cost evidence where they represent a provider as metered.
 
 ## Direct connector precedence
 
@@ -92,6 +95,7 @@ This source slice does not:
 - read or mutate the TinyFish wallet;
 - create or use a live Browser Context Profile;
 - create or use a live Vault credential;
+- reconcile unresolved retained reservations against provider billing;
 - infer provider health from live traffic;
 - persist budget state across restarts;
 - coordinate budget across multiple Search instances;
