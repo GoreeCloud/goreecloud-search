@@ -143,7 +143,11 @@ func loadConfigBytes(body []byte, lookup environmentLookup) ([]searchcore.Provid
 			return nil, fmt.Errorf("provider %d has a missing or duplicate name", index+1)
 		}
 		seenNames[key] = true
-		if configured.Adapter != "goreecloud-http-v1" {
+
+		adapter := strings.TrimSpace(configured.Adapter)
+		switch adapter {
+		case "goreecloud-http-v1", TinyFishSearchAdapter:
+		default:
 			return nil, fmt.Errorf("provider %q uses an unsupported adapter", name)
 		}
 
@@ -160,13 +164,31 @@ func loadConfigBytes(body []byte, lookup environmentLookup) ([]searchcore.Provid
 			credential = value
 		}
 
-		provider, err := NewHTTPJSONProvider(HTTPJSONConfig{
-			Name:                     name,
-			Endpoint:                 configured.Endpoint,
-			Categories:               configured.Categories,
-			BearerToken:              credential,
-			PublishedAtAuthoritative: configured.PublishedAtAuthoritative,
-		})
+		var provider searchcore.Provider
+		var err error
+		switch adapter {
+		case "goreecloud-http-v1":
+			provider, err = NewHTTPJSONProvider(HTTPJSONConfig{
+				Name:                     name,
+				Endpoint:                 configured.Endpoint,
+				Categories:               configured.Categories,
+				BearerToken:              credential,
+				PublishedAtAuthoritative: configured.PublishedAtAuthoritative,
+			})
+		case TinyFishSearchAdapter:
+			if credentialEnvironment == "" {
+				return nil, fmt.Errorf("provider %q requires credential_env", name)
+			}
+			if configured.PublishedAtAuthoritative {
+				return nil, fmt.Errorf("provider %q cannot mark TinyFish timestamps authoritative", name)
+			}
+			provider, err = NewTinyFishSearchProvider(TinyFishSearchConfig{
+				Name:       name,
+				Endpoint:   configured.Endpoint,
+				Categories: configured.Categories,
+				APIKey:     credential,
+			})
+		}
 		if err != nil {
 			return nil, fmt.Errorf("provider %q configuration is invalid: %w", name, err)
 		}
