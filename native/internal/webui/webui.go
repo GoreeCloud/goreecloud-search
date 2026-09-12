@@ -49,7 +49,21 @@ func Preferences(w http.ResponseWriter, _ *http.Request) {
 }
 
 func Styles(w http.ResponseWriter, _ *http.Request) {
-	serveAsset(w, "assets/app.css", "text/css; charset=utf-8")
+	base, err := assets.ReadFile("assets/app.css")
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	reconciliation, err := assets.ReadFile("assets/glaze-v1.2.css")
+	if err != nil {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(base)
+	_, _ = w.Write([]byte("\n\n"))
+	_, _ = w.Write(reconciliation)
 }
 
 func AppearanceScript(w http.ResponseWriter, _ *http.Request) {
