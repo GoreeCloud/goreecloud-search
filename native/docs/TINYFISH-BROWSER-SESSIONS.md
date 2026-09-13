@@ -8,7 +8,7 @@ TinyFish Browser is the lowest-level escalation in GoreeCloud Search's external 
 
 GoreeCloud must treat this as a narrowly bounded browser-session lifecycle, not as a substitute for Search, Fetch, Research, Agent, GoreeCloud Browser, or authoritative first-party connectors.
 
-This Development slice adds a provider-neutral start/terminate lifecycle and an exact TinyFish Browser REST transport without inventing provider fields or exposing browser-control endpoints through public status surfaces.
+This Development foundation adds a provider-neutral start/terminate lifecycle, an exact TinyFish Browser REST transport, and a scoped cleanup lease that prevents normal caller cancellation from silently leaking a confirmed remote browser session.
 
 ## Verified provider contract
 
@@ -86,6 +86,20 @@ Before termination, GoreeCloud:
 
 This keeps Privacy Shield, Wardveil, caller/session authority, target-site policy, cost policy, and future runtime acceptance logic at the GoreeCloud boundary rather than delegating authority to the provider.
 
+## Scoped cleanup lease
+
+A confirmed direct Browser session is a remote resource that can remain active and potentially billable after the caller's task stops. Relying only on each caller to remember a final terminate call is not sufficient.
+
+`BrowserSessionLeaseRunner` scopes one confirmed direct Browser session to one unit of in-process work and guarantees a termination attempt when that work returns. The lease validates its cleanup purpose before session creation, so GoreeCloud never creates a session that it already knows it cannot clean up through the local contract.
+
+Cleanup deliberately runs with a fresh, short-lived internal context rather than inheriting the task context. This matters when the caller cancels, times out, or otherwise abandons the browser task: a canceled task context must not automatically cancel the cleanup request before it can reach TinyFish.
+
+The default cleanup window is 15 seconds and is bounded to at most 30 seconds. The cleanup context exists only for termination; it does not authorize continued browsing or extend the caller's task authority.
+
+If browser work fails and cleanup also fails, GoreeCloud preserves both errors. If browser work succeeds but cleanup is not confirmed, the overall lease reports cleanup failure instead of representing the operation as fully clean. The underlying manager retains the session in its active registry when termination is unconfirmed so an authorized retry remains possible.
+
+The lease does not retry uncertain creation. If session creation is not confirmed, GoreeCloud cannot safely know which provider session to control and does not invent a cleanup identifier.
+
 ## Network and provider boundary
 
 The TinyFish Browser transport:
@@ -117,7 +131,7 @@ TinyFish documents direct Browser API sessions as isolated: they do not persist 
 
 Reusable authenticated state belongs in Browser Context Profiles and the existing GoreeCloud exact-host binding/profile-lifecycle path. Direct Browser sessions must not be represented as a replacement for that authenticated-session architecture.
 
-## What this slice does not implement
+## What this foundation does not implement
 
 This Development source foundation does not yet provide:
 
@@ -132,7 +146,7 @@ This Development source foundation does not yet provide:
 - Privacy Shield or Wardveil production runtime acceptance;
 - a claim that Browser Context Profiles or Vault authentication are healthy.
 
-Creating a low-level browser session is not the same as completing a browser task. A separately reviewed CDP controller must be added before GoreeCloud can claim direct Browser capability for goal execution.
+Creating and safely leasing a low-level browser session is not the same as completing a browser task. A separately reviewed CDP controller must be added before GoreeCloud can claim direct Browser capability for goal execution.
 
 ## Connector precedence
 
