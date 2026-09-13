@@ -10,6 +10,10 @@
 
 This file is the repository-side feature roadmap control for GoreeCloud Search. It records current planned and recommended feature work without replacing the authoritative project record, implementation evidence, release gates, or GoreeCloud Tasks Management.
 
+## Current Development checkpoint
+
+Current `master` includes the bounded first-party GoreeCloud Index consumer contract from merged PR #146 (`67ecb3db638f00125ea8d17aba05bcbaca58bf63`) and the top-result diversity host-key optimization from merged PR #147 (`f1b12bd62a0911879ce5fde2956df9d623f7fad1`). PR #146 exact head passed its full 13-workflow validation matrix before merge. PR #147 exact head `4e70814c49ec9e55b5a5b1be40f24e5dfbc23d46` passed all 12 workflows triggered for the one-file optimization before merge. These remain Development source/build/automated acceptance results; live Index transport acceptance, production provider/runtime acceptance, Release Candidate, production, and Stable gates remain open.
+
 ## Roadmap
 
 | ID | Feature / obligation | Priority | Current state |
@@ -31,7 +35,15 @@ This file is the repository-side feature roadmap control for GoreeCloud Search. 
 | FR-015 | Add a fail-closed provider-neutral direct Browser session lifecycle and exact TinyFish Browser API transport with bounded inactivity timeouts, sensitive CDP/session handling, conservative uncertain-outcome semantics, explicit termination control, and no guessed provider fields. | Medium | Development merged; production acceptance pending |
 | FR-016 | Add evidence-driven provider health acceptance gates for metered Agent and future Browser escalation, including explicit success/latency thresholds, cancellation/rejection treatment, fail-closed unavailable routing, and a path to bounded recent-window and durable privacy-minimized health evidence. | High | Development merged; production acceptance pending |
 | FR-017 | Add a scoped direct Browser session lease that validates cleanup authority before creation, always attempts termination after confirmed creation, uses an independent bounded cleanup context after caller cancellation, preserves work and cleanup failures together, and never treats uncertain cleanup as success. | Medium | Development merged in PR #144 after exact-head CI passed; production acceptance pending. |
-| FR-018 | Define and validate a bounded first-party GoreeCloud Index consumer contract over the native Search API, including an additive 1–100 result limit and explicit data-minimization guidance that forbids unrelated local Index context from crossing the Search boundary. | High | Development source foundation in progress |
+| FR-018 | Define and validate a bounded first-party GoreeCloud Index consumer contract over the native Search API, including an additive 1–100 result limit and explicit data-minimization guidance that forbids unrelated local Index context from crossing the Search boundary. | High | Development source foundation merged in PR #146 after exact-head CI; live Index transport/integration and production acceptance remain pending. |
+
+## Current sequencing recommendation
+
+1. Continue validating the current native Search baseline and preserve the bounded Index API contract as first-party consumers evolve.
+2. Keep Index integration transport, service discovery, runtime authority, and production acceptance separately gated; do not treat the merged API contract as live end-to-end acceptance.
+3. Continue performance work only with behavior-preserving exact-revision evidence, as demonstrated by the host-key optimization in PR #147.
+4. Complete current Glaze UI application acceptance and the remaining provider/platform production gates without reusing historical acceptance as current evidence.
+5. Advance Release Candidate, production, and Stable status only after the applicable runtime, accessibility, representative-target, rollback, monitoring, and recovery gates pass.
 
 ## Maintenance and synchronization
 
