@@ -30,6 +30,7 @@ This file is the repository-side feature roadmap control for GoreeCloud Search. 
 | FR-014 | Require fail-closed GoreeCloud authorization after exact-host profile/Vault binding and request normalization but before any authenticated TinyFish provider execution, so policy evaluates the actual managed session and credential scope crossing the provider boundary. | High | Development merged; production acceptance pending |
 | FR-015 | Add a fail-closed provider-neutral direct Browser session lifecycle and exact TinyFish Browser API transport with bounded inactivity timeouts, sensitive CDP/session handling, conservative uncertain-outcome semantics, explicit termination control, and no guessed provider fields. | Medium | Development merged; production acceptance pending |
 | FR-016 | Add evidence-driven provider health acceptance gates for metered Agent and future Browser escalation, including explicit success/latency thresholds, cancellation/rejection treatment, fail-closed unavailable routing, and a path to bounded recent-window and durable privacy-minimized health evidence. | High | Development merged; production acceptance pending |
+| FR-017 | Add a scoped direct Browser session lease that validates cleanup authority before creation, always attempts termination after confirmed creation, uses an independent bounded cleanup context after caller cancellation, preserves work and cleanup failures together, and never treats uncertain cleanup as success. | Medium | Development source foundation in progress |
 
 ## Maintenance and synchronization
 
