@@ -3,7 +3,6 @@ package webintelligence
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 const MaxHealthPolicyMinimumSamples = 100000
@@ -171,15 +170,4 @@ func saturatingAdd(left, right uint64) uint64 {
 		return ^uint64(0)
 	}
 	return left + right
-}
-
-// recordHealthSample is a test/helper convenience that preserves Controller's
-// existing bounded observation semantics.
-func recordHealthSample(c *Controller, providerID string, outcome Outcome, duration time.Duration, count int) error {
-	for i := 0; i < count; i++ {
-		if err := c.Record(providerID, outcome, duration); err != nil {
-			return err
-		}
-	}
-	return nil
 }
