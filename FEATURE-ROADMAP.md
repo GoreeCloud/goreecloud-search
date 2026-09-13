@@ -1,7 +1,7 @@
 # GoreeCloud Search — Feature Roadmap
 
 **Status:** Active roadmap control  
-**As of:** 2026-09-12  
+**As of:** 2026-09-13  
 **Authoritative project record:** Project Specification — Search  
 **Canonical repository:** GoreeCloud/goreecloud-search  
 **Drive control:** `GoreeCloud/Feature Roadmap/GoreeCloud Search/FEATURE-ROADMAP.docx`
@@ -29,6 +29,7 @@ This file is the repository-side feature roadmap control for GoreeCloud Search. 
 | FR-013 | Add bounded deployment loading and a read-only privacy-minimized native status surface for authenticated TinyFish automation so operators can distinguish unconfigured, unverified, reusable, blocked, failed, expired, revoked, and disclosure-risk session states without exposing profile or Vault item identifiers. | High | Development merged; production acceptance pending |
 | FR-014 | Require fail-closed GoreeCloud authorization after exact-host profile/Vault binding and request normalization but before any authenticated TinyFish provider execution, so policy evaluates the actual managed session and credential scope crossing the provider boundary. | High | Development merged; production acceptance pending |
 | FR-015 | Add a fail-closed provider-neutral direct Browser session lifecycle and exact TinyFish Browser API transport with bounded inactivity timeouts, sensitive CDP/session handling, conservative uncertain-outcome semantics, explicit termination control, and no guessed provider fields. | Medium | Development merged; production acceptance pending |
+| FR-016 | Add evidence-driven provider health acceptance gates for metered Agent and future Browser escalation, including explicit success/latency thresholds, cancellation/rejection treatment, fail-closed unavailable routing, and a path to bounded recent-window and durable privacy-minimized health evidence. | High | Development source foundation in progress |
 
 ## Maintenance and synchronization
 
