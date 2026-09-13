@@ -34,12 +34,85 @@ func testBoundAuthExecutor(t *testing.T, withVault bool, executor *recordingExec
 	if err != nil {
 		t.Fatal(err)
 	}
-	bound, err := NewBoundAuthExecutor(bindings, acceptance, executor)
+	bound, err := NewBoundAuthExecutor(
+		bindings,
+		acceptance,
+		authorizerFunc(func(_ context.Context, _ Request) error { return nil }),
+		executor,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	bound.now = func() time.Time { return time.Date(2026, 9, 13, 2, 30, 0, 0, time.UTC) }
 	return bound, acceptance
+}
+
+func TestBoundAuthExecutorRequiresAuthorizer(t *testing.T) {
+	bindings, err := NewAuthBindings([]AuthBinding{{Host: "example.com", ProfileID: "prof_example"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	acceptance, err := NewAuthAcceptanceRegistry(bindings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = NewBoundAuthExecutor(bindings, acceptance, nil, &recordingExecutor{})
+	if !errors.Is(err, ErrNotAuthorized) {
+		t.Fatalf("expected required authorizer failure, got %v", err)
+	}
+}
+
+func TestBoundAuthExecutorAuthorizesManagedBoundRequestBeforeExecution(t *testing.T) {
+	bindings, err := NewAuthBindings([]AuthBinding{{
+		Host:              "example.com",
+		ProfileID:         "prof_example",
+		CredentialItemIDs: []string{"vault://example-login"},
+		BrowserProfile:    BrowserProfileStealth,
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	acceptance, err := NewAuthAcceptanceRegistry(bindings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	executor := &recordingExecutor{}
+	var observed Request
+	bound, err := NewBoundAuthExecutor(bindings, acceptance, authorizerFunc(func(_ context.Context, request Request) error {
+		observed = request
+		return ErrNotAuthorized
+	}), executor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = bound.Run(context.Background(), Request{
+		URL:        "https://example.com/private#fragment",
+		Goal:       " Verify access. ",
+		Purpose:    " acceptance ",
+		Capability: CapabilityAgent,
+	})
+	if !errors.Is(err, ErrNotAuthorized) {
+		t.Fatalf("expected policy denial, got %v", err)
+	}
+	if executor.calls != 0 {
+		t.Fatalf("provider executor called despite policy denial: %d", executor.calls)
+	}
+	if observed.URL != "https://example.com/private" || observed.Goal != "Verify access." || observed.Purpose != "acceptance" {
+		t.Fatalf("authorizer did not receive normalized request: %#v", observed)
+	}
+	if !observed.UseProfile || observed.ProfileID != "prof_example" || observed.BrowserProfile != BrowserProfileStealth {
+		t.Fatalf("authorizer did not receive managed profile scope: %#v", observed)
+	}
+	if !observed.UseVault || len(observed.CredentialItemIDs) != 1 || observed.CredentialItemIDs[0] != "vault://example-login" {
+		t.Fatalf("authorizer did not receive managed Vault scope: %#v", observed)
+	}
+	status, err := acceptance.Status("example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status.State != AuthAcceptanceUnverified || status.ObservationCount != 0 {
+		t.Fatalf("policy denial must not become provider/session evidence: %#v", status)
+	}
 }
 
 func TestBoundAuthExecutorAppliesBindingAndRecordsReuse(t *testing.T) {
