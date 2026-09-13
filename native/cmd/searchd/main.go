@@ -14,6 +14,7 @@ import (
 	"github.com/GoreeCloud/goreecloud-search/native/internal/providers"
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/syncstate"
+	"github.com/GoreeCloud/goreecloud-search/native/internal/webautomation"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webintelligence"
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
 )
@@ -30,11 +31,13 @@ type capabilityEvidence struct {
 }
 
 type server struct {
-	engine                  *searchcore.Engine
-	media                   *mediaproxy.Proxy
-	build                   buildinfo.Provenance
-	webIntelligence         *webintelligence.Controller
-	webIntelligenceConfigured bool
+	engine                      *searchcore.Engine
+	media                       *mediaproxy.Proxy
+	build                       buildinfo.Provenance
+	webIntelligence             *webintelligence.Controller
+	webIntelligenceConfigured   bool
+	webAutomationAuth           *webautomation.AuthControl
+	webAutomationAuthConfigured bool
 }
 
 func searchCapabilityEvidence() []capabilityEvidence {
@@ -59,17 +62,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("initialize GoreeCloud web intelligence control plane: %v", err)
 	}
+	webAutomationAuth, webAutomationAuthConfigured, err := webautomation.LoadAuthControlFromEnvironment()
+	if err != nil {
+		log.Fatalf("initialize GoreeCloud authenticated web automation control plane: %v", err)
+	}
 	engine := searchcore.NewEngine(8*time.Second, configuredProviders...)
 	mediaProxy, err := mediaproxy.New()
 	if err != nil {
 		log.Fatalf("initialize GoreeCloud Search media boundary: %v", err)
 	}
 	app := server{
-		engine:                    engine,
-		media:                     mediaProxy,
-		build:                     buildinfo.Current(),
-		webIntelligence:           webIntelligenceController,
-		webIntelligenceConfigured: webIntelligenceConfigured,
+		engine:                      engine,
+		media:                       mediaProxy,
+		build:                       buildinfo.Current(),
+		webIntelligence:             webIntelligenceController,
+		webIntelligenceConfigured:   webIntelligenceConfigured,
+		webAutomationAuth:           webAutomationAuth,
+		webAutomationAuthConfigured: webAutomationAuthConfigured,
 	}
 
 	mux := http.NewServeMux()
@@ -93,6 +102,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
 	mux.HandleFunc("GET /api/v1/web-intelligence/status", app.webIntelligenceStatus)
+	mux.HandleFunc("GET /api/v1/web-intelligence/authentication/status", app.webAutomationAuthStatus)
 	mux.HandleFunc("GET /api/v1/sync/capabilities", app.syncCapabilities)
 	mux.HandleFunc("GET /api/v1/platform/status", platformstate.Handler)
 
@@ -133,26 +143,28 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 		"production_approved": false,
 		"build":               s.build,
 		"capabilities": map[string]bool{
-			"html_search":                 true,
-			"machine_readable_search_api": true,
-			"preferences_definitions":     true,
-			"provider_definitions":        true,
-			"web_intelligence_status":     true,
-			"sync_capabilities":           true,
-			"platform_status":             true,
+			"html_search":                       true,
+			"machine_readable_search_api":       true,
+			"preferences_definitions":           true,
+			"provider_definitions":              true,
+			"web_intelligence_status":           true,
+			"web_automation_auth_status":        true,
+			"sync_capabilities":                 true,
+			"platform_status":                   true,
 		},
 		"capability_evidence": searchCapabilityEvidence(),
 		"endpoints": map[string]string{
-			"health":                  "/healthz",
-			"status":                  "/api/v1/status",
-			"readiness":               "/api/v1/readiness",
-			"search":                  "/api/v1/search",
-			"interactive_search":      "/search",
-			"preferences_definitions": "/api/v1/preferences/definitions",
-			"provider_definitions":    "/api/v1/providers/definitions",
-			"web_intelligence_status": "/api/v1/web-intelligence/status",
-			"sync_capabilities":       "/api/v1/sync/capabilities",
-			"platform_status":         "/api/v1/platform/status",
+			"health":                       "/healthz",
+			"status":                       "/api/v1/status",
+			"readiness":                    "/api/v1/readiness",
+			"search":                       "/api/v1/search",
+			"interactive_search":           "/search",
+			"preferences_definitions":      "/api/v1/preferences/definitions",
+			"provider_definitions":         "/api/v1/providers/definitions",
+			"web_intelligence_status":      "/api/v1/web-intelligence/status",
+			"web_automation_auth_status":   "/api/v1/web-intelligence/authentication/status",
+			"sync_capabilities":            "/api/v1/sync/capabilities",
+			"platform_status":              "/api/v1/platform/status",
 		},
 	})
 }
