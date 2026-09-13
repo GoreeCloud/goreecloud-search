@@ -14,6 +14,8 @@ BASE_URL = os.environ.get(
 ).rstrip("/")
 SCREENSHOT_DIR = os.environ.get("GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR")
 STORAGE_KEY = "goreecloud.search.preferences.v1"
+GLAZE_VERSION = "1.4.0"
+GLAZE_OPTICAL_MODE = "adaptive-optical"
 TARGET_FLOOR = 48.0
 TEXT_SCALE = 2.0
 
@@ -191,6 +193,14 @@ def assert_controls(
             )
 
 
+def assert_glaze_root(driver: webdriver.Chrome, context: str) -> None:
+    root = driver.find_element(By.TAG_NAME, "html")
+    if root.get_attribute("data-glaze-version") != GLAZE_VERSION:
+        raise AssertionError(f"{context}: Glaze UI V1.4 contract was lost")
+    if root.get_attribute("data-glaze-optical-v14") != GLAZE_OPTICAL_MODE:
+        raise AssertionError(f"{context}: bounded Glaze UI V1.4 optical mode was lost")
+
+
 def apply_two_x_text_scale(driver: webdriver.Chrome, marker_selector: str) -> None:
     marker = driver.find_element(By.CSS_SELECTOR, marker_selector)
     before = float(
@@ -309,12 +319,11 @@ def assert_two_x_text_resilience() -> None:
                 wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, marker)))
                 context = f"text-200/{viewport.name}/{name}"
                 root = driver.find_element(By.TAG_NAME, "html")
-                if root.get_attribute("data-glaze-version") != "1.1":
-                    raise AssertionError(f"{context}: Glaze UI V1.1 contract was lost")
+                assert_glaze_root(driver, context)
                 apply_two_x_text_scale(driver, marker)
                 if root.get_attribute("data-goreecloud-text-scale") != "200":
                     raise AssertionError(f"{context}: deterministic 200% text marker missing")
-                capture(driver, f"glaze-v1-1-text-200-{viewport.name}-{name}")
+                capture(driver, f"glaze-v1-4-text-200-{viewport.name}-{name}")
                 assert_no_horizontal_overflow(driver, context)
                 assert_controls(driver, targets, context)
                 assert_no_hidden_text_clipping(driver, context)
@@ -324,7 +333,7 @@ def assert_two_x_text_resilience() -> None:
 
 def main() -> int:
     assert_two_x_text_resilience()
-    print("native Glaze UI V1.1 deterministic 200% text stress acceptance passed")
+    print("native Glaze UI V1.4 deterministic 200% text stress acceptance passed")
     print(
         "note: deterministic text-only scaling is resilience evidence, not a substitute "
         "for manual browser zoom, assistive-technology, localization, or physical-device acceptance"

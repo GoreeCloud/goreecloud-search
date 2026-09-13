@@ -10,10 +10,12 @@ import (
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
+const glazeVersion = "1.4.0"
+
 //go:embed assets/*
 var assets embed.FS
 
-var resultsTemplate = template.Must(template.ParseFS(assets, "assets/results.html"))
+var resultsTemplate = template.Must(template.New("results.html").Parse(glazeHTML(mustAsset("assets/results.html"))))
 
 type imageResultView struct {
 	ThumbnailURL string
@@ -41,15 +43,17 @@ type resultsPageData struct {
 }
 
 func Homepage(w http.ResponseWriter, _ *http.Request) {
-	serveAsset(w, "assets/index.html", "text/html; charset=utf-8")
+	serveGlazeHTMLAsset(w, "assets/index.html")
 }
 
 func Preferences(w http.ResponseWriter, _ *http.Request) {
-	serveAsset(w, "assets/preferences.html", "text/html; charset=utf-8")
+	serveGlazeHTMLAsset(w, "assets/preferences.html")
 }
 
 func Styles(w http.ResponseWriter, _ *http.Request) {
-	serveAsset(w, "assets/app.css", "text/css; charset=utf-8")
+	glaze := mustAsset("assets/glaze-v1.4.css")
+	product := mustAsset("assets/app.css")
+	writeAsset(w, glaze+"\n"+product, "text/css; charset=utf-8")
 }
 
 func AppearanceScript(w http.ResponseWriter, _ *http.Request) {
@@ -164,13 +168,36 @@ func renderResults(w http.ResponseWriter, status int, data resultsPageData) {
 	}
 }
 
+func serveGlazeHTMLAsset(w http.ResponseWriter, name string) {
+	writeAsset(w, glazeHTML(mustAsset(name)), "text/html; charset=utf-8")
+}
+
+func glazeHTML(content string) string {
+	content = strings.ReplaceAll(content, "data-glaze-version=\"1.1\"", "data-glaze-version=\""+glazeVersion+"\"")
+	content = strings.ReplaceAll(content, "data-glaze-density-profile=\"comfortable\"", "data-glaze-density-profile=\"comfortable\" data-glaze-optical-v14=\"adaptive-optical\"")
+	content = strings.ReplaceAll(content, "Glaze UI V1.1", "Glaze UI V1.4")
+	return content
+}
+
+func mustAsset(name string) string {
+	content, err := assets.ReadFile(name)
+	if err != nil {
+		panic("missing embedded web asset: " + name)
+	}
+	return string(content)
+}
+
 func serveAsset(w http.ResponseWriter, name, contentType string) {
 	content, err := assets.ReadFile(name)
 	if err != nil {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
+	writeAsset(w, string(content), contentType)
+}
+
+func writeAsset(w http.ResponseWriter, content, contentType string) {
 	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(content)
+	_, _ = w.Write([]byte(content))
 }
