@@ -25,8 +25,8 @@ type BrowserSessionLeaseRequest struct {
 
 // BrowserSessionLeaseRunner scopes one direct Browser session to one unit of
 // caller work and always attempts termination after a confirmed create. Cleanup
-// deliberately uses a fresh bounded context so caller cancellation cannot turn
-// into a silent remote-session leak.
+// deliberately ignores caller cancellation and deadlines while preserving
+// caller-scoped context values needed by authorization, audit, and policy seams.
 type BrowserSessionLeaseRunner struct {
 	manager        *BrowserSessionManager
 	cleanupTimeout time.Duration
@@ -49,6 +49,9 @@ func (r *BrowserSessionLeaseRunner) Run(ctx context.Context, input BrowserSessio
 	if r == nil || r.manager == nil || r.cleanupTimeout <= 0 {
 		return ErrBrowserSessionUnavailable
 	}
+	if ctx == nil {
+		return fmt.Errorf("%w: browser session context is required", ErrInvalidRequest)
+	}
 	if work == nil {
 		return fmt.Errorf("%w: browser session work is required", ErrInvalidRequest)
 	}
@@ -63,7 +66,8 @@ func (r *BrowserSessionLeaseRunner) Run(ctx context.Context, input BrowserSessio
 	}
 
 	defer func() {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), r.cleanupTimeout)
+		cleanupBase := context.WithoutCancel(ctx)
+		cleanupCtx, cancel := context.WithTimeout(cleanupBase, r.cleanupTimeout)
 		defer cancel()
 		cleanupErr := r.manager.Terminate(cleanupCtx, TerminateBrowserSessionRequest{
 			SessionID: session.SessionID,
