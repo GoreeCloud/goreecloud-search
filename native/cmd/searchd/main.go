@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/GoreeCloud/goreecloud-search/native/internal/buildinfo"
@@ -19,7 +22,10 @@ import (
 	"github.com/GoreeCloud/goreecloud-search/native/internal/webui"
 )
 
-const apiVersion = "1"
+const (
+	apiVersion          = "1"
+	maxAPISearchResults = 100
+)
 
 type capabilityEvidence struct {
 	ID                 string `json:"id"`
@@ -143,28 +149,28 @@ func (s server) status(w http.ResponseWriter, _ *http.Request) {
 		"production_approved": false,
 		"build":               s.build,
 		"capabilities": map[string]bool{
-			"html_search":                       true,
-			"machine_readable_search_api":       true,
-			"preferences_definitions":           true,
-			"provider_definitions":              true,
-			"web_intelligence_status":           true,
-			"web_automation_auth_status":        true,
-			"sync_capabilities":                 true,
-			"platform_status":                   true,
+			"html_search":                 true,
+			"machine_readable_search_api": true,
+			"preferences_definitions":     true,
+			"provider_definitions":        true,
+			"web_intelligence_status":     true,
+			"web_automation_auth_status":  true,
+			"sync_capabilities":           true,
+			"platform_status":             true,
 		},
 		"capability_evidence": searchCapabilityEvidence(),
 		"endpoints": map[string]string{
-			"health":                       "/healthz",
-			"status":                       "/api/v1/status",
-			"readiness":                    "/api/v1/readiness",
-			"search":                       "/api/v1/search",
-			"interactive_search":           "/search",
-			"preferences_definitions":      "/api/v1/preferences/definitions",
-			"provider_definitions":         "/api/v1/providers/definitions",
-			"web_intelligence_status":      "/api/v1/web-intelligence/status",
-			"web_automation_auth_status":   "/api/v1/web-intelligence/authentication/status",
-			"sync_capabilities":            "/api/v1/sync/capabilities",
-			"platform_status":              "/api/v1/platform/status",
+			"health":                     "/healthz",
+			"status":                     "/api/v1/status",
+			"readiness":                  "/api/v1/readiness",
+			"search":                     "/api/v1/search",
+			"interactive_search":         "/search",
+			"preferences_definitions":    "/api/v1/preferences/definitions",
+			"provider_definitions":       "/api/v1/providers/definitions",
+			"web_intelligence_status":    "/api/v1/web-intelligence/status",
+			"web_automation_auth_status": "/api/v1/web-intelligence/authentication/status",
+			"sync_capabilities":          "/api/v1/sync/capabilities",
+			"platform_status":            "/api/v1/platform/status",
 		},
 	})
 }
@@ -211,6 +217,22 @@ func requestedCategory(r *http.Request) (string, error) {
 	return searchcore.ValidateCategory(r.URL.Query().Get("category"))
 }
 
+func requestedResultLimit(r *http.Request) (int, bool, error) {
+	values, present := r.URL.Query()["limit"]
+	if !present {
+		return 0, false, nil
+	}
+	if len(values) != 1 {
+		return 0, true, errors.New("result limit must be specified once")
+	}
+	raw := strings.TrimSpace(values[0])
+	limit, err := strconv.Atoi(raw)
+	if err != nil || limit < 1 || limit > maxAPISearchResults {
+		return 0, true, errors.New("result limit must be an integer between 1 and 100")
+	}
+	return limit, true, nil
+}
+
 func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 	category, err := requestedCategory(r)
 	if err != nil {
@@ -239,6 +261,11 @@ func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported search category"})
 		return
 	}
+	limit, hasLimit, err := requestedResultLimit(r)
+	if err != nil {
+		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
 	if !s.engine.SupportsCategory(category) {
 		writeAPIV1JSON(w, http.StatusNotImplemented, map[string]string{
 			"error":    "search category is not implemented in the native provider layer",
@@ -250,6 +277,9 @@ func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
+	}
+	if hasLimit && len(response.Results) > limit {
+		response.Results = append([]searchcore.Result(nil), response.Results[:limit]...)
 	}
 	writeAPIV1JSON(w, http.StatusOK, response)
 }
