@@ -1,0 +1,165 @@
+/*
+ * GoreeCloud Search — GLAZE UI V1.4 / 1.4.0 consumer source projection.
+ *
+ * Shared authority: GoreeCloud/goreecloud-glaze-ui release revision
+ * 84cb3db4884042f0fa25ed6d475a127fb110f596.
+ *
+ * This layer adopts the current Stable semantic/optical contract without claiming
+ * full product conformance. It does not collect wallpaper, camera, browsing,
+ * telemetry, personal, or remote context. Product-local rendered/manual/device
+ * acceptance remains separately gated.
+ */
+
+html[data-glaze-version="1.4.0"] {
+  color-scheme: light dark;
+
+  /* V1.4 Optical Intelligence public bounds. */
+  --glz14-frost-strength: .34;
+  --glz14-blur-scale: .72;
+  --glz14-semantic-protection: .65;
+  --glz14-depth-hue-shift: 0;
+  --glz14-light-warmth: 0;
+  --glz14-memory-tint: transparent;
+  --glz14-memory-tint-influence: 0;
+
+  /* Stable inherited neutral/frosted semantic palette. */
+  --glz14-frost-white: #f4f8fa;
+  --glz14-crystal-white: #fbfdfe;
+  --glz14-ice-blue: #dcecf6;
+  --glz14-glacier-blue: #8fc4e8;
+  --glz14-clear-sky-blue: #68aee0;
+  --glz14-cloud-gray: #dce3e8;
+  --glz14-slate-gray: #7e8d99;
+  --glz14-cool-graphite: #151c22;
+  --glz14-deep-graphite: #0e1419;
+  --glz14-blue-black: #070c11;
+
+  --bg: var(--glz14-frost-white);
+  --surface: rgba(255,255,255,.68);
+  --surface-strong: rgba(255,255,255,.82);
+  --surface-durable: var(--glz14-crystal-white);
+  --text: var(--glz14-cool-graphite);
+  --muted: var(--glz14-slate-gray);
+  --line: rgba(80,80,80,.10);
+  --accent: var(--glz14-clear-sky-blue);
+  --accent-hover: color-mix(in srgb,var(--glz14-clear-sky-blue) 82%,var(--glz14-cool-graphite));
+  --accent-2: var(--glz14-glacier-blue);
+  --warm-accent: var(--glz14-glacier-blue);
+  --glaze-bg: rgba(255,255,255,.62);
+  --glaze-panel: rgba(255,255,255,.76);
+  --shadow: 0 14px 38px rgba(0,0,0,.11);
+  --shadow-float: 0 28px 76px rgba(0,0,0,.16);
+
+  /* Compatibility aliases for Search's existing component vocabulary. */
+  --glz11-canvas-black: var(--glz14-blue-black);
+  --glz11-deep-graphite: var(--glz14-deep-graphite);
+  --glz11-slate-graphite: var(--glz14-cool-graphite);
+  --glz11-deep-teal: #0f6b6f;
+  --glz11-mineral-teal: #1c8a8d;
+  --glz11-soft-aqua: #8fd6d2;
+  --glz11-soft-amber: #d9a35f;
+  --glz11-champagne-gold: #e7c78a;
+  --glz11-warm-glow: #f2d7a6;
+  --glz11-radius-micro: 8px;
+  --glz11-radius-control: 16px;
+  --glz11-radius-container: 24px;
+  --glz11-radius-hero: 32px;
+  --glz11-radius-capsule: 999px;
+  --glz11-target-min: 48px;
+  --radius: var(--glz11-radius-container);
+  --radius-sm: var(--glz11-radius-control);
+  --radius-hero: var(--glz11-radius-hero);
+  --density-gap: 20px;
+  --density-section: 40px;
+  font-family: Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+html[data-glaze-version="1.4.0"][data-glaze-density-profile="standard"] { --density-gap:16px; --density-section:32px; }
+html[data-glaze-version="1.4.0"][data-glaze-density-profile="productive"] { --density-gap:12px; --density-section:24px; }
+html[data-glaze-version="1.4.0"][data-glaze-density-profile="immersive"] { --density-gap:24px; --density-section:48px; }
+html[data-glaze-version="1.4.0"][data-glz-appearance="light"] { color-scheme:light; }
+
+html[data-glaze-version="1.4.0"][data-glz-appearance="dark"] {
+  color-scheme: dark;
+  --bg: var(--glz14-cool-graphite);
+  --surface: rgba(25,25,27,.68);
+  --surface-strong: rgba(38,38,41,.78);
+  --surface-durable: #1b2228;
+  --text: var(--glz14-crystal-white);
+  --muted: #b8c2ca;
+  --line: rgba(255,255,255,.10);
+  --glaze-bg: rgba(25,25,27,.68);
+  --glaze-panel: rgba(34,34,37,.78);
+  --shadow: 0 18px 48px rgba(0,0,0,.30);
+  --shadow-float: 0 30px 86px rgba(0,0,0,.44);
+}
+
+html[data-glaze-version="1.4.0"][data-glz-appearance="deep-dark"] {
+  color-scheme: dark;
+  --bg: var(--glz14-blue-black);
+  --surface: rgba(14,14,16,.74);
+  --surface-strong: rgba(22,22,25,.82);
+  --surface-durable: var(--glz14-deep-graphite);
+  --text: var(--glz14-crystal-white);
+  --muted: #aeb9c2;
+  --line: rgba(255,255,255,.09);
+  --glaze-bg: rgba(14,14,16,.74);
+  --glaze-panel: rgba(18,18,21,.84);
+  --shadow: 0 20px 54px rgba(0,0,0,.38);
+  --shadow-float: 0 34px 96px rgba(0,0,0,.52);
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-glaze-version="1.4.0"]:not([data-glz-appearance]) {
+    --bg: var(--glz14-cool-graphite);
+    --surface: rgba(25,25,27,.68);
+    --surface-strong: rgba(38,38,41,.78);
+    --surface-durable: #1b2228;
+    --text: var(--glz14-crystal-white);
+    --muted: #b8c2ca;
+    --line: rgba(255,255,255,.10);
+    --glaze-bg: rgba(25,25,27,.68);
+    --glaze-panel: rgba(34,34,37,.78);
+  }
+}
+
+html[data-glaze-version="1.4.0"][data-glaze-optical-v14="adaptive-optical"] .topbar {
+  backdrop-filter: blur(calc(24px * var(--glz14-frost-strength) * var(--glz14-blur-scale))) saturate(calc(1 + (var(--glz14-frost-strength) * .18)));
+  -webkit-backdrop-filter: blur(calc(24px * var(--glz14-frost-strength) * var(--glz14-blur-scale))) saturate(calc(1 + (var(--glz14-frost-strength) * .18)));
+}
+
+html[data-glaze-version="1.4.0"][data-glaze-optical-v14="solid-accessible"] {
+  --glz14-memory-tint: transparent;
+  --glz14-memory-tint-influence: 0;
+  --surface: var(--surface-durable);
+  --surface-strong: var(--surface-durable);
+  --glaze-bg: var(--surface-durable);
+  --glaze-panel: var(--surface-durable);
+}
+
+html[data-glaze-version="1.4.0"][data-glaze-optical-v14="solid-accessible"] .topbar { backdrop-filter:none; -webkit-backdrop-filter:none; }
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  html[data-glaze-version="1.4.0"] {
+    --glz14-memory-tint: transparent;
+    --glz14-memory-tint-influence: 0;
+    --surface: var(--surface-durable);
+    --surface-strong: var(--surface-durable);
+    --glaze-bg: var(--surface-durable);
+    --glaze-panel: var(--surface-durable);
+  }
+  html[data-glaze-version="1.4.0"] .topbar { backdrop-filter:none; -webkit-backdrop-filter:none; }
+}
+
+@media (forced-colors: active) {
+  html[data-glaze-version="1.4.0"] {
+    --accent: LinkText;
+    --accent-hover: LinkText;
+    --line: CanvasText;
+    --surface: Canvas;
+    --surface-strong: Canvas;
+    --surface-durable: Canvas;
+    --text: CanvasText;
+    --muted: CanvasText;
+  }
+}
