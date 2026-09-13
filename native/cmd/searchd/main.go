@@ -34,6 +34,7 @@ type capabilityEvidence struct {
 	Current            bool   `json:"current"`
 	ProductionAccepted bool   `json:"production_accepted"`
 	Endpoint           string `json:"endpoint"`
+	MaxResults         int    `json:"max_results,omitempty"`
 }
 
 type server struct {
@@ -55,6 +56,7 @@ func searchCapabilityEvidence() []capabilityEvidence {
 			Current:            true,
 			ProductionAccepted: false,
 			Endpoint:           "/api/v1/search",
+			MaxResults:         maxAPISearchResults,
 		},
 	}
 }
