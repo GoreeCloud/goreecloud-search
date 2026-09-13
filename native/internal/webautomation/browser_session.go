@@ -25,6 +25,7 @@ const (
 var (
 	ErrBrowserSessionNotAuthorized      = errors.New("browser session operation is not authorized")
 	ErrBrowserSessionUnavailable        = errors.New("browser session is unavailable")
+	ErrBrowserSessionCreationUnknown    = errors.New("browser session creation is not confirmed")
 	ErrBrowserSessionTerminationUnknown = errors.New("browser session termination is not confirmed")
 )
 
