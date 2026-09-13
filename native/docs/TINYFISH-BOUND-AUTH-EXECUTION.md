@@ -14,13 +14,28 @@ This directly addresses previously observed failure modes where a TinyFish run h
 
 For an authenticated request:
 
-1. validate the target URL through the existing GoreeCloud web-automation request boundary;
-2. resolve the exact target hostname against the managed authentication-binding registry;
-3. inject the configured Browser Context Profile and only the credential item references already approved for that exact host;
-4. invoke the existing provider-neutral executor;
-5. translate only trusted normalized execution outcomes into authenticated-session acceptance evidence.
+1. resolve the exact target hostname against the managed authentication-binding registry;
+2. inject the configured Browser Context Profile and only the credential item references already approved for that exact host;
+3. normalize the fully bound GoreeCloud request, including URL, goal, purpose, capability, browser mode, duration, output schema, and managed authentication references;
+4. require the injected fail-closed GoreeCloud `Authorizer` to approve that exact normalized and bound operation;
+5. invoke the underlying provider executor only after authorization succeeds;
+6. translate only trusted normalized execution outcomes into authenticated-session acceptance evidence.
+
+This ordering is deliberate. Privacy Shield, Wardveil, caller authority, purpose limitation, cost/session policy, and other authorization checks must evaluate the **actual** Browser Context Profile and Vault scope that would cross the provider boundary, not an earlier unbound request.
 
 The wrapper does not broaden the authorized capability. Agent remains Agent and Browser remains Browser. It also does not authorize a different host, sibling hostname, or subdomain.
+
+## Mandatory authorization boundary
+
+`BoundAuthExecutor` now requires an `Authorizer` at construction time. There is no valid constructor path that omits the policy seam.
+
+A denied operation:
+
+- never reaches the provider executor;
+- does not record session-reuse, site-blocked, or failure evidence because no provider execution occurred;
+- returns the stable GoreeCloud `ErrNotAuthorized` boundary rather than leaking arbitrary policy details.
+
+The authorizer receives the fully normalized managed request, including the exact profile reference and explicitly scoped Vault credential references selected by the binding. This prevents a raw provider executor from accidentally becoming an authorization bypass when used underneath the managed-authentication wrapper.
 
 ## Evidence semantics
 
@@ -30,7 +45,7 @@ The wrapper deliberately **does not** record `vault_repair_verified` merely beca
 
 Normalized site barriers such as CAPTCHA/access denial record `site_blocked`. A normalized requested-goal failure records `failed`.
 
-Caller cancellation, deadline expiration, provider transport failure, and other infrastructure failures are not treated as authentication-state evidence. Doing so would incorrectly mark a Browser Context Profile as unhealthy when the failure may be unrelated to authentication.
+Caller cancellation, deadline expiration, provider transport failure, policy denial, and other infrastructure/control-plane failures are not treated as authentication-state evidence. Doing so would incorrectly mark a Browser Context Profile as unhealthy when the failure may be unrelated to authentication.
 
 ## Fail-closed behavior
 
@@ -38,9 +53,10 @@ The execution wrapper requires:
 
 - a non-empty managed exact-host authentication-binding registry;
 - an authenticated-session acceptance registry;
+- a fail-closed GoreeCloud authorizer;
 - an underlying executor.
 
-Unbound websites fail before provider execution. Caller-supplied profile/Vault references fail before provider execution. If a provider operation succeeds but the resulting acceptance evidence cannot be recorded, the wrapper fails closed instead of returning an untracked authenticated success.
+Unbound websites fail before authorization/provider execution. Caller-supplied profile/Vault references fail before authorization/provider execution. Policy denial fails before provider execution. If a provider operation succeeds but the resulting acceptance evidence cannot be recorded, the wrapper fails closed instead of returning an untracked authenticated success.
 
 ## Secret-handling boundary
 
@@ -54,7 +70,7 @@ GitHub, Google Drive, Gmail, and other authoritative direct connectors remain pr
 
 ## Navigation reliability direction
 
-This wrapper improves deterministic session selection, but it cannot make an empty, expired, revoked, or incorrectly configured provider-side profile valid by itself. Reliable production use still requires live acceptance for each service/account boundary, including:
+This wrapper improves deterministic session selection and closes an authorization-ordering gap, but it cannot make an empty, expired, revoked, or incorrectly configured provider-side profile valid by itself. Reliable production use still requires live acceptance for each service/account boundary, including:
 
 - authorized profile setup and save;
 - later saved-session reuse;

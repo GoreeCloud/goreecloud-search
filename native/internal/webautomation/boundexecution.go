@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-// BoundAuthExecutor applies one managed exact-host authentication binding before
-// invoking an existing web-automation executor. It prevents recurring
-// authenticated runs from accidentally omitting the intended Browser Context
-// Profile or from selecting broad/ad-hoc Vault credentials.
+// BoundAuthExecutor applies one managed exact-host authentication binding,
+// normalizes the resulting request, and requires fail-closed authorization before
+// invoking the underlying provider executor. This ordering ensures policy sees the
+// actual Browser Context Profile/Vault scope that would cross the provider boundary.
 //
 // Successful execution records session-reuse evidence. The wrapper deliberately
 // does not infer Vault repair merely because scoped Vault references were made
@@ -19,30 +19,50 @@ import (
 type BoundAuthExecutor struct {
 	bindings   *AuthBindings
 	acceptance *AuthAcceptanceRegistry
+	authorizer Authorizer
 	executor   Executor
 	now        func() time.Time
 }
 
-func NewBoundAuthExecutor(bindings *AuthBindings, acceptance *AuthAcceptanceRegistry, executor Executor) (*BoundAuthExecutor, error) {
+func NewBoundAuthExecutor(bindings *AuthBindings, acceptance *AuthAcceptanceRegistry, authorizer Authorizer, executor Executor) (*BoundAuthExecutor, error) {
 	if bindings == nil || len(bindings.byHost) == 0 {
 		return nil, ErrAuthBindingUnavailable
 	}
 	if acceptance == nil {
 		return nil, ErrAuthAcceptanceUnavailable
 	}
+	if authorizer == nil {
+		return nil, fmt.Errorf("%w: authenticated execution authorizer is required", ErrNotAuthorized)
+	}
 	if executor == nil {
 		return nil, fmt.Errorf("%w: authenticated executor is required", ErrCapabilityUnavailable)
 	}
-	return &BoundAuthExecutor{bindings: bindings, acceptance: acceptance, executor: executor, now: time.Now}, nil
+	return &BoundAuthExecutor{
+		bindings:   bindings,
+		acceptance: acceptance,
+		authorizer: authorizer,
+		executor:   executor,
+		now:        time.Now,
+	}, nil
 }
 
 func (e *BoundAuthExecutor) Run(ctx context.Context, input Request) (Result, error) {
-	if e == nil || e.bindings == nil || e.acceptance == nil || e.executor == nil {
-		return Result{}, ErrAuthAcceptanceUnavailable
+	if e == nil || e.bindings == nil || e.acceptance == nil || e.authorizer == nil || e.executor == nil {
+		return Result{}, ErrNotAuthorized
 	}
-	request, err := e.bindings.Apply(input)
+	bound, err := e.bindings.Apply(input)
 	if err != nil {
 		return Result{}, err
+	}
+	request, err := normalizeRequest(bound)
+	if err != nil {
+		return Result{}, err
+	}
+	if err := e.authorizer.Authorize(ctx, request); err != nil {
+		if errors.Is(err, ErrNotAuthorized) {
+			return Result{}, err
+		}
+		return Result{}, fmt.Errorf("%w: policy rejected authenticated request", ErrNotAuthorized)
 	}
 
 	result, runErr := e.executor.Run(ctx, request)
