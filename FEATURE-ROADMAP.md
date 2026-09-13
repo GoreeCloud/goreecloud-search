@@ -24,7 +24,7 @@ This file is the repository-side feature roadmap control for GoreeCloud Search. 
 | FR-008 | Add least-capability routing, metered-cost controls, health/observability, replacement/fallback behavior, and Manager operational visibility for the TinyFish integration. | High | Development merged; production acceptance pending |
 | FR-009 | Add exact-host authenticated-session bindings so recurring TinyFish automation deterministically selects one saved Browser Context Profile and only explicitly scoped Vault credential references for the intended service/account boundary. | High | Development merged; production acceptance pending |
 | FR-010 | Add a fail-closed Browser Context Profile lifecycle and recovery primitive for authorized create/setup/save/cancel operations so recurring TinyFish sessions can be deliberately established or repaired without exposing reusable secrets. | High | Development merged; production acceptance pending |
-| FR-011 | Add privacy-minimized authenticated-session acceptance evidence so exact-host TinyFish bindings distinguish configured state from observed setup, session reuse, Vault repair, MFA/block/expiry/revocation failures, and secret-handling defects. | High | Development source foundation in progress |
+| FR-011 | Add privacy-minimized authenticated-session acceptance evidence so exact-host TinyFish bindings distinguish configured state from observed setup, session reuse, Vault repair, current failures, and secret-handling defects. | High | Development source foundation in progress |
 
 ## Maintenance and synchronization
 
