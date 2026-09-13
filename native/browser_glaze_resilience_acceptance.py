@@ -14,6 +14,8 @@ BASE_URL = os.environ.get(
 ).rstrip("/")
 SCREENSHOT_DIR = os.environ.get("GOREECLOUD_SEARCH_NATIVE_RESULTS_SCREENSHOT_DIR")
 STORAGE_KEY = "goreecloud.search.preferences.v1"
+GLAZE_VERSION = "1.4.0"
+GLAZE_OPTICAL_MODE = "adaptive-optical"
 TARGET_FLOOR = 48.0
 
 
@@ -133,6 +135,14 @@ def assert_controls(driver: webdriver.Chrome, selectors: tuple[str, ...], contex
             )
 
 
+def assert_glaze_root(driver: webdriver.Chrome, context: str) -> None:
+    root = driver.find_element(By.TAG_NAME, "html")
+    if root.get_attribute("data-glaze-version") != GLAZE_VERSION:
+        raise AssertionError(f"{context}: Glaze UI V1.4 contract was lost")
+    if root.get_attribute("data-glaze-optical-v14") != GLAZE_OPTICAL_MODE:
+        raise AssertionError(f"{context}: bounded Glaze UI V1.4 optical mode was lost")
+
+
 def assert_rtl_resilience() -> None:
     for viewport in RTL_VIEWPORTS:
         driver = driver_for(viewport)
@@ -149,11 +159,10 @@ def assert_rtl_resilience() -> None:
                 root = driver.find_element(By.TAG_NAME, "html")
                 if root.get_attribute("dir") != "rtl":
                     raise AssertionError(f"{context}: RTL document direction was not applied")
-                if root.get_attribute("data-glaze-version") != "1.1":
-                    raise AssertionError(f"{context}: Glaze UI V1.1 contract was lost")
+                assert_glaze_root(driver, context)
                 assert_no_horizontal_overflow(driver, context)
                 assert_controls(driver, targets, context)
-                capture(driver, f"glaze-v1-1-rtl-{viewport.name}-{name}")
+                capture(driver, f"glaze-v1-4-rtl-{viewport.name}-{name}")
         finally:
             driver.quit()
 
@@ -185,12 +194,10 @@ def assert_two_x_scale_reflow() -> None:
             driver.get(f"{BASE_URL}{path}")
             wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, marker)))
             context = f"2x-scale/640-css/{name}"
-            root = driver.find_element(By.TAG_NAME, "html")
-            if root.get_attribute("data-glaze-version") != "1.1":
-                raise AssertionError(f"{context}: Glaze UI V1.1 contract was lost")
+            assert_glaze_root(driver, context)
             assert_no_horizontal_overflow(driver, context)
             assert_controls(driver, targets, context)
-            capture(driver, f"glaze-v1-1-2x-scale-{name}")
+            capture(driver, f"glaze-v1-4-2x-scale-{name}")
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
         driver.quit()
@@ -199,7 +206,7 @@ def assert_two_x_scale_reflow() -> None:
 def main() -> int:
     assert_rtl_resilience()
     assert_two_x_scale_reflow()
-    print("native Glaze UI V1.1 resilience browser acceptance passed")
+    print("native Glaze UI V1.4 resilience browser acceptance passed")
     print("note: RTL is structural stress evidence, not localization acceptance")
     print("note: 2x device-scale/640 CSS reflow is deterministic CI evidence, not a substitute for manual browser 200% zoom acceptance")
     return 0
