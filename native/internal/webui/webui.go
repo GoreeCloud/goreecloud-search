@@ -173,8 +173,8 @@ func serveGlazeHTMLAsset(w http.ResponseWriter, name string) {
 }
 
 func glazeHTML(content string) string {
-	content = strings.ReplaceAll(content, `data-glaze-version="1.1"`, `data-glaze-version="`+glazeVersion+`"`)
-	content = strings.ReplaceAll(content, `data-glaze-density-profile="comfortable"`, `data-glaze-density-profile="comfortable" data-glaze-optical-v14="adaptive-optical"`)
+	content = strings.ReplaceAll(content, "data-glaze-version=\"1.1\"", "data-glaze-version=\""+glazeVersion+"\"")
+	content = strings.ReplaceAll(content, "data-glaze-density-profile=\"comfortable\"", "data-glaze-density-profile=\"comfortable\" data-glaze-optical-v14=\"adaptive-optical\"")
 	content = strings.ReplaceAll(content, "Glaze UI V1.1", "Glaze UI V1.4")
 	return content
 }
