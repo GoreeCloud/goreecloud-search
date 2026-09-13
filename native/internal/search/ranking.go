@@ -296,6 +296,11 @@ func diversifyTopResultsIntent(intent queryIntent, ranked []Result) []Result {
 		window = len(ranked)
 	}
 
+	hosts := make([]string, len(ranked))
+	for index := range ranked {
+		hosts[index] = resultHost(ranked[index])
+	}
+
 	selected := make([]bool, len(ranked))
 	hostCounts := map[string]int{}
 	output := make([]Result, 0, len(ranked))
@@ -305,7 +310,7 @@ func diversifyTopResultsIntent(intent queryIntent, ranked []Result) []Result {
 			if selected[index] {
 				continue
 			}
-			host := resultHost(result)
+			host := hosts[index]
 			if host != "" && hostCounts[host] >= maxHostResultsInWindow {
 				continue
 			}
