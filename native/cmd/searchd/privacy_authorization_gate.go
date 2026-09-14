@@ -11,15 +11,18 @@ import (
 const maxPrivacyAuthorizationReferenceBytes = 512
 
 var (
-	errPrivacyAuthorizationVerifierUnavailable = errors.New("Privacy Shield authorization verifier is unavailable")
-	errPrivacyAuthorizationReferenceRequired   = errors.New("Privacy Shield capability reference is required")
-	errPrivacyAuthorizationReferenceAmbiguous  = errors.New("Privacy Shield capability reference must be specified once")
-	errPrivacyAuthorizationReferenceInvalid    = errors.New("Privacy Shield capability reference is invalid")
-	errPrivacyAuthorizationMethodRequired       = errors.New("Privacy Shield protected Search requires POST")
-	errPrivacyAuthorizationMediaTypeRequired    = errors.New("Privacy Shield protected Search requires application/json")
+	errPrivacyAuthorizationVerifierUnavailable  = errors.New("Privacy Shield authorization verifier is unavailable")
+	errPrivacyRequesterResolverUnavailable      = errors.New("authenticated Search requester resolver is unavailable")
+	errPrivacyRequesterIdentityRequired         = errors.New("authenticated Search requester identity is required")
+	errPrivacyAuthorizationReferenceRequired    = errors.New("Privacy Shield capability reference is required")
+	errPrivacyAuthorizationReferenceAmbiguous   = errors.New("Privacy Shield capability reference must be specified once")
+	errPrivacyAuthorizationReferenceInvalid     = errors.New("Privacy Shield capability reference is invalid")
+	errPrivacyAuthorizationMethodRequired        = errors.New("Privacy Shield protected Search requires POST")
+	errPrivacyAuthorizationMediaTypeRequired     = errors.New("Privacy Shield protected Search requires application/json")
 )
 
 type searchPrivacyAuthorizationContext struct {
+	RequesterID    string
 	Resource       string
 	Operation      string
 	Purpose        string
@@ -36,25 +39,33 @@ type searchPrivacyAuthorizationVerifier interface {
 	) error
 }
 
+type searchRequesterIdentityResolver interface {
+	ResolveSearchRequester(r *http.Request) (string, error)
+}
+
 // searchPrivacyAuthorizationGate is the Search-side enforcement boundary for
 // the capability-token reference published in the Search capability contract.
 //
 // Current Development runtime wires the gate with required=false and advertises
 // not_enforced_development. A future production runtime must construct this gate
-// with required=true and a real Privacy Shield verifier before the advertised
-// enforcement state can change to required.
+// with required=true, a real Privacy Shield verifier, and an authenticated
+// requester-identity resolver before the advertised enforcement state can change
+// to required. The requester resolver must derive identity from an authenticated
+// runtime/transport boundary; arbitrary client-provided identity headers are not
+// sufficient authority.
 //
 // Required mode also owns the private transport invariant: authorization cannot
 // make a query-bearing GET request acceptable. Protected first-party Search is
 // POST-only with an application/json body so query text does not need to appear
 // in the request URL.
 type searchPrivacyAuthorizationGate struct {
-	required bool
-	verifier searchPrivacyAuthorizationVerifier
+	required          bool
+	verifier          searchPrivacyAuthorizationVerifier
+	requesterResolver searchRequesterIdentityResolver
 }
 
 func (g searchPrivacyAuthorizationGate) Enforced() bool {
-	return g.required && g.verifier != nil
+	return g.required && g.verifier != nil && g.requesterResolver != nil
 }
 
 func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
@@ -63,6 +74,9 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 	}
 	if g.verifier == nil {
 		return errPrivacyAuthorizationVerifierUnavailable
+	}
+	if g.requesterResolver == nil {
+		return errPrivacyRequesterResolverUnavailable
 	}
 
 	values := r.Header.Values(searchPrivacyAuthorizationHeader)
@@ -88,10 +102,20 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 		return errPrivacyAuthorizationMediaTypeRequired
 	}
 
+	requesterID, err := g.requesterResolver.ResolveSearchRequester(r)
+	if err != nil {
+		return err
+	}
+	requesterID = strings.TrimSpace(requesterID)
+	if requesterID == "" {
+		return errPrivacyRequesterIdentityRequired
+	}
+
 	return g.verifier.VerifySearchCapability(
 		r.Context(),
 		reference,
 		searchPrivacyAuthorizationContext{
+			RequesterID:    requesterID,
 			Resource:       "goreecloud.search.query",
 			Operation:      "search.query",
 			Purpose:        "internet_search",
