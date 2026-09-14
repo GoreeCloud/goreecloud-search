@@ -40,7 +40,7 @@ func TestSearchPrivacyAuthorizationGateDevelopmentModeDoesNotFabricateEnforcemen
 func TestSearchPrivacyAuthorizationGateRequiredModeNeedsVerifier(t *testing.T) {
 	gate := searchPrivacyAuthorizationGate{required: true}
 	r := httptest.NewRequest("POST", "/api/v1/search", nil)
-	r.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:test")
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
 
 	if err := gate.Verify(r); !errors.Is(err, errPrivacyAuthorizationVerifierUnavailable) {
 		t.Fatalf("verify error = %v, want verifier unavailable", err)
@@ -50,7 +50,7 @@ func TestSearchPrivacyAuthorizationGateRequiredModeNeedsVerifier(t *testing.T) {
 	}
 }
 
-func TestSearchPrivacyAuthorizationGateRejectsMissingOrAmbiguousReference(t *testing.T) {
+func TestSearchPrivacyAuthorizationGateRejectsMissingAmbiguousOrInvalidReference(t *testing.T) {
 	verifier := &recordingSearchPrivacyVerifier{}
 	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
 
@@ -60,10 +60,16 @@ func TestSearchPrivacyAuthorizationGateRejectsMissingOrAmbiguousReference(t *tes
 	}
 
 	ambiguous := httptest.NewRequest("POST", "/api/v1/search", nil)
-	ambiguous.Header.Add(searchPrivacyAuthorizationHeader, "privacy-shield:capability:one")
-	ambiguous.Header.Add(searchPrivacyAuthorizationHeader, "privacy-shield:capability:two")
+	ambiguous.Header.Add(searchPrivacyAuthorizationHeader, "psc_one")
+	ambiguous.Header.Add(searchPrivacyAuthorizationHeader, "psc_two")
 	if err := gate.Verify(ambiguous); !errors.Is(err, errPrivacyAuthorizationReferenceAmbiguous) {
 		t.Fatalf("ambiguous reference error = %v, want ambiguous", err)
+	}
+
+	invalid := httptest.NewRequest("POST", "/api/v1/search", nil)
+	invalid.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:test")
+	if err := gate.Verify(invalid); !errors.Is(err, errPrivacyAuthorizationReferenceInvalid) {
+		t.Fatalf("invalid reference error = %v, want invalid", err)
 	}
 
 	if verifier.calls != 0 {
@@ -75,7 +81,7 @@ func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *
 	verifier := &recordingSearchPrivacyVerifier{}
 	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
 	r := httptest.NewRequest("POST", "/api/v1/search", nil)
-	r.Header.Set(searchPrivacyAuthorizationHeader, " privacy-shield:capability:test ")
+	r.Header.Set(searchPrivacyAuthorizationHeader, " psc_test-capability ")
 
 	if err := gate.Verify(r); err != nil {
 		t.Fatalf("verify = %v", err)
@@ -86,7 +92,7 @@ func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *
 	if verifier.calls != 1 {
 		t.Fatalf("verifier calls = %d, want 1", verifier.calls)
 	}
-	if verifier.capabilityReference != "privacy-shield:capability:test" {
+	if verifier.capabilityReference != "psc_test-capability" {
 		t.Fatalf("capability reference = %q", verifier.capabilityReference)
 	}
 	want := searchPrivacyAuthorizationContext{
@@ -107,7 +113,7 @@ func TestSearchPrivacyAuthorizationGatePropagatesVerifierRejection(t *testing.T)
 	verifier := &recordingSearchPrivacyVerifier{err: wantErr}
 	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
 	r := httptest.NewRequest("POST", "/api/v1/search", nil)
-	r.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:revoked")
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_revoked")
 
 	if err := gate.Verify(r); !errors.Is(err, wantErr) {
 		t.Fatalf("verify error = %v, want %v", err, wantErr)
