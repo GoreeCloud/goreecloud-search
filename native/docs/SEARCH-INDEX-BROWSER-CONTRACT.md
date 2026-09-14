@@ -25,15 +25,22 @@ The initial interoperable capability is:
 - Endpoint: `/api/v1/search`
 - Supported machine methods: `POST`, `GET`
 - Preferred first-party method: `POST`
-- POST media type: `application/json`
+- Preferred query transport: `json_body`
+- Request media type: `application/json`
+- Response media type: `application/json`
+- Privacy authorization required: `true`
+- Maximum request body: `16384` bytes
+- Maximum result count: `100`
 - Required request fields: normalized query, category, bounded result limit
 - Default category: `general`
+
+The machine-readable capability evidence publishes these transport requirements explicitly so each consumer can independently validate the exact request shape before delegating a query. The presence of an endpoint alone is never sufficient authorization.
 
 `POST` is preferred for first-party remote delegation so query text does not have to appear in the request URL. The native Development service accepts a bounded JSON body and rejects unknown fields, multiple JSON objects, and structurally invalid bodies. `GET` remains an additive Development/compatibility surface; its continued availability does not authorize production consumers to prefer query-bearing URLs.
 
 A consumer must fail closed if the advertised capability is missing, duplicated/ambiguous, stale, non-authoritative, version-incompatible, or structurally invalid.
 
-Development consumers may explicitly opt into non-production or legacy-GET capability evidence only in Development builds and only when that exception is visible in repository-local acceptance evidence. Stable/production consumers must require production-accepted capability evidence and a compatible POST-capable transport.
+Development consumers may explicitly opt into non-production or legacy-GET capability evidence only in Development builds and only when that exception is visible in repository-local acceptance evidence. Stable/production consumers must require production-accepted capability evidence, Privacy Shield authorization, and the compatible POST + JSON-body contract.
 
 ## Data minimization
 
@@ -58,6 +65,8 @@ The machine response carries API version identity in both the `X-GoreeCloud-API-
 
 Partial provider failure inside Search may produce a degraded response if Search can still return valid results. Consumers may preserve those results while presenting degraded availability. Degraded status must never be transformed into a healthy/fully-available claim.
 
+A consumer may also apply its own bounded result cap and independently reject unsafe result actions without suppressing valid siblings. Consumer-side degradation and invalid-result evidence remain authoritative for that consumer even when Search itself reports a successful response.
+
 ## Cancellation and replacement
 
 Interactive consumers must cancel superseded query work when the user replaces the active query. Search should treat client cancellation as cancellation rather than a provider failure and avoid unnecessary downstream work where possible.
@@ -67,8 +76,11 @@ Interactive consumers must cancel superseded query work when the user replaces t
 Browser omnibox classification must remain explicit:
 
 1. Valid navigable URL / accepted navigation intent → Browser navigation path.
-2. Non-URL query → Search delegation path.
-3. Ambiguous or unsafe input → no silent remote execution until classification and applicable Privacy Shield authorization succeed.
+2. Non-URL query → local Search intent only; no query-bearing remote URL is constructed.
+3. Accepted Privacy Shield authorization + compatible production Search capability → a separate transport adapter may construct the bounded POST/JSON request.
+4. Ambiguous, unsafe, unauthorized, or incompatible input → no remote execution.
+
+The classifier must not encode free-text queries into a `?q=` destination as an intermediate convenience. Query text remains transport-neutral until the authorization and capability gates have independently accepted the operation.
 
 Browser may open Search result URLs, but Search does not gain tab/session authority.
 
@@ -80,6 +92,8 @@ Index may dispatch Search concurrently with eligible local providers only when:
 - Search is in the exact provider allowlist;
 - applicable Privacy Shield authority evidence is present and enforceable;
 - the advertised Search capability passes compatibility checks.
+
+Production-mode Index consumers must additionally require production acceptance plus the exact preferred POST, `json_body`, media-type, privacy-requirement, and request-size evidence published by the Search capability. Development mode may retain an explicit compatibility exception for older evidence without converting that exception into production acceptance.
 
 Local-only mode must not preflight or call Search. Index must not compare Search-owned raw score magnitudes against unrelated local-provider score scales; source ordering may be retained only through an explicit bounded normalization/tie-break contract.
 
