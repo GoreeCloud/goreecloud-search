@@ -27,10 +27,27 @@ func (v *recordingSearchPrivacyVerifier) VerifySearchCapability(
 	return v.err
 }
 
+type staticSearchRequesterResolver struct {
+	requesterID string
+	err         error
+}
+
+func (r staticSearchRequesterResolver) ResolveSearchRequester(_ *http.Request) (string, error) {
+	return r.requesterID, r.err
+}
+
 func protectedSearchRequest(method string) *http.Request {
 	r := httptest.NewRequest(method, "/api/v1/search", nil)
 	r.Header.Set("Content-Type", "application/json")
 	return r
+}
+
+func requiredSearchPrivacyGate(verifier searchPrivacyAuthorizationVerifier) searchPrivacyAuthorizationGate {
+	return searchPrivacyAuthorizationGate{
+		required:          true,
+		verifier:          verifier,
+		requesterResolver: staticSearchRequesterResolver{requesterID: "goreecloud-browser"},
+	}
 }
 
 func TestSearchPrivacyAuthorizationGateDevelopmentModeDoesNotFabricateEnforcement(t *testing.T) {
@@ -45,22 +62,54 @@ func TestSearchPrivacyAuthorizationGateDevelopmentModeDoesNotFabricateEnforcemen
 	}
 }
 
-func TestSearchPrivacyAuthorizationGateRequiredModeNeedsVerifier(t *testing.T) {
-	gate := searchPrivacyAuthorizationGate{required: true}
+func TestSearchPrivacyAuthorizationGateRequiredModeNeedsVerifierAndRequesterResolver(t *testing.T) {
 	r := protectedSearchRequest(http.MethodPost)
 	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
 
-	if err := gate.Verify(r); !errors.Is(err, errPrivacyAuthorizationVerifierUnavailable) {
+	withoutVerifier := searchPrivacyAuthorizationGate{
+		required:          true,
+		requesterResolver: staticSearchRequesterResolver{requesterID: "goreecloud-browser"},
+	}
+	if err := withoutVerifier.Verify(r); !errors.Is(err, errPrivacyAuthorizationVerifierUnavailable) {
 		t.Fatalf("verify error = %v, want verifier unavailable", err)
 	}
-	if gate.Enforced() {
+	if withoutVerifier.Enforced() {
 		t.Fatal("required gate without verifier must not claim enforcement")
+	}
+
+	withoutResolver := searchPrivacyAuthorizationGate{
+		required: true,
+		verifier: &recordingSearchPrivacyVerifier{},
+	}
+	if err := withoutResolver.Verify(r); !errors.Is(err, errPrivacyRequesterResolverUnavailable) {
+		t.Fatalf("verify error = %v, want requester resolver unavailable", err)
+	}
+	if withoutResolver.Enforced() {
+		t.Fatal("required gate without requester resolver must not claim enforcement")
+	}
+}
+
+func TestSearchPrivacyAuthorizationGateRejectsMissingAuthenticatedRequesterIdentity(t *testing.T) {
+	verifier := &recordingSearchPrivacyVerifier{}
+	gate := searchPrivacyAuthorizationGate{
+		required:          true,
+		verifier:          verifier,
+		requesterResolver: staticSearchRequesterResolver{},
+	}
+	r := protectedSearchRequest(http.MethodPost)
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
+
+	if err := gate.Verify(r); !errors.Is(err, errPrivacyRequesterIdentityRequired) {
+		t.Fatalf("verify error = %v, want requester identity required", err)
+	}
+	if verifier.calls != 0 {
+		t.Fatalf("verifier calls = %d, want 0", verifier.calls)
 	}
 }
 
 func TestSearchPrivacyAuthorizationGateRejectsMissingAmbiguousOrInvalidReference(t *testing.T) {
 	verifier := &recordingSearchPrivacyVerifier{}
-	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
+	gate := requiredSearchPrivacyGate(verifier)
 
 	missing := protectedSearchRequest(http.MethodPost)
 	if err := gate.Verify(missing); !errors.Is(err, errPrivacyAuthorizationReferenceRequired) {
@@ -95,7 +144,7 @@ func TestSearchPrivacyAuthorizationGateRejectsMissingAmbiguousOrInvalidReference
 
 func TestSearchPrivacyAuthorizationGateRejectsNonPrivateTransportBeforeVerification(t *testing.T) {
 	verifier := &recordingSearchPrivacyVerifier{}
-	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
+	gate := requiredSearchPrivacyGate(verifier)
 
 	getRequest := protectedSearchRequest(http.MethodGet)
 	getRequest.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
@@ -115,9 +164,9 @@ func TestSearchPrivacyAuthorizationGateRejectsNonPrivateTransportBeforeVerificat
 	}
 }
 
-func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *testing.T) {
+func TestSearchPrivacyAuthorizationGatePassesAuthenticatedRequesterAndExactOperationContext(t *testing.T) {
 	verifier := &recordingSearchPrivacyVerifier{}
-	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
+	gate := requiredSearchPrivacyGate(verifier)
 	r := protectedSearchRequest(http.MethodPost)
 	r.Header.Set(searchPrivacyAuthorizationHeader, " psc_test-capability ")
 
@@ -125,7 +174,7 @@ func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *
 		t.Fatalf("verify = %v", err)
 	}
 	if !gate.Enforced() {
-		t.Fatal("required gate with verifier must report enforcement")
+		t.Fatal("required gate with verifier and resolver must report enforcement")
 	}
 	if verifier.calls != 1 {
 		t.Fatalf("verifier calls = %d, want 1", verifier.calls)
@@ -134,6 +183,7 @@ func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *
 		t.Fatalf("capability reference = %q", verifier.capabilityReference)
 	}
 	want := searchPrivacyAuthorizationContext{
+		RequesterID:    "goreecloud-browser",
 		Resource:       "goreecloud.search.query",
 		Operation:      "search.query",
 		Purpose:        "internet_search",
@@ -146,13 +196,26 @@ func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *
 	}
 }
 
-func TestSearchPrivacyAuthorizationGatePropagatesVerifierRejection(t *testing.T) {
-	wantErr := errors.New("revoked capability")
-	verifier := &recordingSearchPrivacyVerifier{err: wantErr}
-	gate := searchPrivacyAuthorizationGate{required: true, verifier: verifier}
+func TestSearchPrivacyAuthorizationGatePropagatesRequesterAndVerifierRejection(t *testing.T) {
+	requesterErr := errors.New("requester authentication failed")
+	verifier := &recordingSearchPrivacyVerifier{}
+	gate := searchPrivacyAuthorizationGate{
+		required:          true,
+		verifier:          verifier,
+		requesterResolver: staticSearchRequesterResolver{err: requesterErr},
+	}
 	r := protectedSearchRequest(http.MethodPost)
-	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_revoked")
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
+	if err := gate.Verify(r); !errors.Is(err, requesterErr) {
+		t.Fatalf("requester error = %v, want %v", err, requesterErr)
+	}
+	if verifier.calls != 0 {
+		t.Fatalf("verifier calls = %d, want 0", verifier.calls)
+	}
 
+	wantErr := errors.New("revoked capability")
+	verifier.err = wantErr
+	gate = requiredSearchPrivacyGate(verifier)
 	if err := gate.Verify(r); !errors.Is(err, wantErr) {
 		t.Fatalf("verify error = %v, want %v", err, wantErr)
 	}
