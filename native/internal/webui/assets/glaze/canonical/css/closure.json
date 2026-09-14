@@ -16,12 +16,12 @@
     "glaze-v1.foundation.css": "b01051203831ce011c08f37b79f2e2032d34d0c8",
     "glaze-v1.components.adaptive.css": "e174ea4923ec1ac6e1eb52d7ee33c14f2f77d5ca",
     "glaze-v1.components.runtime.css": "a89356172d74b66c62cfda198ae827fe9b71c520",
-    "glaze-v1.overlay.css": "cb937fae3166289c9c935d7ae25cefe3f82f3ec0"
+    "glaze-v1.overlay.css": "cb937fae3166289c9c935d7ae25cefe3f82f3ec0",
+    "glaze-v1.advanced.css": "d6e60a9b23354b1dc62dafac284c93b772e582a4"
   },
   "pending_leaf_imports": [
     "glaze-v1.components.css",
     "glaze-v1.structure.css",
-    "glaze-v1.advanced.css",
     "glaze-v1.visual-refinement.css",
     "glaze-v1.optical-reachability.css",
     "glaze-v1.2-frosted-neutral.candidate.css",
