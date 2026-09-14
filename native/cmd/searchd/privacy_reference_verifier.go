@@ -2,7 +2,10 @@ package main
 
 import "context"
 
-const searchPrivacyVerificationConsumerID = "goreecloud-search"
+const (
+	searchPrivacyVerificationContractVersion = 1
+	searchPrivacyVerificationConsumerID       = "goreecloud-search"
+)
 
 type privacyReferenceVerificationExpected struct {
 	RequesterID    string
@@ -15,6 +18,7 @@ type privacyReferenceVerificationExpected struct {
 }
 
 type privacyReferenceVerificationRequest struct {
+	ContractVersion     int
 	ConsumerID          string
 	CapabilityReference string
 	Expected            privacyReferenceVerificationExpected
@@ -30,6 +34,9 @@ type privacyReferenceVerificationClient interface {
 // The concrete IPC/network client remains injected: Search never receives
 // Privacy Shield signing keys and never interprets the signed bearer token.
 //
+// The verification envelope has its own version so Search can fail closed when
+// the authority-side IPC contract changes independently from token format.
+//
 // Search uses consume=true because one remote query is one authorization use.
 // This allows Privacy Shield to enforce single-use capabilities and replay state
 // without Search owning that authority. Requester identity comes from the
@@ -44,6 +51,7 @@ func (v privacyShieldReferenceVerifier) VerifySearchCapability(
 	authorizationContext searchPrivacyAuthorizationContext,
 ) error {
 	return v.client.VerifyReference(ctx, privacyReferenceVerificationRequest{
+		ContractVersion:     searchPrivacyVerificationContractVersion,
 		ConsumerID:          searchPrivacyVerificationConsumerID,
 		CapabilityReference: capabilityReference,
 		Expected: privacyReferenceVerificationExpected{
