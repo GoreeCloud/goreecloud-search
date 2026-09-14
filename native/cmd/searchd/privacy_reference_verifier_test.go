@@ -9,24 +9,39 @@ import (
 )
 
 type recordingPrivacyReferenceClient struct {
-	request privacyReferenceVerificationRequest
-	calls   int
-	err     error
+	request  privacyReferenceVerificationRequest
+	response privacyReferenceVerificationResponse
+	calls    int
+	err      error
 }
 
 func (c *recordingPrivacyReferenceClient) VerifyReference(
 	_ context.Context,
 	request privacyReferenceVerificationRequest,
-) error {
+) (privacyReferenceVerificationResponse, error) {
 	c.calls++
 	c.request = request
-	return c.err
+	return c.response, c.err
 }
 
-func TestPrivacyShieldReferenceVerifierBuildsVersionedMinimalSingleUseVerificationRequest(t *testing.T) {
-	client := &recordingPrivacyReferenceClient{}
-	verifier := privacyShieldReferenceVerifier{client: client}
-	ctx := searchPrivacyAuthorizationContext{
+func authorizedPrivacyReferenceResponse(
+	reference string,
+	ctx searchPrivacyAuthorizationContext,
+) privacyReferenceVerificationResponse {
+	return privacyReferenceVerificationResponse{
+		ContractVersion:     searchPrivacyVerificationContractVersion,
+		Authorized:          true,
+		CapabilityReference: reference,
+		Constraints: privacyReferenceVerificationConstraints{
+			ProcessingZone: ctx.ProcessingZone,
+			Destination:    ctx.Destination,
+			RetentionMode:  ctx.RetentionMode,
+		},
+	}
+}
+
+func searchAuthorizationTestContext() searchPrivacyAuthorizationContext {
+	return searchPrivacyAuthorizationContext{
 		RequesterID:    "goreecloud-index",
 		Resource:       "goreecloud.search.query",
 		Operation:      "search.query",
@@ -35,6 +50,14 @@ func TestPrivacyShieldReferenceVerifierBuildsVersionedMinimalSingleUseVerificati
 		Destination:    "https://search.goreecloud.com",
 		RetentionMode:  "none",
 	}
+}
+
+func TestPrivacyShieldReferenceVerifierBuildsVersionedMinimalSingleUseVerificationRequest(t *testing.T) {
+	ctx := searchAuthorizationTestContext()
+	client := &recordingPrivacyReferenceClient{
+		response: authorizedPrivacyReferenceResponse("psc_operation", ctx),
+	}
+	verifier := privacyShieldReferenceVerifier{client: client}
 
 	if err := verifier.VerifySearchCapability(context.Background(), "psc_operation", ctx); err != nil {
 		t.Fatalf("VerifySearchCapability = %v", err)
@@ -113,17 +136,89 @@ func TestPrivacyShieldReferenceVerifierPropagatesAuthorityRejection(t *testing.T
 	err := verifier.VerifySearchCapability(
 		context.Background(),
 		"psc_operation",
-		searchPrivacyAuthorizationContext{
-			RequesterID:    "goreecloud-browser",
-			Resource:       "goreecloud.search.query",
-			Operation:      "search.query",
-			Purpose:        "internet_search",
-			ProcessingZone: "private_goreecloud",
-			Destination:    "https://search.goreecloud.com",
-			RetentionMode:  "none",
-		},
+		searchAuthorizationTestContext(),
 	)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("VerifySearchCapability error = %v, want %v", err, wantErr)
+	}
+}
+
+func TestPrivacyShieldReferenceVerifierFailsClosedWithoutClient(t *testing.T) {
+	verifier := privacyShieldReferenceVerifier{}
+	err := verifier.VerifySearchCapability(
+		context.Background(),
+		"psc_operation",
+		searchAuthorizationTestContext(),
+	)
+	if !errors.Is(err, errPrivacyReferenceVerificationClientUnavailable) {
+		t.Fatalf("VerifySearchCapability error = %v, want %v", err, errPrivacyReferenceVerificationClientUnavailable)
+	}
+}
+
+func TestPrivacyShieldReferenceVerifierValidatesAuthorityResponse(t *testing.T) {
+	ctx := searchAuthorizationTestContext()
+	valid := authorizedPrivacyReferenceResponse("psc_operation", ctx)
+
+	tests := []struct {
+		name     string
+		mutate   func(*privacyReferenceVerificationResponse)
+		wantErr  error
+	}{
+		{
+			name: "contract version",
+			mutate: func(response *privacyReferenceVerificationResponse) {
+				response.ContractVersion++
+			},
+			wantErr: errPrivacyReferenceVerificationContractMismatch,
+		},
+		{
+			name: "authorization denied",
+			mutate: func(response *privacyReferenceVerificationResponse) {
+				response.Authorized = false
+			},
+			wantErr: errPrivacyReferenceVerificationDenied,
+		},
+		{
+			name: "reference echo",
+			mutate: func(response *privacyReferenceVerificationResponse) {
+				response.CapabilityReference = "psc_other"
+			},
+			wantErr: errPrivacyReferenceVerificationReferenceMismatch,
+		},
+		{
+			name: "processing-zone constraint",
+			mutate: func(response *privacyReferenceVerificationResponse) {
+				response.Constraints.ProcessingZone = "external"
+			},
+			wantErr: errPrivacyReferenceVerificationConstraintMismatch,
+		},
+		{
+			name: "destination constraint",
+			mutate: func(response *privacyReferenceVerificationResponse) {
+				response.Constraints.Destination = "https://other.example"
+			},
+			wantErr: errPrivacyReferenceVerificationConstraintMismatch,
+		},
+		{
+			name: "retention constraint",
+			mutate: func(response *privacyReferenceVerificationResponse) {
+				response.Constraints.RetentionMode = "session"
+			},
+			wantErr: errPrivacyReferenceVerificationConstraintMismatch,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			response := valid
+			test.mutate(&response)
+			client := &recordingPrivacyReferenceClient{response: response}
+			verifier := privacyShieldReferenceVerifier{client: client}
+
+			err := verifier.VerifySearchCapability(context.Background(), "psc_operation", ctx)
+			if !errors.Is(err, test.wantErr) {
+				t.Fatalf("VerifySearchCapability error = %v, want %v", err, test.wantErr)
+			}
+		})
 	}
 }
