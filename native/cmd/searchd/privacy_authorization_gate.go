@@ -11,6 +11,7 @@ var (
 	errPrivacyAuthorizationVerifierUnavailable = errors.New("Privacy Shield authorization verifier is unavailable")
 	errPrivacyAuthorizationReferenceRequired   = errors.New("Privacy Shield capability reference is required")
 	errPrivacyAuthorizationReferenceAmbiguous  = errors.New("Privacy Shield capability reference must be specified once")
+	errPrivacyAuthorizationReferenceInvalid    = errors.New("Privacy Shield capability reference is invalid")
 )
 
 type searchPrivacyAuthorizationContext struct {
@@ -64,6 +65,9 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 	reference := strings.TrimSpace(values[0])
 	if reference == "" {
 		return errPrivacyAuthorizationReferenceRequired
+	}
+	if !strings.HasPrefix(reference, "psc_") || len(reference) <= len("psc_") {
+		return errPrivacyAuthorizationReferenceInvalid
 	}
 
 	return g.verifier.VerifySearchCapability(
