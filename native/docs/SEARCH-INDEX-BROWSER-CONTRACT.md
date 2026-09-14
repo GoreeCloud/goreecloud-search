@@ -22,25 +22,41 @@ The initial interoperable capability is:
 
 - Capability ID: `search.query`
 - Contract version: `1`
-- Endpoint: `/api/v1/search`
+- Discovery endpoint: `/api/v1/status`
+- Discovery collection: `capability_evidence`
+- Query endpoint: `/api/v1/search`
 - Supported machine methods: `POST`, `GET`
 - Preferred first-party method: `POST`
 - Preferred query transport: `json_body`
 - Request media type: `application/json`
 - Response media type: `application/json`
 - Privacy authorization required: `true`
+- Privacy authorization scheme: `privacy_shield_capability_token_reference`
+- Privacy authorization header: `X-GoreeCloud-Privacy-Capability`
 - Maximum request body: `16384` bytes
 - Maximum result count: `100`
 - Required request fields: normalized query, category, bounded result limit
 - Default category: `general`
 
-The machine-readable capability evidence publishes these transport requirements explicitly so each consumer can independently validate the exact request shape before delegating a query. The presence of an endpoint alone is never sufficient authorization.
+The machine-readable capability evidence publishes these transport requirements explicitly so each consumer can independently validate discovery, authorization, and request shape before delegating a query. The presence of an endpoint alone is never sufficient authorization.
+
+The current Development service explicitly advertises Privacy Shield authorization enforcement as `not_enforced_development`. This is intentional evidence of a remaining runtime boundary, not permission to send production traffic. Stable/production consumers must require an accepted enforcement state such as `required` in addition to production acceptance before they may use the advertised authorization header.
 
 `POST` is preferred for first-party remote delegation so query text does not have to appear in the request URL. The native Development service accepts a bounded JSON body and rejects unknown fields, multiple JSON objects, and structurally invalid bodies. `GET` remains an additive Development/compatibility surface; its continued availability does not authorize production consumers to prefer query-bearing URLs.
 
-A consumer must fail closed if the advertised capability is missing, duplicated/ambiguous, stale, non-authoritative, version-incompatible, or structurally invalid.
+A consumer must fail closed if the advertised capability is missing, duplicated/ambiguous, stale, non-authoritative, version-incompatible, structurally invalid, or does not independently prove the expected Privacy Shield authorization transport.
 
-Development consumers may explicitly opt into non-production or legacy-GET capability evidence only in Development builds and only when that exception is visible in repository-local acceptance evidence. Stable/production consumers must require production-accepted capability evidence, Privacy Shield authorization, and the compatible POST + JSON-body contract.
+Development consumers may explicitly opt into non-production or legacy-GET capability evidence only in Development builds and only when that exception is visible in repository-local acceptance evidence. Stable/production consumers must require production-accepted capability evidence, enforced Privacy Shield authorization, and the compatible POST + JSON-body contract.
+
+## Privacy Shield authorization transport
+
+The preferred production model is for authorization to travel with the delegated operation as a Privacy Shield capability-token reference, rather than as a copied policy decision or generic identity claim.
+
+A production consumer must obtain and validate the canonical Privacy Shield decision for the exact `search.query` operation and ensure that the decision permits the expected processing zone, destination, retention behavior, and any obligations before transmitting the request. Consumers that cannot enforce returned obligations must reject constrained decisions rather than silently treating them as unconditional allows.
+
+Only the minimum capability-token reference should cross the Search boundary through `X-GoreeCloud-Privacy-Capability`. Raw policy documents, browsing state, local Index data, or unrelated evidence must not be attached.
+
+Search server-side verification/enforcement of that reference is not yet implemented in this Development service. The capability evidence therefore remains non-production and explicitly non-enforcing until that runtime is complete and accepted.
 
 ## Data minimization
 
@@ -77,8 +93,8 @@ Browser omnibox classification must remain explicit:
 
 1. Valid navigable URL / accepted navigation intent → Browser navigation path.
 2. Non-URL query → local Search intent only; no query-bearing remote URL is constructed.
-3. Accepted Privacy Shield authorization + compatible production Search capability → a separate transport adapter may construct the bounded POST/JSON request.
-4. Ambiguous, unsafe, unauthorized, or incompatible input → no remote execution.
+3. One unambiguous compatible Search capability + accepted Privacy Shield capability-token authorization → a separate transport adapter may construct the bounded POST/JSON request.
+4. Ambiguous, unsafe, unauthorized, expired, constrained-but-unenforceable, or incompatible input → no remote execution.
 
 The classifier must not encode free-text queries into a `?q=` destination as an intermediate convenience. Query text remains transport-neutral until the authorization and capability gates have independently accepted the operation.
 
@@ -93,7 +109,9 @@ Index may dispatch Search concurrently with eligible local providers only when:
 - applicable Privacy Shield authority evidence is present and enforceable;
 - the advertised Search capability passes compatibility checks.
 
-Production-mode Index consumers must additionally require production acceptance plus the exact preferred POST, `json_body`, media-type, privacy-requirement, and request-size evidence published by the Search capability. Development mode may retain an explicit compatibility exception for older evidence without converting that exception into production acceptance.
+Production-mode Index consumers must additionally require production acceptance plus the exact discovery, POST, `json_body`, media-type, privacy-authorization scheme/header/enforcement, and request-size evidence published by the Search capability. Before calling the Search client, Index must obtain a Privacy Shield capability-token reference for the exact operation and carry that reference with the delegated request.
+
+Development mode may retain an explicit compatibility exception for older evidence without converting that exception into production acceptance.
 
 Local-only mode must not preflight or call Search. Index must not compare Search-owned raw score magnitudes against unrelated local-provider score scales; source ordering may be retained only through an explicit bounded normalization/tie-break contract.
 
@@ -103,4 +121,4 @@ All Search-owned user-facing surfaces must track the latest approved Stable Glaz
 
 ## Stability rule
 
-No Search–Index–Browser integration may be described as Stable merely because the API compiles, CI passes, or a source adapter exists. Stable acceptance requires current contracts, supported runtime evidence, privacy/security enforcement, accessibility, error/degradation behavior, and repository-local release acceptance for every participating product.
+No Search–Index–Browser integration may be described as Stable merely because the API compiles, CI passes, or a source adapter exists. Stable acceptance requires current contracts, supported runtime evidence, server-side Privacy Shield enforcement, accessibility, error/degradation behavior, and repository-local release acceptance for every participating product.
