@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 	"unicode"
 )
@@ -18,6 +19,8 @@ var (
 	errIdentityDirectServiceCredentialSourceUnavailable = errors.New("GoreeCloud Identity direct-service credential source is unavailable")
 	errIdentityDirectServiceCredentialInvalid           = errors.New("GoreeCloud Identity direct-service credential is invalid for Privacy Shield")
 	errIdentityDirectServiceAuthorizationHeaderPresent  = errors.New("Privacy Shield request already contains an Authorization header")
+	errIdentityDirectServiceDestinationInvalid          = errors.New("Privacy Shield direct-service destination is invalid")
+	errIdentityDirectServiceDestinationMismatch         = errors.New("Identity direct-service credential cannot be sent outside the configured Privacy Shield endpoint")
 )
 
 // identityDirectServiceCredential is minimized metadata returned alongside an
@@ -48,23 +51,37 @@ type identityDirectServiceCredentialSource interface {
 // to Privacy Shield. This is service authentication only. It does not resolve
 // the end-user/requester identity carried in the Privacy Shield operation and
 // it does not create Privacy Shield authorization by itself.
+//
+// The transport is bound to one exact Privacy Shield verification endpoint so
+// an accidental RoundTripper reuse cannot send the short-lived Identity bearer
+// credential to another origin or path.
 type identityDirectServiceRoundTripper struct {
-	base   http.RoundTripper
-	source identityDirectServiceCredentialSource
+	base            http.RoundTripper
+	source          identityDirectServiceCredentialSource
+	expectedEndpoint *url.URL
 }
 
 func newIdentityDirectServiceRoundTripper(
 	base http.RoundTripper,
 	source identityDirectServiceCredentialSource,
+	privacyShieldEndpoint string,
 ) (*identityDirectServiceRoundTripper, error) {
 	if base == nil || source == nil {
 		return nil, errIdentityDirectServiceCredentialSourceUnavailable
 	}
-	return &identityDirectServiceRoundTripper{base: base, source: source}, nil
+	parsedEndpoint, err := url.Parse(strings.TrimSpace(privacyShieldEndpoint))
+	if err != nil || !validPrivacyReferenceHTTPEndpoint(parsedEndpoint) {
+		return nil, errIdentityDirectServiceDestinationInvalid
+	}
+	return &identityDirectServiceRoundTripper{
+		base:             base,
+		source:           source,
+		expectedEndpoint: parsedEndpoint,
+	}, nil
 }
 
 func (t *identityDirectServiceRoundTripper) AuthenticatedConsumerID() string {
-	if t == nil || t.source == nil || t.base == nil {
+	if t == nil || t.source == nil || t.base == nil || t.expectedEndpoint == nil {
 		return ""
 	}
 	return searchPrivacyVerificationConsumerID
@@ -73,8 +90,11 @@ func (t *identityDirectServiceRoundTripper) AuthenticatedConsumerID() string {
 func (t *identityDirectServiceRoundTripper) RoundTrip(
 	request *http.Request,
 ) (*http.Response, error) {
-	if t == nil || t.source == nil || t.base == nil || request == nil {
+	if t == nil || t.source == nil || t.base == nil || t.expectedEndpoint == nil || request == nil {
 		return nil, errIdentityDirectServiceCredentialSourceUnavailable
+	}
+	if !sameIdentityDirectServiceEndpoint(request.URL, t.expectedEndpoint) {
+		return nil, errIdentityDirectServiceDestinationMismatch
 	}
 	if strings.TrimSpace(request.Header.Get("Authorization")) != "" {
 		return nil, errIdentityDirectServiceAuthorizationHeaderPresent
@@ -96,6 +116,19 @@ func (t *identityDirectServiceRoundTripper) RoundTrip(
 	forwarded.Header = request.Header.Clone()
 	forwarded.Header.Set("Authorization", "Bearer "+credential.BearerToken)
 	return t.base.RoundTrip(forwarded)
+}
+
+func sameIdentityDirectServiceEndpoint(actual, expected *url.URL) bool {
+	if actual == nil || expected == nil {
+		return false
+	}
+	return actual.Scheme == expected.Scheme &&
+		actual.Host == expected.Host &&
+		actual.Path == expected.Path &&
+		actual.RawPath == expected.RawPath &&
+		actual.RawQuery == expected.RawQuery &&
+		actual.Fragment == expected.Fragment &&
+		actual.User == nil
 }
 
 func validateSearchPrivacyDirectServiceCredential(
