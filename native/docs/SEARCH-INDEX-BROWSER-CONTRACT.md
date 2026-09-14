@@ -23,12 +23,17 @@ The initial interoperable capability is:
 - Capability ID: `search.query`
 - Contract version: `1`
 - Endpoint: `/api/v1/search`
+- Supported machine methods: `POST`, `GET`
+- Preferred first-party method: `POST`
+- POST media type: `application/json`
 - Required request fields: normalized query, category, bounded result limit
 - Default category: `general`
 
+`POST` is preferred for first-party remote delegation so query text does not have to appear in the request URL. The native Development service accepts a bounded JSON body and rejects unknown fields, multiple JSON objects, and structurally invalid bodies. `GET` remains an additive Development/compatibility surface; its continued availability does not authorize production consumers to prefer query-bearing URLs.
+
 A consumer must fail closed if the advertised capability is missing, duplicated/ambiguous, stale, non-authoritative, version-incompatible, or structurally invalid.
 
-Development consumers may explicitly opt into non-production capability evidence only in Development builds and only when that exception is visible in repository-local acceptance evidence. Stable/production consumers must require production-accepted capability evidence.
+Development consumers may explicitly opt into non-production or legacy-GET capability evidence only in Development builds and only when that exception is visible in repository-local acceptance evidence. Stable/production consumers must require production-accepted capability evidence and a compatible POST-capable transport.
 
 ## Data minimization
 
@@ -46,6 +51,8 @@ The delegated request must not include unrelated local state. In particular, the
 Search results returned to Index or Browser must contain only fields required by the consuming experience, including a title, canonical HTTP(S) URL, optional snippet, and bounded Search-owned ranking metadata.
 
 Consumers must independently validate executable destinations. HTTP(S) results containing invalid hosts, unsupported schemes, embedded user-info credentials, malformed URLs, or other disallowed destination forms must not become executable actions.
+
+The machine response carries API version identity in both the `X-GoreeCloud-API-Version` header and the successful response body so consumers can reject incompatible or mismatched contracts.
 
 ## Degradation
 
@@ -74,7 +81,7 @@ Index may dispatch Search concurrently with eligible local providers only when:
 - applicable Privacy Shield authority evidence is present and enforceable;
 - the advertised Search capability passes compatibility checks.
 
-Local-only mode must not preflight or call Search.
+Local-only mode must not preflight or call Search. Index must not compare Search-owned raw score magnitudes against unrelated local-provider score scales; source ordering may be retained only through an explicit bounded normalization/tie-break contract.
 
 ## Glaze UI
 
