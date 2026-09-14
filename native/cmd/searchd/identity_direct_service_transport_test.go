@@ -151,11 +151,29 @@ func TestIdentityDirectServiceTransportRejectsCredentialMetadataMismatch(t *test
 			},
 		},
 		{
+			name: "service whitespace is not normalized",
+			credential: identityDirectServiceCredential{
+				BearerToken: "token",
+				ServiceID:   " goreecloud-search ",
+				Audience:    searchPrivacyDirectServiceAudience,
+				Scopes:      []string{searchPrivacyDirectServiceScope},
+			},
+		},
+		{
 			name: "wrong audience",
 			credential: identityDirectServiceCredential{
 				BearerToken: "token",
 				ServiceID:   searchPrivacyVerificationConsumerID,
 				Audience:    "goreecloud-mesh",
+				Scopes:      []string{searchPrivacyDirectServiceScope},
+			},
+		},
+		{
+			name: "audience whitespace is not normalized",
+			credential: identityDirectServiceCredential{
+				BearerToken: "token",
+				ServiceID:   searchPrivacyVerificationConsumerID,
+				Audience:    " goreecloud-privacy-shield ",
 				Scopes:      []string{searchPrivacyDirectServiceScope},
 			},
 		},
