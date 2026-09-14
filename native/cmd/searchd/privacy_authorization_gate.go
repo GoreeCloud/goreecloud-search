@@ -1,0 +1,77 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"strings"
+)
+
+var (
+	errPrivacyAuthorizationVerifierUnavailable = errors.New("Privacy Shield authorization verifier is unavailable")
+	errPrivacyAuthorizationReferenceRequired   = errors.New("Privacy Shield capability reference is required")
+	errPrivacyAuthorizationReferenceAmbiguous  = errors.New("Privacy Shield capability reference must be specified once")
+)
+
+type searchPrivacyAuthorizationContext struct {
+	Operation      string
+	ProcessingZone string
+	Destination    string
+	RetentionMode  string
+}
+
+type searchPrivacyAuthorizationVerifier interface {
+	VerifySearchCapability(
+		ctx context.Context,
+		capabilityReference string,
+		authorizationContext searchPrivacyAuthorizationContext,
+	) error
+}
+
+// searchPrivacyAuthorizationGate is the Search-side enforcement boundary for
+// the capability-token reference published in the Search capability contract.
+//
+// Current Development runtime does not wire this gate into searchAPI and
+// advertises not_enforced_development. Future production wiring must construct
+// this gate with required=true and a real Privacy Shield verifier before the
+// advertised enforcement state can change to required.
+type searchPrivacyAuthorizationGate struct {
+	required bool
+	verifier searchPrivacyAuthorizationVerifier
+}
+
+func (g searchPrivacyAuthorizationGate) Enforced() bool {
+	return g.required && g.verifier != nil
+}
+
+func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
+	if !g.required {
+		return nil
+	}
+	if g.verifier == nil {
+		return errPrivacyAuthorizationVerifierUnavailable
+	}
+
+	values := r.Header.Values(searchPrivacyAuthorizationHeader)
+	if len(values) == 0 {
+		return errPrivacyAuthorizationReferenceRequired
+	}
+	if len(values) != 1 {
+		return errPrivacyAuthorizationReferenceAmbiguous
+	}
+	reference := strings.TrimSpace(values[0])
+	if reference == "" {
+		return errPrivacyAuthorizationReferenceRequired
+	}
+
+	return g.verifier.VerifySearchCapability(
+		r.Context(),
+		reference,
+		searchPrivacyAuthorizationContext{
+			Operation:      "search.query",
+			ProcessingZone: "private_goreecloud",
+			Destination:    "https://search.goreecloud.com",
+			RetentionMode:  "none",
+		},
+	)
+}
