@@ -13,11 +13,11 @@
     "glaze-v1.1.css": "aa0250f01151f17cd3c77e9a67544c6af4b5aa32",
     "glaze-v1.1-appearance.css": "c4e10e043d537c68f1e4a5f97bdb8b6f0d371dce",
     "glaze-v1.0.0.css": "eca2209c5d678830f92907b4d44ea6cc5b1c8536",
+    "glaze-v1.foundation.css": "b01051203831ce011c08f37b79f2e2032d34d0c8",
     "glaze-v1.components.adaptive.css": "e174ea4923ec1ac6e1eb52d7ee33c14f2f77d5ca",
     "glaze-v1.components.runtime.css": "a89356172d74b66c62cfda198ae827fe9b71c520"
   },
   "pending_leaf_imports": [
-    "glaze-v1.foundation.css",
     "glaze-v1.components.css",
     "glaze-v1.structure.css",
     "glaze-v1.overlay.css",
