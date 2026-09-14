@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -73,10 +74,18 @@ func TestSearchPrivacyAuthorizationGateRejectsMissingAmbiguousOrInvalidReference
 		t.Fatalf("ambiguous reference error = %v, want ambiguous", err)
 	}
 
-	invalid := protectedSearchRequest(http.MethodPost)
-	invalid.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:test")
-	if err := gate.Verify(invalid); !errors.Is(err, errPrivacyAuthorizationReferenceInvalid) {
-		t.Fatalf("invalid reference error = %v, want invalid", err)
+	invalidReferences := []string{
+		"privacy-shield:capability:test",
+		"psc_has whitespace",
+		"psc_line\nbreak",
+		"psc_" + strings.Repeat("x", maxPrivacyAuthorizationReferenceBytes),
+	}
+	for _, reference := range invalidReferences {
+		invalid := protectedSearchRequest(http.MethodPost)
+		invalid.Header.Set(searchPrivacyAuthorizationHeader, reference)
+		if err := gate.Verify(invalid); !errors.Is(err, errPrivacyAuthorizationReferenceInvalid) {
+			t.Fatalf("invalid reference %q error = %v, want invalid", reference, err)
+		}
 	}
 
 	if verifier.calls != 0 {
