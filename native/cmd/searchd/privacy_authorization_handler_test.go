@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
 func TestSearchAPIRequiredPrivacyGateRejectsBeforeParsingRequest(t *testing.T) {
@@ -94,6 +98,42 @@ func TestSearchAPIVerifierRejectionIsSanitized(t *testing.T) {
 	}
 	if strings.Contains(w.Body.String(), "signature") {
 		t.Fatalf("verifier details leaked in body: %q", w.Body.String())
+	}
+}
+
+func TestSearchAPICallerCancellationDoesNotWriteSyntheticError(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	app := server{engine: searchcore.NewEngine(time.Second)}
+	r := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/search",
+		strings.NewReader(`{"query":"superseded query","category":"general","limit":5}`),
+	).WithContext(ctx)
+	r.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	app.searchAPI(w, r)
+
+	if w.Body.Len() != 0 {
+		t.Fatalf("canceled API request wrote synthetic response body: %q", w.Body.String())
+	}
+	if got := w.Header().Get("X-GoreeCloud-API-Version"); got != "" {
+		t.Fatalf("canceled API request wrote response headers: %q", got)
+	}
+}
+
+func TestSearchPageCallerCancellationDoesNotRenderSyntheticError(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	app := server{engine: searchcore.NewEngine(time.Second)}
+	r := httptest.NewRequest(http.MethodGet, "/search?q=superseded", nil).WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	app.searchPage(w, r)
+
+	if w.Body.Len() != 0 {
+		t.Fatalf("canceled HTML request rendered synthetic error: %q", w.Body.String())
 	}
 }
 
