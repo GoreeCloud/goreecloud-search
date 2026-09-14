@@ -1,0 +1,60 @@
+package main
+
+import "context"
+
+const searchPrivacyVerificationConsumerID = "goreecloud-search"
+
+type privacyReferenceVerificationExpected struct {
+	RequesterID    string
+	ResourceID     string
+	Purpose        string
+	Operation      string
+	ProcessingZone string
+	Destination    string
+	RetentionMode  string
+}
+
+type privacyReferenceVerificationRequest struct {
+	ConsumerID          string
+	CapabilityReference string
+	Expected            privacyReferenceVerificationExpected
+	Consume             bool
+}
+
+type privacyReferenceVerificationClient interface {
+	VerifyReference(ctx context.Context, request privacyReferenceVerificationRequest) error
+}
+
+// privacyShieldReferenceVerifier adapts Search's narrow authorization gate to
+// the authority-owned Privacy Shield capability-reference verification service.
+// The concrete IPC/network client remains injected: Search never receives
+// Privacy Shield signing keys and never interprets the signed bearer token.
+//
+// Search uses consume=true because one remote query is one authorization use.
+// This allows Privacy Shield to enforce single-use capabilities and replay state
+// without Search owning that authority.
+type privacyShieldReferenceVerifier struct {
+	client      privacyReferenceVerificationClient
+	requesterID string
+}
+
+func (v privacyShieldReferenceVerifier) VerifySearchCapability(
+	ctx context.Context,
+	capabilityReference string,
+	authorizationContext searchPrivacyAuthorizationContext,
+) error {
+	return v.client.VerifyReference(ctx, privacyReferenceVerificationRequest{
+		ConsumerID:          searchPrivacyVerificationConsumerID,
+		CapabilityReference: capabilityReference,
+		Expected: privacyReferenceVerificationExpected{
+			RequesterID:    v.requesterID,
+			ResourceID:     authorizationContext.Resource,
+			Purpose:        authorizationContext.Purpose,
+			Operation:      authorizationContext.Operation,
+			ProcessingZone: authorizationContext.ProcessingZone,
+			Destination:    authorizationContext.Destination,
+			RetentionMode:  authorizationContext.RetentionMode,
+		},
+		Consume: true,
+	})
+}
