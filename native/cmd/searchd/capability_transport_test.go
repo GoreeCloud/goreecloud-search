@@ -28,6 +28,7 @@ func TestSearchCapabilityJSONPublishesPreferredPrivateTransport(t *testing.T) {
 		PrivacyAuthorizationScheme      string `json:"privacy_authorization_scheme"`
 		PrivacyAuthorizationHeader      string `json:"privacy_authorization_header"`
 		PrivacyAuthorizationEnforcement string `json:"privacy_authorization_enforcement"`
+		AuthenticatedRequesterRequired  bool   `json:"authenticated_requester_required"`
 		MaxRequestBytes                 int    `json:"max_request_bytes"`
 	}
 	if err := json.Unmarshal(encoded, &document); err != nil {
@@ -60,6 +61,9 @@ func TestSearchCapabilityJSONPublishesPreferredPrivateTransport(t *testing.T) {
 	}
 	if document.PrivacyAuthorizationEnforcement != searchPrivacyAuthorizationEnforcementDev {
 		t.Fatalf("privacy authorization enforcement = %q, want %q", document.PrivacyAuthorizationEnforcement, searchPrivacyAuthorizationEnforcementDev)
+	}
+	if !document.AuthenticatedRequesterRequired {
+		t.Fatal("authenticated requester requirement must be published")
 	}
 	if document.MaxRequestBytes != maxSearchAPIRequestBytes {
 		t.Fatalf("max request bytes = %d, want %d", document.MaxRequestBytes, maxSearchAPIRequestBytes)
