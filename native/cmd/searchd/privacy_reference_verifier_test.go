@@ -21,7 +21,7 @@ func (c *recordingPrivacyReferenceClient) VerifyReference(
 	return c.err
 }
 
-func TestPrivacyShieldReferenceVerifierBuildsMinimalSingleUseVerificationRequest(t *testing.T) {
+func TestPrivacyShieldReferenceVerifierBuildsVersionedMinimalSingleUseVerificationRequest(t *testing.T) {
 	client := &recordingPrivacyReferenceClient{}
 	verifier := privacyShieldReferenceVerifier{client: client}
 	ctx := searchPrivacyAuthorizationContext{
@@ -41,6 +41,7 @@ func TestPrivacyShieldReferenceVerifierBuildsMinimalSingleUseVerificationRequest
 		t.Fatalf("client calls = %d, want 1", client.calls)
 	}
 	want := privacyReferenceVerificationRequest{
+		ContractVersion:     searchPrivacyVerificationContractVersion,
 		ConsumerID:          "goreecloud-search",
 		CapabilityReference: "psc_operation",
 		Expected: privacyReferenceVerificationExpected{
