@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -23,23 +24,39 @@ import (
 )
 
 const (
-	apiVersion          = "1"
-	maxAPISearchResults = 100
+	apiVersion               = "1"
+	maxAPISearchResults      = 100
+	maxSearchAPIRequestBytes = 16 * 1024
 )
 
 type capabilityEvidence struct {
-	ID                 string `json:"id"`
-	ContractVersion    string `json:"contract_version"`
-	Authoritative      bool   `json:"authoritative"`
-	Current            bool   `json:"current"`
-	ProductionAccepted bool   `json:"production_accepted"`
-	Endpoint           string `json:"endpoint"`
-	MaxResults         int    `json:"max_results,omitempty"`
+	ID                 string   `json:"id"`
+	ContractVersion    string   `json:"contract_version"`
+	Authoritative      bool     `json:"authoritative"`
+	Current            bool     `json:"current"`
+	ProductionAccepted bool     `json:"production_accepted"`
+	Endpoint           string   `json:"endpoint"`
+	Methods            []string `json:"methods,omitempty"`
+	PreferredMethod    string   `json:"preferred_method,omitempty"`
+	MaxResults         int      `json:"max_results,omitempty"`
 }
 
 type searchAPIResponse struct {
 	APIVersion string `json:"api_version"`
 	searchcore.Response
+}
+
+type searchAPIBodyRequest struct {
+	Query    string `json:"query"`
+	Category string `json:"category,omitempty"`
+	Limit    *int   `json:"limit,omitempty"`
+}
+
+type parsedSearchAPIRequest struct {
+	query    string
+	category string
+	limit    int
+	hasLimit bool
 }
 
 type server struct {
@@ -61,6 +78,8 @@ func searchCapabilityEvidence() []capabilityEvidence {
 			Current:            true,
 			ProductionAccepted: false,
 			Endpoint:           "/api/v1/search",
+			Methods:            []string{http.MethodPost, http.MethodGet},
+			PreferredMethod:    http.MethodPost,
 			MaxResults:         maxAPISearchResults,
 		},
 	}
@@ -112,6 +131,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/status", app.status)
 	mux.HandleFunc("GET /api/v1/readiness", app.readiness)
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
+	mux.HandleFunc("POST /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
 	mux.HandleFunc("GET /api/v1/web-intelligence/status", app.webIntelligenceStatus)
@@ -259,6 +279,71 @@ func requestedResultLimit(r *http.Request) (int, bool, error) {
 	return limit, true, nil
 }
 
+func requestedGETSearchAPIRequest(r *http.Request) (parsedSearchAPIRequest, error) {
+	rawQuery, err := requestedSearchQuery(r)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+	category, err := requestedCategory(r)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+	limit, hasLimit, err := requestedResultLimit(r)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+	return parsedSearchAPIRequest{
+		query:    rawQuery,
+		category: category,
+		limit:    limit,
+		hasLimit: hasLimit,
+	}, nil
+}
+
+func requestedPOSTSearchAPIRequest(w http.ResponseWriter, r *http.Request) (parsedSearchAPIRequest, error) {
+	contentType := strings.TrimSpace(strings.SplitN(r.Header.Get("Content-Type"), ";", 2)[0])
+	if contentType != "application/json" {
+		return parsedSearchAPIRequest{}, errors.New("POST search requests require application/json")
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxSearchAPIRequestBytes)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var body searchAPIBodyRequest
+	if err := decoder.Decode(&body); err != nil {
+		return parsedSearchAPIRequest{}, errors.New("invalid JSON search request")
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return parsedSearchAPIRequest{}, errors.New("search request must contain one JSON object")
+	}
+
+	category, err := searchcore.ValidateCategory(body.Category)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+
+	parsed := parsedSearchAPIRequest{
+		query:    body.Query,
+		category: category,
+	}
+	if body.Limit != nil {
+		if *body.Limit < 1 || *body.Limit > maxAPISearchResults {
+			return parsedSearchAPIRequest{}, errors.New("result limit must be an integer between 1 and 100")
+		}
+		parsed.limit = *body.Limit
+		parsed.hasLimit = true
+	}
+	return parsed, nil
+}
+
+func requestedSearchAPIRequest(w http.ResponseWriter, r *http.Request) (parsedSearchAPIRequest, error) {
+	if r.Method == http.MethodPost {
+		return requestedPOSTSearchAPIRequest(w, r)
+	}
+	return requestedGETSearchAPIRequest(r)
+}
+
 func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 	category, err := requestedCategory(r)
 	if err != nil {
@@ -282,35 +367,25 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
-	rawQuery, err := requestedSearchQuery(r)
+	request, err := requestedSearchAPIRequest(w, r)
 	if err != nil {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	category, err := requestedCategory(r)
-	if err != nil {
-		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-	limit, hasLimit, err := requestedResultLimit(r)
-	if err != nil {
-		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-	if !s.engine.SupportsCategory(category) {
+	if !s.engine.SupportsCategory(request.category) {
 		writeAPIV1JSON(w, http.StatusNotImplemented, map[string]string{
 			"error":    "search category is not implemented in the native provider layer",
-			"category": category,
+			"category": request.category,
 		})
 		return
 	}
-	response, err := s.engine.SearchCategory(r.Context(), rawQuery, category)
+	response, err := s.engine.SearchCategory(r.Context(), request.query, request.category)
 	if err != nil {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	if hasLimit && len(response.Results) > limit {
-		response.Results = append([]searchcore.Result(nil), response.Results[:limit]...)
+	if request.hasLimit && len(response.Results) > request.limit {
+		response.Results = append([]searchcore.Result(nil), response.Results[:request.limit]...)
 	}
 	writeAPIV1JSON(w, http.StatusOK, searchAPIResponse{
 		APIVersion: apiVersion,
