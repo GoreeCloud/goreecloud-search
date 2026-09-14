@@ -1,10 +1,21 @@
 package main
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 const (
 	searchPrivacyVerificationContractVersion = 1
 	searchPrivacyVerificationConsumerID       = "goreecloud-search"
+)
+
+var (
+	errPrivacyReferenceVerificationClientUnavailable = errors.New("Privacy Shield reference verification client is unavailable")
+	errPrivacyReferenceVerificationContractMismatch  = errors.New("Privacy Shield reference verification contract version mismatch")
+	errPrivacyReferenceVerificationDenied            = errors.New("Privacy Shield reference verification denied authorization")
+	errPrivacyReferenceVerificationReferenceMismatch = errors.New("Privacy Shield reference verification capability reference mismatch")
+	errPrivacyReferenceVerificationConstraintMismatch = errors.New("Privacy Shield reference verification constraints mismatch")
 )
 
 type privacyReferenceVerificationExpected struct {
@@ -39,7 +50,10 @@ type privacyReferenceVerificationResponse struct {
 }
 
 type privacyReferenceVerificationClient interface {
-	VerifyReference(ctx context.Context, request privacyReferenceVerificationRequest) error
+	VerifyReference(
+		ctx context.Context,
+		request privacyReferenceVerificationRequest,
+	) (privacyReferenceVerificationResponse, error)
 }
 
 // privacyShieldReferenceVerifier adapts Search's narrow authorization gate to
@@ -55,6 +69,11 @@ type privacyReferenceVerificationClient interface {
 // This allows Privacy Shield to enforce single-use capabilities and replay state
 // without Search owning that authority. Requester identity comes from the
 // gate's authenticated requester resolver, never from an arbitrary HTTP field.
+//
+// The transport client is deliberately not trusted to collapse the authority
+// response into a success/error bit. Search validates the versioned response,
+// positive authorization, echoed opaque reference, and enforceable constraints
+// itself before the request is admitted.
 type privacyShieldReferenceVerifier struct {
 	client privacyReferenceVerificationClient
 }
@@ -64,7 +83,11 @@ func (v privacyShieldReferenceVerifier) VerifySearchCapability(
 	capabilityReference string,
 	authorizationContext searchPrivacyAuthorizationContext,
 ) error {
-	return v.client.VerifyReference(ctx, privacyReferenceVerificationRequest{
+	if v.client == nil {
+		return errPrivacyReferenceVerificationClientUnavailable
+	}
+
+	request := privacyReferenceVerificationRequest{
 		ContractVersion:     searchPrivacyVerificationContractVersion,
 		ConsumerID:          searchPrivacyVerificationConsumerID,
 		CapabilityReference: capabilityReference,
@@ -78,5 +101,30 @@ func (v privacyShieldReferenceVerifier) VerifySearchCapability(
 			RetentionMode:  authorizationContext.RetentionMode,
 		},
 		Consume: true,
-	})
+	}
+
+	response, err := v.client.VerifyReference(ctx, request)
+	if err != nil {
+		return err
+	}
+	if response.ContractVersion != searchPrivacyVerificationContractVersion {
+		return errPrivacyReferenceVerificationContractMismatch
+	}
+	if !response.Authorized {
+		return errPrivacyReferenceVerificationDenied
+	}
+	if response.CapabilityReference != capabilityReference {
+		return errPrivacyReferenceVerificationReferenceMismatch
+	}
+
+	expectedConstraints := privacyReferenceVerificationConstraints{
+		ProcessingZone: authorizationContext.ProcessingZone,
+		Destination:    authorizationContext.Destination,
+		RetentionMode:  authorizationContext.RetentionMode,
+	}
+	if response.Constraints != expectedConstraints {
+		return errPrivacyReferenceVerificationConstraintMismatch
+	}
+
+	return nil
 }
