@@ -19,11 +19,11 @@
     "glaze-v1.components.runtime.css": "a89356172d74b66c62cfda198ae827fe9b71c520",
     "glaze-v1.overlay.css": "cb937fae3166289c9c935d7ae25cefe3f82f3ec0",
     "glaze-v1.advanced.css": "d6e60a9b23354b1dc62dafac284c93b772e582a4",
-    "glaze-v1.visual-refinement.css": "f5696fdb81f8deda3ce75e112989d772b7d74909"
+    "glaze-v1.visual-refinement.css": "f5696fdb81f8deda3ce75e112989d772b7d74909",
+    "glaze-v1.optical-reachability.css": "6123cff22f06b4c537156a1285e2664763f33316"
   },
   "pending_leaf_imports": [
     "glaze-v1.structure.css",
-    "glaze-v1.optical-reachability.css",
     "glaze-v1.2-frosted-neutral.candidate.css",
     "glaze-v1.2-living-glaze.candidate.css",
     "glaze-v1.2-components.candidate.css",
