@@ -9,6 +9,7 @@
     "glaze-v1.3.0.css": "4c3ad293ba9196e2e5a32700b530ec67fd01cef6",
     "glaze-v1.2.0.css": "4705df1b9b891a5810d6355f7aa1db05ac1a4501",
     "glaze-v1.2.0-candidate.css": "b4412b9fa2ca36aa1ae5d83d10976b92395f95ba",
+    "glaze-v1.2-frosted-neutral.candidate.css": "1ca1d441994748bb6454606ba04801b6b8b267d8",
     "glaze-v1.1.0.css": "c689e8e58cefc49f931862996a1e0e871497fe88",
     "glaze-v1.1.css": "aa0250f01151f17cd3c77e9a67544c6af4b5aa32",
     "glaze-v1.1-appearance.css": "c4e10e043d537c68f1e4a5f97bdb8b6f0d371dce",
@@ -24,7 +25,6 @@
     "glaze-v1.optical-reachability.css": "6123cff22f06b4c537156a1285e2664763f33316"
   },
   "pending_leaf_imports": [
-    "glaze-v1.2-frosted-neutral.candidate.css",
     "glaze-v1.2-living-glaze.candidate.css",
     "glaze-v1.2-components.candidate.css",
     "glaze-v1.2-system-shell.candidate.css",
