@@ -364,6 +364,9 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 	}
 	response, err := s.engine.SearchCategory(r.Context(), r.URL.Query().Get("q"), category)
 	if err != nil {
+		if r.Context().Err() != nil {
+			return
+		}
 		webui.RenderSearchError(w, r.URL.Query().Get("q"), err)
 		return
 	}
@@ -402,6 +405,9 @@ func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	response, err := s.engine.SearchCategory(r.Context(), request.query, request.category)
 	if err != nil {
+		if r.Context().Err() != nil {
+			return
+		}
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
