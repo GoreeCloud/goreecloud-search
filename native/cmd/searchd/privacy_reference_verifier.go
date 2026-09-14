@@ -8,21 +8,34 @@ const (
 )
 
 type privacyReferenceVerificationExpected struct {
-	RequesterID    string
-	ResourceID     string
-	Purpose        string
-	Operation      string
-	ProcessingZone string
-	Destination    string
-	RetentionMode  string
+	RequesterID    string `json:"requester_id"`
+	ResourceID     string `json:"resource_id"`
+	Purpose        string `json:"purpose"`
+	Operation      string `json:"operation"`
+	ProcessingZone string `json:"processing_zone"`
+	Destination    string `json:"destination"`
+	RetentionMode  string `json:"retention_mode"`
 }
 
 type privacyReferenceVerificationRequest struct {
-	ContractVersion     int
-	ConsumerID          string
-	CapabilityReference string
-	Expected            privacyReferenceVerificationExpected
-	Consume             bool
+	ContractVersion     int                                  `json:"contract_version"`
+	ConsumerID          string                               `json:"consumer_id"`
+	CapabilityReference string                               `json:"capability_reference"`
+	Expected            privacyReferenceVerificationExpected `json:"expected"`
+	Consume             bool                                 `json:"consume"`
+}
+
+type privacyReferenceVerificationConstraints struct {
+	ProcessingZone string `json:"processing_zone"`
+	Destination    string `json:"destination"`
+	RetentionMode  string `json:"retention_mode"`
+}
+
+type privacyReferenceVerificationResponse struct {
+	ContractVersion     int                                     `json:"contract_version"`
+	Authorized          bool                                    `json:"authorized"`
+	CapabilityReference string                                  `json:"capability_reference"`
+	Constraints         privacyReferenceVerificationConstraints `json:"constraints"`
 }
 
 type privacyReferenceVerificationClient interface {
@@ -34,8 +47,9 @@ type privacyReferenceVerificationClient interface {
 // The concrete IPC/network client remains injected: Search never receives
 // Privacy Shield signing keys and never interprets the signed bearer token.
 //
-// The verification envelope has its own version so Search can fail closed when
-// the authority-side IPC contract changes independently from token format.
+// The verification envelope has its own version and pinned JSON field names so
+// Search can fail closed when the authority-side IPC contract changes
+// independently from token format.
 //
 // Search uses consume=true because one remote query is one authorization use.
 // This allows Privacy Shield to enforce single-use capabilities and replay state
