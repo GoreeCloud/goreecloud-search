@@ -32,10 +32,10 @@ type privacyReferenceVerificationClient interface {
 //
 // Search uses consume=true because one remote query is one authorization use.
 // This allows Privacy Shield to enforce single-use capabilities and replay state
-// without Search owning that authority.
+// without Search owning that authority. Requester identity comes from the
+// gate's authenticated requester resolver, never from an arbitrary HTTP field.
 type privacyShieldReferenceVerifier struct {
-	client      privacyReferenceVerificationClient
-	requesterID string
+	client privacyReferenceVerificationClient
 }
 
 func (v privacyShieldReferenceVerifier) VerifySearchCapability(
@@ -47,7 +47,7 @@ func (v privacyShieldReferenceVerifier) VerifySearchCapability(
 		ConsumerID:          searchPrivacyVerificationConsumerID,
 		CapabilityReference: capabilityReference,
 		Expected: privacyReferenceVerificationExpected{
-			RequesterID:    v.requesterID,
+			RequesterID:    authorizationContext.RequesterID,
 			ResourceID:     authorizationContext.Resource,
 			Purpose:        authorizationContext.Purpose,
 			Operation:      authorizationContext.Operation,
