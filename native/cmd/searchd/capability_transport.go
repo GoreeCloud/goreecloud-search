@@ -3,25 +3,33 @@ package main
 import "encoding/json"
 
 const (
-	preferredSearchQueryTransport            = "json_body"
-	searchCapabilityDiscoveryEndpoint        = "/api/v1/status"
-	searchCapabilityDiscoveryCollection      = "capability_evidence"
-	searchPrivacyAuthorizationScheme         = "privacy_shield_capability_token_reference"
-	searchPrivacyAuthorizationHeader         = "X-GoreeCloud-Privacy-Capability"
-	searchPrivacyAuthorizationEnforcementDev = "not_enforced_development"
+	preferredSearchQueryTransport             = "json_body"
+	searchCapabilityDiscoveryEndpoint         = "/api/v1/status"
+	searchCapabilityDiscoveryCollection       = "capability_evidence"
+	searchPrivacyAuthorizationScheme          = "privacy_shield_capability_token_reference"
+	searchPrivacyAuthorizationHeader          = "X-GoreeCloud-Privacy-Capability"
+	searchPrivacyAuthorizationEnforcementDev  = "not_enforced_development"
+	searchRequesterAuthenticationAuthority    = "goreecloud-identity"
+	searchRequesterAuthenticationScheme       = "bearer"
+	searchRequesterAuthenticationHeader       = "Authorization"
 )
 
 // MarshalJSON makes the machine-readable Search capability explicit enough for
-// independent consumers to validate discovery, transport, and privacy
-// requirements before delegating a query. GET remains available for
-// compatibility, but the preferred inter-application contract is POST with a
-// JSON body so query text does not need to appear in a URL.
+// independent consumers to validate discovery, transport, privacy, and
+// requester-authentication requirements before delegating a query. GET remains
+// available for compatibility, but the preferred inter-application contract is
+// POST with a JSON body so query text does not need to appear in a URL.
 //
 // Privacy Shield authorization and authenticated requester identity are part of
 // the intended production contract, but this Development service does not yet
 // enforce the capability reference at the server boundary. The evidence says so
 // explicitly; production consumers must reject this Development evidence rather
 // than inferring enforcement from endpoint reachability.
+//
+// The requester-authentication metadata deliberately stops at authority,
+// credential scheme, and carrier header. Concrete Identity audience, scope,
+// token-format, issuer/JWKS, and application-registration values remain
+// producer-owned GoreeCloud Identity contracts and are not invented here.
 func (e capabilityEvidence) MarshalJSON() ([]byte, error) {
 	type capabilityEvidenceJSON struct {
 		ID                              string   `json:"id"`
@@ -42,6 +50,9 @@ func (e capabilityEvidence) MarshalJSON() ([]byte, error) {
 		PrivacyAuthorizationHeader      string   `json:"privacy_authorization_header,omitempty"`
 		PrivacyAuthorizationEnforcement string   `json:"privacy_authorization_enforcement,omitempty"`
 		AuthenticatedRequesterRequired  bool     `json:"authenticated_requester_required"`
+		AuthenticatedRequesterAuthority string   `json:"authenticated_requester_authority,omitempty"`
+		AuthenticatedRequesterScheme    string   `json:"authenticated_requester_scheme,omitempty"`
+		AuthenticatedRequesterHeader    string   `json:"authenticated_requester_header,omitempty"`
 		MaxRequestBytes                 int      `json:"max_request_bytes,omitempty"`
 		MaxResults                      int      `json:"max_results,omitempty"`
 	}
@@ -65,6 +76,9 @@ func (e capabilityEvidence) MarshalJSON() ([]byte, error) {
 		PrivacyAuthorizationHeader:      searchPrivacyAuthorizationHeader,
 		PrivacyAuthorizationEnforcement: searchPrivacyAuthorizationEnforcementDev,
 		AuthenticatedRequesterRequired:  true,
+		AuthenticatedRequesterAuthority: searchRequesterAuthenticationAuthority,
+		AuthenticatedRequesterScheme:    searchRequesterAuthenticationScheme,
+		AuthenticatedRequesterHeader:    searchRequesterAuthenticationHeader,
 		MaxRequestBytes:                 maxSearchAPIRequestBytes,
 		MaxResults:                      e.MaxResults,
 	})
