@@ -90,7 +90,9 @@ func TestSearchPrivacyAuthorizationGatePassesExactOperationContextToVerifier(t *
 		t.Fatalf("capability reference = %q", verifier.capabilityReference)
 	}
 	want := searchPrivacyAuthorizationContext{
+		Resource:       "goreecloud.search.query",
 		Operation:      "search.query",
+		Purpose:        "internet_search",
 		ProcessingZone: "private_goreecloud",
 		Destination:    "https://search.goreecloud.com",
 		RetentionMode:  "none",
