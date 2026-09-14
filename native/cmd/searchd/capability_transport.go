@@ -17,11 +17,11 @@ const (
 // compatibility, but the preferred inter-application contract is POST with a
 // JSON body so query text does not need to appear in a URL.
 //
-// Privacy Shield authorization is part of the intended contract, but this
-// Development service does not yet enforce the capability-token reference at
-// the server boundary. The evidence says so explicitly; production consumers
-// must reject this Development evidence rather than inferring enforcement from
-// endpoint reachability.
+// Privacy Shield authorization and authenticated requester identity are part of
+// the intended production contract, but this Development service does not yet
+// enforce the capability reference at the server boundary. The evidence says so
+// explicitly; production consumers must reject this Development evidence rather
+// than inferring enforcement from endpoint reachability.
 func (e capabilityEvidence) MarshalJSON() ([]byte, error) {
 	type capabilityEvidenceJSON struct {
 		ID                              string   `json:"id"`
@@ -41,6 +41,7 @@ func (e capabilityEvidence) MarshalJSON() ([]byte, error) {
 		PrivacyAuthorizationScheme      string   `json:"privacy_authorization_scheme,omitempty"`
 		PrivacyAuthorizationHeader      string   `json:"privacy_authorization_header,omitempty"`
 		PrivacyAuthorizationEnforcement string   `json:"privacy_authorization_enforcement,omitempty"`
+		AuthenticatedRequesterRequired  bool     `json:"authenticated_requester_required"`
 		MaxRequestBytes                 int      `json:"max_request_bytes,omitempty"`
 		MaxResults                      int      `json:"max_results,omitempty"`
 	}
@@ -63,6 +64,7 @@ func (e capabilityEvidence) MarshalJSON() ([]byte, error) {
 		PrivacyAuthorizationScheme:      searchPrivacyAuthorizationScheme,
 		PrivacyAuthorizationHeader:      searchPrivacyAuthorizationHeader,
 		PrivacyAuthorizationEnforcement: searchPrivacyAuthorizationEnforcementDev,
+		AuthenticatedRequesterRequired:  true,
 		MaxRequestBytes:                 maxSearchAPIRequestBytes,
 		MaxResults:                      e.MaxResults,
 	})
