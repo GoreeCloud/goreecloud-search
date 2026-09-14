@@ -5,7 +5,10 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"unicode"
 )
+
+const maxPrivacyAuthorizationReferenceBytes = 512
 
 var (
 	errPrivacyAuthorizationVerifierUnavailable = errors.New("Privacy Shield authorization verifier is unavailable")
@@ -73,7 +76,7 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 	if reference == "" {
 		return errPrivacyAuthorizationReferenceRequired
 	}
-	if !strings.HasPrefix(reference, "psc_") || len(reference) <= len("psc_") {
+	if !validPrivacyAuthorizationReference(reference) {
 		return errPrivacyAuthorizationReferenceInvalid
 	}
 
@@ -97,4 +100,16 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 			RetentionMode:  "none",
 		},
 	)
+}
+
+func validPrivacyAuthorizationReference(reference string) bool {
+	if len(reference) <= len("psc_") || len(reference) > maxPrivacyAuthorizationReferenceBytes {
+		return false
+	}
+	if !strings.HasPrefix(reference, "psc_") {
+		return false
+	}
+	return strings.IndexFunc(reference, func(r rune) bool {
+		return unicode.IsSpace(r) || unicode.IsControl(r)
+	}) == -1
 }
