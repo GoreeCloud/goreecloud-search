@@ -49,7 +49,7 @@ platform_systems:
       - SPECIFICATIONS.md
       - native/internal/platformstate/platformstate.go
       - native/internal/platformstate/platformstate_test.go
-    notes: Search contains a fail-closed Privacy Shield evidence projection boundary, but accepted producer-authoritative runtime privacy evidence and production acceptance remain unavailable.
+    notes: Search contains a fail-closed Privacy Shield evidence projection boundary and a validated capability-reference verification protocol client, but accepted producer-authoritative runtime privacy evidence, authenticated transport, and production acceptance remain unavailable.
   wardveil_security:
     result: applicable-blocked
     version: null
@@ -73,8 +73,9 @@ platform_systems:
     notes: Search can fail-closed project supplied Everkeep continuity evidence, but accepted backup, restore, recovery, migration, and rollback evidence for the native application remains incomplete.
   glaze_ui:
     result: applicable-migration-required
-    version: '1.1.0'
+    version: '1.4.0'
     evidence:
+      - README.md
       - SPECIFICATIONS.md
       - native/internal/webui
       - native/internal/webui/assets/appearance.js
@@ -84,7 +85,7 @@ platform_systems:
       - native/browser_glaze_acceptance.py
       - native/browser_glaze_resilience_acceptance.py
       - native/browser_glaze_large_text_acceptance.py
-    notes: Native browser source explicitly targets current Stable GLAZE UI V1.1 / 1.1.0 with Deep Teal and Soft Amber identity, Light/Dark/Deep Dark mappings, shared local appearance/density handling, accessibility fallbacks, Compact/Medium/Expanded/Wide browser checks, bounded RTL structural stress checks, deterministic 2x device-scale/640-CSS-pixel reflow checks, and deterministic 200% text-only scaling stress checks. RTL localization acceptance, manual browser zoom and assistive-technology review, contextual whole-application visual approval, physical form-factor evidence, target-environment validation, and production acceptance remain incomplete, so Glaze conformance is not claimed.
+    notes: Search Development source now targets the current Official Stable GLAZE UI V1.4 / 1.4.0 Optical Intelligence baseline. Repository-local source and deterministic browser checks exist, but V1.4 application-specific rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, and production acceptance remain incomplete, so whole-application conformance is still migration-required.
   mesh:
     result: applicable-blocked
     version: null
@@ -110,7 +111,7 @@ platform_systems:
     evidence:
       - SPECIFICATIONS.md
       - native/docs/CAPABILITY-EVIDENCE.md
-    notes: GoreeCloud Identity must own account, authentication, authorization, session, and authority state for account-bound Search capabilities; accepted runtime integration remains incomplete.
+    notes: GoreeCloud Identity must own account, authentication, authorization, session, requester identity, and service identity for account-bound or protected Search capabilities; accepted direct-service authentication and runtime integration remain incomplete.
 
 health:
   health_endpoint: /healthz
@@ -149,10 +150,10 @@ external_dependencies:
 
 compatibility:
   platform_contract: '0.2'
-  glaze_ui_required: '1.1.0'
+  glaze_ui_required: '1.4.0'
   requires:
     - goreecloud-platform-contract==0.2
-    - glaze-ui==1.1.0
+    - glaze-ui==1.4.0
   provides:
     - search-api-v1
     - search-provider-contract-v1
@@ -181,12 +182,12 @@ conformance:
     - native/cmd/searchd/category_acceptance_test.go
   blockers:
     - GoreeCloud Manager operational integration and acceptance are incomplete.
-    - Producer-authoritative Privacy Shield runtime evidence and Search privacy acceptance are incomplete.
+    - Producer-authoritative Privacy Shield runtime evidence, authenticated verification transport, and Search privacy acceptance are incomplete.
     - Producer-authoritative Wardveil Security runtime evidence and Search security acceptance are incomplete.
     - Everkeep backup, restore, recovery, migration, and rollback acceptance are incomplete.
-    - Current Stable GLAZE UI V1.1 / 1.1.0 source shell adoption and deterministic resilience checks, including bounded RTL, 2x reflow, and 200% text-only stress, are implemented, but RTL localization acceptance, manual browser zoom and assistive-technology review, contextual whole-application visual approval, physical form-factor evidence, target-environment validation, and production acceptance are incomplete.
+    - Current Stable GLAZE UI V1.4 / 1.4.0 is the required Search baseline and Development source targets it, but Search-specific rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, and production acceptance evidence remain incomplete.
     - GoreeCloud Mesh registration, coordination, dependency/event integration, and runtime acceptance are incomplete.
-    - GoreeCloud Identity account, authentication, authorization, session, and authority integration is incomplete for account-bound capabilities.
+    - GoreeCloud Identity account, authentication, authorization, session, requester/service identity, and direct-service authentication integration is incomplete for protected capabilities.
     - No production-approved external Search provider, provider credentials integration, or provider-specific privacy, terms, rate-limit, abuse, timestamp-authority, live-result, and target-runtime acceptance is established.
     - Live General, Images, Videos, News, and Files category acceptance against approved providers is incomplete.
     - Native Development binary and OCI packaging provenance exist, but Release Candidate publication/signing or attestation policy, immutable production release identity, target-host deployment provenance, migration parity, controlled cutover from the transitional runtime, monitoring, alerting, rollback, and exact production deployment verification remain incomplete.
