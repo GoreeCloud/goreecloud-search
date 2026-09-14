@@ -220,8 +220,27 @@ func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+func requestedSingleQueryValue(r *http.Request, key, duplicateError string) (string, error) {
+	values, present := r.URL.Query()[key]
+	if !present {
+		return "", nil
+	}
+	if len(values) != 1 {
+		return "", errors.New(duplicateError)
+	}
+	return values[0], nil
+}
+
 func requestedCategory(r *http.Request) (string, error) {
-	return searchcore.ValidateCategory(r.URL.Query().Get("category"))
+	raw, err := requestedSingleQueryValue(r, "category", "search category must be specified once")
+	if err != nil {
+		return "", err
+	}
+	return searchcore.ValidateCategory(raw)
+}
+
+func requestedSearchQuery(r *http.Request) (string, error) {
+	return requestedSingleQueryValue(r, "q", "query must be specified once")
 }
 
 func requestedResultLimit(r *http.Request) (int, bool, error) {
@@ -263,9 +282,14 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
+	rawQuery, err := requestedSearchQuery(r)
+	if err != nil {
+		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
 	category, err := requestedCategory(r)
 	if err != nil {
-		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported search category"})
+		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 	limit, hasLimit, err := requestedResultLimit(r)
@@ -280,7 +304,7 @@ func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	response, err := s.engine.SearchCategory(r.Context(), r.URL.Query().Get("q"), category)
+	response, err := s.engine.SearchCategory(r.Context(), rawQuery, category)
 	if err != nil {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
