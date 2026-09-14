@@ -37,6 +37,11 @@ type capabilityEvidence struct {
 	MaxResults         int    `json:"max_results,omitempty"`
 }
 
+type searchAPIResponse struct {
+	APIVersion string `json:"api_version"`
+	searchcore.Response
+}
+
 type server struct {
 	engine                      *searchcore.Engine
 	media                       *mediaproxy.Proxy
@@ -283,7 +288,10 @@ func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
 	if hasLimit && len(response.Results) > limit {
 		response.Results = append([]searchcore.Result(nil), response.Results[:limit]...)
 	}
-	writeAPIV1JSON(w, http.StatusOK, response)
+	writeAPIV1JSON(w, http.StatusOK, searchAPIResponse{
+		APIVersion: apiVersion,
+		Response:   response,
+	})
 }
 
 func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {
