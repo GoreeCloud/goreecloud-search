@@ -18,15 +18,19 @@ var (
 	errIdentityRequesterAuthorizationMissing   = errors.New("authenticated requester credential is required")
 	errIdentityRequesterAuthorizationAmbiguous = errors.New("authenticated requester credential must be specified once")
 	errIdentityRequesterAuthorizationInvalid   = errors.New("authenticated requester credential is invalid")
+	errIdentityRequesterApplicationInvalid     = errors.New("verified requester application is invalid")
 	errIdentityRequesterPrincipalInvalid       = errors.New("verified requester principal is invalid")
 )
 
 // identityVerifiedSearchRequester is minimized Identity-owned verification
-// output. Search receives only the canonical principal identifier needed to bind
-// the Privacy Shield operation. It does not receive Identity signing material,
-// reusable session secrets, or arbitrary caller-selected authorization claims.
+// output. Search needs two independent identities from the authenticated native
+// application credential: the registered application that is the Privacy Shield
+// requester and the user principal bound to the Identity session. Neither value
+// is accepted from caller-selected headers. Search receives no Identity signing
+// material, reusable session secret, or arbitrary caller-selected claim.
 type identityVerifiedSearchRequester struct {
-	PrincipalID string
+	ApplicationID string
+	PrincipalID   string
 }
 
 // identitySearchRequesterVerifier is the producer-owned verification seam for
@@ -44,7 +48,11 @@ type identitySearchRequesterVerifier interface {
 
 // identityBearerSearchRequesterResolver converts one independently verified
 // Identity bearer credential into the requester ID used by the Search Privacy
-// Shield gate. Caller-controlled identity headers are intentionally ignored.
+// Shield gate. Privacy Shield capabilities issued to first-party applications
+// bind expected.requester_id to the registered application requester, not to
+// Search's own service identity and not to the end-user principal. The principal
+// remains independently required and validated as evidence that the credential
+// represents a user-bound native application session.
 type identityBearerSearchRequesterResolver struct {
 	verifier identitySearchRequesterVerifier
 }
@@ -84,10 +92,13 @@ func (r *identityBearerSearchRequesterResolver) ResolveSearchRequester(
 	if err != nil {
 		return "", err
 	}
-	if !validIdentityRequesterPrincipal(verified.PrincipalID) {
+	if !validIdentityRequesterID(verified.ApplicationID) {
+		return "", errIdentityRequesterApplicationInvalid
+	}
+	if !validIdentityRequesterID(verified.PrincipalID) {
 		return "", errIdentityRequesterPrincipalInvalid
 	}
-	return verified.PrincipalID, nil
+	return verified.ApplicationID, nil
 }
 
 func canonicalIdentityBearerCredential(value string) (string, error) {
@@ -110,14 +121,14 @@ func canonicalIdentityBearerCredential(value string) (string, error) {
 	return credential, nil
 }
 
-func validIdentityRequesterPrincipal(principalID string) bool {
-	if principalID == "" || len(principalID) > maxIdentityRequesterIDBytes {
+func validIdentityRequesterID(value string) bool {
+	if value == "" || len(value) > maxIdentityRequesterIDBytes {
 		return false
 	}
-	if strings.TrimSpace(principalID) != principalID {
+	if strings.TrimSpace(value) != value {
 		return false
 	}
-	for _, character := range principalID {
+	for _, character := range value {
 		if unicode.IsSpace(character) || unicode.IsControl(character) {
 			return false
 		}
