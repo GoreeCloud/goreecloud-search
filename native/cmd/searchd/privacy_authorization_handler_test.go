@@ -17,6 +17,9 @@ func TestSearchAPIRequiredPrivacyGateRejectsBeforeParsingRequest(t *testing.T) {
 		privacyAuthorizationGate: searchPrivacyAuthorizationGate{
 			required: true,
 			verifier: &recordingSearchPrivacyVerifier{},
+			requesterResolver: staticSearchRequesterResolver{
+				requesterID: "goreecloud-browser",
+			},
 		},
 	}
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/search", strings.NewReader("not-json"))
@@ -35,11 +38,16 @@ func TestSearchAPIRequiredPrivacyGateRejectsBeforeParsingRequest(t *testing.T) {
 
 func TestSearchAPIRequiredPrivacyGateNeedsVerifier(t *testing.T) {
 	app := server{
-		privacyAuthorizationGate: searchPrivacyAuthorizationGate{required: true},
+		privacyAuthorizationGate: searchPrivacyAuthorizationGate{
+			required: true,
+			requesterResolver: staticSearchRequesterResolver{
+				requesterID: "goreecloud-browser",
+			},
+		},
 	}
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/search", strings.NewReader("not-json"))
 	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:test")
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
 	w := httptest.NewRecorder()
 
 	app.searchAPI(w, r)
@@ -58,11 +66,14 @@ func TestSearchAPIVerifiedPrivacyReferenceReachesRequestParsing(t *testing.T) {
 		privacyAuthorizationGate: searchPrivacyAuthorizationGate{
 			required: true,
 			verifier: verifier,
+			requesterResolver: staticSearchRequesterResolver{
+				requesterID: "goreecloud-browser",
+			},
 		},
 	}
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/search", strings.NewReader("not-json"))
 	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:test")
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_test")
 	w := httptest.NewRecorder()
 
 	app.searchAPI(w, r)
@@ -72,6 +83,9 @@ func TestSearchAPIVerifiedPrivacyReferenceReachesRequestParsing(t *testing.T) {
 	}
 	if verifier.calls != 1 {
 		t.Fatalf("verifier calls = %d, want 1", verifier.calls)
+	}
+	if verifier.authorizationContext.RequesterID != "goreecloud-browser" {
+		t.Fatalf("verified requester = %q", verifier.authorizationContext.RequesterID)
 	}
 	if !strings.Contains(w.Body.String(), "invalid JSON search request") {
 		t.Fatalf("body = %q", w.Body.String())
@@ -84,11 +98,14 @@ func TestSearchAPIVerifierRejectionIsSanitized(t *testing.T) {
 		privacyAuthorizationGate: searchPrivacyAuthorizationGate{
 			required: true,
 			verifier: verifier,
+			requesterResolver: staticSearchRequesterResolver{
+				requesterID: "goreecloud-index",
+			},
 		},
 	}
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/search", strings.NewReader("not-json"))
 	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set(searchPrivacyAuthorizationHeader, "privacy-shield:capability:rejected")
+	r.Header.Set(searchPrivacyAuthorizationHeader, "psc_rejected")
 	w := httptest.NewRecorder()
 
 	app.searchAPI(w, r)
