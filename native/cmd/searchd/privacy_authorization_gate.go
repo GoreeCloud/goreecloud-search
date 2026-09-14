@@ -12,6 +12,8 @@ var (
 	errPrivacyAuthorizationReferenceRequired   = errors.New("Privacy Shield capability reference is required")
 	errPrivacyAuthorizationReferenceAmbiguous  = errors.New("Privacy Shield capability reference must be specified once")
 	errPrivacyAuthorizationReferenceInvalid    = errors.New("Privacy Shield capability reference is invalid")
+	errPrivacyAuthorizationMethodRequired       = errors.New("Privacy Shield protected Search requires POST")
+	errPrivacyAuthorizationMediaTypeRequired    = errors.New("Privacy Shield protected Search requires application/json")
 )
 
 type searchPrivacyAuthorizationContext struct {
@@ -38,6 +40,11 @@ type searchPrivacyAuthorizationVerifier interface {
 // not_enforced_development. A future production runtime must construct this gate
 // with required=true and a real Privacy Shield verifier before the advertised
 // enforcement state can change to required.
+//
+// Required mode also owns the private transport invariant: authorization cannot
+// make a query-bearing GET request acceptable. Protected first-party Search is
+// POST-only with an application/json body so query text does not need to appear
+// in the request URL.
 type searchPrivacyAuthorizationGate struct {
 	required bool
 	verifier searchPrivacyAuthorizationVerifier
@@ -68,6 +75,14 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 	}
 	if !strings.HasPrefix(reference, "psc_") || len(reference) <= len("psc_") {
 		return errPrivacyAuthorizationReferenceInvalid
+	}
+
+	if r.Method != http.MethodPost {
+		return errPrivacyAuthorizationMethodRequired
+	}
+	mediaType := strings.TrimSpace(strings.SplitN(r.Header.Get("Content-Type"), ";", 2)[0])
+	if mediaType != "application/json" {
+		return errPrivacyAuthorizationMediaTypeRequired
 	}
 
 	return g.verifier.VerifySearchCapability(
