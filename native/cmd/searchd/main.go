@@ -67,6 +67,7 @@ type server struct {
 	webIntelligenceConfigured   bool
 	webAutomationAuth           *webautomation.AuthControl
 	webAutomationAuthConfigured bool
+	privacyAuthorizationGate    searchPrivacyAuthorizationGate
 }
 
 func searchCapabilityEvidence() []capabilityEvidence {
@@ -111,6 +112,9 @@ func main() {
 		webIntelligenceConfigured:   webIntelligenceConfigured,
 		webAutomationAuth:           webAutomationAuth,
 		webAutomationAuthConfigured: webAutomationAuthConfigured,
+		privacyAuthorizationGate: searchPrivacyAuthorizationGate{
+			required: false,
+		},
 	}
 
 	mux := http.NewServeMux()
@@ -167,14 +171,15 @@ func (s server) health(w http.ResponseWriter, _ *http.Request) {
 
 func (s server) status(w http.ResponseWriter, _ *http.Request) {
 	writeAPIV1JSON(w, http.StatusOK, map[string]any{
-		"api_version":         apiVersion,
-		"product":             "GoreeCloud Search",
-		"service":             "search",
-		"status":              "ok",
-		"implementation":      "native",
-		"lifecycle":           "development",
-		"production_approved": false,
-		"build":               s.build,
+		"api_version":                    apiVersion,
+		"product":                        "GoreeCloud Search",
+		"service":                        "search",
+		"status":                         "ok",
+		"implementation":                 "native",
+		"lifecycle":                      "development",
+		"production_approved":            false,
+		"privacy_authorization_enforced": s.privacyAuthorizationGate.Enforced(),
+		"build":                          s.build,
 		"capabilities": map[string]bool{
 			"html_search":                 true,
 			"machine_readable_search_api": true,
@@ -208,7 +213,9 @@ func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
 	if engineInitialized {
 		generalCategoryReady = s.engine.SupportsCategory(searchcore.CategoryGeneral)
 	}
-	ready := engineInitialized && generalCategoryReady
+	privacyAuthorizationBoundaryReady :=
+		!s.privacyAuthorizationGate.required || s.privacyAuthorizationGate.Enforced()
+	ready := engineInitialized && generalCategoryReady && privacyAuthorizationBoundaryReady
 	status := "ready"
 	httpStatus := http.StatusOK
 	if !ready {
@@ -225,8 +232,9 @@ func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
 		"readiness_scope":     "local_native_application",
 		"production_approved": false,
 		"checks": map[string]bool{
-			"native_engine_initialized": engineInitialized,
-			"general_category_ready":     generalCategoryReady,
+			"native_engine_initialized":             engineInitialized,
+			"general_category_ready":                 generalCategoryReady,
+			"privacy_authorization_boundary_ready": privacyAuthorizationBoundaryReady,
 		},
 		"not_evaluated": []string{
 			"external_search_providers",
@@ -367,6 +375,19 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
+	if err := s.privacyAuthorizationGate.Verify(r); err != nil {
+		if errors.Is(err, errPrivacyAuthorizationVerifierUnavailable) {
+			writeAPIV1JSON(w, http.StatusServiceUnavailable, map[string]string{
+				"error": "Privacy Shield authorization verifier is unavailable",
+			})
+			return
+		}
+		writeAPIV1JSON(w, http.StatusForbidden, map[string]string{
+			"error": "Privacy Shield authorization is required",
+		})
+		return
+	}
+
 	request, err := requestedSearchAPIRequest(w, r)
 	if err != nil {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
