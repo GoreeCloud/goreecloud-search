@@ -52,11 +52,15 @@ Development consumers may explicitly opt into non-production or legacy-GET capab
 
 The preferred production model is for authorization to travel with the delegated operation as a Privacy Shield capability-token reference, rather than as a copied policy decision or generic identity claim.
 
-A production consumer must obtain and validate the canonical Privacy Shield decision for the exact `search.query` operation and ensure that the decision permits the expected processing zone, destination, retention behavior, and any obligations before transmitting the request. Consumers that cannot enforce returned obligations must reject constrained decisions rather than silently treating them as unconditional allows.
+A production consumer must create a unique Privacy Shield `request_id` before authorization, submit the canonical request for resource `goreecloud.search.query`, operation `search.query`, purpose `internet_search`, processing zone `private_goreecloud`, destination `https://search.goreecloud.com`, and retention `none`, and require the returned decision to correlate to that same request. A compatible-looking decision issued for another request is not valid authorization.
+
+Consumers must also ensure that the decision permits the expected processing zone, destination, retention behavior, and any obligations before transmitting the request. Consumers that cannot enforce returned obligations must reject constrained decisions rather than silently treating them as unconditional allows.
 
 Only the minimum capability-token reference should cross the Search boundary through `X-GoreeCloud-Privacy-Capability`. Raw policy documents, browsing state, local Index data, or unrelated evidence must not be attached.
 
-Search server-side verification/enforcement of that reference is not yet implemented in this Development service. The capability evidence therefore remains non-production and explicitly non-enforcing until that runtime is complete and accepted.
+Search now contains a request-handler authorization gate. In required mode, the gate executes before Search request parsing or engine execution, rejects missing or ambiguous capability references, refuses readiness when a verifier is unavailable, sanitizes verifier rejection from the HTTP response, and asks the verifier to validate the capability reference against the exact resource, operation, purpose, processing zone, destination, and retention context.
+
+The Development runtime deliberately instantiates this gate with enforcement disabled because a real Privacy Shield capability-token verifier is not yet connected. Search therefore continues to advertise `not_enforced_development`; the existence of the gate is not production verification evidence and must not be used to change that state prematurely.
 
 ## Data minimization
 
@@ -85,7 +89,9 @@ A consumer may also apply its own bounded result cap and independently reject un
 
 ## Cancellation and replacement
 
-Interactive consumers must cancel superseded query work when the user replaces the active query. Search should treat client cancellation as cancellation rather than a provider failure and avoid unnecessary downstream work where possible.
+Interactive consumers must cancel superseded query work when the user replaces the active query. Search treats caller cancellation or a caller-owned deadline as operation cancellation, not provider failure: it returns without manufacturing partial provider-timeout evidence and the HTTP layer does not render or encode a synthetic Search error after the request context is canceled.
+
+Search's own bounded engine deadline remains a separate concern. When that Search-owned deadline expires while the caller is still active, valid results from providers that completed in time may be preserved and unresolved providers are represented as bounded `provider_timeout` degradation. This distinction prevents user-driven cancellation from corrupting provider-health evidence.
 
 ## Browser behavior
 
@@ -94,7 +100,7 @@ Browser omnibox classification must remain explicit:
 1. Valid navigable URL / accepted navigation intent → Browser navigation path.
 2. Non-URL query → local Search intent only; no query-bearing remote URL is constructed.
 3. One unambiguous compatible Search capability + accepted Privacy Shield capability-token authorization → a separate transport adapter may construct the bounded POST/JSON request.
-4. Ambiguous, unsafe, unauthorized, expired, constrained-but-unenforceable, or incompatible input → no remote execution.
+4. Ambiguous, unsafe, unauthorized, expired, constrained-but-unenforceable, request-mismatched, or incompatible input → no remote execution.
 
 The classifier must not encode free-text queries into a `?q=` destination as an intermediate convenience. Query text remains transport-neutral until the authorization and capability gates have independently accepted the operation.
 
@@ -109,7 +115,7 @@ Index may dispatch Search concurrently with eligible local providers only when:
 - applicable Privacy Shield authority evidence is present and enforceable;
 - the advertised Search capability passes compatibility checks.
 
-Production-mode Index consumers must additionally require production acceptance plus the exact discovery, POST, `json_body`, media-type, privacy-authorization scheme/header/enforcement, and request-size evidence published by the Search capability. Before calling the Search client, Index must obtain a Privacy Shield capability-token reference for the exact operation and carry that reference with the delegated request.
+Production-mode Index consumers must additionally require production acceptance plus the exact discovery, POST, `json_body`, media-type, privacy-authorization scheme/header/enforcement, and request-size evidence published by the Search capability. Before calling the Search client, Index must create a unique Privacy Shield request, accept only the matching decision, obtain its capability-token reference, and carry only that reference with the delegated request.
 
 Development mode may retain an explicit compatibility exception for older evidence without converting that exception into production acceptance.
 
@@ -121,4 +127,4 @@ All Search-owned user-facing surfaces must track the latest approved Stable Glaz
 
 ## Stability rule
 
-No Search–Index–Browser integration may be described as Stable merely because the API compiles, CI passes, or a source adapter exists. Stable acceptance requires current contracts, supported runtime evidence, server-side Privacy Shield enforcement, accessibility, error/degradation behavior, and repository-local release acceptance for every participating product.
+No Search–Index–Browser integration may be described as Stable merely because the API compiles, CI passes, or a source adapter exists. Stable acceptance requires current contracts, supported runtime evidence, a real accepted Privacy Shield capability-token verifier, accessibility, error/degradation behavior, cancellation behavior, and repository-local release acceptance for every participating product.
