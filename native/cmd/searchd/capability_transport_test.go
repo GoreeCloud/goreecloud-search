@@ -29,6 +29,9 @@ func TestSearchCapabilityJSONPublishesPreferredPrivateTransport(t *testing.T) {
 		PrivacyAuthorizationHeader      string `json:"privacy_authorization_header"`
 		PrivacyAuthorizationEnforcement string `json:"privacy_authorization_enforcement"`
 		AuthenticatedRequesterRequired  bool   `json:"authenticated_requester_required"`
+		AuthenticatedRequesterAuthority string `json:"authenticated_requester_authority"`
+		AuthenticatedRequesterScheme    string `json:"authenticated_requester_scheme"`
+		AuthenticatedRequesterHeader    string `json:"authenticated_requester_header"`
 		MaxRequestBytes                 int    `json:"max_request_bytes"`
 	}
 	if err := json.Unmarshal(encoded, &document); err != nil {
@@ -64,6 +67,15 @@ func TestSearchCapabilityJSONPublishesPreferredPrivateTransport(t *testing.T) {
 	}
 	if !document.AuthenticatedRequesterRequired {
 		t.Fatal("authenticated requester requirement must be published")
+	}
+	if document.AuthenticatedRequesterAuthority != searchRequesterAuthenticationAuthority {
+		t.Fatalf("requester authority = %q, want %q", document.AuthenticatedRequesterAuthority, searchRequesterAuthenticationAuthority)
+	}
+	if document.AuthenticatedRequesterScheme != searchRequesterAuthenticationScheme {
+		t.Fatalf("requester scheme = %q, want %q", document.AuthenticatedRequesterScheme, searchRequesterAuthenticationScheme)
+	}
+	if document.AuthenticatedRequesterHeader != searchRequesterAuthenticationHeader {
+		t.Fatalf("requester header = %q, want %q", document.AuthenticatedRequesterHeader, searchRequesterAuthenticationHeader)
 	}
 	if document.MaxRequestBytes != maxSearchAPIRequestBytes {
 		t.Fatalf("max request bytes = %d, want %d", document.MaxRequestBytes, maxSearchAPIRequestBytes)
