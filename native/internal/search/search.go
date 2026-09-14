@@ -225,7 +225,8 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		return Response{}, errors.New("search category is not implemented in the native provider layer")
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, e.timeout)
+	callerCtx := ctx
+	ctx, cancel := context.WithTimeout(callerCtx, e.timeout)
 	defer cancel()
 	requestNow := time.Now().UTC()
 	intent := parseQueryIntent(query)
@@ -254,7 +255,8 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	}
 
 	// One slot per selected provider prevents a late provider completion from
-	// blocking after this request has already returned at its deadline.
+	// blocking after this request has already returned at its deadline or the
+	// caller has canceled the operation.
 	ch := make(chan providerResult, len(selected))
 	for index, selectedProvider := range selected {
 		index, selectedProvider := index, selectedProvider
@@ -315,6 +317,14 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		case item := <-ch:
 			consume(item)
 		case <-ctx.Done():
+			// Caller cancellation/deadline is operation cancellation, not provider
+			// degradation. Propagate it immediately so superseded interactive
+			// searches do not waste ranking work or manufacture provider failures.
+			if callerErr := callerCtx.Err(); callerErr != nil {
+				return Response{}, callerErr
+			}
+			// Only the engine-owned deadline becomes bounded provider-timeout
+			// evidence, preserving healthy siblings that completed in time.
 			for index, provider := range selected {
 				if resolved[index] {
 					continue
