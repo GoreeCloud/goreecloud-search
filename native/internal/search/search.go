@@ -224,6 +224,9 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 	if !e.SupportsCategory(category) {
 		return Response{}, errors.New("search category is not implemented in the native provider layer")
 	}
+	if err := ctx.Err(); err != nil {
+		return Response{}, err
+	}
 
 	callerCtx := ctx
 	ctx, cancel := context.WithTimeout(callerCtx, e.timeout)
@@ -339,6 +342,9 @@ func (e *Engine) SearchCategory(ctx context.Context, raw, rawCategory string) (R
 		}
 	}
 
+	if callerErr := callerCtx.Err(); callerErr != nil {
+		return Response{}, callerErr
+	}
 	response.SuggestedQuery = suggestQueryCorrection(query, candidates)
 	response.Results = rankResults(query, candidates)
 	sort.Slice(response.Providers, func(i, j int) bool { return response.Providers[i].Name < response.Providers[j].Name })
