@@ -112,14 +112,6 @@ platform_systems:
       - SPECIFICATIONS.md
       - native/docs/CAPABILITY-EVIDENCE.md
     notes: GoreeCloud Identity must own account, authentication, authorization, session, requester identity, and service identity for account-bound or protected Search capabilities; accepted direct-service authentication and runtime integration remain incomplete.
-  sync:
-    result: applicable-blocked
-    version: null
-    evidence:
-      - README.md
-      - native/internal/syncstate
-      - native/docs/CAPABILITY-EVIDENCE.md
-    notes: Search has GoreeCloud-owned source boundaries for declaring and validating Search synchronization datasets and state, but accepted GoreeCloud Sync runtime registration, authenticated submission/retrieval, cross-device reconciliation, conflict/deletion behavior, and production synchronization evidence remain incomplete.
 
 health:
   health_endpoint: /healthz
@@ -196,7 +188,7 @@ conformance:
     - Current Stable GLAZE UI V1.4 / 1.4.0 is the required Search baseline and Development source targets it, but Search-specific rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, and production acceptance evidence remain incomplete.
     - GoreeCloud Mesh registration, coordination, dependency/event integration, and runtime acceptance are incomplete.
     - GoreeCloud Identity account, authentication, authorization, session, requester/service identity, and direct-service authentication integration is incomplete for protected capabilities.
-    - GoreeCloud Sync runtime dataset registration, authenticated synchronization, cross-device reconciliation, conflict/deletion handling, and production acceptance remain incomplete.
+    - GoreeCloud Sync remains a separate application/service capability; its runtime dataset registration, authenticated synchronization, cross-device reconciliation, conflict/deletion handling, and production acceptance are incomplete where Search synchronization is enabled.
     - No production-approved external Search provider, provider credentials integration, or provider-specific privacy, terms, rate-limit, abuse, timestamp-authority, live-result, and target-runtime acceptance is established.
     - Live General, Images, Videos, News, and Files category acceptance against approved providers is incomplete.
     - Native Development binary and OCI packaging provenance exist, but Release Candidate publication/signing or attestation policy, immutable production release identity, target-host deployment provenance, migration parity, controlled cutover from the transitional runtime, monitoring, alerting, rollback, and exact production deployment verification remain incomplete.
