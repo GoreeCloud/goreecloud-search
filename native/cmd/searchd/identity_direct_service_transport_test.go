@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const testPrivacyShieldDirectServiceEndpoint = "https://privacy.goreecloud.test/v1/capabilities/verify"
+
 type testIdentityDirectServiceCredentialSource struct {
 	credential identityDirectServiceCredential
 	err        error
@@ -52,15 +54,29 @@ func validIdentityDirectServiceCredential() identityDirectServiceCredential {
 	}
 }
 
+func newTestIdentityDirectServiceTransport(
+	t *testing.T,
+	base http.RoundTripper,
+	source identityDirectServiceCredentialSource,
+) *identityDirectServiceRoundTripper {
+	t.Helper()
+	transport, err := newIdentityDirectServiceRoundTripper(
+		base,
+		source,
+		testPrivacyShieldDirectServiceEndpoint,
+	)
+	if err != nil {
+		t.Fatalf("create transport: %v", err)
+	}
+	return transport
+}
+
 func TestIdentityDirectServiceTransportAddsOnlyBoundAuthorizationHeader(t *testing.T) {
 	source := &testIdentityDirectServiceCredentialSource{
 		credential: validIdentityDirectServiceCredential(),
 	}
 	base := &testRoundTripper{}
-	transport, err := newIdentityDirectServiceRoundTripper(base, source)
-	if err != nil {
-		t.Fatalf("create transport: %v", err)
-	}
+	transport := newTestIdentityDirectServiceTransport(t, base, source)
 	if transport.AuthenticatedConsumerID() != searchPrivacyVerificationConsumerID {
 		t.Fatalf("authenticated consumer = %q", transport.AuthenticatedConsumerID())
 	}
@@ -68,7 +84,7 @@ func TestIdentityDirectServiceTransportAddsOnlyBoundAuthorizationHeader(t *testi
 	request, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
-		"https://privacy.goreecloud.test/v1/capabilities/verify",
+		testPrivacyShieldDirectServiceEndpoint,
 		strings.NewReader(`{"consumer_id":"goreecloud-search"}`),
 	)
 	if err != nil {
@@ -107,11 +123,64 @@ func TestIdentityDirectServiceTransportRejectsMissingDependencies(t *testing.T) 
 	source := &testIdentityDirectServiceCredentialSource{
 		credential: validIdentityDirectServiceCredential(),
 	}
-	if _, err := newIdentityDirectServiceRoundTripper(nil, source); err != errIdentityDirectServiceCredentialSourceUnavailable {
+	if _, err := newIdentityDirectServiceRoundTripper(
+		nil,
+		source,
+		testPrivacyShieldDirectServiceEndpoint,
+	); err != errIdentityDirectServiceCredentialSourceUnavailable {
 		t.Fatalf("nil base error = %v", err)
 	}
-	if _, err := newIdentityDirectServiceRoundTripper(base, nil); err != errIdentityDirectServiceCredentialSourceUnavailable {
+	if _, err := newIdentityDirectServiceRoundTripper(
+		base,
+		nil,
+		testPrivacyShieldDirectServiceEndpoint,
+	); err != errIdentityDirectServiceCredentialSourceUnavailable {
 		t.Fatalf("nil source error = %v", err)
+	}
+}
+
+func TestIdentityDirectServiceTransportRejectsInvalidDestinationConfiguration(t *testing.T) {
+	base := &testRoundTripper{}
+	source := &testIdentityDirectServiceCredentialSource{
+		credential: validIdentityDirectServiceCredential(),
+	}
+
+	for _, endpoint := range []string{
+		"",
+		"https://privacy.goreecloud.test",
+		"http://privacy.goreecloud.test/v1/capabilities/verify",
+		"https://user@privacy.goreecloud.test/v1/capabilities/verify",
+		"https://privacy.goreecloud.test/v1/capabilities/verify?target=other",
+	} {
+		if _, err := newIdentityDirectServiceRoundTripper(base, source, endpoint); err != errIdentityDirectServiceDestinationInvalid {
+			t.Fatalf("endpoint %q error = %v", endpoint, err)
+		}
+	}
+}
+
+func TestIdentityDirectServiceTransportRejectsDestinationMismatchBeforeCredentialIssuance(t *testing.T) {
+	source := &testIdentityDirectServiceCredentialSource{
+		credential: validIdentityDirectServiceCredential(),
+	}
+	base := &testRoundTripper{}
+	transport := newTestIdentityDirectServiceTransport(t, base, source)
+
+	for _, target := range []string{
+		"https://other.goreecloud.test/v1/capabilities/verify",
+		"https://privacy.goreecloud.test/v1/capabilities/consume",
+		"https://privacy.goreecloud.test/v1/capabilities/verify?redirected=true",
+	} {
+		request, err := http.NewRequest(http.MethodPost, target, nil)
+		if err != nil {
+			t.Fatalf("create request: %v", err)
+		}
+		_, err = transport.RoundTrip(request)
+		if err != errIdentityDirectServiceDestinationMismatch {
+			t.Fatalf("target %q error = %v", target, err)
+		}
+	}
+	if source.calls != 0 || base.calls != 0 {
+		t.Fatalf("source/base calls = %d/%d, want 0/0", source.calls, base.calls)
 	}
 }
 
@@ -120,14 +189,11 @@ func TestIdentityDirectServiceTransportRejectsExistingAuthorizationHeader(t *tes
 		credential: validIdentityDirectServiceCredential(),
 	}
 	base := &testRoundTripper{}
-	transport, err := newIdentityDirectServiceRoundTripper(base, source)
-	if err != nil {
-		t.Fatalf("create transport: %v", err)
-	}
-	request, _ := http.NewRequest(http.MethodPost, "https://privacy.goreecloud.test/verify", nil)
+	transport := newTestIdentityDirectServiceTransport(t, base, source)
+	request, _ := http.NewRequest(http.MethodPost, testPrivacyShieldDirectServiceEndpoint, nil)
 	request.Header.Set("Authorization", "Bearer injected")
 
-	_, err = transport.RoundTrip(request)
+	_, err := transport.RoundTrip(request)
 	if err != errIdentityDirectServiceAuthorizationHeaderPresent {
 		t.Fatalf("authorization-header error = %v", err)
 	}
@@ -204,12 +270,9 @@ func TestIdentityDirectServiceTransportRejectsCredentialMetadataMismatch(t *test
 		t.Run(testCase.name, func(t *testing.T) {
 			source := &testIdentityDirectServiceCredentialSource{credential: testCase.credential}
 			base := &testRoundTripper{}
-			transport, err := newIdentityDirectServiceRoundTripper(base, source)
-			if err != nil {
-				t.Fatalf("create transport: %v", err)
-			}
-			request, _ := http.NewRequest(http.MethodPost, "https://privacy.goreecloud.test/verify", nil)
-			_, err = transport.RoundTrip(request)
+			transport := newTestIdentityDirectServiceTransport(t, base, source)
+			request, _ := http.NewRequest(http.MethodPost, testPrivacyShieldDirectServiceEndpoint, nil)
+			_, err := transport.RoundTrip(request)
 			if err != errIdentityDirectServiceCredentialInvalid {
 				t.Fatalf("credential validation error = %v", err)
 			}
@@ -224,13 +287,10 @@ func TestIdentityDirectServiceTransportPropagatesCredentialSourceFailure(t *test
 	identityUnavailable := errors.New("identity runtime unavailable")
 	source := &testIdentityDirectServiceCredentialSource{err: identityUnavailable}
 	base := &testRoundTripper{}
-	transport, err := newIdentityDirectServiceRoundTripper(base, source)
-	if err != nil {
-		t.Fatalf("create transport: %v", err)
-	}
-	request, _ := http.NewRequest(http.MethodPost, "https://privacy.goreecloud.test/verify", nil)
+	transport := newTestIdentityDirectServiceTransport(t, base, source)
+	request, _ := http.NewRequest(http.MethodPost, testPrivacyShieldDirectServiceEndpoint, nil)
 
-	_, err = transport.RoundTrip(request)
+	_, err := transport.RoundTrip(request)
 	if !errors.Is(err, identityUnavailable) {
 		t.Fatalf("credential source error = %v", err)
 	}
