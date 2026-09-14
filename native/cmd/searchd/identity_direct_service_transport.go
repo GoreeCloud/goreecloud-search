@@ -101,10 +101,10 @@ func (t *identityDirectServiceRoundTripper) RoundTrip(
 func validateSearchPrivacyDirectServiceCredential(
 	credential identityDirectServiceCredential,
 ) error {
-	if strings.TrimSpace(credential.ServiceID) != searchPrivacyVerificationConsumerID {
+	if credential.ServiceID != searchPrivacyVerificationConsumerID {
 		return errIdentityDirectServiceCredentialInvalid
 	}
-	if strings.TrimSpace(credential.Audience) != searchPrivacyDirectServiceAudience {
+	if credential.Audience != searchPrivacyDirectServiceAudience {
 		return errIdentityDirectServiceCredentialInvalid
 	}
 	if len(credential.Scopes) != 1 || credential.Scopes[0] != searchPrivacyDirectServiceScope {
