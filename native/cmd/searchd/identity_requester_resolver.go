@@ -14,11 +14,11 @@ const (
 )
 
 var (
-	errIdentityRequesterVerifierUnavailable = errors.New("GoreeCloud Identity requester verifier is unavailable")
-	errIdentityRequesterAuthorizationMissing = errors.New("authenticated requester credential is required")
+	errIdentityRequesterVerifierUnavailable    = errors.New("GoreeCloud Identity requester verifier is unavailable")
+	errIdentityRequesterAuthorizationMissing   = errors.New("authenticated requester credential is required")
 	errIdentityRequesterAuthorizationAmbiguous = errors.New("authenticated requester credential must be specified once")
-	errIdentityRequesterAuthorizationInvalid = errors.New("authenticated requester credential is invalid")
-	errIdentityRequesterPrincipalInvalid = errors.New("verified requester principal is invalid")
+	errIdentityRequesterAuthorizationInvalid   = errors.New("authenticated requester credential is invalid")
+	errIdentityRequesterPrincipalInvalid       = errors.New("verified requester principal is invalid")
 )
 
 // identityVerifiedSearchRequester is minimized Identity-owned verification
@@ -118,7 +118,7 @@ func validIdentityRequesterPrincipal(principalID string) bool {
 		return false
 	}
 	for _, character := range principalID {
-		if unicode.IsControl(character) {
+		if unicode.IsSpace(character) || unicode.IsControl(character) {
 			return false
 		}
 	}
