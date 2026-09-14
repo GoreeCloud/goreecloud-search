@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
 
 func TestSearchCapabilityEvidencePublishesConsumerBounds(t *testing.T) {
 	evidence := searchCapabilityEvidence()
@@ -20,6 +23,12 @@ func TestSearchCapabilityEvidencePublishesConsumerBounds(t *testing.T) {
 	}
 	if query.MaxResults != maxAPISearchResults {
 		t.Fatalf("max results = %d, want %d", query.MaxResults, maxAPISearchResults)
+	}
+	if len(query.Methods) != 2 || query.Methods[0] != http.MethodPost || query.Methods[1] != http.MethodGet {
+		t.Fatalf("methods = %#v, want [POST GET]", query.Methods)
+	}
+	if query.PreferredMethod != http.MethodPost {
+		t.Fatalf("preferred method = %q, want POST", query.PreferredMethod)
 	}
 	if !query.Authoritative || !query.Current {
 		t.Fatalf("search.query capability must remain authoritative and current")
