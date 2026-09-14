@@ -14,7 +14,9 @@ var (
 )
 
 type searchPrivacyAuthorizationContext struct {
+	Resource       string
 	Operation      string
+	Purpose        string
 	ProcessingZone string
 	Destination    string
 	RetentionMode  string
@@ -31,10 +33,10 @@ type searchPrivacyAuthorizationVerifier interface {
 // searchPrivacyAuthorizationGate is the Search-side enforcement boundary for
 // the capability-token reference published in the Search capability contract.
 //
-// Current Development runtime does not wire this gate into searchAPI and
-// advertises not_enforced_development. Future production wiring must construct
-// this gate with required=true and a real Privacy Shield verifier before the
-// advertised enforcement state can change to required.
+// Current Development runtime wires the gate with required=false and advertises
+// not_enforced_development. A future production runtime must construct this gate
+// with required=true and a real Privacy Shield verifier before the advertised
+// enforcement state can change to required.
 type searchPrivacyAuthorizationGate struct {
 	required bool
 	verifier searchPrivacyAuthorizationVerifier
@@ -68,7 +70,9 @@ func (g searchPrivacyAuthorizationGate) Verify(r *http.Request) error {
 		r.Context(),
 		reference,
 		searchPrivacyAuthorizationContext{
+			Resource:       "goreecloud.search.query",
 			Operation:      "search.query",
+			Purpose:        "internet_search",
 			ProcessingZone: "private_goreecloud",
 			Destination:    "https://search.goreecloud.com",
 			RetentionMode:  "none",
