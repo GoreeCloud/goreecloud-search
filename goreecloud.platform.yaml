@@ -73,7 +73,7 @@ platform_systems:
     notes: Search can fail-closed project supplied Everkeep continuity evidence, but accepted backup, restore, recovery, migration, and rollback evidence for the native application remains incomplete.
   glaze_ui:
     result: applicable-migration-required
-    version: '1.4.0'
+    version: '1.4.1'
     evidence:
       - README.md
       - SPECIFICATIONS.md
@@ -85,7 +85,7 @@ platform_systems:
       - native/browser_glaze_acceptance.py
       - native/browser_glaze_resilience_acceptance.py
       - native/browser_glaze_large_text_acceptance.py
-    notes: Search Development source now targets the current Official Stable GLAZE UI V1.4 / 1.4.0 Optical Intelligence baseline. Repository-local source and deterministic browser checks exist, but V1.4 application-specific rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, and production acceptance remain incomplete, so whole-application conformance is still migration-required.
+    notes: Search Development source and deterministic browser evidence are being advanced to current Official Stable GLAZE UI V1.4.1 / 1.4.1 Optical Hardening at exact signed Stable authority 4fab9da0fad2e5c974e0e66ec88632c61745751c, with V1.4.0 retained as the immediate shared rollback baseline. Repository-local source and deterministic browser checks do not establish whole-application conformance; Search-specific rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, performance, rollback, and production acceptance remain incomplete, so migration-required remains correct.
   mesh:
     result: applicable-blocked
     version: null
@@ -150,10 +150,10 @@ external_dependencies:
 
 compatibility:
   platform_contract: '0.3'
-  glaze_ui_required: '1.4.0'
+  glaze_ui_required: '1.4.1'
   requires:
     - goreecloud-platform-contract==0.3
-    - glaze-ui==1.4.0
+    - glaze-ui==1.4.1
   provides:
     - search-api-v1
     - search-provider-contract-v1
@@ -185,7 +185,7 @@ conformance:
     - Producer-authoritative Privacy Shield runtime evidence, authenticated verification transport, and Search privacy acceptance are incomplete.
     - Producer-authoritative Wardveil Security runtime evidence and Search security acceptance are incomplete.
     - Everkeep backup, restore, recovery, migration, and rollback acceptance are incomplete.
-    - Current Stable GLAZE UI V1.4 / 1.4.0 is the required Search baseline and Development source targets it, but Search-specific rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, and production acceptance evidence remain incomplete.
+    - Current Stable GLAZE UI V1.4.1 / 1.4.1 is the required Search baseline, but Search-specific source reconciliation, rendered, accessibility, localization/RTL, representative-device/form-factor, target-environment, performance, rollback, and production acceptance evidence remain incomplete.
     - GoreeCloud Mesh registration, coordination, dependency/event integration, and runtime acceptance are incomplete.
     - GoreeCloud Identity account, authentication, authorization, session, requester/service identity, and direct-service authentication integration is incomplete for protected capabilities.
     - GoreeCloud Sync remains a separate application/service capability; its runtime dataset registration, authenticated synchronization, cross-device reconciliation, conflict/deletion handling, and production acceptance are incomplete where Search synchronization is enabled.
