@@ -1,19 +1,22 @@
 /*
- * GoreeCloud Search — GLAZE UI V1.4 / 1.4.0 consumer source projection.
+ * GoreeCloud Search — GLAZE UI V1.4.1 / 1.4.1 consumer source projection.
  *
- * Shared authority: GoreeCloud/goreecloud-glaze-ui release revision
- * 84cb3db4884042f0fa25ed6d475a127fb110f596.
+ * Shared authority: GoreeCloud/goreecloud-glaze-ui signed Stable revision
+ * 4fab9da0fad2e5c974e0e66ec88632c61745751c.
  *
- * This layer adopts the current Stable semantic/optical contract without claiming
- * full product conformance. It does not collect wallpaper, camera, browsing,
- * telemetry, personal, or remote context. Product-local rendered/manual/device
- * acceptance remains separately gated.
+ * This bounded Search-owned projection preserves the inherited V1.4 semantic
+ * and optical contract while moving the runtime identity to current Stable
+ * V1.4.1. It is not a vendored copy of the canonical V1.4.1 entrypoint and does
+ * not claim full product conformance. It does not collect wallpaper, camera,
+ * browsing, telemetry, personal, or remote context. Product-local rendered,
+ * manual, accessibility, representative-device, and performance acceptance
+ * remain separately gated.
  */
 
-html[data-glaze-version="1.4.0"] {
+html[data-glaze-version="1.4.1"] {
   color-scheme: light dark;
 
-  /* V1.4 Optical Intelligence public bounds. */
+  /* V1.4 Optical Intelligence public bounds inherited by V1.4.1. */
   --glz14-frost-strength: .34;
   --glz14-blur-scale: .72;
   --glz14-semantic-protection: .65;
@@ -74,12 +77,12 @@ html[data-glaze-version="1.4.0"] {
   font-family: Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
-html[data-glaze-version="1.4.0"][data-glaze-density-profile="standard"] { --density-gap:16px; --density-section:32px; }
-html[data-glaze-version="1.4.0"][data-glaze-density-profile="productive"] { --density-gap:12px; --density-section:24px; }
-html[data-glaze-version="1.4.0"][data-glaze-density-profile="immersive"] { --density-gap:24px; --density-section:48px; }
-html[data-glaze-version="1.4.0"][data-glz-appearance="light"] { color-scheme:light; }
+html[data-glaze-version="1.4.1"][data-glaze-density-profile="standard"] { --density-gap:16px; --density-section:32px; }
+html[data-glaze-version="1.4.1"][data-glaze-density-profile="productive"] { --density-gap:12px; --density-section:24px; }
+html[data-glaze-version="1.4.1"][data-glaze-density-profile="immersive"] { --density-gap:24px; --density-section:48px; }
+html[data-glaze-version="1.4.1"][data-glz-appearance="light"] { color-scheme:light; }
 
-html[data-glaze-version="1.4.0"][data-glz-appearance="dark"] {
+html[data-glaze-version="1.4.1"][data-glz-appearance="dark"] {
   color-scheme: dark;
   --bg: var(--glz14-cool-graphite);
   --surface: rgba(25,25,27,.68);
@@ -94,7 +97,7 @@ html[data-glaze-version="1.4.0"][data-glz-appearance="dark"] {
   --shadow-float: 0 30px 86px rgba(0,0,0,.44);
 }
 
-html[data-glaze-version="1.4.0"][data-glz-appearance="deep-dark"] {
+html[data-glaze-version="1.4.1"][data-glz-appearance="deep-dark"] {
   color-scheme: dark;
   --bg: var(--glz14-blue-black);
   --surface: rgba(14,14,16,.74);
@@ -110,7 +113,7 @@ html[data-glaze-version="1.4.0"][data-glz-appearance="deep-dark"] {
 }
 
 @media (prefers-color-scheme: dark) {
-  html[data-glaze-version="1.4.0"]:not([data-glz-appearance]) {
+  html[data-glaze-version="1.4.1"]:not([data-glz-appearance]) {
     --bg: var(--glz14-cool-graphite);
     --surface: rgba(25,25,27,.68);
     --surface-strong: rgba(38,38,41,.78);
@@ -123,12 +126,12 @@ html[data-glaze-version="1.4.0"][data-glz-appearance="deep-dark"] {
   }
 }
 
-html[data-glaze-version="1.4.0"][data-glaze-optical-v14="adaptive-optical"] .topbar {
+html[data-glaze-version="1.4.1"][data-glaze-optical-v14="adaptive-optical"] .topbar {
   backdrop-filter: blur(calc(24px * var(--glz14-frost-strength) * var(--glz14-blur-scale))) saturate(calc(1 + (var(--glz14-frost-strength) * .18)));
   -webkit-backdrop-filter: blur(calc(24px * var(--glz14-frost-strength) * var(--glz14-blur-scale))) saturate(calc(1 + (var(--glz14-frost-strength) * .18)));
 }
 
-html[data-glaze-version="1.4.0"][data-glaze-optical-v14="solid-accessible"] {
+html[data-glaze-version="1.4.1"][data-glaze-optical-v14="solid-accessible"] {
   --glz14-memory-tint: transparent;
   --glz14-memory-tint-influence: 0;
   --surface: var(--surface-durable);
@@ -137,10 +140,10 @@ html[data-glaze-version="1.4.0"][data-glaze-optical-v14="solid-accessible"] {
   --glaze-panel: var(--surface-durable);
 }
 
-html[data-glaze-version="1.4.0"][data-glaze-optical-v14="solid-accessible"] .topbar { backdrop-filter:none; -webkit-backdrop-filter:none; }
+html[data-glaze-version="1.4.1"][data-glaze-optical-v14="solid-accessible"] .topbar { backdrop-filter:none; -webkit-backdrop-filter:none; }
 
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
-  html[data-glaze-version="1.4.0"] {
+  html[data-glaze-version="1.4.1"] {
     --glz14-memory-tint: transparent;
     --glz14-memory-tint-influence: 0;
     --surface: var(--surface-durable);
@@ -148,11 +151,11 @@ html[data-glaze-version="1.4.0"][data-glaze-optical-v14="solid-accessible"] .top
     --glaze-bg: var(--surface-durable);
     --glaze-panel: var(--surface-durable);
   }
-  html[data-glaze-version="1.4.0"] .topbar { backdrop-filter:none; -webkit-backdrop-filter:none; }
+  html[data-glaze-version="1.4.1"] .topbar { backdrop-filter:none; -webkit-backdrop-filter:none; }
 }
 
 @media (forced-colors: active) {
-  html[data-glaze-version="1.4.0"] {
+  html[data-glaze-version="1.4.1"] {
     --accent: LinkText;
     --accent-hover: LinkText;
     --line: CanvasText;
