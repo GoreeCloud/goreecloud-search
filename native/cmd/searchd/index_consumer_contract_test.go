@@ -92,6 +92,25 @@ func TestSearchAPIRejectsInvalidOrAmbiguousResultLimit(t *testing.T) {
 	}
 }
 
+func TestSearchAPIRejectsAmbiguousQueryOrCategory(t *testing.T) {
+	app := server{engine: searchcore.NewEngine(time.Second, indexConsumerContractProvider{})}
+	paths := []string{
+		"/api/v1/search?q=first&q=second&category=general",
+		"/api/v1/search?q=test&category=general&category=news",
+	}
+
+	for _, path := range paths {
+		t.Run(path, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, path, nil)
+			response := httptest.NewRecorder()
+			app.searchAPI(response, request)
+			if response.Code != http.StatusBadRequest {
+				t.Fatalf("status = %d, want %d: %s", response.Code, http.StatusBadRequest, response.Body.String())
+			}
+		})
+	}
+}
+
 func TestRequestedResultLimitCapsFirstPartyConsumerRequests(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=test&limit=100", nil)
 	limit, present, err := requestedResultLimit(request)

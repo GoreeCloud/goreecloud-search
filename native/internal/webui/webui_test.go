@@ -42,7 +42,7 @@ func TestRenderResultsEscapesProviderContentAndHidesInternalScore(t *testing.T) 
 	}
 	for _, expected := range []string{
 		"GoreeCloud Search",
-		`data-glaze-version="1.4.0"`,
+		`data-glaze-version="1.4.1"`,
 		`data-glaze-density-profile="comfortable"`,
 		`data-glaze-optical-v14="adaptive-optical"`,
 		`/assets/appearance.js`,
@@ -136,7 +136,7 @@ func TestHomepageStylesAreServedAsCSS(t *testing.T) {
 	}
 }
 
-func TestAppStylesAdoptGlazeV14SourceProjectionAndFallbacks(t *testing.T) {
+func TestAppStylesAdoptGlazeV141SourceProjectionAndFallbacks(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	Styles(recorder, httptest.NewRequest(http.MethodGet, "/assets/app.css", nil))
 	if recorder.Code != http.StatusOK {
@@ -144,7 +144,7 @@ func TestAppStylesAdoptGlazeV14SourceProjectionAndFallbacks(t *testing.T) {
 	}
 	body := recorder.Body.String()
 	for _, expected := range []string{
-		`html[data-glaze-version="1.4.0"]`,
+		`html[data-glaze-version="1.4.1"]`,
 		`--glz14-frost-strength`,
 		`--glz14-semantic-protection`,
 		`--glz14-memory-tint-influence: 0`,
@@ -158,7 +158,7 @@ func TestAppStylesAdoptGlazeV14SourceProjectionAndFallbacks(t *testing.T) {
 		"solid-accessible",
 	} {
 		if !strings.Contains(body, expected) {
-			t.Fatalf("app stylesheet missing Glaze V1.4 source contract %q", expected)
+			t.Fatalf("app stylesheet missing Glaze V1.4.1 source contract %q", expected)
 		}
 	}
 	for _, legacy := range []string{"#5d62ff", "#7c4dff"} {
@@ -197,7 +197,7 @@ func TestHomepageUsesOnlySharedLocalAppearanceBootstrap(t *testing.T) {
 	body := recorder.Body.String()
 
 	for _, expected := range []string{
-		`data-glaze-version="1.4.0"`,
+		`data-glaze-version="1.4.1"`,
 		`data-glaze-density-profile="comfortable"`,
 		`data-glaze-optical-v14="adaptive-optical"`,
 		`/assets/appearance.js`,
@@ -223,7 +223,7 @@ func TestHomepageUsesOnlySharedLocalAppearanceBootstrap(t *testing.T) {
 	}
 }
 
-func TestAppearanceScriptIsLocalOnlyAndGlazeV14Bound(t *testing.T) {
+func TestAppearanceScriptIsLocalOnlyAndGlazeV141Bound(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	AppearanceScript(recorder, httptest.NewRequest(http.MethodGet, "/assets/appearance.js", nil))
 	if recorder.Code != http.StatusOK {
@@ -235,7 +235,7 @@ func TestAppearanceScriptIsLocalOnlyAndGlazeV14Bound(t *testing.T) {
 	body := recorder.Body.String()
 	for _, expected := range []string{
 		"goreecloud.search.preferences.v1",
-		`const glazeVersion = "1.4.0"`,
+		`const glazeVersion = "1.4.1"`,
 		`root.dataset.glazeVersion = glazeVersion`,
 		`root.dataset.glazeOpticalV14 = "adaptive-optical"`,
 		`"deep-dark"`,
@@ -292,7 +292,7 @@ func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
 	body := recorder.Body.String()
 
 	for _, expected := range []string{
-		`data-glaze-version="1.4.0"`,
+		`data-glaze-version="1.4.1"`,
 		`data-glaze-optical-v14="adaptive-optical"`,
 		`/assets/appearance.js`,
 		"/assets/preferences.js",
@@ -303,7 +303,7 @@ func TestPreferencesPageWiresLocalControlsAndPortability(t *testing.T) {
 		"data-preference=\"search.autocomplete\"",
 		"data-preference=\"privacy.recent_queries\"",
 		`value="deep-dark"`,
-		"Glaze UI V1.4",
+		"Glaze UI V1.4.1",
 	} {
 		if !strings.Contains(body, expected) {
 			t.Fatalf("Preferences page missing %q", expected)

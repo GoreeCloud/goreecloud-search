@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -23,18 +24,39 @@ import (
 )
 
 const (
-	apiVersion          = "1"
-	maxAPISearchResults = 100
+	apiVersion               = "1"
+	maxAPISearchResults      = 100
+	maxSearchAPIRequestBytes = 16 * 1024
 )
 
 type capabilityEvidence struct {
-	ID                 string `json:"id"`
-	ContractVersion    string `json:"contract_version"`
-	Authoritative      bool   `json:"authoritative"`
-	Current            bool   `json:"current"`
-	ProductionAccepted bool   `json:"production_accepted"`
-	Endpoint           string `json:"endpoint"`
-	MaxResults         int    `json:"max_results,omitempty"`
+	ID                 string   `json:"id"`
+	ContractVersion    string   `json:"contract_version"`
+	Authoritative      bool     `json:"authoritative"`
+	Current            bool     `json:"current"`
+	ProductionAccepted bool     `json:"production_accepted"`
+	Endpoint           string   `json:"endpoint"`
+	Methods            []string `json:"methods,omitempty"`
+	PreferredMethod    string   `json:"preferred_method,omitempty"`
+	MaxResults         int      `json:"max_results,omitempty"`
+}
+
+type searchAPIResponse struct {
+	APIVersion string `json:"api_version"`
+	searchcore.Response
+}
+
+type searchAPIBodyRequest struct {
+	Query    string `json:"query"`
+	Category string `json:"category,omitempty"`
+	Limit    *int   `json:"limit,omitempty"`
+}
+
+type parsedSearchAPIRequest struct {
+	query    string
+	category string
+	limit    int
+	hasLimit bool
 }
 
 type server struct {
@@ -45,6 +67,7 @@ type server struct {
 	webIntelligenceConfigured   bool
 	webAutomationAuth           *webautomation.AuthControl
 	webAutomationAuthConfigured bool
+	privacyAuthorizationGate    searchPrivacyAuthorizationGate
 }
 
 func searchCapabilityEvidence() []capabilityEvidence {
@@ -56,6 +79,8 @@ func searchCapabilityEvidence() []capabilityEvidence {
 			Current:            true,
 			ProductionAccepted: false,
 			Endpoint:           "/api/v1/search",
+			Methods:            []string{http.MethodPost, http.MethodGet},
+			PreferredMethod:    http.MethodPost,
 			MaxResults:         maxAPISearchResults,
 		},
 	}
@@ -87,6 +112,9 @@ func main() {
 		webIntelligenceConfigured:   webIntelligenceConfigured,
 		webAutomationAuth:           webAutomationAuth,
 		webAutomationAuthConfigured: webAutomationAuthConfigured,
+		privacyAuthorizationGate: searchPrivacyAuthorizationGate{
+			required: false,
+		},
 	}
 
 	mux := http.NewServeMux()
@@ -107,6 +135,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/status", app.status)
 	mux.HandleFunc("GET /api/v1/readiness", app.readiness)
 	mux.HandleFunc("GET /api/v1/search", app.searchAPI)
+	mux.HandleFunc("POST /api/v1/search", app.searchAPI)
 	mux.HandleFunc("GET /api/v1/preferences/definitions", app.preferenceDefinitions)
 	mux.HandleFunc("GET /api/v1/providers/definitions", app.providerDefinitions)
 	mux.HandleFunc("GET /api/v1/web-intelligence/status", app.webIntelligenceStatus)
@@ -142,14 +171,15 @@ func (s server) health(w http.ResponseWriter, _ *http.Request) {
 
 func (s server) status(w http.ResponseWriter, _ *http.Request) {
 	writeAPIV1JSON(w, http.StatusOK, map[string]any{
-		"api_version":         apiVersion,
-		"product":             "GoreeCloud Search",
-		"service":             "search",
-		"status":              "ok",
-		"implementation":      "native",
-		"lifecycle":           "development",
-		"production_approved": false,
-		"build":               s.build,
+		"api_version":                    apiVersion,
+		"product":                        "GoreeCloud Search",
+		"service":                        "search",
+		"status":                         "ok",
+		"implementation":                 "native",
+		"lifecycle":                      "development",
+		"production_approved":            false,
+		"privacy_authorization_enforced": s.privacyAuthorizationGate.Enforced(),
+		"build":                          s.build,
 		"capabilities": map[string]bool{
 			"html_search":                 true,
 			"machine_readable_search_api": true,
@@ -183,7 +213,9 @@ func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
 	if engineInitialized {
 		generalCategoryReady = s.engine.SupportsCategory(searchcore.CategoryGeneral)
 	}
-	ready := engineInitialized && generalCategoryReady
+	privacyAuthorizationBoundaryReady :=
+		!s.privacyAuthorizationGate.required || s.privacyAuthorizationGate.Enforced()
+	ready := engineInitialized && generalCategoryReady && privacyAuthorizationBoundaryReady
 	status := "ready"
 	httpStatus := http.StatusOK
 	if !ready {
@@ -200,8 +232,9 @@ func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
 		"readiness_scope":     "local_native_application",
 		"production_approved": false,
 		"checks": map[string]bool{
-			"native_engine_initialized": engineInitialized,
-			"general_category_ready":     generalCategoryReady,
+			"native_engine_initialized":             engineInitialized,
+			"general_category_ready":                 generalCategoryReady,
+			"privacy_authorization_boundary_ready": privacyAuthorizationBoundaryReady,
 		},
 		"not_evaluated": []string{
 			"external_search_providers",
@@ -215,8 +248,27 @@ func (s server) readiness(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
+func requestedSingleQueryValue(r *http.Request, key, duplicateError string) (string, error) {
+	values, present := r.URL.Query()[key]
+	if !present {
+		return "", nil
+	}
+	if len(values) != 1 {
+		return "", errors.New(duplicateError)
+	}
+	return values[0], nil
+}
+
 func requestedCategory(r *http.Request) (string, error) {
-	return searchcore.ValidateCategory(r.URL.Query().Get("category"))
+	raw, err := requestedSingleQueryValue(r, "category", "search category must be specified once")
+	if err != nil {
+		return "", err
+	}
+	return searchcore.ValidateCategory(raw)
+}
+
+func requestedSearchQuery(r *http.Request) (string, error) {
+	return requestedSingleQueryValue(r, "q", "query must be specified once")
 }
 
 func requestedResultLimit(r *http.Request) (int, bool, error) {
@@ -235,6 +287,71 @@ func requestedResultLimit(r *http.Request) (int, bool, error) {
 	return limit, true, nil
 }
 
+func requestedGETSearchAPIRequest(r *http.Request) (parsedSearchAPIRequest, error) {
+	rawQuery, err := requestedSearchQuery(r)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+	category, err := requestedCategory(r)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+	limit, hasLimit, err := requestedResultLimit(r)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+	return parsedSearchAPIRequest{
+		query:    rawQuery,
+		category: category,
+		limit:    limit,
+		hasLimit: hasLimit,
+	}, nil
+}
+
+func requestedPOSTSearchAPIRequest(w http.ResponseWriter, r *http.Request) (parsedSearchAPIRequest, error) {
+	contentType := strings.TrimSpace(strings.SplitN(r.Header.Get("Content-Type"), ";", 2)[0])
+	if contentType != "application/json" {
+		return parsedSearchAPIRequest{}, errors.New("POST search requests require application/json")
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxSearchAPIRequestBytes)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	var body searchAPIBodyRequest
+	if err := decoder.Decode(&body); err != nil {
+		return parsedSearchAPIRequest{}, errors.New("invalid JSON search request")
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		return parsedSearchAPIRequest{}, errors.New("search request must contain one JSON object")
+	}
+
+	category, err := searchcore.ValidateCategory(body.Category)
+	if err != nil {
+		return parsedSearchAPIRequest{}, err
+	}
+
+	parsed := parsedSearchAPIRequest{
+		query:    body.Query,
+		category: category,
+	}
+	if body.Limit != nil {
+		if *body.Limit < 1 || *body.Limit > maxAPISearchResults {
+			return parsedSearchAPIRequest{}, errors.New("result limit must be an integer between 1 and 100")
+		}
+		parsed.limit = *body.Limit
+		parsed.hasLimit = true
+	}
+	return parsed, nil
+}
+
+func requestedSearchAPIRequest(w http.ResponseWriter, r *http.Request) (parsedSearchAPIRequest, error) {
+	if r.Method == http.MethodPost {
+		return requestedPOSTSearchAPIRequest(w, r)
+	}
+	return requestedGETSearchAPIRequest(r)
+}
+
 func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 	category, err := requestedCategory(r)
 	if err != nil {
@@ -247,6 +364,9 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 	}
 	response, err := s.engine.SearchCategory(r.Context(), r.URL.Query().Get("q"), category)
 	if err != nil {
+		if r.Context().Err() != nil {
+			return
+		}
 		webui.RenderSearchError(w, r.URL.Query().Get("q"), err)
 		return
 	}
@@ -258,32 +378,46 @@ func (s server) searchPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s server) searchAPI(w http.ResponseWriter, r *http.Request) {
-	category, err := requestedCategory(r)
-	if err != nil {
-		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported search category"})
-		return
-	}
-	limit, hasLimit, err := requestedResultLimit(r)
-	if err != nil {
-		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-	if !s.engine.SupportsCategory(category) {
-		writeAPIV1JSON(w, http.StatusNotImplemented, map[string]string{
-			"error":    "search category is not implemented in the native provider layer",
-			"category": category,
+	if err := s.privacyAuthorizationGate.Verify(r); err != nil {
+		if errors.Is(err, errPrivacyAuthorizationVerifierUnavailable) {
+			writeAPIV1JSON(w, http.StatusServiceUnavailable, map[string]string{
+				"error": "Privacy Shield authorization verifier is unavailable",
+			})
+			return
+		}
+		writeAPIV1JSON(w, http.StatusForbidden, map[string]string{
+			"error": "Privacy Shield authorization is required",
 		})
 		return
 	}
-	response, err := s.engine.SearchCategory(r.Context(), r.URL.Query().Get("q"), category)
+
+	request, err := requestedSearchAPIRequest(w, r)
 	if err != nil {
 		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	if hasLimit && len(response.Results) > limit {
-		response.Results = append([]searchcore.Result(nil), response.Results[:limit]...)
+	if !s.engine.SupportsCategory(request.category) {
+		writeAPIV1JSON(w, http.StatusNotImplemented, map[string]string{
+			"error":    "search category is not implemented in the native provider layer",
+			"category": request.category,
+		})
+		return
 	}
-	writeAPIV1JSON(w, http.StatusOK, response)
+	response, err := s.engine.SearchCategory(r.Context(), request.query, request.category)
+	if err != nil {
+		if r.Context().Err() != nil {
+			return
+		}
+		writeAPIV1JSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if request.hasLimit && len(response.Results) > request.limit {
+		response.Results = append([]searchcore.Result(nil), response.Results[:request.limit]...)
+	}
+	writeAPIV1JSON(w, http.StatusOK, searchAPIResponse{
+		APIVersion: apiVersion,
+		Response:   response,
+	})
 }
 
 func (s server) preferenceDefinitions(w http.ResponseWriter, _ *http.Request) {

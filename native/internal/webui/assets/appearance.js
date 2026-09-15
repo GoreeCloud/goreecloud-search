@@ -3,7 +3,7 @@
 
   const storageKey = "goreecloud.search.preferences.v1";
   const schemaVersion = 1;
-  const glazeVersion = "1.4.0";
+  const glazeVersion = "1.4.1";
   const defaultTheme = "system";
   const defaultDensity = "comfortable";
   const themes = new Set(["system", "light", "dark", "deep-dark"]);

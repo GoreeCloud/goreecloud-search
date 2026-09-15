@@ -29,15 +29,15 @@ type glazeAuthorityManifest struct {
 		} `json:"optical_engine"`
 	} `json:"entrypoints"`
 	ConsumerBoundary struct {
-		CurrentSourceProjection              string `json:"current_source_projection"`
-		CanonicalEntrypointVendored         bool   `json:"canonical_entrypoint_vendored"`
-		CanonicalRuntimeVendored            bool   `json:"canonical_runtime_vendored"`
-		ProductionAccepted                  bool   `json:"production_accepted"`
-		ManualDeviceQualificationComplete   bool   `json:"manual_device_qualification_complete"`
+		CurrentSourceProjection            string `json:"current_source_projection"`
+		CanonicalEntrypointVendored       bool   `json:"canonical_entrypoint_vendored"`
+		CanonicalRuntimeVendored          bool   `json:"canonical_runtime_vendored"`
+		ProductionAccepted                bool   `json:"production_accepted"`
+		ManualDeviceQualificationComplete bool   `json:"manual_device_qualification_complete"`
 	} `json:"consumer_boundary"`
 }
 
-func TestGlazeV14AuthorityManifestBindsExactStableRelease(t *testing.T) {
+func TestGlazeV141AuthorityManifestBindsExactStableRelease(t *testing.T) {
 	var manifest glazeAuthorityManifest
 	if err := json.Unmarshal([]byte(mustAsset("assets/glaze-v1.4-authority.json")), &manifest); err != nil {
 		t.Fatalf("decode Glaze authority manifest: %v", err)
@@ -49,20 +49,20 @@ func TestGlazeV14AuthorityManifestBindsExactStableRelease(t *testing.T) {
 	if manifest.Lifecycle != "stable" || !manifest.ConsumerEligible {
 		t.Fatal("Glaze authority lifecycle is not current Stable consumer authority")
 	}
-	if manifest.AuthorityRepository != "GoreeCloud/goreecloud-glaze-ui" || manifest.AuthorityRevision != "84cb3db4884042f0fa25ed6d475a127fb110f596" {
+	if manifest.AuthorityRepository != "GoreeCloud/goreecloud-glaze-ui" || manifest.AuthorityRevision != "4fab9da0fad2e5c974e0e66ec88632c61745751c" {
 		t.Fatalf("Glaze authority revision mismatch: %s@%s", manifest.AuthorityRepository, manifest.AuthorityRevision)
 	}
-	if manifest.RollbackBaseline != "1.3.0" {
-		t.Fatalf("rollback baseline = %q, want 1.3.0", manifest.RollbackBaseline)
+	if manifest.RollbackBaseline != "1.4.0" {
+		t.Fatalf("rollback baseline = %q, want 1.4.0", manifest.RollbackBaseline)
 	}
 
 	expected := map[string][2]string{
-		"web": {"css/glaze-v1.4.0.css", "d48a9bc317090d152799769271de0fb4325494c4"},
-		"runtime": {"js/glaze-v1.4.0.mjs", "a39e7f7209533f5c5b4fe78ce496307fc7850bfc"},
-		"optical": {"js/glaze-v1.4-optical-engine.mjs", "96590bedcdb581a3c5c41e548c5866c7b6cd80a4"},
+		"web":     {"css/glaze-v1.4.1.css", "4373cc859da9a329bcfb4cc56062ec639ad2ff93"},
+		"runtime": {"js/glaze-v1.4.1.mjs", "ed2c9894ae5c7da53e1691ad41d5cb1f101b42a0"},
+		"optical": {"js/glaze-v1.4.1-optical-engine.mjs", "7f197bf4738be5c91c2f925b96b534e370af2d3f"},
 	}
 	actual := map[string][2]string{
-		"web": {manifest.Entrypoints.Web.Path, manifest.Entrypoints.Web.GitBlobSHA},
+		"web":     {manifest.Entrypoints.Web.Path, manifest.Entrypoints.Web.GitBlobSHA},
 		"runtime": {manifest.Entrypoints.Runtime.Path, manifest.Entrypoints.Runtime.GitBlobSHA},
 		"optical": {manifest.Entrypoints.OpticalEngine.Path, manifest.Entrypoints.OpticalEngine.GitBlobSHA},
 	}
@@ -82,7 +82,7 @@ func TestGlazeV14AuthorityManifestBindsExactStableRelease(t *testing.T) {
 
 	projection := mustAsset(manifest.ConsumerBoundary.CurrentSourceProjection)
 	for _, required := range []string{
-		"GLAZE UI V1.4 / 1.4.0 consumer source projection",
+		"GLAZE UI V1.4.1 / 1.4.1 consumer source projection",
 		manifest.AuthorityRevision,
 		"--glz14-frost-strength",
 		"--glz14-memory-tint-influence",

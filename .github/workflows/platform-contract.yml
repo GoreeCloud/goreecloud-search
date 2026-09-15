@@ -17,8 +17,14 @@ name: Platform Contract
 permissions:
   contents: read
 
+# Development validation intentionally pins the exact current Platform Contract
+# 0.3 candidate from GoreeCloud/GoreeCloud PR #30. The candidate follows the
+# authoritative seven-system governance model and requires current Stable
+# GLAZE UI V1.4.1 / 1.4.1 for applicable Stable consumers. This exact pin is
+# deterministic Development evidence only; it does not treat that draft central
+# PR as merged, accepted, or production authority.
 jobs:
   validate:
-    uses: GoreeCloud/GoreeCloud/.github/workflows/reusable-platform-manifest.yml@b25c96afd8cd5dd99154f720e5b709e64fc0c6df
+    uses: GoreeCloud/GoreeCloud/.github/workflows/reusable-platform-manifest.yml@8c552251baca0098714d8fc7445f3d6be8545899
     with:
       manifest-path: goreecloud.platform.yaml
