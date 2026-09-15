@@ -10,7 +10,7 @@ import (
 	searchcore "github.com/GoreeCloud/goreecloud-search/native/internal/search"
 )
 
-const glazeVersion = "1.4.0"
+const glazeVersion = "1.4.1"
 
 //go:embed assets/*
 var assets embed.FS
@@ -175,7 +175,7 @@ func serveGlazeHTMLAsset(w http.ResponseWriter, name string) {
 func glazeHTML(content string) string {
 	content = strings.ReplaceAll(content, "data-glaze-version=\"1.1\"", "data-glaze-version=\""+glazeVersion+"\"")
 	content = strings.ReplaceAll(content, "data-glaze-density-profile=\"comfortable\"", "data-glaze-density-profile=\"comfortable\" data-glaze-optical-v14=\"adaptive-optical\"")
-	content = strings.ReplaceAll(content, "Glaze UI V1.1", "Glaze UI V1.4")
+	content = strings.ReplaceAll(content, "Glaze UI V1.1", "Glaze UI V1.4.1")
 	return content
 }
 
