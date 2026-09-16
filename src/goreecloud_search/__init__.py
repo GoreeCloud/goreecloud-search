@@ -56,6 +56,13 @@ from .providers import ProviderSearchBatch, ResultCandidate, SearchProvider
 from .query_parser import QueryParseError, parse_query
 from .ranking import RankedResult, RankingSignal, rank_results
 from .service import SearchCore, SearchResponse
+from .snippets import (
+    DEFAULT_SNIPPET_MAX_CHARS,
+    MAX_SNIPPET_SOURCE_CHARS,
+    GeneratedSnippet,
+    SnippetGenerationError,
+    generate_snippet,
+)
 from .version import __version__
 
 __all__ = [
@@ -76,5 +83,7 @@ __all__ = [
     "canonicalize_url", "normalize_and_deduplicate", "RankingSignal", "RankedResult",
     "rank_results", "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt",
     "ExecutionReport", "SearchAvailability", "SearchExecutor", "SearchResponse",
+    "DEFAULT_SNIPPET_MAX_CHARS", "MAX_SNIPPET_SOURCE_CHARS", "GeneratedSnippet",
+    "SnippetGenerationError", "generate_snippet",
     "parse_query", "plan_sources", "SearchCore",
 ]
