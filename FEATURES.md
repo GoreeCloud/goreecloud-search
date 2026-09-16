@@ -1,7 +1,7 @@
 # GoreeCloud Search — Current Features
 
 **Lifecycle:** Development  
-**Version:** `0.1.0.dev2`
+**Version:** `0.1.0.dev3`
 
 This file records implemented behavior in the current development candidate. It does not claim release, deployment, production acceptance, or Stable qualification.
 
@@ -31,6 +31,9 @@ This file records implemented behavior in the current development candidate. It 
 - Canonical-URL and content-hash deduplication.
 - Multi-provider source-agreement counts and provenance aggregation.
 - Fail-closed rejection of candidates from undeclared providers.
+- Deterministic Search-owned ranking using quoted-phrase, title-term, snippet-term, explicit site/filetype/language, and bounded source-agreement signals.
+- Per-result ranking signal records and human-readable “Why this result?” explanations.
+- No behavioral-history, advertising-payment, click-profile, or hidden provider-specific ranking boost.
 - Development CLI for query parsing without network access.
 - Unit tests and CI for Python 3.11 and 3.12.
 - Explicit internal application version.

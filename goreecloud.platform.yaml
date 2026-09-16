@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev2
+  version: 0.1.0.dev3
   lifecycle: development
   stable: false
 
@@ -14,6 +14,7 @@ runtime_scope:
     - source-planning
     - search-index-contract-v1
     - result-normalization-and-deduplication
+    - deterministic-ranking-and-explanations
   network_provider_execution: false
   persistent_user_state: false
   user_interface: false

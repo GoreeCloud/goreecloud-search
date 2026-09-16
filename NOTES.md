@@ -24,3 +24,7 @@ The first implementation slice intentionally starts with a GoreeCloud-owned, sid
 ## Stacked implementation candidate
 
 `feature/index-contract-normalization` is based on `feature/native-search-core-foundation`. It must be retargeted or reconciled after the parent candidate changes or merges. The child candidate adds contract/normalization primitives only; it does not authorize or implement live Index network access.
+
+## Ranking baseline
+
+The initial ranker intentionally avoids provider-specific hidden boosts and behavioral signals. GoreeCloud Index presence is recorded as provenance but contributes zero score. Source agreement is bounded so federation consensus cannot dominate lexical/query-intent relevance.

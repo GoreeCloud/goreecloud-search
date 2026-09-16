@@ -12,7 +12,7 @@ Use GitHub private vulnerability reporting when it is enabled for this repositor
 
 ## Current security boundary
 
-Version `0.1.0.dev2` performs no provider network execution. The primary implemented controls are input validation, deterministic source planning, a fail-closed rule preventing external-provider inclusion in GoreeCloud-only and offline/local modes, strict Search ↔ Index contract-version validation, conservative result-URL validation, and rejection of candidates from undeclared providers.
+Version `0.1.0.dev3` performs no provider network execution. The primary implemented controls are input validation, deterministic source planning, a fail-closed rule preventing external-provider inclusion in GoreeCloud-only and offline/local modes, strict Search ↔ Index contract-version validation, conservative result-URL validation, rejection of candidates from undeclared providers, and deterministic ranking that does not execute code or invoke network services.
 
 ## Future requirements
 

@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev2`
+**Repository version:** `0.1.0.dev3`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -41,11 +41,11 @@ Completed checkboxes above describe the stacked development candidate only until
 - [x] Add canonical-URL and content-hash deduplication.
 - [x] Add source-agreement counts.
 - [ ] Add snippet generation.
-- [ ] Add initial deterministic ranking.
-- [x] Add provider/result provenance primitives for later “Why this result?” explanations.
+- [x] Add initial deterministic ranking with inspectable scoring signals.
+- [x] Add provider/result provenance primitives and initial “Why this result?” explanations.
 - [ ] Add SafeSearch/content-policy hooks.
 
-Normalization deliberately does not rerank results; ranking remains a separate Search-owned phase.
+Normalization deliberately does not rerank results. Ranking is a separate Search-owned phase and the current candidate uses only inspectable query/result evidence plus a bounded source-agreement signal.
 
 ## Phase 3 — Federated providers
 
