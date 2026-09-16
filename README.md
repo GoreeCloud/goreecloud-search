@@ -3,7 +3,7 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev7`  
+> **Version:** `0.1.0.dev6`  
 > **License:** `AGPL-3.0-or-later`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport or production safety classifier ships in this revision.
 
