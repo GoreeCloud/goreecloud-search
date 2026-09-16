@@ -3,55 +3,40 @@
 ## Lifecycle
 
 - Product: GoreeCloud Search
-- Version: `0.1.0.dev7`
+- Version: `0.1.0.dev8`
 - Lifecycle: Development
 - Stable: No
 - License: `AGPL-3.0-or-later`
 
 ## Current implementation boundary
 
-The current native development candidates provide a query parser and privacy-aware source planner, bounded asynchronous provider execution, a versioned Search ↔ Index contract boundary with pagination, Search-owned normalization/deduplication, content policy, deterministic baseline ranking, and an initial transparent Search-local Lens reranking layer.
+The current development candidates provide a query parser/privacy-aware source planner, bounded asynchronous provider execution, a versioned Search ↔ Index contract boundary with pagination, Search-owned normalization/deduplication, content policy, deterministic baseline ranking, Search-local Lens reranking, and a strict portable Lens data contract.
 
-### Query model
+### Query and provider boundaries
 
-The parser currently supports free-text terms, double-quoted phrases, excluded terms, `site:`, `-domain:`, `filetype:`, `ext:`, `before:`, `after:`, `language:`, `region:`, `source:`, `category:`, and `lens:`.
+The parser supports free text, phrases/exclusions, site/domain/filetype/date/language/region/source/category filters, and `lens:`. Source planning implements Index First, Federated, GoreeCloud Only, External Only, and Offline/Local modes with optional third-party disclosure budgets. The executor may run only plan-admitted providers.
 
-Unsupported syntax must remain ordinary query text or be rejected explicitly rather than causing hidden network behavior.
+### Lens reranking boundary
 
-### Source modes and privacy
+A `Lens` is a Search-local deterministic set of domain/filetype/language boost, lower, or exclude rules. Every score adjustment is an inspectable ranking signal and every exclusion is explicit evidence. Unknown requested Lenses fail before provider execution. Search strips `query.filters.lens` from the provider-facing query.
 
-The source planner implements `index_first`, `federated`, `goreecloud_only`, `external_only`, and `offline_local`. The executor may run only providers named by the plan. `QueryDisclosureBudget` can cap distinct third-party providers before execution. `goreecloud_only` and `offline_local` must never produce a plan that discloses the query to a third-party provider.
+### Portable Lens contract
 
-### Provider and Index boundaries
+`goreecloud.search-lens.v1` is the current portable Lens document format. It is JSON and contains exactly: `format_version`, `name`, `description`, and `rules`; each rule contains exactly `target`, `value`, `action`, and `weight`.
 
-Provider implementations conform to typed descriptors/search contracts. Execution is bounded by concurrency and timeout controls with cancellation and failure isolation. `goreecloud.search-index.v1` defines the current transport-injected Search ↔ Index model with category/capability negotiation, cursor pagination, provenance, and degraded-state propagation. No authenticated live Index client ships yet.
+Export is deterministic (`sort_keys`, stable floating-point rule weights, UTF-8 text, terminal newline). Import fails closed on incompatible versions, unknown/duplicate fields, non-finite numbers, unsupported targets/actions, invalid types/weights, empty/too-long values, more than 256 rules, or documents larger than 64 KiB. Import/export is an in-memory transformation only: there is no filesystem persistence, remote registry, network fetch, code execution, signature/trust system, or synchronization in this candidate.
 
-### Ranking boundary
+### Content-policy and ranking boundaries
 
-Baseline ranking uses transparent deterministic query/result signals. GoreeCloud Index presence has zero ranking weight. Provider rank, click history, advertising payment, cross-query profiles, and hidden behavioral signals are not used.
-
-### Lens boundary
-
-A `Lens` is a Search-local deterministic set of rules. The current rule targets are domain, filetype, and language; actions are boost, lower, and exclude. Boost/lower weights are explicit and bounded. Matching subdomains are recognized for domain rules. Every applied score adjustment becomes an inspectable `RankingSignal`, and every exclusion is returned as Lens exclusion evidence.
-
-Lens registry names use a stable case-insensitive lookup form while preserving the user-visible Lens name. An unknown requested Lens fails before provider execution. Search removes `query.filters.lens` from the provider-facing query before execution, so the selected local Lens is not sent to GoreeCloud Index or federated adapters through this contract.
-
-Lens persistence, remote discovery, import/export, sharing, synchronization, trust/signature handling, and UI are not implemented.
-
-### Content-policy boundary
-
-Content policy is evaluated after normalization and before ranking. Hooks return attributable allow/warn/block decisions. Block dominates warn, and hook exception/spoofed provenance fails closed. The built-in `DomainPolicyHook` is explicit administrator domain policy, not a production content classifier. Moderate/Strict SafeSearch is rejected before provider execution unless at least one configured hook declares enforcement.
+Content policy is evaluated after normalization and before ranking. Moderate/Strict SafeSearch fails before provider execution unless a configured hook declares enforcement. Baseline ranking is transparent/deterministic and excludes provider rank, click history, advertising payment, cross-query profiles, and hidden behavioral signals. Lens reranking occurs after the baseline/content-policy stages.
 
 ## Not yet implemented
 
-- Authenticated live GoreeCloud Index transport and runtime integration.
-- Approved external search-provider adapters.
+- Authenticated live GoreeCloud Index transport and approved external providers.
 - HTTP API and health/readiness endpoints.
 - Snippet generation beyond provider-supplied snippets.
-- Production SafeSearch classification sources and verified Wardveil runtime safety feeds.
-- Lens persistence, export/import, sharing, synchronization, and UI.
-- Private View, GoreeCloud Browser integration, and GoreeCloud AI answer integration.
-- Identity-authenticated service requests, Privacy Shield runtime authorization, GoreeCloud Mesh discovery/events, and GoreeCloud Manager administration.
-- User/admin Glaze UI surfaces, persistent search history/GoreeCloud Sync, and production deployment artifacts.
+- Production SafeSearch/Wardveil classification feeds.
+- Lens filesystem persistence, automatic UI import/export, signatures/trust, remote sharing/discovery, synchronization, and hosted registry.
+- Private View, Browser/AI integration, Platform-System runtime enforcement, Glaze UI surfaces, persistent history/Sync, and production deployment artifacts.
 
 These remain planned and must not be represented as implemented until code and verification evidence exist.

@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev7
+  version: 0.1.0.dev8
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -20,11 +20,13 @@ runtime_scope:
     - query-disclosure-budgeting
     - content-policy-hooks
     - local-lens-reranking
+    - portable-lens-format-v1
     - index-cursor-pagination
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
   content_policy_hooks: true
   local_lens_reranking: true
+  portable_lens_format: goreecloud.search-lens.v1
   production_safesearch_classifier: false
   built_in_live_network_provider: false
   persistent_user_state: false
@@ -46,7 +48,7 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: Local execution controls include timeouts, cancellation, failure isolation, provenance validation, and fail-closed content-policy hook handling, but no Wardveil runtime contract or production safety-classification feed is integrated.
+    reason: Local execution controls include timeouts, cancellation, failure isolation, provenance validation, strict Lens document parsing, and fail-closed content-policy hook handling, but no Wardveil runtime contract or production safety-classification feed is integrated.
   everkeep:
     applicable: false
     status: not_applicable_current_runtime
@@ -72,7 +74,7 @@ specialized_services:
   goreecloud_sync:
     applicable: false
     status: not_applicable_current_runtime
-    reason: Lenses are currently injected local configuration and no Lens persistence, sharing, search history, preferences, or other synchronized user state exists in this runtime slice.
+    reason: Portable Lens serialization exists, but the runtime still persists or synchronizes no Lens state, search history, preferences, or other user data.
 
 evidence:
   status: development_candidate

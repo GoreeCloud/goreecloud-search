@@ -8,8 +8,8 @@ The repository/package identifier may use `goreecloud-search` where technical co
 
 ## Current interface state
 
-No GoreeCloud-controlled user or administrator interface is implemented in version `0.1.0.dev7`.
+No GoreeCloud-controlled user or administrator interface is implemented in version `0.1.0.dev8`.
 
-When an interface is introduced, it must use the then-current approved Stable Glaze UI contract and preserve truthful privacy, security, source, Lens, and degraded-state presentation.
+When an interface is introduced, it must use the then-current approved Stable Glaze UI contract and preserve truthful privacy, security, source, Lens/import-export, and degraded-state presentation.
 
 No logo, icon, color token, or visual asset in this repository currently establishes an approved final visual identity.

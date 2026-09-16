@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev7`
+**Repository version:** `0.1.0.dev8`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -43,6 +43,7 @@ Completed checkboxes describe the stacked development candidate only until accep
 - [x] Add provider/result provenance primitives and initial “Why this result?” explanations.
 - [x] Add SafeSearch/content-policy hooks and administrator domain policy controls.
 - [x] Add initial transparent Search-local Lens reranking/exclusion primitives.
+- [x] Add a strict versioned portable Lens import/export data format.
 - [ ] Add verified content/safety classification sources for production SafeSearch enforcement.
 
 ## Phase 3 — Federated providers
@@ -77,7 +78,7 @@ Completed checkboxes describe the stacked development candidate only until accep
 - GoreeCloud Browser address-bar and new-tab search.
 - Result actions and truthful availability/degraded-state presentation.
 - Glaze UI accessibility/adaptive layouts.
-- Lens creation/editing UI, export/import/share workflows, Search preferences, and Private View.
+- Lens creation/editing UI, file I/O, trusted sharing/discovery, optional synchronization, Search preferences, and Private View.
 
 ## Phase 6 — Advanced discovery
 

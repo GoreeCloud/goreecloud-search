@@ -16,6 +16,7 @@ All notable verified changes to GoreeCloud Search will be recorded here.
 - Off/Moderate/Strict SafeSearch intent plus fail-closed pre-execution enforcement-availability checks.
 - Built-in administrator domain allow/block controls with subdomain matching.
 - Transparent Search-local GoreeCloud Lens primitives for domain/filetype/language boost, lower, and exclusion rules, including explicit ranking signals and non-disclosure of Lens selection to provider adapters.
+- Versioned `goreecloud.search-lens.v1` portable JSON import/export with deterministic round-trip serialization, strict field/version validation, duplicate-key and non-finite-number rejection, and bounded document/rule sizes.
 - Project-specific licensing decision selecting `AGPL-3.0-or-later` for GoreeCloud Search, plus repository license and rights notices.
 
 No release, deployment, production acceptance, or Stable qualification is claimed by these unreleased changes.
