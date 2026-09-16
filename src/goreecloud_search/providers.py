@@ -16,10 +16,16 @@ class ResultCandidate:
     provider_rank: int | None = None
     published_at: str | None = None
     content_type: str | None = None
+    canonical_url: str | None = None
+    source_id: str | None = None
+    content_hash: str | None = None
+    language: str | None = None
+    last_crawled_at: str | None = None
+    provider_contract_version: str | None = None
 
 
 class SearchProvider(Protocol):
-    """Replaceable provider boundary for future Index and federated adapters."""
+    """Replaceable provider boundary for Index and federated adapters."""
 
     @property
     def descriptor(self) -> ProviderDescriptor:
