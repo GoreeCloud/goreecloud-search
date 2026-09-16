@@ -29,6 +29,15 @@ from .index_contract import (
     IndexSearchResponse,
 )
 from .index_provider import GoreeCloudIndexProvider, IndexTransport
+from .lens_contract import (
+    LENS_FORMAT_VERSION,
+    MAX_LENS_DOCUMENT_BYTES,
+    MAX_LENS_RULES,
+    LensFormatError,
+    export_lens,
+    import_lens,
+    lens_to_document,
+)
 from .lenses import (
     Lens,
     LensApplicationReport,
@@ -53,7 +62,9 @@ __all__ = [
     "__version__", "INDEX_CONTRACT_VERSION", "ContentPolicyAction",
     "ContentPolicyDecision", "ContentPolicyEngine", "ContentPolicyError",
     "ContentPolicyHook", "ContentPolicyOutcome", "ContentPolicyReport",
-    "DomainPolicyHook", "SafeSearchMode", "Lens", "LensRule", "LensRuleAction",
+    "DomainPolicyHook", "SafeSearchMode", "LENS_FORMAT_VERSION",
+    "MAX_LENS_DOCUMENT_BYTES", "MAX_LENS_RULES", "LensFormatError",
+    "export_lens", "import_lens", "lens_to_document", "Lens", "LensRule", "LensRuleAction",
     "LensRuleTarget", "LensRegistry", "LensError", "LensExclusion",
     "LensApplicationReport", "apply_lens", "ParsedQuery", "ProviderDescriptor",
     "ProviderOrigin", "QueryDisclosureBudget", "QueryFilters", "SearchCategory", "SourceMode", "SourcePlan",
