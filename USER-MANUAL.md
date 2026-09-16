@@ -2,7 +2,7 @@
 
 ## Current status
 
-GoreeCloud Search is in Development. Version `0.1.0.dev1` is a developer-facing foundation, not a complete search-engine release.
+GoreeCloud Search is in Development. Version `0.1.0.dev2` is a developer-facing foundation and is not a complete search engine release.
 
 ## Install for development
 
@@ -18,12 +18,24 @@ Python 3.11 or newer is required.
 goreecloud-search parse 'privacy "search engine" site:example.com category:docs'
 ```
 
-The command prints normalized JSON and performs no network access.
+The command prints a normalized JSON representation of the query. It does not contact the Internet or any search provider.
 
 ## Supported operators
 
-`site:`, `-domain:`, `filetype:`, `ext:`, `before:`, `after:`, `language:`, `region:`, `source:`, `category:`, `lens:`, quoted phrases, and `-excluded-term`.
+- `site:example.com`
+- `-domain:example.com`
+- `filetype:pdf`
+- `ext:pdf`
+- `before:2026-09-16`
+- `after:2026-01-01`
+- `language:en`
+- `region:US`
+- `source:index`
+- `category:news`
+- `lens:official`
+- `"quoted phrase"`
+- `-excluded-term`
 
 ## Current limitations
 
-Live search, Browser/Index integration, provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet.
+Live search, authenticated GoreeCloud Index transport/runtime integration, Browser integration, provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet. The current Index work is a developer contract/adapter boundary only.

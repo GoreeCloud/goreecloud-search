@@ -2,9 +2,9 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev1`
+**Repository version:** `0.1.0.dev2`
 
-This is the repository-coupled roadmap source. Planned items remain obligations until implemented and verified or explicitly superseded/cancelled.
+This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
 ## Phase 0 — Native foundation
 
@@ -16,48 +16,96 @@ This is the repository-coupled roadmap source. Planned items remain obligations 
 - [ ] Merge and verify baseline CI and test coverage.
 - [ ] Reconcile required repository documentation and Platform-System declarations.
 
-The current topic branch is a candidate only; these items remain incomplete until accepted on the authoritative integration line with required verification.
+The current topic branch is a candidate only; checkboxes remain incomplete until accepted on the authoritative integration line with required verification.
 
 ## Phase 1 — GoreeCloud Index path
 
-**Status:** Planned
+**Status:** In implementation
 
-- Implement the first-party GoreeCloud Index adapter and versioned Search ↔ Index contract.
-- Add capability negotiation, timeout/cancellation, pagination, provenance, and degraded-state behavior.
-- Verify applicable privacy and identity boundaries.
+- [x] Implement the first-party GoreeCloud Index provider adapter boundary.
+- [x] Define the versioned Search ↔ Index request/response contract.
+- [x] Add initial category/capability negotiation.
+- [ ] Add authenticated live Index transport.
+- [ ] Add timeout, cancellation, pagination execution, and degraded-state behavior.
+- [x] Add Index provenance fields required for later ranking and result explanations.
+- [ ] Verify Privacy Shield, Identity, Wardveil Security, and runtime authority boundaries for live Index requests.
+
+Completed checkboxes above describe the stacked development candidate only until that candidate is accepted onto the authoritative integration line.
 
 ## Phase 2 — Search result pipeline
 
-**Status:** Planned
+**Status:** In implementation
 
-- Result normalization, canonicalization, deduplication, source agreement, snippets, deterministic ranking, provenance, and SafeSearch hooks.
+- [x] Add deterministic result normalization.
+- [x] Add conservative canonical URL handling.
+- [x] Add canonical-URL and content-hash deduplication.
+- [x] Add source-agreement counts.
+- [ ] Add snippet generation.
+- [ ] Add initial deterministic ranking.
+- [x] Add provider/result provenance primitives for later “Why this result?” explanations.
+- [ ] Add SafeSearch/content-policy hooks.
+
+Normalization deliberately does not rerank results; ranking remains a separate Search-owned phase.
 
 ## Phase 3 — Federated providers
 
 **Status:** Planned
 
-- Provider SDK/lifecycle, approved external adapters, per-provider controls, disclosure budgets, health, graceful degradation, and opt-in external suggestions.
+- Provider SDK/adapter lifecycle.
+- Explicit provider capability declarations.
+- Approved external provider integrations.
+- Per-provider timeout/retry/rate/cost controls.
+- Query-disclosure budgets.
+- Provider health and graceful degradation.
+- External suggestions only when explicitly enabled.
 
 ## Phase 4 — Service API and platform controls
 
 **Status:** Planned
 
-- Versioned HTTP API, health/readiness, Identity, Privacy Shield, Wardveil Security, Mesh, Manager, privacy-safe evidence and observability.
+- Versioned HTTP API.
+- Health/readiness endpoints.
+- GoreeCloud Identity authentication and requester identity.
+- Privacy Shield permitted-use enforcement.
+- Wardveil Security trust/risk enforcement.
+- GoreeCloud Mesh discovery and integration contracts.
+- GoreeCloud Manager administrative state.
+- Evidence and observability that preserve privacy.
 
 ## Phase 5 — Browser and Glaze UI experience
 
 **Status:** Planned
 
-- Browser address-bar/new-tab search, result actions, degraded-state UX, current Stable Glaze UI, accessibility, preferences, Lenses, and Private View.
+- GoreeCloud Browser address-bar search.
+- New-tab search.
+- Search result actions.
+- Search availability/degraded-state presentation.
+- Glaze UI result experience.
+- Accessibility and adaptive layouts.
+- Search preferences and Lenses.
+- Private View / isolated browsing workflows.
 
 ## Phase 6 — Advanced discovery
 
 **Status:** Planned
 
-- Discussions, Quick Answers, optional GoreeCloud AI answers, private-corpus search, structured verticals, internationalization, and explicit Search → Fetch → Research → Agent/Browser escalation.
+- Discussions.
+- Quick Answers.
+- Optional GoreeCloud AI answers with source-backed citations.
+- Private-corpus search.
+- Structured verticals.
+- Internationalization and regional controls.
+- Research workspaces with explicit escalation from Search → Fetch → Research → Agent/Browser.
 
 ## Phase 7 — Production and self-hosting
 
 **Status:** Planned
 
-- OCI/Podman/GoreeCloud Containers/bare-metal deployment, Kubernetes when justified, signed artifacts, SBOM/provenance, and full production/Stable qualification evidence.
+- OCI container image.
+- Rootless Podman profile.
+- GoreeCloud Containers profile.
+- Bare-metal service definitions.
+- Kubernetes/Helm profile when justified.
+- Signed artifacts, SBOM, provenance, and reproducible build metadata.
+- Performance, reliability, security, privacy, and recovery qualification.
+- Stable-release evidence and documentation reconciliation.

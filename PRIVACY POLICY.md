@@ -2,9 +2,9 @@
 
 ## Current development implementation
 
-Version `0.1.0.dev1` contains a local query parser and source planner. It:
+Version `0.1.0.dev2` contains a local query parser, source planner, versioned Search ↔ Index contract models, a transport-injected Index adapter boundary, and local result normalization/deduplication. The repository code in this version:
 
-- Does not send search queries over the network.
+- Does not send search queries over the network. The Index adapter has no built-in network transport.
 - Does not contact third-party search providers.
 - Does not persist search history.
 - Does not contain advertising or tracking code.
@@ -13,10 +13,14 @@ Version `0.1.0.dev1` contains a local query parser and source planner. It:
 
 ## Source planning
 
-The source planner marks whether a plan would disclose a query to a third-party provider. `goreecloud_only` and `offline_local` fail closed against third-party query disclosure.
+The source planner marks whether an execution plan would disclose a query to a third-party provider.
+
+`goreecloud_only` and `offline_local` are required to fail closed against third-party query disclosure.
 
 ## Future network features
 
-Future provider execution, suggestions, synchronization, account storage, analytics, AI, Browser, Index, or other network features must update this policy to match verified behavior and apply relevant Identity, Privacy Shield, Wardveil, retention, consent, minimization, and disclosure controls before production acceptance.
+Any future provider execution, remote suggestion, synchronization, account storage, analytics, AI, Browser, Index, or other network-capable feature must update this policy to match verified behavior and must apply the relevant GoreeCloud Identity, Privacy Shield, Wardveil Security, retention, consent, minimization, and disclosure controls before production acceptance.
 
-This document describes repository behavior only; it does not establish the behavior of any future hosted deployment until separately verified.
+## Development warning
+
+This document describes the current repository implementation. It does not claim that a future hosted deployment has the same data flows until that deployment is separately verified.

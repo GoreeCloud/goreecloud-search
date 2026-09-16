@@ -3,36 +3,76 @@
 ## Lifecycle
 
 - Product: GoreeCloud Search
-- Version: `0.1.0.dev1`
+- Version: `0.1.0.dev2`
 - Lifecycle: Development
 - Stable: No
 
 ## Current implementation boundary
 
-The current native implementation is intentionally narrow. It provides a side-effect-free query parser and source planner that later API, Browser, Index, and AI integrations can consume.
+The current native development candidates remain intentionally narrow. They provide a side-effect-free query parser and source planner plus a versioned Search ↔ Index contract boundary and Search-owned normalization/deduplication primitives that can be embedded by later API, Browser, Index transport, and AI integrations.
 
 ### Query model
 
-Supported today:
+The parser currently supports:
 
-- Free-text terms and double-quoted phrases.
+- Free-text terms.
+- Double-quoted phrases.
 - Excluded terms prefixed with `-`.
-- `site:`, `-domain:`, `filetype:`, `ext:`, `before:`, `after:`, `language:`, `region:`, `source:`, `category:`, and `lens:`.
+- `site:`
+- `-domain:`
+- `filetype:`
+- `ext:`
+- `before:YYYY-MM-DD`
+- `after:YYYY-MM-DD`
+- `language:`
+- `region:`
+- `source:`
+- `category:`
+- `lens:`
+
+Unsupported syntax must remain treated as ordinary query text or be rejected explicitly rather than causing hidden network behavior.
 
 ### Source modes
 
-The planner implements `index_first`, `federated`, `goreecloud_only`, `external_only`, and `offline_local`.
+The source planner implements these policy modes:
 
-The planner returns an ordered plan and never executes a provider.
+- `index_first`
+- `federated`
+- `goreecloud_only`
+- `external_only`
+- `offline_local`
+
+The planner never executes a provider. It returns an ordered plan.
 
 ### Privacy invariant
 
-`goreecloud_only` and `offline_local` must never produce a plan that discloses a query to a third-party provider.
+`goreecloud_only` and `offline_local` must never produce a plan that discloses the query to a third-party provider.
 
 ### Provider boundary
 
-Future providers must use the repository's typed descriptor and provider protocol, remain replaceable, and declare supported categories and origin.
+Provider implementations must conform to the repository's typed provider descriptor and search protocol. Provider adapters must remain replaceable and must declare supported categories and origin.
 
 ## Not yet implemented
 
-Live GoreeCloud Index access, external provider adapters, HTTP APIs, normalization, deduplication, ranking, SafeSearch enforcement, Private View, Browser integration, AI synthesis, Identity, Privacy Shield, Wardveil, Mesh, Manager, Glaze UI, Sync, persistence, and production deployment are not implemented and must not be represented as complete.
+- Authenticated live GoreeCloud Index transport and runtime integration.
+- External search-provider adapters.
+- HTTP API.
+- Snippet generation and user-facing ranking.
+- SafeSearch enforcement.
+- Private View.
+- GoreeCloud Browser integration.
+- GoreeCloud AI answer integration.
+- Identity-authenticated service requests.
+- Privacy Shield runtime authorization.
+- Wardveil Security runtime checks.
+- GoreeCloud Mesh discovery/events.
+- GoreeCloud Manager administration.
+- User/admin Glaze UI surfaces.
+- Persistent search history or GoreeCloud Sync.
+- Production deployment artifacts.
+
+These remain planned and must not be represented as implemented until code and verification evidence exist.
+
+## Search ↔ Index contract boundary
+
+The current development candidate defines `goreecloud.search-index.v1` as the first versioned in-process contract model between Search and a future authenticated GoreeCloud Index transport. Search owns query planning, normalization, deduplication, source agreement, and later user-facing ranking. Index supplies document candidates and index-specific provenance. The current adapter is transport-injected and does not establish live connectivity, authentication, authorization, privacy acceptance, or production runtime integration.
