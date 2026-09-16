@@ -29,6 +29,17 @@ from .index_contract import (
     IndexSearchResponse,
 )
 from .index_provider import GoreeCloudIndexProvider, IndexTransport
+from .lenses import (
+    Lens,
+    LensApplicationReport,
+    LensError,
+    LensExclusion,
+    LensRegistry,
+    LensRule,
+    LensRuleAction,
+    LensRuleTarget,
+    apply_lens,
+)
 from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryDisclosureBudget, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
 from .normalization import NormalizedResult, ResultNormalizationError, ResultProvenance, canonicalize_url, normalize_and_deduplicate
 from .planner import SourcePlanningError, plan_sources
@@ -42,16 +53,17 @@ __all__ = [
     "__version__", "INDEX_CONTRACT_VERSION", "ContentPolicyAction",
     "ContentPolicyDecision", "ContentPolicyEngine", "ContentPolicyError",
     "ContentPolicyHook", "ContentPolicyOutcome", "ContentPolicyReport",
-    "DomainPolicyHook", "SafeSearchMode", "ParsedQuery", "ProviderDescriptor",
-    "ProviderOrigin", "QueryDisclosureBudget", "QueryFilters", "SearchCategory",
-    "SourceMode", "SourcePlan", "SourcePlanStep", "QueryParseError",
-    "SourcePlanningError", "IndexContractError", "ResultNormalizationError",
-    "ProviderExecutionError", "IndexCapabilities", "IndexDocumentCandidate",
-    "IndexSearchRequest", "IndexSearchResponse", "GoreeCloudIndexProvider",
-    "IndexTransport", "ResultCandidate", "ProviderSearchBatch", "SearchProvider",
-    "ResultProvenance", "NormalizedResult", "canonicalize_url",
-    "normalize_and_deduplicate", "RankingSignal", "RankedResult", "rank_results",
-    "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt", "ExecutionReport",
-    "SearchAvailability", "SearchExecutor", "SearchResponse", "parse_query",
-    "plan_sources", "SearchCore",
+    "DomainPolicyHook", "SafeSearchMode", "Lens", "LensRule", "LensRuleAction",
+    "LensRuleTarget", "LensRegistry", "LensError", "LensExclusion",
+    "LensApplicationReport", "apply_lens", "ParsedQuery", "ProviderDescriptor",
+    "ProviderOrigin", "QueryDisclosureBudget", "QueryFilters", "SearchCategory", "SourceMode", "SourcePlan",
+    "SourcePlanStep", "QueryParseError", "SourcePlanningError", "IndexContractError",
+    "ResultNormalizationError", "ProviderExecutionError", "IndexCapabilities",
+    "IndexDocumentCandidate", "IndexSearchRequest", "IndexSearchResponse",
+    "GoreeCloudIndexProvider", "IndexTransport", "ResultCandidate",
+    "ProviderSearchBatch", "SearchProvider", "ResultProvenance", "NormalizedResult",
+    "canonicalize_url", "normalize_and_deduplicate", "RankingSignal", "RankedResult",
+    "rank_results", "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt",
+    "ExecutionReport", "SearchAvailability", "SearchExecutor", "SearchResponse",
+    "parse_query", "plan_sources", "SearchCore",
 ]
