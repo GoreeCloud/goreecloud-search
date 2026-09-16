@@ -4,9 +4,10 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev6
+  version: 0.1.0.dev7
   lifecycle: development
   stable: false
+  license: AGPL-3.0-or-later
 
 runtime_scope:
   implemented:
