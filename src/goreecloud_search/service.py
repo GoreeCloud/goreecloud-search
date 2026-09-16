@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from .models import ParsedQuery, ProviderDescriptor, SourceMode, SourcePlan
 from .normalization import NormalizedResult, normalize_and_deduplicate
 from .planner import plan_sources
+from .ranking import RankedResult, rank_results
 from .providers import ResultCandidate
 from .query_parser import parse_query
 
@@ -28,3 +29,6 @@ class SearchCore:
 
     def normalize(self, candidates: Iterable[ResultCandidate]) -> tuple[NormalizedResult, ...]:
         return normalize_and_deduplicate(tuple(candidates), self._providers)
+
+    def rank(self, query: ParsedQuery, results: Iterable[NormalizedResult]) -> tuple[RankedResult, ...]:
+        return rank_results(query, tuple(results))
