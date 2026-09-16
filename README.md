@@ -3,8 +3,8 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev3`  
-> **Current scope:** Native query parsing, privacy-aware source planning, a versioned GoreeCloud Index contract boundary, Search-owned result normalization/deduplication, and deterministic explainable ranking. Live web retrieval is not implemented in this revision.
+> **Version:** `0.1.0.dev4`  
+> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution orchestration, a versioned GoreeCloud Index contract boundary with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport ships in this revision.
 
 ## What exists now
 
@@ -15,14 +15,15 @@ This repository currently contains the first native implementation foundation:
 - Quoted phrases and excluded terms.
 - Search categories and deployment source modes.
 - A deterministic source planner for Index First, Federated, GoreeCloud Only, External Only, and Offline / Local Index operation.
-- A replaceable provider contract for future GoreeCloud Index and federated adapters.
+- A replaceable provider contract for GoreeCloud Index and future federated adapters.
+- Bounded asynchronous provider execution with per-provider timeouts, cancellation propagation, concurrency limits, partial-failure isolation, fallback execution, and explicit availability state.
 - A privacy invariant that prevents external-provider inclusion in GoreeCloud Only and Offline / Local modes.
-- Versioned Search ↔ GoreeCloud Index v1 contract models and a transport-injected first-party adapter boundary.
+- Versioned Search ↔ GoreeCloud Index v1 contract models, transport-injected first-party adapter boundary, cursor pagination, and provider-reported degraded-state/warning propagation.
 - Conservative URL canonicalization, canonical-URL/content-hash deduplication, source agreement, and result provenance.
 - Deterministic ranking with inspectable scoring signals and human-readable result explanations.
 - Unit tests and pull-request CI.
 
-The current code does **not** contact external search engines, GoreeCloud Index, GoreeCloud Identity, Privacy Shield, Wardveil Security, Mesh, or any deployed service.
+The repository ships no authenticated live provider transport. The development CLI performs no network access. The execution engine can invoke explicitly injected provider adapters, so any future network-capable adapter must satisfy the applicable privacy, identity, security, and deployment controls before acceptance.
 
 ## Development use
 
@@ -53,6 +54,7 @@ Browser / AI / API clients
    - query parser
    - source planner
    - privacy boundary
+   - provider executor
    - normalization
    - deduplication
    - ranking
@@ -64,11 +66,11 @@ GoreeCloud   optional
   Index      providers
 ```
 
-The current development candidates implement the query/parser, source-planning, Search ↔ Index contract, normalization/deduplication, and initial deterministic ranking layers. See `FEATURE-ROADMAP.md` for planned work and `FEATURES.md` for current implementation state.
+The current development candidates implement the query/parser, source-planning, bounded provider execution, Search ↔ Index contract/pagination, normalization/deduplication, and initial deterministic ranking layers. See `FEATURE-ROADMAP.md` for planned work and `FEATURES.md` for current implementation state.
 
 ## Privacy boundary
 
-No live provider execution exists in this revision. The planning layer distinguishes third-party query disclosure and fails closed for source modes that prohibit it. Future network-capable adapters must integrate applicable GoreeCloud Identity, Privacy Shield, Wardveil Security, and other platform controls before production acceptance.
+The planning layer distinguishes third-party query disclosure and fails closed for source modes that prohibit it. The execution layer runs only providers already admitted by that plan, applies bounded concurrency/timeouts, and reports degraded or unavailable states instead of silently substituting providers. No authenticated live network adapter is shipped; future network-capable adapters must integrate applicable GoreeCloud Identity, Privacy Shield, Wardveil Security, and other platform controls before production acceptance.
 
 ## Status integrity
 
@@ -76,4 +78,4 @@ A branch, pull request, passing CI run, configuration declaration, or documented
 
 ## Current implementation expansion
 
-The current stacked development candidate adds the versioned `goreecloud.search-index.v1` contract, a first-party Index provider adapter boundary, Search-owned result normalization/deduplication, and deterministic ranking. Live Index connectivity and runtime Platform-System enforcement remain unimplemented and are not implied by these interfaces.
+The current stacked development candidate adds the versioned `goreecloud.search-index.v1` contract, a first-party Index provider adapter boundary with pagination, bounded provider execution/fallback behavior, Search-owned result normalization/deduplication, and deterministic ranking. Authenticated live Index connectivity and runtime Platform-System enforcement remain unimplemented and are not implied by these interfaces.

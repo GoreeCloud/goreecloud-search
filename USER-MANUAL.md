@@ -2,7 +2,7 @@
 
 ## Current status
 
-GoreeCloud Search is in Development. Version `0.1.0.dev3` is a developer-facing foundation and is not a complete search engine release.
+GoreeCloud Search is in Development. Version `0.1.0.dev4` is a developer-facing foundation and is not a complete search engine release.
 
 ## Install for development
 
@@ -38,4 +38,4 @@ The command prints a normalized JSON representation of the query. It does not co
 
 ## Current limitations
 
-Live search, authenticated GoreeCloud Index transport/runtime integration, Browser integration, provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet. The current Index work is a developer contract/adapter boundary only.
+Authenticated live search transport, Browser integration, approved external-provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet. The developer core now includes provider execution orchestration and Index pagination, but no authenticated live Index transport or approved external network adapter ships with it.
