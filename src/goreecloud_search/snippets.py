@@ -37,10 +37,13 @@ def _normalize_source(text: str) -> tuple[str, bool]:
 
 def _needles(query: ParsedQuery) -> tuple[str, ...]:
     values: list[str] = []
+    seen: set[str] = set()
     for value in (*query.phrases, *query.terms):
         cleaned = _WHITESPACE.sub(" ", value).strip()
-        if cleaned and cleaned.casefold() not in {item.casefold() for item in values}:
+        folded = cleaned.casefold()
+        if cleaned and folded not in seen:
             values.append(cleaned)
+            seen.add(folded)
     return tuple(values)
 
 
@@ -61,10 +64,12 @@ def _clip(text: str, *, focus_start: int, focus_end: int, max_chars: int) -> tup
     if len(text) <= max_chars:
         return text, 0, len(text)
 
+    # Reserve room for leading/trailing ellipses before selecting the body window.
+    body_budget = max_chars - 2
     focus_mid = (focus_start + focus_end) // 2
-    start = max(0, focus_mid - max_chars // 2)
-    end = min(len(text), start + max_chars)
-    start = max(0, end - max_chars)
+    start = max(0, focus_mid - body_budget // 2)
+    end = min(len(text), start + body_budget)
+    start = max(0, end - body_budget)
 
     # Avoid starting or ending in the middle of a word when a nearby boundary exists.
     if start > 0:
@@ -76,9 +81,14 @@ def _clip(text: str, *, focus_start: int, focus_end: int, max_chars: int) -> tup
         if boundary > start:
             end = boundary
 
-    body = text[start:end].strip()
     prefix = "…" if start > 0 else ""
     suffix = "…" if end < len(text) else ""
+    hard_body_budget = max_chars - len(prefix) - len(suffix)
+    body = text[start:end].strip()
+    if len(body) > hard_body_budget:
+        body = body[:hard_body_budget].rstrip()
+        end = start + len(body)
+        suffix = "…"
     return f"{prefix}{body}{suffix}", start, end
 
 
@@ -122,9 +132,9 @@ def generate_snippet(
         # Prefer a complete leading sentence when it fits; otherwise use the same
         # deterministic bounded clipping path as query-focused snippets.
         first_sentence = _SENTENCE_BREAK.split(text, maxsplit=1)[0]
-        if first_sentence and len(first_sentence) <= max_chars:
+        suffix = "…" if len(first_sentence) < len(text) else ""
+        if first_sentence and len(first_sentence) + len(suffix) <= max_chars:
             end = len(first_sentence)
-            suffix = "…" if end < len(text) else ""
             return GeneratedSnippet(
                 text=f"{first_sentence}{suffix}",
                 matched_query=False,
