@@ -6,13 +6,14 @@ All notable verified changes to GoreeCloud Search will be recorded here.
 
 ### Added
 
-- Initial native query model and parser, privacy-aware source planning, provider contract, development CLI, tests, and CI.
+- Native query model/parser, privacy-aware source planning, provider contract, development CLI, tests, and CI.
 - Versioned Search ↔ GoreeCloud Index v1 contract, capability model, transport-injected adapter, cursor pagination, and degraded/warning propagation.
-- Conservative URL canonicalization, canonical-URL/content-hash deduplication, source agreement, and result provenance primitives.
-- Deterministic Search-owned ranking with inspectable scoring signals and initial “Why this result?” explanations.
-- Bounded asynchronous provider execution with concurrency/timeouts, cancellation propagation, partial-provider failure isolation, availability states, and Index-first fallback.
-- End-to-end SearchCore pipeline from parse → plan → execute → normalize/deduplicate → rank.
-- Optional per-query third-party disclosure budgets enforced during source planning, before any provider execution.
-- Source-plan evidence recording third-party provider count, applied disclosure cap, and omitted providers.
+- URL normalization/deduplication, source agreement, and result provenance.
+- Deterministic Search-owned ranking with inspectable signals and initial “Why this result?” explanations.
+- Bounded asynchronous provider execution with concurrency/timeouts, cancellation, partial-failure isolation, availability states, and Index-first fallback.
+- Optional per-query third-party disclosure budgets enforced before provider execution, with plan evidence.
+- Content-policy hook engine between normalization and ranking, with decision provenance and allow/warn/block outcomes.
+- Off/Moderate/Strict SafeSearch intent plus fail-closed pre-execution enforcement-availability checks.
+- Built-in administrator domain allow/block controls with subdomain matching.
 
 No release, deployment, production acceptance, or Stable qualification is claimed by these unreleased changes.

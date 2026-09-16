@@ -3,61 +3,41 @@
 ## Lifecycle
 
 - Product: GoreeCloud Search
-- Version: `0.1.0.dev5`
+- Version: `0.1.0.dev6`
 - Lifecycle: Development
 - Stable: No
 
 ## Current implementation boundary
 
-The current native development candidates provide a query parser and privacy-aware source planner, bounded asynchronous provider execution, pre-execution third-party query-disclosure budgeting, a versioned Search ↔ Index contract boundary with pagination, Search-owned normalization/deduplication primitives, and an initial deterministic ranking layer.
+The current stacked candidates provide query parsing/planning, pre-execution third-party disclosure budgeting, bounded provider execution, a versioned Search ↔ Index contract with pagination, Search-owned normalization/deduplication, local content-policy hooks, and deterministic ranking.
 
-### Query model
+### Source/privacy boundary
 
-The parser currently supports free-text terms, double-quoted phrases, excluded terms, `site:`, `-domain:`, `filetype:`, `ext:`, `before:`, `after:`, `language:`, `region:`, `source:`, `category:`, and `lens:`.
-
-### Source modes and privacy invariant
-
-The source planner implements `index_first`, `federated`, `goreecloud_only`, `external_only`, and `offline_local`. It never executes a provider. The executor may run only providers named by the returned plan and must not discover or substitute additional sources. `goreecloud_only` and `offline_local` must never produce a plan that discloses the query to a third-party provider.
-
-A caller may supply a `QueryDisclosureBudget` that caps distinct third-party providers before the plan is returned. Providers over budget are omitted before execution.
+The planner implements Index First, Federated, GoreeCloud Only, External Only, and Offline Local modes. It may also apply `QueryDisclosureBudget(max_third_party_providers=N)` before returning the plan. The executor may run only plan-approved providers and cannot widen source eligibility.
 
 ### Provider boundary
 
-Provider adapters remain replaceable and declare supported categories and origin. Execution is bounded by configurable concurrency and per-provider timeout controls; outer cancellation propagates to in-flight work; provider failures are isolated; and provider batches may report degraded state and warnings without failing successful sources.
+Provider adapters remain replaceable and declare category/origin. Execution is bounded by concurrency and timeout policy; cancellation propagates; provider failures are isolated; provider batches may report degradation/warnings.
+
+### Content-policy boundary
+
+Content policy is evaluated after normalization and before ranking. Hooks return attributable allow/warn/block decisions. Block dominates warn. Hook exceptions or spoofed decision provenance fail closed instead of silently bypassing policy.
+
+`DomainPolicyHook` enforces explicit administrator domain allowlists/blocklists and intentionally does not claim semantic content classification. Search exposes Off, Moderate, and Strict SafeSearch intent; Moderate/Strict is rejected before any provider execution unless at least one configured hook declares SafeSearch enforcement. The hook contract is not evidence of a production classifier, Wardveil integration, or accepted safety taxonomy.
+
+### Ranking boundary
+
+Ranking uses transparent deterministic query/result evidence plus a bounded source-agreement bonus. GoreeCloud Index provenance has zero ranking weight. Provider rank, click history, advertising payments, cross-query profiles, and hidden behavioral signals are not used.
 
 ## Not yet implemented
 
 - Authenticated live GoreeCloud Index transport and runtime integration.
-- External search-provider adapters.
-- HTTP API.
-- Snippet generation and advanced ranking signals beyond the current deterministic baseline.
-- SafeSearch enforcement.
-- Private View.
-- GoreeCloud Browser integration.
-- GoreeCloud AI answer integration.
-- Identity-authenticated service requests.
-- Privacy Shield runtime authorization.
-- Wardveil Security runtime checks.
-- GoreeCloud Mesh discovery/events.
-- GoreeCloud Manager administration.
-- User/admin Glaze UI surfaces.
-- Persistent search history or GoreeCloud Sync.
-- Production deployment artifacts.
+- Approved external provider adapters.
+- Production SafeSearch classification sources / Wardveil safety integration.
+- HTTP API and health/readiness endpoints.
+- Snippet generation and advanced ranking signals beyond the current baseline.
+- Private View, GoreeCloud Browser integration, GoreeCloud AI answers.
+- Identity-authenticated requests, Privacy Shield runtime authorization, GoreeCloud Mesh discovery/events, GoreeCloud Manager administration.
+- User/admin Glaze UI surfaces, persistent history/Sync, and production deployment artifacts.
 
 These remain planned and must not be represented as implemented until code and verification evidence exist.
-
-## Search ↔ Index contract boundary
-
-The development candidate defines `goreecloud.search-index.v1` as the first versioned in-process contract model between Search and a future authenticated GoreeCloud Index transport. Search owns query planning, normalization, deduplication, source agreement, and user-facing ranking. Index supplies document candidates and index-specific provenance. The adapter is transport-injected, supports bounded multi-page retrieval, and reports Index degraded state/warnings to the execution layer. It does not establish live connectivity, authentication, authorization, privacy acceptance, or production runtime integration.
-
-## Ranking boundary
-
-The current ranker uses transparent deterministic signals derived from parsed query and normalized result evidence: quoted-phrase matches, title/snippet term matches, explicit site/filetype/language matches, and a bounded source-agreement bonus. GoreeCloud Index presence is exposed as provenance with zero ranking weight. Provider rank, click history, advertising payment, cross-query profiles, and hidden behavioral signals are not used.
-
-## Provider execution boundary
-
-The execution engine consumes an already-approved `SourcePlan`. It may not add providers or bypass source-mode privacy restrictions. Per-provider timeout/error states are isolated and reported as explicit attempts. Index-first fallback providers execute only when the primary stage returns fewer raw candidates than the requested target. If all executed providers fail, the result is `unavailable`; partial failures yield `degraded`. Caller cancellation propagates and cancels in-flight provider work.
-
-## Query-disclosure budget boundary
-
-A `QueryDisclosureBudget` may set `max_third_party_providers` to a non-negative integer or leave it unlimited. Budget selection is deterministic because eligible providers are already sorted by configured priority and name. The budget only removes third-party-disclosing providers; it never adds providers or relaxes source-mode/category/source-filter restrictions. Source plans expose the selected third-party-provider count, the applied budget, and how many otherwise eligible providers were omitted. If a zero budget leaves no valid provider for an External Only request, planning fails rather than disclosing the query.

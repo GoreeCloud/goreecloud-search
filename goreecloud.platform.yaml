@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev5
+  version: 0.1.0.dev6
   lifecycle: development
   stable: false
 
@@ -17,9 +17,12 @@ runtime_scope:
     - deterministic-ranking-and-explanations
     - provider-execution-orchestration
     - query-disclosure-budgeting
+    - content-policy-hooks
     - index-cursor-pagination
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
+  content_policy_hooks: true
+  production_safesearch_classifier: false
   built_in_live_network_provider: false
   persistent_user_state: false
   user_interface: false
@@ -31,37 +34,31 @@ platform_systems:
     status: not_implemented
     conformance: blocked
     reason: Administrative inventory, health, configuration, and lifecycle integration is planned but absent.
-
   privacy_shield:
     applicable: true
     status: not_implemented
     conformance: blocked
     reason: The planner and executor enforce source-plan boundaries and optional third-party disclosure budgets, but no Privacy Shield runtime authorization contract is integrated for live network providers.
-
   wardveil_security:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: Local execution controls include timeouts, cancellation, failure isolation, and provenance validation, but no Wardveil runtime contract is integrated.
-
+    reason: Local execution controls include timeouts, cancellation, failure isolation, provenance validation, and fail-closed content-policy hook handling, but no Wardveil runtime contract or production safety-classification feed is integrated.
   everkeep:
     applicable: false
     status: not_applicable_current_runtime
     conformance: not_applicable
     reason: This runtime slice is stateless and persists no material user or service data. Re-evaluate when persistent state or deployment recovery is introduced.
-
   glaze_ui:
     applicable: false
     status: not_applicable_current_runtime
     conformance: not_applicable
     reason: No GoreeCloud-controlled user or administrator interface exists in this runtime slice. Re-evaluate before any UI is accepted.
-
   goreecloud_mesh:
     applicable: true
     status: not_implemented
     conformance: blocked
     reason: Service discovery, capability exchange, events, and integration coordination are planned but absent.
-
   goreecloud_identity:
     applicable: true
     status: not_implemented
