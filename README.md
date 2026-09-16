@@ -3,7 +3,7 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev4`  
+> **Version:** `0.1.0.dev5`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution orchestration, a versioned GoreeCloud Index contract boundary with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport ships in this revision.
 
 ## What exists now
@@ -17,6 +17,7 @@ This repository currently contains the first native implementation foundation:
 - A deterministic source planner for Index First, Federated, GoreeCloud Only, External Only, and Offline / Local Index operation.
 - A replaceable provider contract for GoreeCloud Index and future federated adapters.
 - Bounded asynchronous provider execution with per-provider timeouts, cancellation propagation, concurrency limits, partial-failure isolation, fallback execution, and explicit availability state.
+- Optional query-disclosure budgets that cap how many third-party providers may receive one query before execution begins.
 - A privacy invariant that prevents external-provider inclusion in GoreeCloud Only and Offline / Local modes.
 - Versioned Search ↔ GoreeCloud Index v1 contract models, transport-injected first-party adapter boundary, cursor pagination, and provider-reported degraded-state/warning propagation.
 - Conservative URL canonicalization, canonical-URL/content-hash deduplication, source agreement, and result provenance.
@@ -70,7 +71,7 @@ The current development candidates implement the query/parser, source-planning, 
 
 ## Privacy boundary
 
-The planning layer distinguishes third-party query disclosure and fails closed for source modes that prohibit it. The execution layer runs only providers already admitted by that plan, applies bounded concurrency/timeouts, and reports degraded or unavailable states instead of silently substituting providers. No authenticated live network adapter is shipped; future network-capable adapters must integrate applicable GoreeCloud Identity, Privacy Shield, Wardveil Security, and other platform controls before production acceptance.
+The planning layer distinguishes third-party query disclosure, can apply an explicit per-query third-party-provider disclosure budget, and fails closed for source modes that prohibit disclosure. The execution layer runs only providers already admitted by that plan, applies bounded concurrency/timeouts, and reports degraded or unavailable states instead of silently substituting providers. No authenticated live network adapter is shipped; future network-capable adapters must integrate applicable GoreeCloud Identity, Privacy Shield, Wardveil Security, and other platform controls before production acceptance.
 
 ## Status integrity
 
@@ -78,4 +79,4 @@ A branch, pull request, passing CI run, configuration declaration, or documented
 
 ## Current implementation expansion
 
-The current stacked development candidate adds the versioned `goreecloud.search-index.v1` contract, a first-party Index provider adapter boundary with pagination, bounded provider execution/fallback behavior, Search-owned result normalization/deduplication, and deterministic ranking. Authenticated live Index connectivity and runtime Platform-System enforcement remain unimplemented and are not implied by these interfaces.
+The current stacked development candidate adds the versioned `goreecloud.search-index.v1` contract, a first-party Index provider adapter boundary with pagination, bounded provider execution/fallback behavior, Search-owned result normalization/deduplication, deterministic ranking, and pre-execution third-party query-disclosure budgeting. Authenticated live Index connectivity and runtime Platform-System enforcement remain unimplemented and are not implied by these interfaces.
