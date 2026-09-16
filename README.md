@@ -3,9 +3,9 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev7`  
+> **Version:** `0.1.0.dev8`  
 > **License:** `AGPL-3.0-or-later`  
-> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport or production safety classifier ships in this revision.
+> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport or production safety classifier ships in this revision.
 
 ## What exists now
 
@@ -16,12 +16,12 @@ GoreeCloud Search is the privacy-first, self-hostable search and information-dis
 - Versioned Search ↔ GoreeCloud Index v1 models, transport-injected adapter boundary, cursor pagination, and degraded/warning propagation.
 - Conservative URL canonicalization, deduplication, source agreement, and provenance.
 - Local content-policy hooks applied after normalization and before ranking.
-- Typed SafeSearch intent modes: Off, Moderate, and Strict.
-- Fail-closed pre-execution rejection when Moderate/Strict is requested but no configured hook can enforce it.
+- Typed SafeSearch intent modes: Off, Moderate, and Strict with fail-closed enforcement availability checks.
 - Built-in administrator domain allowlist/blocklist policy with subdomain matching. This domain hook is not a content or threat classifier.
 - Deterministic ranking with inspectable signals and “Why this result?” explanations.
 - Search-local GoreeCloud Lenses with transparent domain, filetype, and language boost/lower/exclude rules.
 - Lens explanations and exclusions are explicit; the selected Lens is removed from the provider-facing query before provider execution.
+- Versioned `goreecloud.search-lens.v1` JSON import/export with deterministic serialization and strict schema/size validation.
 - Unit tests and pull-request CI.
 
 The repository ships no authenticated live network provider, no production SafeSearch classifier, no Wardveil safety feed, and no user-facing UI. The development CLI performs no network access.
@@ -62,7 +62,7 @@ GoreeCloud   optional
 
 The planner can cap third-party query recipients before execution. The executor runs only providers admitted by that plan. Content-policy hooks then evaluate normalized results before ranking. Non-Off SafeSearch intent fails before provider execution if no configured hook can enforce it, preventing a falsely protected state from disclosing the query first.
 
-Lenses are a Search-local ranking layer in this candidate. A requested `lens:` value is resolved before provider execution and then removed from the query passed to provider adapters, so local Lens selection is not disclosed to GoreeCloud Index or federated providers by this implementation.
+Lenses are a Search-local ranking layer in this candidate. A requested `lens:` value is resolved before provider execution and then removed from the query passed to provider adapters. Portable Lens export/import is a pure local data transformation; this repository does not upload, publish, synchronize, or remotely fetch Lens documents.
 
 The built-in `DomainPolicyHook` enforces explicit administrator domain policy only. It does not classify adult content, malware, phishing, misinformation, or any other semantic/safety category. Those classifications require separately verified sources and platform integrations.
 
