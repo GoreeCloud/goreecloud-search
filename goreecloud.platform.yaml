@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev6
+  version: 0.1.0.dev7
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -19,10 +19,12 @@ runtime_scope:
     - provider-execution-orchestration
     - query-disclosure-budgeting
     - content-policy-hooks
+    - local-lens-reranking
     - index-cursor-pagination
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
   content_policy_hooks: true
+  local_lens_reranking: true
   production_safesearch_classifier: false
   built_in_live_network_provider: false
   persistent_user_state: false
@@ -70,7 +72,7 @@ specialized_services:
   goreecloud_sync:
     applicable: false
     status: not_applicable_current_runtime
-    reason: No search history, preferences, or other synchronized persistent user state exists in this runtime slice.
+    reason: Lenses are currently injected local configuration and no Lens persistence, sharing, search history, preferences, or other synchronized user state exists in this runtime slice.
 
 evidence:
   status: development_candidate
