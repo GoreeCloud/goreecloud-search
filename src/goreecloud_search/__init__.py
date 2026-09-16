@@ -1,5 +1,14 @@
 """GoreeCloud Search core package."""
 
+from .execution import (
+    ExecutionPolicy,
+    ExecutionReport,
+    ProviderAttempt,
+    ProviderExecutionError,
+    ProviderExecutionStatus,
+    SearchAvailability,
+    SearchExecutor,
+)
 from .index_contract import (
     INDEX_CONTRACT_VERSION,
     IndexCapabilities,
@@ -12,20 +21,22 @@ from .index_provider import GoreeCloudIndexProvider, IndexTransport
 from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
 from .normalization import NormalizedResult, ResultNormalizationError, ResultProvenance, canonicalize_url, normalize_and_deduplicate
 from .planner import SourcePlanningError, plan_sources
-from .providers import ResultCandidate, SearchProvider
+from .providers import ProviderSearchBatch, ResultCandidate, SearchProvider
 from .query_parser import QueryParseError, parse_query
 from .ranking import RankedResult, RankingSignal, rank_results
-from .service import SearchCore
+from .service import SearchCore, SearchResponse
 from .version import __version__
 
 __all__ = [
     "__version__", "INDEX_CONTRACT_VERSION", "ParsedQuery", "ProviderDescriptor",
     "ProviderOrigin", "QueryFilters", "SearchCategory", "SourceMode", "SourcePlan",
     "SourcePlanStep", "QueryParseError", "SourcePlanningError", "IndexContractError",
-    "ResultNormalizationError", "IndexCapabilities", "IndexDocumentCandidate",
-    "IndexSearchRequest", "IndexSearchResponse", "GoreeCloudIndexProvider",
-    "IndexTransport", "ResultCandidate", "SearchProvider", "ResultProvenance",
-    "NormalizedResult", "canonicalize_url", "normalize_and_deduplicate",
-    "RankingSignal", "RankedResult", "rank_results",
+    "ResultNormalizationError", "ProviderExecutionError", "IndexCapabilities",
+    "IndexDocumentCandidate", "IndexSearchRequest", "IndexSearchResponse",
+    "GoreeCloudIndexProvider", "IndexTransport", "ResultCandidate",
+    "ProviderSearchBatch", "SearchProvider", "ResultProvenance", "NormalizedResult",
+    "canonicalize_url", "normalize_and_deduplicate", "RankingSignal", "RankedResult",
+    "rank_results", "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt",
+    "ExecutionReport", "SearchAvailability", "SearchExecutor", "SearchResponse",
     "parse_query", "plan_sources", "SearchCore",
 ]

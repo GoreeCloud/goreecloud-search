@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -24,6 +23,15 @@ class ResultCandidate:
     provider_contract_version: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class ProviderSearchBatch:
+    """One provider's bounded response to a Search execution request."""
+
+    candidates: tuple[ResultCandidate, ...]
+    degraded: bool = False
+    warnings: tuple[str, ...] = ()
+
+
 class SearchProvider(Protocol):
     """Replaceable provider boundary for Index and federated adapters."""
 
@@ -31,5 +39,5 @@ class SearchProvider(Protocol):
     def descriptor(self) -> ProviderDescriptor:
         ...
 
-    async def search(self, query: ParsedQuery, *, limit: int) -> Sequence[ResultCandidate]:
+    async def search(self, query: ParsedQuery, *, limit: int) -> ProviderSearchBatch:
         ...
