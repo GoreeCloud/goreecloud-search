@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev3`
+**Repository version:** `0.1.0.dev4`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -26,7 +26,7 @@ The current topic branch is a candidate only; checkboxes remain incomplete until
 - [x] Define the versioned Search ↔ Index request/response contract.
 - [x] Add initial category/capability negotiation.
 - [ ] Add authenticated live Index transport.
-- [ ] Add timeout, cancellation, pagination execution, and degraded-state behavior.
+- [x] Add timeout, cancellation, pagination execution, and degraded-state behavior.
 - [x] Add Index provenance fields required for later ranking and result explanations.
 - [ ] Verify Privacy Shield, Identity, Wardveil Security, and runtime authority boundaries for live Index requests.
 
@@ -54,7 +54,8 @@ Normalization deliberately does not rerank results. Ranking is a separate Search
 - Provider SDK/adapter lifecycle.
 - Explicit provider capability declarations.
 - Approved external provider integrations.
-- Per-provider timeout/retry/rate/cost controls.
+- [x] Bounded execution foundation with per-provider timeouts and concurrency controls.
+- Retry/rate/cost controls beyond the current timeout foundation.
 - Query-disclosure budgets.
 - Provider health and graceful degradation.
 - External suggestions only when explicitly enabled.
