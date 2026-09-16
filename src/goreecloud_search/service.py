@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .content_policy import ContentPolicyEngine, ContentPolicyHook, ContentPolicyReport, SafeSearchMode
 from .execution import ExecutionPolicy, ExecutionReport, SearchExecutor
+from .lenses import Lens, LensApplicationReport, LensRegistry, apply_lens
 from .models import ParsedQuery, ProviderDescriptor, QueryDisclosureBudget, SourceMode, SourcePlan
 from .normalization import NormalizedResult, normalize_and_deduplicate
 from .planner import plan_sources
@@ -19,11 +20,12 @@ class SearchResponse:
     plan: SourcePlan
     execution: ExecutionReport
     content_policy: ContentPolicyReport
+    lens: LensApplicationReport
     results: tuple[RankedResult, ...]
 
 
 class SearchCore:
-    """Search orchestration core for parsing, execution, policy, and ranking."""
+    """Search orchestration core for parsing, execution, policy, Lenses, and ranking."""
 
     def __init__(
         self,
@@ -32,6 +34,7 @@ class SearchCore:
         provider_adapters: Iterable[SearchProvider] = (),
         execution_policy: ExecutionPolicy | None = None,
         content_policy_hooks: Iterable[ContentPolicyHook] = (),
+        lenses: Iterable[Lens] = (),
     ) -> None:
         adapters = tuple(provider_adapters)
         descriptors: dict[str, ProviderDescriptor] = {
@@ -50,10 +53,15 @@ class SearchCore:
         self._provider_adapters = adapters
         self._execution_policy = execution_policy or ExecutionPolicy()
         self._content_policy = ContentPolicyEngine(tuple(content_policy_hooks))
+        self._lenses = LensRegistry(tuple(lenses))
 
     @property
     def providers(self) -> tuple[ProviderDescriptor, ...]:
         return self._providers
+
+    @property
+    def lenses(self) -> tuple[Lens, ...]:
+        return self._lenses.lenses
 
     def parse(self, raw_query: str) -> ParsedQuery:
         return parse_query(raw_query)
@@ -83,6 +91,13 @@ class SearchCore:
     ) -> tuple[RankedResult, ...]:
         return rank_results(query, tuple(results))
 
+    @staticmethod
+    def _provider_query(query: ParsedQuery) -> ParsedQuery:
+        """Remove Search-local Lens state before any provider adapter sees the query."""
+        if query.filters.lens is None:
+            return query
+        return replace(query, filters=replace(query.filters, lens=None))
+
     async def search(
         self,
         raw_query: str,
@@ -98,18 +113,21 @@ class SearchCore:
             mode=mode,
             disclosure_budget=disclosure_budget,
         )
+        lens = self._lenses.resolve(query.filters.lens)
         executor = SearchExecutor(self._provider_adapters, policy=self._execution_policy)
-        execution = await executor.execute(query, plan, limit=limit)
+        execution = await executor.execute(self._provider_query(query), plan, limit=limit)
         normalized = self.normalize(execution.candidates)
         content_policy = self._content_policy.apply(
             normalized,
             safe_search=safe_search,
         )
-        ranked = self.rank(query, content_policy.visible_results)
+        baseline_ranked = self.rank(query, content_policy.visible_results)
+        lens_report = apply_lens(baseline_ranked, lens)
         return SearchResponse(
             query=query,
             plan=plan,
             execution=execution,
             content_policy=content_policy,
-            results=ranked[:limit],
+            lens=lens_report,
+            results=lens_report.results[:limit],
         )
