@@ -7,6 +7,7 @@ product:
   version: 0.1.0.dev6
   lifecycle: development
   stable: false
+  license: AGPL-3.0-or-later
 
 runtime_scope:
   implemented:
