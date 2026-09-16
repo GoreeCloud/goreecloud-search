@@ -3,7 +3,8 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev6`  
+> **Version:** `0.1.0.dev7`  
+> **License:** `AGPL-3.0-or-later`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport or production safety classifier ships in this revision.
 
 ## What exists now
@@ -59,6 +60,14 @@ GoreeCloud   optional
 The planner can cap third-party query recipients before execution. The executor runs only providers admitted by that plan. Content-policy hooks then evaluate normalized results before ranking. Non-Off SafeSearch intent fails before provider execution if no configured hook can enforce it, preventing a falsely protected state from disclosing the query first.
 
 The built-in `DomainPolicyHook` enforces explicit administrator domain policy only. It does not classify adult content, malware, phishing, misinformation, or any other semantic/safety category. Those classifications require separately verified sources and platform integrations.
+
+## License
+
+GoreeCloud-owned code in this repository is licensed under the **GNU Affero General Public License v3.0 or later (`AGPL-3.0-or-later`)**, unless a specific file or third-party component states otherwise.
+
+This license was selected specifically for GoreeCloud Search because Search is intended to be a self-hostable, network-interactive service and GoreeCloud wants modified hosted versions to preserve reciprocal source availability. See `LICENSE`, `LICENSING.md`, and `NOTICE`.
+
+Third-party material remains governed by its own applicable license terms.
 
 ## Status integrity
 
