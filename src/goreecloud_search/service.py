@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from .content_policy import ContentPolicyEngine, ContentPolicyHook, ContentPolicyReport, SafeSearchMode
 from .execution import ExecutionPolicy, ExecutionReport, SearchExecutor
 from .models import ParsedQuery, ProviderDescriptor, QueryDisclosureBudget, SourceMode, SourcePlan
 from .normalization import NormalizedResult, normalize_and_deduplicate
@@ -17,11 +18,12 @@ class SearchResponse:
     query: ParsedQuery
     plan: SourcePlan
     execution: ExecutionReport
+    content_policy: ContentPolicyReport
     results: tuple[RankedResult, ...]
 
 
 class SearchCore:
-    """Search orchestration core for parsing, execution, normalization, and ranking."""
+    """Search orchestration core for parsing, execution, policy, and ranking."""
 
     def __init__(
         self,
@@ -29,6 +31,7 @@ class SearchCore:
         *,
         provider_adapters: Iterable[SearchProvider] = (),
         execution_policy: ExecutionPolicy | None = None,
+        content_policy_hooks: Iterable[ContentPolicyHook] = (),
     ) -> None:
         adapters = tuple(provider_adapters)
         descriptors: dict[str, ProviderDescriptor] = {
@@ -46,6 +49,7 @@ class SearchCore:
         self._providers = tuple(descriptors.values())
         self._provider_adapters = adapters
         self._execution_policy = execution_policy or ExecutionPolicy()
+        self._content_policy = ContentPolicyEngine(tuple(content_policy_hooks))
 
     @property
     def providers(self) -> tuple[ProviderDescriptor, ...]:
@@ -86,7 +90,9 @@ class SearchCore:
         mode: SourceMode = SourceMode.INDEX_FIRST,
         limit: int = 10,
         disclosure_budget: QueryDisclosureBudget | None = None,
+        safe_search: SafeSearchMode = SafeSearchMode.OFF,
     ) -> SearchResponse:
+        self._content_policy.ensure_safe_search_supported(safe_search)
         query, plan = self.plan(
             raw_query,
             mode=mode,
@@ -95,10 +101,15 @@ class SearchCore:
         executor = SearchExecutor(self._provider_adapters, policy=self._execution_policy)
         execution = await executor.execute(query, plan, limit=limit)
         normalized = self.normalize(execution.candidates)
-        ranked = self.rank(query, normalized)
+        content_policy = self._content_policy.apply(
+            normalized,
+            safe_search=safe_search,
+        )
+        ranked = self.rank(query, content_policy.visible_results)
         return SearchResponse(
             query=query,
             plan=plan,
             execution=execution,
+            content_policy=content_policy,
             results=ranked[:limit],
         )
