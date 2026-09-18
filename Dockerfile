@@ -12,8 +12,7 @@ LABEL org.opencontainers.image.title="GoreeCloud Search" \
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/opt/goreecloud-search \
-    BRAVE_SEARCH_API_KEY_FILE=/run/secrets/brave_search_api_key
+    PYTHONPATH=/opt/goreecloud-search
 
 WORKDIR /opt/goreecloud-search
 
