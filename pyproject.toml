@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goreecloud-search"
-version = "0.1.0.dev11"
+version = "0.1.0.dev12"
 description = "Privacy-first GoreeCloud Search core with bounded local/container Development APIs, transparent source planning, bounded provider execution, an opt-in Brave Web Search adapter, query-disclosure budgets, content-policy hooks, Index contracts, normalization, and deterministic ranking."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -15,3 +15,7 @@ goreecloud-search = "goreecloud_search.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+
+[tool.setuptools.package-data]
+goreecloud_search = ["static/*.css"]
