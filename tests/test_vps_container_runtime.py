@@ -171,7 +171,11 @@ class RuntimeSecretTests(unittest.TestCase):
 class VPSDeploymentArtifactTests(unittest.TestCase):
     def test_dockerfile_is_non_root_and_uses_container_boundary(self):
         dockerfile = (REPO_ROOT / "Dockerfile").read_text()
-        self.assertIn("FROM python:3.12.14-slim-bookworm", dockerfile)
+        self.assertIn(
+            "FROM python:3.12.14-slim-bookworm@sha256:"
+            "782412e85d0f0984994c290652577d4018aff08145c85b262bb63dc0c7522254",
+            dockerfile,
+        )
         self.assertIn("USER 10001:10001", dockerfile)
         self.assertNotIn("BRAVE_SEARCH_API_KEY_FILE=", dockerfile)
         self.assertIn('"serve-container"', dockerfile)
