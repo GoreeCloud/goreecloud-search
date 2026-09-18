@@ -75,8 +75,12 @@ def render_search_page(
     query: str = "",
     response: SearchResponse | None = None,
     error: str | None = None,
+    public_base_url: str,
 ) -> bytes:
     query_value = escape(query, quote=True)
+    service_host = escape(
+        urlsplit(public_base_url).hostname or public_base_url
+    )
     status = ""
     results = ""
     if response is not None:
@@ -152,7 +156,7 @@ def render_search_page(
     <footer>
       <span>GoreeCloud Search {escape(__version__)}</span>
       <span>Glaze UI target {GLAZE_UI_TARGET_VERSION} · adoption not yet accepted</span>
-      <span>Local service · 127.0.0.1 only</span>
+      <span>Private service · {service_host}</span>
     </footer>
   </main>
 </body>
@@ -160,9 +164,9 @@ def render_search_page(
 """.encode("utf-8")
 
 
-def render_opensearch(*, port: int) -> bytes:
+def render_opensearch(*, public_base_url: str) -> bytes:
     template = (
-        f"http://127.0.0.1:{port}/search?"
+        f"{public_base_url}/search?"
         "q={searchTerms}"
     )
     return f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -171,6 +175,6 @@ def render_opensearch(*, port: int) -> bytes:
   <Description>Search with the local GoreeCloud Search service</Description>
   <InputEncoding>UTF-8</InputEncoding>
   <Url type="text/html" method="get" template="{escape(template, quote=True)}"/>
-  <SearchForm>http://127.0.0.1:{port}/</SearchForm>
+  <SearchForm>{escape(public_base_url, quote=True)}/</SearchForm>
 </OpenSearchDescription>
 """.encode("utf-8")
