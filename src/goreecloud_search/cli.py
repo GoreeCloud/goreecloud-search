@@ -108,8 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     serve_command = subparsers.add_parser(
         "serve",
         help=(
-            "Run the Development HTTP API on IPv4 loopback only. "
-            "No user-facing web UI is included."
+            "Run the Development Search API and web UI on IPv4 loopback only."
         ),
     )
     serve_command.add_argument(
@@ -122,8 +121,9 @@ def build_parser() -> argparse.ArgumentParser:
     container_command = subparsers.add_parser(
         "serve-container",
         help=(
-            "Run the Development API on the container network for an approved "
-            "reverse proxy. This command is not a host-publication instruction."
+            "Run the Development Search API and web UI on the container network "
+            "for an approved reverse proxy. This command is not a host-publication "
+            "instruction."
         ),
     )
     container_command.add_argument(
@@ -242,7 +242,7 @@ def _run_local_server(args: argparse.Namespace) -> int:
     )
     print(
         (
-            "GoreeCloud Search Development API listening on "
+            "GoreeCloud Search Development service listening on "
             f"http://{LOCAL_SEARCH_HOST}:{server.server_port}"
         ),
         file=sys.stderr,
@@ -271,7 +271,7 @@ def _run_container_server(args: argparse.Namespace) -> int:
     )
     print(
         (
-            "GoreeCloud Search container API listening on "
+            "GoreeCloud Search container service listening on "
             f"{CONTAINER_SEARCH_HOST}:{server.server_port}; "
             "backend host-port publication is not implied"
         ),
