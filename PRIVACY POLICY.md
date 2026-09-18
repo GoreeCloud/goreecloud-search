@@ -2,7 +2,7 @@
 
 ## Current development implementation
 
-Version `0.1.0.dev12` contains a local query parser, source planner, bounded provider-execution engine, versioned Search ↔ Index contract models with pagination, a transport-injected Index adapter boundary, result normalization/deduplication, content-policy hooks, deterministic ranking, Search-local Lens reranking, and a portable Lens data format. The repository code in this version:
+Version `0.1.0.dev13` contains a local query parser, source planner, bounded provider-execution engine, versioned Search ↔ Index contract models with pagination, a transport-injected Index adapter boundary, result normalization/deduplication, content-policy hooks, deterministic ranking, Search-local Lens reranking, and a portable Lens data format. The repository code in this version:
 
 - Ships one opt-in Development external provider adapter for Brave Web Search API. When explicitly selected, the minimized provider-facing query is disclosed to Brave; Search-local `lens:` and `source:` controls are not included in that provider query string.
 - Executes explicitly injected provider adapters only within the planner-approved source plan. The Brave API credential is supplied from `BRAVE_SEARCH_API_KEY`, is not placed in query parameters or result evidence, and is sent only to the fixed Brave HTTPS endpoint; redirects are refused.
