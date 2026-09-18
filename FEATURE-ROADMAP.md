@@ -98,7 +98,11 @@ Completed checkboxes describe the stacked development candidate only until accep
 - [x] Add a VPS Compose service candidate that preserves the verified `searxng-core:8080` Caddy backend contract, uses no host port, and requires an exact tag@digest image reference.
 - [x] Add protected runtime credential-file input and container health validation.
 - [x] Add independent CI that builds and exercises the hardened container without making a live provider request.
-- [ ] Read back and reconcile the actual `/srv/docker/stacks/searxng/docker-compose.yml` before any target-host change.
+- [x] Add a stdout-only, non-mutating VPS preflight collector that reads the authoritative Search Compose identity, active container/image/health/security/network state, protected credential metadata, Caddy route references, private DNS, and HTTPS homepage state without printing secrets or raw configuration.
+- [x] Run the initial read-only preflight on `goreecloud-vps-01` and retain/review the resulting Docker/Compose/image/security/network/credential/DNS/HTTPS evidence.
+- [x] Re-run the corrected preflight against the current production Caddy root at `/srv/docker/caddy`; the active `Caddyfile` contains both `search.goreecloud.com` and `searxng-core:8080` references, while historical backup files also contain the same strings.
+- [x] Verify the intended private Caddy route directly at the approved NetBird address: the corrected collector returned HTTP 200 with TLS verification success for `search.goreecloud.com` forced to `100.71.27.119`.
+- [ ] Validate the owner laptop separately through its actual NetBird + AdGuard private-DNS path. The VPS system resolver still returns public addresses and is not a substitute for this client-path check.
 - [ ] Build/publish an immutable GHCR image with exact version, revision, architecture, and digest evidence.
 - [ ] Perform real-provider and target-runtime validation on `goreecloud-vps-01`.
 - [ ] Complete controlled rollback preparation and private Caddy/DNS acceptance before cutover.
