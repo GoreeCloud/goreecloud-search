@@ -156,7 +156,7 @@ class UrllibBraveSearchTransport:
             method="GET",
         )
         try:
-            with urlopen(http_request, timeout=self._timeout_seconds) as response:
+            with self._opener.open(http_request, timeout=self._timeout_seconds) as response:
                 body = response.read(_MAX_RESPONSE_BYTES + 1)
         except HTTPError as exc:
             if exc.code in {401, 403}:
