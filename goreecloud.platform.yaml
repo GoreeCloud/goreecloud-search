@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev10
+  version: 0.1.0.dev11
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -33,6 +33,7 @@ runtime_scope:
   user_interface: false
   local_development_http_api: true
   public_http_listener: false
+  zorin_user_service_profile: true
   administrator_interface: false
 
 platform_systems:
