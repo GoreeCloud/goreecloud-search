@@ -6,9 +6,9 @@ umask 077
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 
-DATA_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/goreecloud/search"
-CONFIG_ROOT="${XDG_CONFIG_HOME:-$HOME/.config}/goreecloud"
-UNIT_ROOT="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+DATA_ROOT="$HOME/.local/share/goreecloud/search"
+CONFIG_ROOT="$HOME/.config/goreecloud"
+UNIT_ROOT="$HOME/.config/systemd/user"
 VENV="$DATA_ROOT/venv"
 ENV_FILE="$CONFIG_ROOT/search.env"
 UNIT_FILE="$UNIT_ROOT/goreecloud-search.service"
@@ -22,6 +22,15 @@ require_command() {
 
 require_command python3
 require_command systemctl
+
+python3 - <<'PY'
+import sys
+if sys.version_info < (3, 11):
+    raise SystemExit(
+        "GoreeCloud Search requires Python 3.11 or newer "
+        f"(found {sys.version.split()[0]})."
+    )
+PY
 
 systemctl --user show-environment >/dev/null 2>&1 || {
     printf '%s\n'         "A working systemd user manager is required for this deployment profile." >&2
