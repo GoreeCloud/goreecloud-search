@@ -29,9 +29,9 @@ require_command grep
 
 python3 - <<'PY'
 import sys
-if sys.version_info < (3, 11):
+if sys.version_info < (3, 10):
     raise SystemExit(
-        "GoreeCloud Search requires Python 3.11 or newer "
+        "GoreeCloud Search requires Python 3.10 or newer "
         f"(found {sys.version.split()[0]})."
     )
 PY
