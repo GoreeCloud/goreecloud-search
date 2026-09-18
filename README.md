@@ -38,6 +38,8 @@ python -m unittest discover -s tests -v
 
 The Docker candidate is built from the repository root. Its default command is `serve-container --port 8080 --service-hostname search.goreecloud.com`. The container listener is intentionally separate from `serve`, which remains fixed to `127.0.0.1`. The repository Compose example under `deploy/vps/` is a service candidate only; it must not overwrite the live `/srv/docker/stacks/searxng/docker-compose.yml` without authoritative readback and controlled reconciliation.
 
+A separate manual publication workflow is prepared under `.github/workflows/publish-container.yml`. It is intended for a future approved **merged main revision only**. The workflow fails closed unless the selected main SHA exactly matches the requested full SHA and VERSION, allows only Development/RC identities, publishes only the verified `linux/amd64` architecture, creates a unique version-plus-SHA tag, enables BuildKit SBOM and provenance attestations, and verifies the remote image digest and OCI revision/version labels. It does not deploy the VPS and it must not be run from a stacked Draft branch.
+
 ## Architecture direction
 
 ```text

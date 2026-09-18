@@ -1,0 +1,209 @@
+name: Publish Development Container
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "Exact merged main-branch commit SHA to publish"
+        required: true
+        type: string
+      version:
+        description: "Exact Development/RC version from VERSION"
+        required: true
+        type: string
+      confirmation:
+        description: "Type PUBLISH GOREECLOUD SEARCH DEVELOPMENT CONTAINER"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: goreecloud-search-container-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish exact linux/amd64 image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out exact selected revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Fail closed unless source identity is exact and authoritative
+        id: identity
+        shell: bash
+        env:
+          REQUESTED_SHA: ${{ inputs.source_sha }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Publication is allowed only from the authoritative main branch." >&2
+            exit 1
+          fi
+
+          if [ "${GITHUB_SHA}" != "${REQUESTED_SHA}" ]; then
+            echo "Requested source SHA does not match the checked-out main revision." >&2
+            exit 1
+          fi
+
+          if ! printf '%s' "${REQUESTED_SHA}" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "source_sha must be a full lowercase 40-character Git SHA." >&2
+            exit 1
+          fi
+
+          VERSION="$(tr -d '\r\n' < VERSION)"
+          if [ "${VERSION}" != "${REQUESTED_VERSION}" ]; then
+            echo "Requested version does not match VERSION." >&2
+            exit 1
+          fi
+
+          if ! printf '%s' "${VERSION}" | grep -Eq '^0\.1\.0\.dev[0-9]+$|^0\.1\.0-rc\.[0-9]+$'; then
+            echo "This workflow publishes Development/RC identities only." >&2
+            exit 1
+          fi
+
+          if [ "${CONFIRMATION}" != "PUBLISH GOREECLOUD SEARCH DEVELOPMENT CONTAINER" ]; then
+            echo "Explicit publication confirmation text did not match." >&2
+            exit 1
+          fi
+
+          SHORT_SHA="$(printf '%s' "${GITHUB_SHA}" | cut -c1-12)"
+          IMAGE="ghcr.io/goreecloud/goreecloud-search"
+          TAG="${VERSION}-${SHORT_SHA}"
+          CREATED="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          {
+            echo "version=${VERSION}"
+            echo "short_sha=${SHORT_SHA}"
+            echo "image=${IMAGE}"
+            echo "tag=${TAG}"
+            echo "created=${CREATED}"
+            echo "image_ref=${IMAGE}:${TAG}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Verify Docker Buildx is available
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version
+          docker buildx version
+
+      - name: Authenticate to GHCR with repository-scoped token
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '%s' "${GHCR_TOKEN}" |             docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+
+      - name: Create isolated Buildx builder
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx create             --driver docker-container             --name "goreecloud-search-publish-${GITHUB_RUN_ID}"             --use
+          docker buildx inspect --bootstrap
+
+      - name: Build and publish exact Development image
+        id: build
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.identity.outputs.image_ref }}
+          VERSION: ${{ steps.identity.outputs.version }}
+          CREATED: ${{ steps.identity.outputs.created }}
+        run: |
+          set -euo pipefail
+          METADATA="${RUNNER_TEMP}/goreecloud-search-build-metadata.json"
+
+          docker buildx build             --platform linux/amd64             --provenance=mode=max             --sbom=true             --build-arg "GORECLOUD_SEARCH_VERSION=${VERSION}"             --build-arg "GORECLOUD_SEARCH_REVISION=${GITHUB_SHA}"             --label "org.opencontainers.image.created=${CREATED}"             --label "org.opencontainers.image.ref.name=${IMAGE_REF}"             --tag "${IMAGE_REF}"             --metadata-file "${METADATA}"             --push             .
+
+          DIGEST="$(python3 - "${METADATA}" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], "r", encoding="utf-8") as handle:
+              metadata = json.load(handle)
+
+          digest = metadata.get("containerimage.digest")
+          if not isinstance(digest, str) or not digest.startswith("sha256:"):
+              raise SystemExit("Build metadata did not contain containerimage.digest")
+          print(digest)
+          PY
+          )"
+
+          {
+            echo "digest=${DIGEST}"
+            echo "immutable_ref=${{ steps.identity.outputs.image }}@${DIGEST}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Verify published immutable artifact
+        shell: bash
+        env:
+          IMAGE_REF: ${{ steps.identity.outputs.image_ref }}
+          IMMUTABLE_REF: ${{ steps.build.outputs.immutable_ref }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools inspect "${IMMUTABLE_REF}"
+          docker pull --platform linux/amd64 "${IMAGE_REF}"
+
+          ACTUAL_PLATFORM="$(docker image inspect             --format '{{.Os}}/{{.Architecture}}' "${IMAGE_REF}")"
+          test "${ACTUAL_PLATFORM}" = "linux/amd64"
+
+          ACTUAL_REVISION="$(docker image inspect             --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}'             "${IMAGE_REF}")"
+          test "${ACTUAL_REVISION}" = "${GITHUB_SHA}"
+
+          ACTUAL_VERSION="$(docker image inspect             --format '{{ index .Config.Labels "org.opencontainers.image.version" }}'             "${IMAGE_REF}")"
+          test "${ACTUAL_VERSION}" = "${VERSION}"
+
+          EXPECTED_REPODIGEST="${{ steps.identity.outputs.image }}@${{ steps.build.outputs.digest }}"
+          TAGGED_REPODIGEST="$(docker image inspect             --format '{{ index .RepoDigests 0 }}' "${IMAGE_REF}")"
+          test "${TAGGED_REPODIGEST}" = "${EXPECTED_REPODIGEST}"
+
+      - name: Record publication evidence
+        shell: bash
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+          IMAGE_REF: ${{ steps.identity.outputs.image_ref }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          IMMUTABLE_REF: ${{ steps.build.outputs.immutable_ref }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## GoreeCloud Search Development container publication"
+            echo
+            echo "- Repository: ${GITHUB_REPOSITORY}"
+            echo "- Source SHA: ${GITHUB_SHA}"
+            echo "- Version: ${VERSION}"
+            echo "- Platform: linux/amd64"
+            echo "- Tagged image: ${IMAGE_REF}"
+            echo "- Digest: ${DIGEST}"
+            echo "- Immutable image: ${IMMUTABLE_REF}"
+            echo "- SBOM: BuildKit registry attestation enabled"
+            echo "- Provenance: BuildKit mode=max registry attestation enabled"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "This workflow publishes an artifact only. It does not deploy the VPS, establish production acceptance, or promote Stable."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Log out of GHCR
+        if: always()
+        shell: bash
+        run: docker logout ghcr.io >/dev/null 2>&1 || true
+
+      - name: Remove isolated builder
+        if: always()
+        shell: bash
+        run: |
+          docker buildx rm "goreecloud-search-publish-${GITHUB_RUN_ID}"             >/dev/null 2>&1 || true
