@@ -403,3 +403,34 @@ footer {
     forced-color-adjust: auto;
   }
 }
+
+
+@media (prefers-reduced-transparency: reduce) {
+  .masthead,
+  .search-surface,
+  .result,
+  .empty-state,
+  .error-state {
+    background: var(--gc-surface-solid);
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --gc-line: currentColor;
+  }
+
+  .masthead,
+  .search-surface,
+  .result,
+  .empty-state,
+  .error-state,
+  .development-badge,
+  .status-pill,
+  .meta-chip,
+  .search-form input {
+    border-width: 2px;
+  }
+}
