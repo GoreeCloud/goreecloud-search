@@ -33,7 +33,7 @@ class ZorinUserServiceTests(unittest.TestCase):
     def test_install_is_health_gated_and_does_not_modify_searxng(self):
         script = (DEPLOY / "install-user-service.sh").read_text()
         self.assertIn("http://127.0.0.1:8787/healthz", script)
-        self.assertIn("requires Python 3.11 or newer", script)
+        self.assertIn("requires Python 3.10 or newer", script)
         self.assertIn('cp -R "$REPO_ROOT/src/goreecloud_search"', script)
         self.assertNotIn("pip install", script)
         self.assertIn("systemctl --user enable --now goreecloud-search.service", script)
