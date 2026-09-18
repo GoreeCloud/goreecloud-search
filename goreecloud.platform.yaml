@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev11
+  version: 0.1.0.dev12
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -22,6 +22,10 @@ runtime_scope:
     - local-lens-reranking
     - portable-lens-format-v1
     - index-cursor-pagination
+    - loopback-development-http-api-v1
+    - zorin-systemd-user-service-profile
+    - server-rendered-local-web-ui
+    - opensearch-discovery
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
   content_policy_hooks: true
@@ -30,8 +34,10 @@ runtime_scope:
   production_safesearch_classifier: false
   built_in_live_network_provider: true
   persistent_user_state: false
-  user_interface: false
+  user_interface: true
   local_development_http_api: true
+  local_web_ui: true
+  opensearch_discovery: true
   public_http_listener: false
   zorin_user_service_profile: true
   administrator_interface: false
@@ -58,10 +64,11 @@ platform_systems:
     conformance: not_applicable
     reason: This runtime slice is stateless and persists no material user or service data. Re-evaluate when persistent state or deployment recovery is introduced.
   glaze_ui:
-    applicable: false
-    status: not_applicable_current_runtime
-    conformance: not_applicable
-    reason: No GoreeCloud-controlled user or administrator interface exists in this runtime slice. Re-evaluate before any UI is accepted.
+    applicable: true
+    target_version: 1.5.1
+    status: development_adoption_unaccepted
+    conformance: blocked
+    reason: A GoreeCloud-controlled local web UI now exists and targets current Stable Glaze UI 1.5.1 semantics, but Search has no repository-local exact-revision rendered, accessibility, human, or target-runtime acceptance and is not yet registered as an accepted Glaze UI consumer.
   goreecloud_mesh:
     applicable: true
     status: not_implemented
@@ -71,7 +78,17 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: A Development external provider credential and loopback-only HTTP API now exist, but GoreeCloud Identity integration remains absent and is required before protected or production service operations are accepted.
+    reason: A Development external provider credential and loopback-only HTTP/API surface now exist, but GoreeCloud Identity integration remains absent and is required before protected or production service operations are accepted.
+  goreecloud_policy:
+    applicable: true
+    status: not_implemented
+    conformance: blocked
+    reason: Search has local content-policy hooks and explicit source-planning rules, but no current GoreeCloud Policy runtime contract, rule-authority evidence, policy-version identity, or enforcement-result integration is implemented.
+  goreecloud_observability:
+    applicable: true
+    status: partial_local_health_only
+    conformance: blocked
+    reason: The Development service exposes a local health endpoint and bounded execution evidence, but no current GoreeCloud Observability integration, accepted signal contract, monitoring pipeline, alerting, freshness evidence, or target-runtime operational acceptance is implemented.
 
 specialized_services:
   goreecloud_sync:
@@ -86,3 +103,5 @@ evidence:
   notes:
     - A declaration is not implementation evidence.
     - CI passing does not establish Platform-System conformance or Stable qualification.
+    - This schema_version 1 declaration is transitional and does not by itself establish complete Integral Platform Systems v3.0 nine-system conformance.
+    - Glaze UI 1.5.1 is a target only until fresh Search-specific repository-local consumer acceptance is recorded.
