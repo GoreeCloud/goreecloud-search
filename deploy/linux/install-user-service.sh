@@ -7,11 +7,13 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 
 DATA_ROOT="$HOME/.local/share/goreecloud/search"
+APP_ROOT="$DATA_ROOT/app"
+BIN_ROOT="$DATA_ROOT/bin"
 CONFIG_ROOT="$HOME/.config/goreecloud"
 UNIT_ROOT="$HOME/.config/systemd/user"
-VENV="$DATA_ROOT/venv"
 ENV_FILE="$CONFIG_ROOT/search.env"
 UNIT_FILE="$UNIT_ROOT/goreecloud-search.service"
+LAUNCHER="$BIN_ROOT/goreecloud-search"
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || {
@@ -22,6 +24,8 @@ require_command() {
 
 require_command python3
 require_command systemctl
+require_command install
+require_command grep
 
 python3 - <<'PY'
 import sys
@@ -37,11 +41,17 @@ systemctl --user show-environment >/dev/null 2>&1 || {
     exit 1
 }
 
-mkdir -p "$DATA_ROOT" "$CONFIG_ROOT" "$UNIT_ROOT"
-chmod 700 "$DATA_ROOT" "$CONFIG_ROOT"
+mkdir -p "$APP_ROOT" "$BIN_ROOT" "$CONFIG_ROOT" "$UNIT_ROOT"
+chmod 700 "$DATA_ROOT" "$APP_ROOT" "$BIN_ROOT" "$CONFIG_ROOT"
 
-python3 -m venv "$VENV"
-"$VENV/bin/python" -m pip install     --disable-pip-version-check     --no-deps     --no-build-isolation     --upgrade     "$REPO_ROOT"
+rm -rf "$APP_ROOT/goreecloud_search"
+cp -R "$REPO_ROOT/src/goreecloud_search" "$APP_ROOT/goreecloud_search"
+
+cat > "$LAUNCHER" <<EOF
+#!/bin/sh
+PYTHONPATH="$APP_ROOT" exec python3 -m goreecloud_search.cli "\$@"
+EOF
+chmod 0700 "$LAUNCHER"
 
 install -m 0600 "$SCRIPT_DIR/goreecloud-search.service" "$UNIT_FILE"
 
@@ -60,7 +70,7 @@ fi
 
 systemctl --user enable --now goreecloud-search.service
 
-"$VENV/bin/python" - <<'PY'
+python3 - <<'PY'
 from urllib.request import urlopen
 import json
 
