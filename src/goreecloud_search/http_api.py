@@ -6,7 +6,7 @@ from datetime import date
 from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from typing import Any
+from typing import Any, Iterable
 from urllib.parse import parse_qs, urlsplit
 
 from .models import SourceMode
@@ -16,13 +16,15 @@ from .version import __version__
 
 LOCAL_SEARCH_HOST = "127.0.0.1"
 DEFAULT_LOCAL_SEARCH_PORT = 8787
+CONTAINER_SEARCH_HOST = "0.0.0.0"
+DEFAULT_CONTAINER_SEARCH_PORT = 8080
 MAX_HTTP_QUERY_CHARS = 2048
 MAX_HTTP_REQUEST_TARGET_CHARS = 4096
 MAX_HTTP_RESULT_LIMIT = 20
 
 
 class LocalSearchAPIError(ValueError):
-    """Raised when a local API request cannot be accepted safely."""
+    """Raised when an HTTP search request cannot be accepted safely."""
 
 
 def _jsonable(value: Any) -> Any:
@@ -39,8 +41,47 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
-class LocalSearchHTTPServer(HTTPServer):
-    """Loopback-only Development HTTP boundary for one SearchCore instance."""
+def _normalize_host(value: str) -> str:
+    raw = value.strip()
+    if not raw:
+        return ""
+    if raw.startswith("["):
+        closing = raw.find("]")
+        if closing == -1:
+            return ""
+        return raw[1:closing].casefold().rstrip(".")
+    return raw.rsplit(":", 1)[0].casefold().rstrip(".")
+
+
+class SearchHTTPServer(HTTPServer):
+    """Bounded HTTP boundary for one SearchCore instance."""
+
+    def __init__(
+        self,
+        core: SearchCore,
+        *,
+        host: str,
+        port: int,
+        mode: SourceMode,
+        allowed_hosts: Iterable[str],
+    ) -> None:
+        if port < 0 or port > 65535:
+            raise ValueError("port must be between 0 and 65535")
+        normalized = frozenset(
+            item.strip().casefold().rstrip(".")
+            for item in allowed_hosts
+            if item.strip()
+        )
+        if not normalized:
+            raise ValueError("allowed_hosts must not be empty")
+        self.search_core = core
+        self.source_mode = mode
+        self.allowed_hosts = normalized
+        super().__init__((host, port), _SearchHandler)
+
+
+class LocalSearchHTTPServer(SearchHTTPServer):
+    """Loopback-only Development HTTP boundary."""
 
     def __init__(
         self,
@@ -49,15 +90,41 @@ class LocalSearchHTTPServer(HTTPServer):
         port: int = DEFAULT_LOCAL_SEARCH_PORT,
         mode: SourceMode = SourceMode.EXTERNAL_ONLY,
     ) -> None:
-        if port < 0 or port > 65535:
-            raise ValueError("port must be between 0 and 65535")
-        self.search_core = core
-        self.source_mode = mode
-        super().__init__((LOCAL_SEARCH_HOST, port), _LocalSearchHandler)
+        super().__init__(
+            core,
+            host=LOCAL_SEARCH_HOST,
+            port=port,
+            mode=mode,
+            allowed_hosts=("127.0.0.1", "localhost"),
+        )
 
 
-class _LocalSearchHandler(BaseHTTPRequestHandler):
-    server: LocalSearchHTTPServer
+class ContainerSearchHTTPServer(SearchHTTPServer):
+    """Container-network HTTP boundary for reverse-proxy access."""
+
+    def __init__(
+        self,
+        core: SearchCore,
+        *,
+        port: int = DEFAULT_CONTAINER_SEARCH_PORT,
+        mode: SourceMode = SourceMode.EXTERNAL_ONLY,
+        service_hostname: str = "search.goreecloud.com",
+    ) -> None:
+        super().__init__(
+            core,
+            host=CONTAINER_SEARCH_HOST,
+            port=port,
+            mode=mode,
+            allowed_hosts=(
+                "127.0.0.1",
+                "localhost",
+                service_hostname,
+            ),
+        )
+
+
+class _SearchHandler(BaseHTTPRequestHandler):
+    server: SearchHTTPServer
     server_version = "GoreeCloudSearch"
     sys_version = ""
 
@@ -91,6 +158,10 @@ class _LocalSearchHandler(BaseHTTPRequestHandler):
             self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
+
+    def _host_allowed(self) -> bool:
+        host = self.headers.get("Host", "")
+        return _normalize_host(host) in self.server.allowed_hosts
 
     def _single_param(
         self,
@@ -187,6 +258,10 @@ class _LocalSearchHandler(BaseHTTPRequestHandler):
         )
 
     def do_GET(self) -> None:
+        if not self._host_allowed():
+            self._send_json(421, {"error": "misdirected_request"})
+            return
+
         if len(self.path) > MAX_HTTP_REQUEST_TARGET_CHARS:
             self._send_json(414, {"error": "request_target_too_large"})
             return
@@ -216,13 +291,25 @@ class _LocalSearchHandler(BaseHTTPRequestHandler):
 
         self._send_json(404, {"error": "not_found"})
 
+    def _reject_misdirected(self) -> bool:
+        if self._host_allowed():
+            return False
+        self._send_json(421, {"error": "misdirected_request"})
+        return True
+
     def do_POST(self) -> None:
+        if self._reject_misdirected():
+            return
         self._send_json(405, {"error": "method_not_allowed"})
 
     def do_PUT(self) -> None:
+        if self._reject_misdirected():
+            return
         self._send_json(405, {"error": "method_not_allowed"})
 
     def do_DELETE(self) -> None:
+        if self._reject_misdirected():
+            return
         self._send_json(405, {"error": "method_not_allowed"})
 
 
@@ -234,4 +321,25 @@ def create_local_server(
 ) -> LocalSearchHTTPServer:
     """Create a server that is structurally fixed to IPv4 loopback."""
 
-    return LocalSearchHTTPServer(core, port=port, mode=mode)
+    return LocalSearchHTTPServer(
+        core,
+        port=port,
+        mode=mode,
+    )
+
+
+def create_container_server(
+    core: SearchCore,
+    *,
+    port: int = DEFAULT_CONTAINER_SEARCH_PORT,
+    mode: SourceMode = SourceMode.EXTERNAL_ONLY,
+    service_hostname: str = "search.goreecloud.com",
+) -> ContainerSearchHTTPServer:
+    """Create a Docker-network listener intended for Caddy reverse proxying."""
+
+    return ContainerSearchHTTPServer(
+        core,
+        port=port,
+        mode=mode,
+        service_hostname=service_hostname,
+    )

@@ -15,7 +15,11 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - Moderate/Strict SafeSearch must be enforceable before any provider call or Search rejects the request.
 - The built-in domain hook is administrator policy only, not a semantic/safety classifier.
 - The Brave Web Search adapter is an opt-in Development path; its presence is not production provider acceptance.
-- The local HTTP API is fixed to IPv4 loopback and is a Development boundary only; production authentication, abuse controls, readiness, UI, and deployment acceptance remain open.
+- The local HTTP API remains fixed to IPv4 loopback and is a Development boundary only.
+- Authoritative GoreeCloud Docker inventory establishes that the operational Search/SearXNG lineage is hosted on `goreecloud-vps-01`, not on the owner laptop. The verified August 17 deployment uses container name `searxng-core`, Compose project/path `searxng` at `/srv/docker/stacks/searxng/docker-compose.yml`, Caddy backend `searxng-core:8080`, and private hostname `search.goreecloud.com`; historical `searxng-*` names were retained intentionally for compatibility.
+- The deployed VPS image `ghcr.io/goreecloud/goreecloud-search:3584da535f7ed7c3b4b8dc73cf0424fb4bdf1949` at recorded digest `sha256:30ec99e3311fa9dcc934ac267aef123bb2541e0cd0165b360c4a7dc4fa29e3d5` is outside the current rewritten repository lineage and is therefore treated as the current rollback baseline, not as source evidence for this native candidate.
+- This branch adds a native VPS Docker Development candidate that preserves the existing Caddy backend identity, avoids host-port publication, and joins only the `proxy` network because the native service does not use Valkey. The legacy `searxng-valkey` service and `searxng-internal` network remain live-state compatibility/rollback concerns until separately verified for retirement. The candidate has not been built into an accepted GHCR artifact or deployed on the VPS.
+- Earlier Draft PRs #13 and #14 were closed after correcting the mistaken laptop-daemon replacement assumption. The laptop is a Browser/client acceptance target, not the Search server runtime.
 - This version is Development only.
 
 ## Open decisions
@@ -25,7 +29,7 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - Production acceptance criteria and provider set beyond the Development Brave adapter.
 - Production safety/content classification sources and Wardveil integration.
 - Exact current Stable Platform-System contract versions at integration time.
-- Production deployment topology and persistence model.
+- Verified native VPS deployment artifact, exact live Compose reconciliation, Caddy/private-DNS acceptance, monitoring, rollback, and retirement of any obsolete SearXNG-derived supporting state.
 
 ## Stacked implementation candidates
 

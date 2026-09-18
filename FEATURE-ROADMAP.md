@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev10`
+**Repository version:** `0.1.0.dev11`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -92,9 +92,18 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 ## Phase 7 — Production and self-hosting
 
-**Status:** Planned
+**Status:** In implementation
 
-- OCI/rootless Podman/GoreeCloud Containers/bare-metal deployment profiles.
-- Kubernetes/Helm only when justified.
-- Signed artifacts, SBOM, provenance, reproducible build metadata.
-- Performance, reliability, security, privacy, recovery, and Stable qualification evidence.
+- [x] Add a GoreeCloud-owned non-root Docker image candidate for the native service.
+- [x] Add a VPS Compose service candidate that preserves the verified `searxng-core:8080` Caddy backend contract, uses no host port, and requires an exact tag@digest image reference.
+- [x] Add protected runtime credential-file input and container health validation.
+- [x] Add independent CI that builds and exercises the hardened container without making a live provider request.
+- [ ] Read back and reconcile the actual `/srv/docker/stacks/searxng/docker-compose.yml` before any target-host change.
+- [ ] Build/publish an immutable GHCR image with exact version, revision, architecture, and digest evidence.
+- [ ] Perform real-provider and target-runtime validation on `goreecloud-vps-01`.
+- [ ] Complete controlled rollback preparation and private Caddy/DNS acceptance before cutover.
+- [ ] Retire legacy SearXNG-derived Valkey/config/naming only when separately proven unnecessary.
+- [ ] Add other OCI/rootless Podman/GoreeCloud Containers/bare-metal profiles only when justified.
+- [ ] Kubernetes/Helm only when justified.
+- [ ] Signed artifacts, SBOM, provenance, reproducible build metadata.
+- [ ] Performance, reliability, security, privacy, recovery, and Stable qualification evidence.

@@ -3,7 +3,7 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev10`  
+> **Version:** `0.1.0.dev11`  
 > **License:** `AGPL-3.0-or-later`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, deterministic explainable ranking, bounded snippet generation, and an opt-in Brave Web Search API adapter. Production provider acceptance and production safety classification remain open.
 
@@ -24,7 +24,7 @@ GoreeCloud Search is the privacy-first, self-hostable search and information-dis
 - Versioned `goreecloud.search-lens.v1` JSON import/export with deterministic serialization and strict schema/size validation.
 - Unit tests and pull-request CI.
 
-The repository now ships one opt-in external network provider and a loopback-only HTTP API for Development use. The API is not a production service boundary: it has no GoreeCloud Identity integration, no production rate/abuse controls, no user-facing Glaze UI, and no deployment acceptance. It does not make Brave a production-accepted provider, add an authenticated live GoreeCloud Index transport, establish a production SafeSearch classifier or Wardveil feed, retire SearXNG, or establish Stable qualification.
+The repository now ships one opt-in external network provider, a loopback-only Development HTTP API, and a separate Docker-network Development listener intended for the verified VPS reverse-proxy topology. The container path preserves the current `searxng-core:8080` Caddy backend contract without publishing a host port, supports a runtime file for the Brave credential, and includes a hardened non-root container/Compose candidate. This is not deployment acceptance: no image from this native repository has been published or deployed to `goreecloud-vps-01`, no live provider credential has been exercised there, and no user-facing Glaze UI, production rate/abuse controls, Identity acceptance, SearXNG-derived dependency retirement, or Stable qualification is established.
 
 ## Development use
 
@@ -35,6 +35,8 @@ python -m pip install -e .
 goreecloud-search parse 'privacy "search engine" site:example.com category:docs'
 python -m unittest discover -s tests -v
 ```
+
+The Docker candidate is built from the repository root. Its default command is `serve-container --port 8080 --service-hostname search.goreecloud.com`. The container listener is intentionally separate from `serve`, which remains fixed to `127.0.0.1`. The repository Compose example under `deploy/vps/` is a service candidate only; it must not overwrite the live `/srv/docker/stacks/searxng/docker-compose.yml` without authoritative readback and controlled reconciliation.
 
 ## Architecture direction
 

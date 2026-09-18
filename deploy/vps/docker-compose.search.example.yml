@@ -1,0 +1,52 @@
+# Candidate service definition for the verified goreecloud-vps-01 topology.
+# Do not replace the live /srv/docker/stacks/searxng/docker-compose.yml wholesale
+# from this example. Read back the live file first and preserve unrelated services,
+# networks, secrets, labels, monitoring, and the legacy searxng-valkey service /
+# searxng-internal network until their retirement is separately verified. The native
+# Search service itself does not need Valkey and therefore joins only the proxy network.
+#
+# GOREECLOUD_SEARCH_IMAGE must be an approved unique tag plus immutable digest.
+# Example shape only:
+# ghcr.io/goreecloud/goreecloud-search:0.1.0-dev11-<revision>@sha256:<digest>
+
+services:
+  searxng-core:
+    image: "${GOREECLOUD_SEARCH_IMAGE:?set an approved tag@sha256 digest}"
+    container_name: searxng-core
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    pids_limit: 128
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      BRAVE_SEARCH_API_KEY_FILE: /run/secrets/brave_search_api_key
+    volumes:
+      - type: bind
+        source: /srv/docker/secrets/searxng/brave-search-api-key
+        target: /run/secrets/brave_search_api_key
+        read_only: true
+    expose:
+      - "8080"
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    networks:
+      - proxy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    stop_grace_period: 10s
+
+# Before deployment, the host secret file must be owned by the container
+# runtime identity (10001:10001), mode 0400, and protected by the governed
+# /srv/docker/secrets backup/recovery process.
+
+networks:
+  proxy:
+    external: true
+    name: proxy

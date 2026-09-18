@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev10
+  version: 0.1.0.dev11
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -22,6 +22,10 @@ runtime_scope:
     - local-lens-reranking
     - portable-lens-format-v1
     - index-cursor-pagination
+    - loopback-development-http-api-v1
+    - container-network-development-http-api-v1
+    - vps-docker-development-profile
+    - runtime-file-secret-input
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
   content_policy_hooks: true
@@ -32,6 +36,11 @@ runtime_scope:
   persistent_user_state: false
   user_interface: false
   local_development_http_api: true
+  container_network_development_http_api: true
+  vps_docker_development_profile: true
+  runtime_file_secret_input: true
+  private_reverse_proxy_candidate: true
+  host_port_publication_required: false
   public_http_listener: false
   administrator_interface: false
 
@@ -52,10 +61,10 @@ platform_systems:
     conformance: blocked
     reason: Local execution controls include timeouts, cancellation, failure isolation, provenance validation, strict Lens document parsing, and fail-closed content-policy hook handling, but no Wardveil runtime contract or production safety-classification feed is integrated.
   everkeep:
-    applicable: false
-    status: not_applicable_current_runtime
-    conformance: not_applicable
-    reason: This runtime slice is stateless and persists no material user or service data. Re-evaluate when persistent state or deployment recovery is introduced.
+    applicable: true
+    status: not_implemented
+    conformance: blocked
+    reason: Search is currently stateless at the application layer, but the VPS deployment requires recoverable configuration, protected secret restoration, immutable artifact rollback, and verified target-host recovery evidence. The native repository has not yet integrated an accepted Everkeep recovery contract.
   glaze_ui:
     applicable: false
     status: not_applicable_current_runtime
@@ -70,7 +79,17 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: A Development external provider credential and loopback-only HTTP API now exist, but GoreeCloud Identity integration remains absent and is required before protected or production service operations are accepted.
+    reason: Development local/container HTTP boundaries and an external provider credential path exist, but GoreeCloud Identity integration remains absent and is required before protected or production service operations are accepted.
+  goreecloud_policy:
+    applicable: true
+    status: not_implemented
+    conformance: blocked
+    reason: Search has local source-planning and content-policy rules, but no current GoreeCloud Policy runtime contract, policy/version identity, rule-authority evidence, or enforcement-result integration is implemented.
+  goreecloud_observability:
+    applicable: true
+    status: partial_local_health_only
+    conformance: blocked
+    reason: Search exposes a health endpoint and bounded provider execution evidence, and the VPS candidate defines container health/log rotation, but no accepted GoreeCloud Observability contract, target-host monitoring integration, signal freshness evidence, alerting, or operational acceptance exists.
 
 specialized_services:
   goreecloud_sync:
@@ -84,4 +103,6 @@ evidence:
   stable_qualification: blocked
   notes:
     - A declaration is not implementation evidence.
-    - CI passing does not establish Platform-System conformance or Stable qualification.
+    - CI passing does not establish Platform-System conformance, target-host deployment acceptance, or Stable qualification.
+    - This schema_version 1 declaration is transitional and does not itself establish complete Integral Platform Systems v3.0 nine-system conformance.
+    - The VPS Docker profile is a Development candidate only; no native image from this rewritten repository is recorded as deployed on goreecloud-vps-01.

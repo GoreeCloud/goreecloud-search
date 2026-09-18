@@ -32,3 +32,80 @@ jobs:
         run: python -m compileall -q src
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
+
+
+  container:
+    name: Container build and runtime
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Build exact source image
+        run: |
+          docker build \
+            --build-arg GORECLOUD_SEARCH_VERSION="$(cat VERSION)" \
+            --build-arg GORECLOUD_SEARCH_REVISION="$GITHUB_SHA" \
+            --tag goreecloud-search:ci \
+            .
+      - name: Prepare runtime value file
+        run: |
+          install -d -m 0700 "$RUNNER_TEMP/goreecloud-search"
+          printf '%s\n' 'ci-placeholder-value' > "$RUNNER_TEMP/goreecloud-search/brave_search_api_key"
+          sudo chown 10001:10001 "$RUNNER_TEMP/goreecloud-search/brave_search_api_key"
+          sudo chmod 0400 "$RUNNER_TEMP/goreecloud-search/brave_search_api_key"
+      - name: Run hardened container
+        run: |
+          docker run -d \
+            --name goreecloud-search-ci \
+            --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 128 \
+            --publish 127.0.0.1:18080:8080 \
+            --env BRAVE_SEARCH_API_KEY_FILE=/run/secrets/brave_search_api_key \
+            --volume "$RUNNER_TEMP/goreecloud-search/brave_search_api_key:/run/secrets/brave_search_api_key:ro" \
+            goreecloud-search:ci
+      - name: Verify runtime identity and health
+        run: |
+          test "$(docker exec goreecloud-search-ci id -u)" = "10001"
+          test "$(docker exec goreecloud-search-ci id -g)" = "10001"
+          python - <<'PY'
+          import json
+          import time
+          from urllib.request import urlopen
+
+          last_error = None
+          for _ in range(20):
+              try:
+                  with urlopen("http://127.0.0.1:18080/healthz", timeout=2) as response:
+                      payload = json.load(response)
+                  if response.status == 200 and payload.get("status") == "ok":
+                      break
+              except Exception as exc:
+                  last_error = exc
+              time.sleep(0.5)
+          else:
+              raise SystemExit(f"container health endpoint did not become ready: {last_error}")
+          PY
+      - name: Verify Docker health state
+        run: |
+          for attempt in $(seq 1 20); do
+            state="$(docker inspect --format '{{.State.Health.Status}}' goreecloud-search-ci)"
+            if [ "$state" = "healthy" ]; then
+              exit 0
+            fi
+            if [ "$state" = "unhealthy" ]; then
+              docker logs goreecloud-search-ci
+              exit 1
+            fi
+            sleep 1
+          done
+          docker inspect goreecloud-search-ci
+          exit 1
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs goreecloud-search-ci || true
+      - name: Remove test container
+        if: always()
+        run: docker rm -f goreecloud-search-ci >/dev/null 2>&1 || true
