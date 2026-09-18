@@ -139,7 +139,8 @@ class UrllibBraveSearchTransport:
     def __init__(self, *, timeout_seconds: float = 2.5) -> None:
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
-        self._timeout_seconds = timeout_seconds\n        self._opener = build_opener(_NoRedirect())
+        self._timeout_seconds = timeout_seconds
+        self._opener = build_opener(_NoRedirect())
 
     async def search(
         self,
