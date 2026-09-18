@@ -20,6 +20,7 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - The deployed VPS image `ghcr.io/goreecloud/goreecloud-search:3584da535f7ed7c3b4b8dc73cf0424fb4bdf1949` at recorded digest `sha256:30ec99e3311fa9dcc934ac267aef123bb2541e0cd0165b360c4a7dc4fa29e3d5` is outside the current rewritten repository lineage and is therefore treated as the current rollback baseline, not as source evidence for this native candidate.
 - This branch adds a native VPS Docker Development candidate that preserves the existing Caddy backend identity, avoids host-port publication, and joins only the `proxy` network because the native service does not use Valkey. The legacy `searxng-valkey` service and `searxng-internal` network remain live-state compatibility/rollback concerns until separately verified for retirement. The candidate has not been built into an accepted GHCR artifact or deployed on the VPS.
 - Earlier Draft PRs #13 and #14 were closed after correcting the mistaken laptop-daemon replacement assumption. The laptop is a Browser/client acceptance target, not the Search server runtime.
+- `deploy/vps/read-only-preflight.sh` is a pre-cutover evidence collector only. It performs no Docker/Compose/Caddy/file mutation, does not read provider secret values or container environment, does not emit raw Compose/Caddy contents or logs, performs no provider query, and probes only the Search HTTPS homepage. Its output does not authorize deployment; the actual VPS run and evidence review remain open.
 - This version is Development only.
 
 ## Open decisions
