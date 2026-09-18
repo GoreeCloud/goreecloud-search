@@ -38,7 +38,7 @@ for path in "$SEARCH_COMPOSE" "$CADDY_ROOT" "$SEARCH_SECRET_FILE"; do
     absolute_path "$path" || fail "preflight paths must be absolute"
 done
 
-for command_name in docker hostname uname stat sha256sum grep curl getent awk sort sed wc; do
+for command_name in docker hostname uname stat sha256sum grep curl getent awk sort sed wc paste; do
     require_command "$command_name"
 done
 
@@ -51,47 +51,61 @@ else
     fail "Docker read access is unavailable; run with approved Docker read permissions"
 fi
 
-FILE=( )
-if test -r "$SEARCH_COMPOSE"; then
-    FILE=( )
-elif command -v sudo >/dev/null 2>&1 && sudo -n test -r "$SEARCH_COMPOSE"; then
-    FILE=(sudo -n)
-else
-    fail "authoritative Search Compose file is not readable: $SEARCH_COMPOSE"
-fi
+sudo_read_available() {
+    command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1
+}
 
 file_exists() {
-    if [ "${#FILE[@]}" -eq 0 ]; then
-        test -e "$1"
-    else
-        "${FILE[@]}" test -e "$1"
+    local path="$1"
+    if test -e "$path"; then
+        return 0
     fi
+    if sudo_read_available && sudo -n test -e "$path"; then
+        return 0
+    fi
+    return 1
+}
+
+file_readable() {
+    local path="$1"
+    if test -r "$path"; then
+        return 0
+    fi
+    if sudo_read_available && sudo -n test -r "$path"; then
+        return 0
+    fi
+    return 1
 }
 
 file_stat() {
-    if [ "${#FILE[@]}" -eq 0 ]; then
+    local path="${@: -1}"
+    if test -r "$path"; then
         stat "$@"
-    else
-        "${FILE[@]}" stat "$@"
+        return
     fi
+    sudo_read_available || fail "path requires approved read privilege: $path"
+    sudo -n stat "$@"
 }
 
 file_sha256() {
-    if [ "${#FILE[@]}" -eq 0 ]; then
-        sha256sum "$1"
-    else
-        "${FILE[@]}" sha256sum "$1"
+    local path="$1"
+    if test -r "$path"; then
+        sha256sum "$path"
+        return
     fi
+    sudo_read_available || fail "path requires approved read privilege: $path"
+    sudo -n sha256sum "$path"
 }
 
 grep_paths() {
     local pattern="$1"
-    shift
-    if [ "${#FILE[@]}" -eq 0 ]; then
-        grep -RIl --binary-files=without-match --fixed-strings -- "$pattern" "$@" 2>/dev/null || true
-    else
-        "${FILE[@]}" grep -RIl --binary-files=without-match --fixed-strings -- "$pattern" "$@" 2>/dev/null || true
+    local root="$2"
+    if test -r "$root"; then
+        grep -RIl --binary-files=without-match --fixed-strings -- "$pattern" "$root" 2>/dev/null || true
+        return
     fi
+    sudo_read_available || fail "Caddy root requires approved read privilege: $root"
+    sudo -n grep -RIl --binary-files=without-match --fixed-strings -- "$pattern" "$root" 2>/dev/null || true
 }
 
 container_exists() {
@@ -124,6 +138,8 @@ kv docker_server_version "$("${DOCKER[@]}" version --format '{{.Server.Version}}
 kv docker_compose_version "$("${DOCKER[@]}" compose version --short)"
 
 section "Authoritative Search Compose"
+file_exists "$SEARCH_COMPOSE" || fail "authoritative Search Compose file is absent: $SEARCH_COMPOSE"
+file_readable "$SEARCH_COMPOSE" || fail "authoritative Search Compose file is not readable: $SEARCH_COMPOSE"
 kv compose_path "$SEARCH_COMPOSE"
 kv compose_sha256 "$(file_sha256 "$SEARCH_COMPOSE" | awk '{print $1}')"
 kv compose_mode_owner "$(file_stat -c '%a %U:%G' "$SEARCH_COMPOSE")"
