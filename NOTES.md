@@ -14,7 +14,9 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - Policy hooks are attributable; exceptions or spoofed decision provenance fail closed.
 - Moderate/Strict SafeSearch must be enforceable before any provider call or Search rejects the request.
 - The built-in domain hook is administrator policy only, not a semantic/safety classifier.
-- The Brave Web Search adapter is an opt-in Development path; its presence is not production provider acceptance.\n- This version is Development only.
+- The Brave Web Search adapter is an opt-in Development path; its presence is not production provider acceptance.
+- The local HTTP API is fixed to IPv4 loopback and is a Development boundary only; production authentication, abuse controls, readiness, UI, and deployment acceptance remain open.
+- This version is Development only.
 
 ## Open decisions
 
@@ -27,4 +29,4 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 
 ## Stacked implementation candidates
 
-The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
+The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider` → `feature/local-http-api`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.

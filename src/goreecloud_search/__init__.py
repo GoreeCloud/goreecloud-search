@@ -31,6 +31,16 @@ from .execution import (
     SearchAvailability,
     SearchExecutor,
 )
+from .http_api import (
+    DEFAULT_LOCAL_SEARCH_PORT,
+    LOCAL_SEARCH_HOST,
+    MAX_HTTP_QUERY_CHARS,
+    MAX_HTTP_REQUEST_TARGET_CHARS,
+    MAX_HTTP_RESULT_LIMIT,
+    LocalSearchAPIError,
+    LocalSearchHTTPServer,
+    create_local_server,
+)
 from .index_contract import (
     INDEX_CONTRACT_VERSION,
     IndexCapabilities,
@@ -112,6 +122,14 @@ from .version import __version__
 __all__ = [
     "__version__",
     "INDEX_CONTRACT_VERSION",
+    "LOCAL_SEARCH_HOST",
+    "DEFAULT_LOCAL_SEARCH_PORT",
+    "MAX_HTTP_QUERY_CHARS",
+    "MAX_HTTP_REQUEST_TARGET_CHARS",
+    "MAX_HTTP_RESULT_LIMIT",
+    "LocalSearchAPIError",
+    "LocalSearchHTTPServer",
+    "create_local_server",
     "BRAVE_WEB_SEARCH_URL",
     "BRAVE_MAX_RESULTS",
     "BRAVE_MAX_QUERY_CHARS",

@@ -7,9 +7,11 @@ from datetime import date
 from enum import Enum
 import json
 import os
+import sys
 from typing import Any
 
 from .brave_provider import BraveWebSearchProvider
+from .http_api import DEFAULT_LOCAL_SEARCH_PORT, LOCAL_SEARCH_HOST, create_local_server
 from .models import SourceMode
 from .query_parser import QueryParseError, parse_query
 from .service import SearchCore
@@ -28,6 +30,25 @@ def _jsonable(value: Any) -> Any:
     if isinstance(value, list):
         return [_jsonable(item) for item in value]
     return value
+
+
+def _add_provider_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--country",
+        default=None,
+        help="Optional two-letter country code",
+    )
+    parser.add_argument(
+        "--language",
+        default=None,
+        help="Optional Brave search language",
+    )
+    parser.add_argument(
+        "--provider-safesearch",
+        choices=("off", "moderate", "strict"),
+        default="moderate",
+        help="Filtering requested from the external provider; default: moderate",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -70,28 +91,25 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=10,
     )
-    search_command.add_argument(
-        "--country",
-        default=None,
-        help="Optional two-letter country code",
+    _add_provider_options(search_command)
+
+    serve_command = subparsers.add_parser(
+        "serve",
+        help=(
+            "Run the Development HTTP API on IPv4 loopback only. "
+            "No user-facing web UI is included."
+        ),
     )
-    search_command.add_argument(
-        "--language",
-        default=None,
-        help="Optional Brave search language",
+    serve_command.add_argument(
+        "--port",
+        type=int,
+        default=DEFAULT_LOCAL_SEARCH_PORT,
     )
-    search_command.add_argument(
-        "--provider-safesearch",
-        choices=("off", "moderate", "strict"),
-        default="moderate",
-        help="Filtering requested from the external provider; default: moderate",
-    )
+    _add_provider_options(serve_command)
     return parser
 
 
-async def _run_brave_search(
-    args: argparse.Namespace,
-) -> int:
+def _brave_provider(args: argparse.Namespace) -> BraveWebSearchProvider:
     api_key = os.environ.get(
         "BRAVE_SEARCH_API_KEY",
         "",
@@ -101,19 +119,27 @@ async def _run_brave_search(
             "BRAVE_SEARCH_API_KEY is required "
             "for the Brave provider"
         )
-    if args.limit < 1:
-        raise ValueError("--limit must be positive")
-
-    provider = BraveWebSearchProvider(
+    return BraveWebSearchProvider(
         api_key=api_key,
         country=args.country,
         search_lang=args.language,
         safesearch=args.provider_safesearch,
     )
-    core = SearchCore(
-        provider_adapters=(provider,),
+
+
+def _brave_core(args: argparse.Namespace) -> SearchCore:
+    return SearchCore(
+        provider_adapters=(_brave_provider(args),),
     )
-    response = await core.search(
+
+
+async def _run_brave_search(
+    args: argparse.Namespace,
+) -> int:
+    if args.limit < 1:
+        raise ValueError("--limit must be positive")
+
+    response = await _brave_core(args).search(
         args.query,
         mode=SourceMode.EXTERNAL_ONLY,
         limit=args.limit,
@@ -126,6 +152,31 @@ async def _run_brave_search(
         )
     )
     return 0 if response.results else 3
+
+
+def _run_server(args: argparse.Namespace) -> int:
+    if args.port < 1 or args.port > 65535:
+        raise ValueError("--port must be between 1 and 65535")
+
+    server = create_local_server(
+        _brave_core(args),
+        port=args.port,
+        mode=SourceMode.EXTERNAL_ONLY,
+    )
+    print(
+        (
+            "GoreeCloud Search Development API listening on "
+            f"http://{LOCAL_SEARCH_HOST}:{server.server_port}"
+        ),
+        file=sys.stderr,
+    )
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        return 0
+    finally:
+        server.server_close()
+    return 0
 
 
 def main(
@@ -155,6 +206,11 @@ def main(
             QueryParseError,
             ValueError,
         ) as exc:
+            parser.error(str(exc))
+    if args.command == "serve":
+        try:
+            return _run_server(args)
+        except ValueError as exc:
             parser.error(str(exc))
     parser.error("unsupported command")
     return 2
