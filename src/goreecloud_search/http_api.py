@@ -291,13 +291,25 @@ class _SearchHandler(BaseHTTPRequestHandler):
 
         self._send_json(404, {"error": "not_found"})
 
+    def _reject_misdirected(self) -> bool:
+        if self._host_allowed():
+            return False
+        self._send_json(421, {"error": "misdirected_request"})
+        return True
+
     def do_POST(self) -> None:
+        if self._reject_misdirected():
+            return
         self._send_json(405, {"error": "method_not_allowed"})
 
     def do_PUT(self) -> None:
+        if self._reject_misdirected():
+            return
         self._send_json(405, {"error": "method_not_allowed"})
 
     def do_DELETE(self) -> None:
+        if self._reject_misdirected():
+            return
         self._send_json(405, {"error": "method_not_allowed"})
 
 
