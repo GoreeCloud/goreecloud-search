@@ -7,7 +7,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 EnvironmentFile=%h/.config/goreecloud/search.env
-ExecStart=%h/.local/share/goreecloud/search/venv/bin/goreecloud-search serve --port 8787
+ExecStart=%h/.local/share/goreecloud/search/bin/goreecloud-search serve --port 8787
 Restart=on-failure
 RestartSec=5s
 TimeoutStartSec=20s
