@@ -28,6 +28,7 @@ class VPSReadOnlyPreflightTests(unittest.TestCase):
             "searxng-core",
             "searxng-valkey",
             "search.goreecloud.com",
+            "100.71.27.119",
             "proxy",
             "/srv/docker/caddy",
             "/srv/docker/secrets/searxng/brave-search-api-key",
@@ -101,7 +102,13 @@ class VPSReadOnlyPreflightTests(unittest.TestCase):
         self.assertNotIn("curl -k", self.lower)
         self.assertNotIn("--insecure", self.lower)
         self.assertNotIn("?q=", self.text)
+        self.assertNotIn("curl --fail", self.lower)
         self.assertIn("https_ssl_verify_result", self.text)
+        self.assertIn("https_curl_exit_code", self.text)
+        self.assertIn('vps_dns_matches_expected_private_address', self.text)
+        self.assertIn('--resolve "$SEARCH_HOST:443:$PRIVATE_SEARCH_ADDRESS"', self.text)
+        self.assertIn("private_https_ssl_verify_result", self.text)
+        self.assertIn("private_https_curl_exit_code", self.text)
 
     def test_search_inspection_avoids_unrelated_network_listing(self):
         self.assertIn("network_has_container", self.text)
