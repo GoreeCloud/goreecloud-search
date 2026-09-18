@@ -80,6 +80,7 @@ class LocalWebUITests(unittest.TestCase):
         self.assertIn('href="/assets/search.css"', body)
         self.assertIn('href="/opensearch.xml"', body)
         self.assertNotIn("<script", body.casefold())
+        self.assertNotIn("autofocus", body.casefold())
         self.assertIn("style-src 'self'", headers["Content-Security-Policy"])
         self.assertNotIn("script-src", headers["Content-Security-Policy"])
         self.assertIsNone(headers["Access-Control-Allow-Origin"])
