@@ -116,6 +116,11 @@ class BraveWebSearchProviderTests(unittest.IsolatedAsyncioTestCase):
                             "description": "bad",
                         },
                         {
+                            "title": "Credential URL",
+                            "url": "https://user:password@example.net/private",
+                            "description": "bad",
+                        },
+                        {
                             "title": "Good",
                             "url": "https://example.org/",
                             "description": "ok",
