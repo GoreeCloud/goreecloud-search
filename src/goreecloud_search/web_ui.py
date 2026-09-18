@@ -48,7 +48,7 @@ def _result_html(response: SearchResponse) -> str:
             else ""
         )
         source_agreement = (
-            f'<span class="meta-chip">{result.source_agreement} sources agree</span>'
+            f'<span class="meta-chip">Found by {result.source_agreement} sources</span>'
             if result.source_agreement > 1
             else ""
         )
