@@ -21,5 +21,6 @@ All notable verified changes to GoreeCloud Search will be recorded here.
 - Bounded query-aware snippet generation for already-authorized plain text.
 - Opt-in Brave Web Search API provider and CLI search path with fixed-endpoint HTTPS, environment-only credentials, minimized provider queries, bounded response parsing, redirect refusal, result-URL validation, region/language controls, bounded date-range mapping, and provider-side SafeSearch selection.
 - Loopback-only Development HTTP API with health and versioned search endpoints, bounded request parsing, privacy-preserving request logging behavior, no CORS exposure, and defensive response headers.
+- VPS Docker Development candidate with a separate container-network listener, bounded Host validation for `search.goreecloud.com`, Docker-secret-file credential input, non-root/read-only compatible image, health check, hardened Compose service example, preserved `searxng-core:8080` Caddy compatibility, and no host-port publication.
 
 No release, deployment, production acceptance, or Stable qualification is claimed by these unreleased changes.
