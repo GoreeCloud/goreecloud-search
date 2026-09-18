@@ -156,25 +156,20 @@ jobs:
           set -euo pipefail
 
           docker buildx imagetools inspect "${IMMUTABLE_REF}"
-          docker pull --platform linux/amd64 "${IMMUTABLE_REF}"
+          docker pull --platform linux/amd64 "${IMAGE_REF}"
 
-          ACTUAL_PLATFORM="$(docker image inspect             --format '{{.Os}}/{{.Architecture}}' "${IMMUTABLE_REF}")"
+          ACTUAL_PLATFORM="$(docker image inspect             --format '{{.Os}}/{{.Architecture}}' "${IMAGE_REF}")"
           test "${ACTUAL_PLATFORM}" = "linux/amd64"
 
-          ACTUAL_REVISION="$(docker image inspect             --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}'             "${IMMUTABLE_REF}")"
+          ACTUAL_REVISION="$(docker image inspect             --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}'             "${IMAGE_REF}")"
           test "${ACTUAL_REVISION}" = "${GITHUB_SHA}"
 
-          ACTUAL_VERSION="$(docker image inspect             --format '{{ index .Config.Labels "org.opencontainers.image.version" }}'             "${IMMUTABLE_REF}")"
+          ACTUAL_VERSION="$(docker image inspect             --format '{{ index .Config.Labels "org.opencontainers.image.version" }}'             "${IMAGE_REF}")"
           test "${ACTUAL_VERSION}" = "${VERSION}"
 
-          TAGGED_DIGEST="$(docker image inspect             --format '{{ index .RepoDigests 0 }}' "${IMAGE_REF}")"
-          case "${TAGGED_DIGEST}" in
-            *@sha256:*) ;;
-            *)
-              echo "Tagged image did not resolve to an immutable digest." >&2
-              exit 1
-              ;;
-          esac
+          EXPECTED_REPODIGEST="${{ steps.identity.outputs.image }}@${{ steps.build.outputs.digest }}"
+          TAGGED_REPODIGEST="$(docker image inspect             --format '{{ index .RepoDigests 0 }}' "${IMAGE_REF}")"
+          test "${TAGGED_REPODIGEST}" = "${EXPECTED_REPODIGEST}"
 
       - name: Record publication evidence
         shell: bash
