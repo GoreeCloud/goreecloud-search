@@ -101,6 +101,19 @@ class ContainerHTTPBoundaryTests(unittest.TestCase):
         payload = json.load(error)
         self.assertEqual(payload["error"], "misdirected_request")
 
+    def test_mutating_method_also_rejects_unapproved_host(self):
+        request = Request(
+            f"{self.base}/api/v1/search",
+            headers={"Host": "unapproved.example"},
+            method="POST",
+        )
+        with self.assertRaises(HTTPError) as context:
+            urlopen(request, timeout=2)
+        error = context.exception
+        self.assertEqual(error.code, 421)
+        payload = json.load(error)
+        self.assertEqual(payload["error"], "misdirected_request")
+
 
 class RuntimeSecretTests(unittest.TestCase):
     def test_direct_environment_value_remains_supported_for_development(self):
