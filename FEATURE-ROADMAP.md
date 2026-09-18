@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev10`
+**Repository version:** `0.1.0.dev11`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -65,7 +65,7 @@ Completed checkboxes describe the stacked development candidate only until accep
 **Status:** Planned
 
 - [x] Add a loopback-only Development `/api/v1/search` and `/healthz` HTTP boundary.
-- [ ] Add production service authentication/authorization, readiness semantics, rate/abuse controls, and target-runtime acceptance.
+- [ ] Add production service authentication/authorization, readiness semantics, rate/abuse controls, monitoring/observability, and target-runtime acceptance.
 - GoreeCloud Identity authentication and requester identity.
 - Privacy Shield permitted-use enforcement.
 - Wardveil Security trust/risk/safety integration.
@@ -94,7 +94,9 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 **Status:** Planned
 
-- OCI/rootless Podman/GoreeCloud Containers/bare-metal deployment profiles.
+- [x] Add an initial non-root Zorin OS/systemd user-service Development deployment profile.
+- [ ] Validate the profile on the actual laptop with a real provider credential and representative searches.
+- [ ] Add production/self-hosting OCI/rootless Podman/GoreeCloud Containers/bare-metal deployment profiles where required.
 - Kubernetes/Helm only when justified.
 - Signed artifacts, SBOM, provenance, reproducible build metadata.
 - Performance, reliability, security, privacy, recovery, and Stable qualification evidence.
