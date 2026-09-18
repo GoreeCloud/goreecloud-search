@@ -14,17 +14,17 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - Policy hooks are attributable; exceptions or spoofed decision provenance fail closed.
 - Moderate/Strict SafeSearch must be enforceable before any provider call or Search rejects the request.
 - The built-in domain hook is administrator policy only, not a semantic/safety classifier.
-- This version is Development only.
+- The Brave Web Search adapter is an opt-in Development path; its presence is not production provider acceptance.\n- This version is Development only.
 
 ## Open decisions
 
 - Final production service/runtime framework.
 - Public source licensing/rights model.
-- Approved production provider set.
+- Production acceptance criteria and provider set beyond the Development Brave adapter.
 - Production safety/content classification sources and Wardveil integration.
 - Exact current Stable Platform-System contract versions at integration time.
 - Production deployment topology and persistence model.
 
 ## Stacked implementation candidates
 
-The current stack is `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
+The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.

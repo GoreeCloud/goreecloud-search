@@ -3,9 +3,9 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev8`  
+> **Version:** `0.1.0.dev9`  
 > **License:** `AGPL-3.0-or-later`  
-> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport or production safety classifier ships in this revision.
+> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, deterministic explainable ranking, bounded snippet generation, and an opt-in Brave Web Search API adapter. Production provider acceptance and production safety classification remain open.
 
 ## What exists now
 
@@ -24,7 +24,7 @@ GoreeCloud Search is the privacy-first, self-hostable search and information-dis
 - Versioned `goreecloud.search-lens.v1` JSON import/export with deterministic serialization and strict schema/size validation.
 - Unit tests and pull-request CI.
 
-The repository ships no authenticated live network provider, no production SafeSearch classifier, no Wardveil safety feed, and no user-facing UI. The development CLI performs no network access.
+The repository now ships one opt-in external network provider for Development use. It does not make Brave a production-accepted provider, does not add an authenticated live GoreeCloud Index transport, and does not establish a production SafeSearch classifier, Wardveil safety feed, user-facing UI, deployment, or Stable qualification.
 
 ## Development use
 
@@ -60,7 +60,7 @@ GoreeCloud   optional
 
 ## Privacy and policy boundaries
 
-The planner can cap third-party query recipients before execution. The executor runs only providers admitted by that plan. Content-policy hooks then evaluate normalized results before ranking. Non-Off SafeSearch intent fails before provider execution if no configured hook can enforce it, preventing a falsely protected state from disclosing the query first.
+The Brave adapter is opt-in and external: when it is selected by the source plan, the minimized provider-facing query is disclosed to Brave. Search-local `lens:` and `source:` controls are not forwarded in the Brave query string, the API credential is sent only to the fixed Brave HTTPS endpoint, and redirects are refused. The planner can cap third-party query recipients before execution. The executor runs only providers admitted by that plan. Content-policy hooks then evaluate normalized results before ranking. Non-Off SafeSearch intent fails before provider execution if no configured hook can enforce it, preventing a falsely protected state from disclosing the query first.
 
 Lenses are a Search-local ranking layer in this candidate. A requested `lens:` value is resolved before provider execution and then removed from the query passed to provider adapters. Portable Lens export/import is a pure local data transformation; this repository does not upload, publish, synchronize, or remotely fetch Lens documents.
 
