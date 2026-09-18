@@ -110,6 +110,7 @@ class LocalWebUITests(unittest.TestCase):
             "External provider query disclosure active",
             body,
         )
+        self.assertNotIn("sources agree", body)
         self.assertNotIn("<svg", body.casefold())
         self.assertNotIn("<script", body.casefold())
         self.assertNotIn("<img", body.casefold())
@@ -156,6 +157,8 @@ class LocalWebUITests(unittest.TestCase):
         self.assertTrue(headers["Content-Type"].startswith("text/css"))
         self.assertIn("prefers-reduced-motion", body)
         self.assertIn("forced-colors: active", body)
+        self.assertIn("prefers-reduced-transparency: reduce", body)
+        self.assertIn("prefers-contrast: more", body)
         self.assertIn(":focus-visible", body)
         self.assertNotIn("@import", body.casefold())
         self.assertNotIn("url(http", body.casefold())
