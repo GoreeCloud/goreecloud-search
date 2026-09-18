@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev12`
+**Repository version:** `0.1.0.dev13`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -96,7 +96,8 @@ Completed checkboxes describe the stacked development candidate only until accep
 **Status:** Planned
 
 - [x] Add an initial non-root Zorin OS/systemd user-service Development deployment profile.
-- [ ] Validate the profile on the actual laptop with a real provider credential and representative searches.
+- [x] Add Python 3.10 CI/runtime compatibility coverage for the Zorin profile.
+- [ ] Validate the profile on the actual laptop with its installed Python/runtime, a real provider credential, and representative searches.
 - [ ] Add production/self-hosting OCI/rootless Podman/GoreeCloud Containers/bare-metal deployment profiles where required.
 - Kubernetes/Helm only when justified.
 - Signed artifacts, SBOM, provenance, reproducible build metadata.
