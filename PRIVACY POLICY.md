@@ -2,7 +2,7 @@
 
 ## Current development implementation
 
-Version `0.1.0.dev10` contains a local query parser, source planner, bounded provider-execution engine, versioned Search ↔ Index contract models with pagination, a transport-injected Index adapter boundary, result normalization/deduplication, content-policy hooks, deterministic ranking, Search-local Lens reranking, and a portable Lens data format. The repository code in this version:
+Version `0.1.0.dev11` contains a local query parser, source planner, bounded provider-execution engine, versioned Search ↔ Index contract models with pagination, a transport-injected Index adapter boundary, result normalization/deduplication, content-policy hooks, deterministic ranking, Search-local Lens reranking, and a portable Lens data format. The repository code in this version:
 
 - Ships one opt-in Development external provider adapter for Brave Web Search API. When explicitly selected, the minimized provider-facing query is disclosed to Brave; Search-local `lens:` and `source:` controls are not included in that provider query string.
 - Executes explicitly injected provider adapters only within the planner-approved source plan. The Brave API credential is supplied from `BRAVE_SEARCH_API_KEY`, is not placed in query parameters or result evidence, and is sent only to the fixed Brave HTTPS endpoint; redirects are refused.
@@ -13,6 +13,7 @@ Version `0.1.0.dev10` contains a local query parser, source planner, bounded pro
 - Can serialize/parse Lens configuration as deterministic JSON locally; the implementation performs no file write, upload, publication, synchronization, or remote retrieval of Lens documents.
 - Does not persist search history or Lens state.
 - The Development HTTP API binds only to `127.0.0.1`, emits no CORS allow-origin header, sends `Cache-Control: no-store`, and suppresses default HTTP request-target logging so query strings are not written by this server's request logger.
+- The Zorin OS/Linux user-service profile stores the active Brave credential only in `~/.config/goreecloud/search.env`, outside the repository, with installer-enforced `0600` permissions. The sanitized repository example contains no credential value.
 - Does not contain advertising/tracking code, build behavioral profiles, or use click history/advertising identifiers/paid placement for ranking.
 
 ## Portable Lens privacy
