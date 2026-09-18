@@ -33,6 +33,17 @@ _SEARCH_CSS = (
 class LocalSearchAPIError(ValueError):
     """Raised when a local API request cannot be accepted safely."""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "invalid_search_request",
+        parameters: tuple[str, ...] = (),
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.parameters = parameters
+
 
 def _jsonable(value: Any) -> Any:
     if isinstance(value, Enum):
@@ -175,14 +186,17 @@ class _LocalSearchHandler(BaseHTTPRequestHandler):
             )
         except ValueError as exc:
             raise LocalSearchAPIError(
-                "invalid query parameters"
+                "invalid query parameters",
+                code="invalid_query_parameters",
             ) from exc
 
         unknown = sorted(set(params) - {"q", "limit"})
         if unknown:
             raise LocalSearchAPIError(
                 "unsupported query parameter(s): "
-                + ", ".join(unknown)
+                + ", ".join(unknown),
+                code="unsupported_query_parameter",
+                parameters=tuple(unknown),
             )
 
         query = self._single_param(
@@ -231,12 +245,15 @@ class _LocalSearchHandler(BaseHTTPRequestHandler):
         try:
             query, limit = self._search_parameters(query_string)
         except LocalSearchAPIError as exc:
+            payload: dict[str, Any] = {
+                "error": exc.code,
+                "message": str(exc),
+            }
+            if exc.parameters:
+                payload["parameters"] = list(exc.parameters)
             self._send_json(
                 400,
-                {
-                    "error": "invalid_search_request",
-                    "message": str(exc),
-                },
+                payload,
             )
             return
 
