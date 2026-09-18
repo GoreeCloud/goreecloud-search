@@ -25,7 +25,7 @@ The Development HTTP search endpoints use GET query parameters. The loopback com
 
 ## Future network features
 
-The Brave provider remains an external disclosure path: when selected, the minimized provider-facing query is sent to Brave. The VPS candidate supports supplying the provider credential from `BRAVE_SEARCH_API_KEY_FILE`, with the Compose example mapping a protected Docker secret file at runtime rather than storing the value in source or the Compose definition.
+The Brave provider remains an external disclosure path: when selected, the minimized provider-facing query is sent to Brave. The VPS candidate supports supplying the provider credential from `BRAVE_SEARCH_API_KEY_FILE`, with the Compose example bind-mounting a protected host credential file read-only at runtime rather than storing the value in source or the Compose definition.
 
 Any live network provider transport, remote suggestion, Lens sharing/discovery/synchronization, account storage, analytics, AI, Browser, Index, or other network-capable feature must update this policy to match verified behavior and apply the relevant GoreeCloud Identity, Privacy Shield, Wardveil Security, Policy, Observability, retention, consent, minimization, and disclosure controls before production acceptance.
 
