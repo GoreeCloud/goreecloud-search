@@ -7,15 +7,24 @@ from datetime import date
 from enum import Enum
 import json
 import os
+from pathlib import Path
 import sys
 from typing import Any
 
 from .brave_provider import BraveWebSearchProvider
-from .http_api import DEFAULT_LOCAL_SEARCH_PORT, LOCAL_SEARCH_HOST, create_local_server
+from .http_api import (
+    CONTAINER_SEARCH_HOST,
+    DEFAULT_LOCAL_SEARCH_PORT,
+    LOCAL_SEARCH_HOST,
+    create_search_server,
+)
 from .models import SourceMode
 from .query_parser import QueryParseError, parse_query
 from .service import SearchCore
 from .version import __version__
+
+
+_MAX_SECRET_FILE_BYTES = 16 * 1024
 
 
 def _jsonable(value: Any) -> Any:
@@ -26,13 +35,18 @@ def _jsonable(value: Any) -> Any:
     if isinstance(value, tuple):
         return [_jsonable(item) for item in value]
     if isinstance(value, dict):
-        return {key: _jsonable(item) for key, item in value.items()}
+        return {
+            key: _jsonable(item)
+            for key, item in value.items()
+        }
     if isinstance(value, list):
         return [_jsonable(item) for item in value]
     return value
 
 
-def _add_provider_options(parser: argparse.ArgumentParser) -> None:
+def _add_provider_options(
+    parser: argparse.ArgumentParser,
+) -> None:
     parser.add_argument(
         "--country",
         default=None,
@@ -47,7 +61,10 @@ def _add_provider_options(parser: argparse.ArgumentParser) -> None:
         "--provider-safesearch",
         choices=("off", "moderate", "strict"),
         default="moderate",
-        help="Filtering requested from the external provider; default: moderate",
+        help=(
+            "Filtering requested from the external "
+            "provider; default: moderate"
+        ),
     )
 
 
@@ -68,7 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     parse_command = subparsers.add_parser(
         "parse",
-        help="Parse a query without performing network access.",
+        help="Parse a query without network access.",
     )
     parse_command.add_argument(
         "query",
@@ -96,40 +113,110 @@ def build_parser() -> argparse.ArgumentParser:
     serve_command = subparsers.add_parser(
         "serve",
         help=(
-            "Run the Development HTTP API on IPv4 loopback only. "
-            "No user-facing web UI is included."
+            "Run the Development HTTP/API and web UI. "
+            "Loopback is the default; 0.0.0.0 is allowed "
+            "only for a container/network-isolated deployment."
         ),
+    )
+    serve_command.add_argument(
+        "--host",
+        choices=(
+            LOCAL_SEARCH_HOST,
+            CONTAINER_SEARCH_HOST,
+        ),
+        default=LOCAL_SEARCH_HOST,
     )
     serve_command.add_argument(
         "--port",
         type=int,
         default=DEFAULT_LOCAL_SEARCH_PORT,
     )
+    serve_command.add_argument(
+        "--public-base-url",
+        default=os.environ.get(
+            "GOREECLOUD_SEARCH_PUBLIC_BASE_URL"
+        ),
+        help=(
+            "Canonical HTTP(S) origin used for OpenSearch "
+            "and UI identity; required with --host 0.0.0.0."
+        ),
+    )
     _add_provider_options(serve_command)
     return parser
 
 
-def _brave_provider(args: argparse.Namespace) -> BraveWebSearchProvider:
-    api_key = os.environ.get(
+def _provider_api_key() -> str:
+    env_key = os.environ.get(
         "BRAVE_SEARCH_API_KEY",
         "",
     ).strip()
-    if not api_key:
+    secret_file = os.environ.get(
+        "BRAVE_SEARCH_API_KEY_FILE",
+        "",
+    ).strip()
+
+    if env_key and secret_file:
         raise ValueError(
-            "BRAVE_SEARCH_API_KEY is required "
-            "for the Brave provider"
+            "configure either BRAVE_SEARCH_API_KEY or "
+            "BRAVE_SEARCH_API_KEY_FILE, not both"
         )
+    if env_key:
+        return env_key
+    if not secret_file:
+        raise ValueError(
+            "Brave provider credential is required"
+        )
+
+    path = Path(secret_file)
+    try:
+        if path.is_symlink():
+            raise ValueError(
+                "Brave provider credential file "
+                "must not be a symbolic link"
+            )
+        stat = path.stat()
+        if (
+            not path.is_file()
+            or stat.st_size < 1
+            or stat.st_size > _MAX_SECRET_FILE_BYTES
+        ):
+            raise ValueError(
+                "Brave provider credential file "
+                "has an invalid size or type"
+            )
+        value = path.read_text(
+            encoding="utf-8"
+        ).strip()
+    except OSError as exc:
+        raise ValueError(
+            "Brave provider credential file "
+            "could not be read"
+        ) from exc
+    if not value:
+        raise ValueError(
+            "Brave provider credential file is empty"
+        )
+    return value
+
+
+def _brave_provider(
+    args: argparse.Namespace,
+) -> BraveWebSearchProvider:
     return BraveWebSearchProvider(
-        api_key=api_key,
+        api_key=_provider_api_key(),
         country=args.country,
         search_lang=args.language,
         safesearch=args.provider_safesearch,
     )
 
 
-def _brave_core(args: argparse.Namespace) -> SearchCore:
+def _brave_core(
+    args: argparse.Namespace,
+) -> SearchCore:
     return SearchCore(
-        provider_adapters=(_brave_provider(args),),
+        provider_adapters=(
+            _brave_provider(args),
+        ),
     )
 
 
@@ -137,7 +224,9 @@ async def _run_brave_search(
     args: argparse.Namespace,
 ) -> int:
     if args.limit < 1:
-        raise ValueError("--limit must be positive")
+        raise ValueError(
+            "--limit must be positive"
+        )
 
     response = await _brave_core(args).search(
         args.query,
@@ -146,7 +235,9 @@ async def _run_brave_search(
     )
     print(
         json.dumps(
-            _jsonable(asdict(response)),
+            _jsonable(
+                asdict(response)
+            ),
             indent=2,
             sort_keys=True,
         )
@@ -154,19 +245,30 @@ async def _run_brave_search(
     return 0 if response.results else 3
 
 
-def _run_server(args: argparse.Namespace) -> int:
-    if args.port < 1 or args.port > 65535:
-        raise ValueError("--port must be between 1 and 65535")
+def _run_server(
+    args: argparse.Namespace,
+) -> int:
+    if (
+        args.port < 1
+        or args.port > 65535
+    ):
+        raise ValueError(
+            "--port must be between 1 and 65535"
+        )
 
-    server = create_local_server(
+    server = create_search_server(
         _brave_core(args),
+        host=args.host,
         port=args.port,
         mode=SourceMode.EXTERNAL_ONLY,
+        public_base_url=args.public_base_url,
     )
     print(
         (
-            "GoreeCloud Search Development API listening on "
-            f"http://{LOCAL_SEARCH_HOST}:{server.server_port}"
+            "GoreeCloud Search Development service "
+            f"listening on {args.host}:"
+            f"{server.server_port}; canonical origin "
+            f"{server.public_base_url}"
         ),
         file=sys.stderr,
     )
@@ -186,12 +288,16 @@ def main(
     args = parser.parse_args(argv)
     if args.command == "parse":
         try:
-            parsed = parse_query(args.query)
+            parsed = parse_query(
+                args.query
+            )
         except QueryParseError as exc:
             parser.error(str(exc))
         print(
             json.dumps(
-                _jsonable(asdict(parsed)),
+                _jsonable(
+                    asdict(parsed)
+                ),
                 indent=2,
                 sort_keys=True,
             )
