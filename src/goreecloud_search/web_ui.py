@@ -135,7 +135,7 @@ def render_search_page(
         <input id="query" name="q" type="search" value="{query_value}"
                placeholder="Search with GoreeCloud" autocomplete="off"
                autocapitalize="none" spellcheck="false" maxlength="2048"
-               required autofocus>
+               required>
         <button type="submit">Search</button>
       </form>
       <p class="privacy-note">
