@@ -1,7 +1,7 @@
 # GoreeCloud Search — Current Features
 
 **Lifecycle:** Development  
-**Version:** `0.1.0.dev11`
+**Version:** `0.1.0.dev12`
 
 This file records implemented behavior in the current development candidate. It does not claim release, deployment, production acceptance, or Stable qualification.
 
@@ -26,9 +26,11 @@ This file records implemented behavior in the current development candidate. It 
 - Development CLI supports local parsing, explicit Brave-backed search, and a loopback-only local service command.
 - Development HTTP API exposes `/healthz` and versioned `/api/v1/search`, fixed to IPv4 loopback with no CORS header, `no-store`/anti-sniffing/frame/referrer headers, bounded request/query/limit handling, generic server errors, and no request-target logging.
 - Zorin OS/Linux systemd user-service profile installs the pure-Python source into a user-owned data directory, keeps the Brave API key in a 0600 runtime environment file outside source control, requires Python 3.11+, applies systemd hardening, health-checks startup, and preserves the existing SearXNG runtime for rollback.
+- Server-rendered local web UI provides a search form, result list, provenance/source-disclosure state, explainable ranking details, responsive layout, light/dark adaptation, reduced-motion handling, forced-colors support, and no external UI dependencies or client-side JavaScript.
+- Local OpenSearch discovery descriptor exposes the loopback Search form as a browser-search integration target without changing browser settings automatically.
 - Unit tests and CI for Python 3.11 and 3.12.
 - Explicit internal application version.
 
 ## Not implemented
 
-One opt-in external live provider adapter (Brave Web Search API) ships in this Development candidate, but it is not production-accepted. The GoreeCloud Index adapter still has no authenticated runtime transport. Portable Lens serialization and a loopback Development HTTP API are implemented, but production service authentication/authorization, rate/abuse controls, readiness semantics, file persistence, automatic import/export UI, remote sharing/discovery, signatures/trust, synchronized Lens state, hosted Lens registry, Lens UI, Browser integration, AI synthesis, persistent history, and production deployment are not implemented yet.
+One opt-in external live provider adapter (Brave Web Search API) ships in this Development candidate, but it is not production-accepted. The GoreeCloud Index adapter still has no authenticated runtime transport. Portable Lens serialization, a loopback Development HTTP API, and an initial local web UI are implemented, but production service authentication/authorization, rate/abuse controls, readiness semantics, repository-local Glaze UI 1.5.1 acceptance, file persistence, automatic Lens import/export UI, remote sharing/discovery, signatures/trust, synchronized Lens state, hosted Lens registry, Lens editing UI, automatic Browser configuration, AI synthesis, persistent history, and production deployment are not implemented yet.
