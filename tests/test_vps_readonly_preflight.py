@@ -29,7 +29,7 @@ class VPSReadOnlyPreflightTests(unittest.TestCase):
             "searxng-valkey",
             "search.goreecloud.com",
             "proxy",
-            "/srv/docker/stacks/caddy",
+            "/srv/docker/caddy",
             "/srv/docker/secrets/searxng/brave-search-api-key",
         ):
             self.assertIn(value, self.text)
