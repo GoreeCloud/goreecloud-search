@@ -7,7 +7,7 @@ SEARCH_CONTAINER="${SEARCH_CONTAINER:-searxng-core}"
 LEGACY_VALKEY_CONTAINER="${LEGACY_VALKEY_CONTAINER:-searxng-valkey}"
 SEARCH_HOST="${SEARCH_HOST:-search.goreecloud.com}"
 PROXY_NETWORK="${PROXY_NETWORK:-proxy}"
-CADDY_ROOT="${CADDY_ROOT:-/srv/docker/stacks/caddy}"
+CADDY_ROOT="${CADDY_ROOT:-/srv/docker/caddy}"
 SEARCH_SECRET_FILE="${SEARCH_SECRET_FILE:-/srv/docker/secrets/searxng/brave-search-api-key}"
 
 fail() {
