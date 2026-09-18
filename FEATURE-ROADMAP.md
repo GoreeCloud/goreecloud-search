@@ -101,7 +101,8 @@ Completed checkboxes describe the stacked development candidate only until accep
 - [x] Add a stdout-only, non-mutating VPS preflight collector that reads the authoritative Search Compose identity, active container/image/health/security/network state, protected credential metadata, Caddy route references, private DNS, and HTTPS homepage state without printing secrets or raw configuration.
 - [x] Run the initial read-only preflight on `goreecloud-vps-01` and retain/review the resulting Docker/Compose/image/security/network/credential/DNS/HTTPS evidence.
 - [ ] Re-run the corrected preflight against the current production Caddy root at `/srv/docker/caddy` and reconcile Search hostname/backend route references; the first run used the standardized future `/srv/docker/stacks/caddy` path and therefore could not inspect the active Caddy files.
-- [ ] Resolve the private-client-path mismatch found by the first run: `search.goreecloud.com` resolved to public addresses rather than the approved private NetBird target, and the TLS-verified homepage request returned HTTP 404.
+- [ ] Re-run the corrected collector to verify the intended private Caddy route directly at the approved NetBird address. The first VPS-local resolver probe returned public addresses and a TLS-verified HTTP 404, so it did not establish the approved private route or the owner-laptop client path.
+- [ ] Validate the owner laptop separately through its actual NetBird + AdGuard private-DNS path after the server-side route is verified.
 - [ ] Build/publish an immutable GHCR image with exact version, revision, architecture, and digest evidence.
 - [ ] Perform real-provider and target-runtime validation on `goreecloud-vps-01`.
 - [ ] Complete controlled rollback preparation and private Caddy/DNS acceptance before cutover.
