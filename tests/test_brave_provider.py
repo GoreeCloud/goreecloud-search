@@ -3,6 +3,10 @@ import unittest
 from goreecloud_search import (
     BraveSearchProviderError,
     BraveWebSearchProvider,
+    Lens,
+    LensRule,
+    LensRuleAction,
+    LensRuleTarget,
     SearchCore,
     SourceMode,
     parse_query,
@@ -40,7 +44,21 @@ class BraveWebSearchProviderTests(unittest.IsolatedAsyncioTestCase):
             country="US",
             search_lang="en",
         )
-        core = SearchCore(provider_adapters=(provider,))
+        core = SearchCore(
+            provider_adapters=(provider,),
+            lenses=(
+                Lens(
+                    name="local",
+                    rules=(
+                        LensRule(
+                            target=LensRuleTarget.DOMAIN,
+                            value="example.com",
+                            action=LensRuleAction.BOOST,
+                        ),
+                    ),
+                ),
+            ),
+        )
         response = await core.search(
             'privacy "search engine" site:example.com -tracker '
             'source:brave lens:local',
