@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev12
+  version: 0.1.0.dev13
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -26,6 +26,7 @@ runtime_scope:
     - zorin-systemd-user-service-profile
     - server-rendered-local-web-ui
     - opensearch-discovery
+    - python-3.10-runtime-compatibility
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
   content_policy_hooks: true
