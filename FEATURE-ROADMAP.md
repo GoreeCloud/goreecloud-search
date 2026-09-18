@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev11`
+**Repository version:** `0.1.0.dev12`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -77,9 +77,10 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 **Status:** Planned
 
-- GoreeCloud Browser address-bar and new-tab search.
-- Result actions and truthful availability/degraded-state presentation.
-- Glaze UI accessibility/adaptive layouts.
+- [x] Add local OpenSearch discovery for explicit Browser/search-engine integration.
+- [ ] Complete GoreeCloud Browser address-bar/new-tab integration and target-runtime acceptance.
+- [x] Add initial local result UI with truthful availability and provider-disclosure presentation.
+- [ ] Complete repository-local Glaze UI 1.5.1 rendered, accessibility, and target-runtime acceptance.
 - Lens creation/editing UI, file I/O, trusted sharing/discovery, optional synchronization, Search preferences, and Private View.
 
 ## Phase 6 — Advanced discovery
