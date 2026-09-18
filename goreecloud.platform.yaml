@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev8
+  version: 0.1.0.dev9
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -28,7 +28,7 @@ runtime_scope:
   local_lens_reranking: true
   portable_lens_format: goreecloud.search-lens.v1
   production_safesearch_classifier: false
-  built_in_live_network_provider: false
+  built_in_live_network_provider: true
   persistent_user_state: false
   user_interface: false
   administrator_interface: false
@@ -68,7 +68,7 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: No authenticated live network provider or administrative interface exists yet; Identity integration is required before protected service operations are accepted.
+    reason: A Development external provider credential can be supplied at runtime, but GoreeCloud Identity integration remains absent and is required before protected service operations are accepted.
 
 specialized_services:
   goreecloud_sync:
