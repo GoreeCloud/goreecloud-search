@@ -2,7 +2,7 @@
 
 ## Current development implementation
 
-Version `0.1.0.dev11` contains a local query parser, source planner, bounded provider-execution engine, versioned Search ↔ Index contract models with pagination, a transport-injected Index adapter boundary, result normalization/deduplication, content-policy hooks, deterministic ranking, Search-local Lens reranking, and a portable Lens data format. The repository code in this version:
+Version `0.1.0.dev12` contains a local query parser, source planner, bounded provider-execution engine, versioned Search ↔ Index contract models with pagination, a transport-injected Index adapter boundary, result normalization/deduplication, content-policy hooks, deterministic ranking, Search-local Lens reranking, and a portable Lens data format. The repository code in this version:
 
 - Ships one opt-in Development external provider adapter for Brave Web Search API. When explicitly selected, the minimized provider-facing query is disclosed to Brave; Search-local `lens:` and `source:` controls are not included in that provider query string.
 - Executes explicitly injected provider adapters only within the planner-approved source plan. The Brave API credential is supplied from `BRAVE_SEARCH_API_KEY`, is not placed in query parameters or result evidence, and is sent only to the fixed Brave HTTPS endpoint; redirects are refused.
@@ -14,6 +14,7 @@ Version `0.1.0.dev11` contains a local query parser, source planner, bounded pro
 - Does not persist search history or Lens state.
 - The Development HTTP API binds only to `127.0.0.1`, emits no CORS allow-origin header, sends `Cache-Control: no-store`, and suppresses default HTTP request-target logging so query strings are not written by this server's request logger.
 - The Zorin OS/Linux user-service profile stores the active Brave credential only in `~/.config/goreecloud/search.env`, outside the repository, with installer-enforced `0600` permissions. The sanitized repository example contains no credential value.
+- The local web UI is server-rendered and loads no third-party scripts, fonts, images, analytics, or other remote presentation assets. Query text and provider content are HTML-escaped before rendering. Search-result links use no-referrer behavior, and the UI truthfully discloses when the plan sends a query to an external provider.
 - Does not contain advertising/tracking code, build behavioral profiles, or use click history/advertising identifiers/paid placement for ranking.
 
 ## Portable Lens privacy
@@ -22,7 +23,7 @@ Portable Lens documents intentionally contain only format version, user-visible 
 
 The Brave adapter does not persist queries, API responses, or search history. External-provider operation remains subject to the provider's own service and privacy terms and is not equivalent to GoreeCloud-only search.
 
-The Development HTTP search endpoint uses GET query parameters. A browser, local client, intermediary debugging tool, or operating-system component outside this server may retain requested URLs according to its own settings. The server's `no-store` response and suppressed request-target logging do not control those external histories. A production Browser integration must define the final history/private-search behavior explicitly.
+The Development HTTP API and human Search form use GET query parameters. A browser, local client, intermediary debugging tool, or operating-system component outside this server may retain requested URLs according to its own settings. The server's `no-store` response and suppressed request-target logging do not control those external histories. A production Browser integration must define the final history/private-search behavior explicitly.
 
 ## Future network features
 
