@@ -40,7 +40,7 @@ def _result_html(response: SearchResponse) -> str:
             for explanation in item.explanations
         )
         why = (
-            "<details class="why-result">"
+            '<details class="why-result">'
             "<summary>Why this result?</summary>"
             f"<ul>{explanations}</ul>"
             "</details>"
