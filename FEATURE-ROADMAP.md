@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev11`
+**Repository version:** `0.1.0.dev12`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -75,12 +75,17 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 ## Phase 5 — Browser and Glaze UI experience
 
-**Status:** Planned
+**Status:** In implementation
 
-- GoreeCloud Browser address-bar and new-tab search.
-- Result actions and truthful availability/degraded-state presentation.
-- Glaze UI accessibility/adaptive layouts.
-- Lens creation/editing UI, file I/O, trusted sharing/discovery, optional synchronization, Search preferences, and Private View.
+- [x] Add an initial private VPS Search page and result experience.
+- [x] Add truthful availability, provider/query-disclosure, provenance, multi-source discovery count, and “Why this result?” presentation.
+- [x] Add local OpenSearch discovery using the configured service origin.
+- [x] Add initial Glaze UI 1.5.1-targeted responsive/accessibility/resilience behavior.
+- [ ] Complete repository-local exact-revision rendered, accessibility, human, and target-runtime Glaze UI acceptance.
+- [ ] Reconcile the shared Glaze consumer registry after Search-specific acceptance evidence exists.
+- [ ] Integrate GoreeCloud Browser address-bar and new-tab search on the laptop/client path.
+- [ ] Add result actions beyond ordinary open/copy/browser-native actions.
+- [ ] Add Lens creation/editing UI, file I/O, trusted sharing/discovery, optional synchronization, Search preferences, and Private View.
 
 ## Phase 6 — Advanced discovery
 

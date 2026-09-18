@@ -1,7 +1,7 @@
 # GoreeCloud Search — Current Features
 
 **Lifecycle:** Development  
-**Version:** `0.1.0.dev11`
+**Version:** `0.1.0.dev12`
 
 This file records implemented behavior in the current development candidate. It does not claim release, deployment, production acceptance, or Stable qualification.
 
@@ -26,9 +26,12 @@ This file records implemented behavior in the current development candidate. It 
 - Development CLI supports local parsing, explicit Brave-backed search, a loopback-only local service command, and a distinct container-network service command with a bounded Host-header allowlist.
 - Development HTTP API exposes `/healthz` and versioned `/api/v1/search`. The local command remains fixed to IPv4 loopback; the container command binds inside the container network for Caddy access and accepts only loopback plus the configured service hostname. Both omit CORS authorization, use `no-store`/anti-sniffing/frame/referrer headers, bound request/query/limit handling, return generic internal errors, and suppress request-target logging.
 - VPS Docker candidate includes a non-root image, read-only-root compatible runtime, built-in health check, protected runtime credential-file support, no host-port requirement, capability drop/no-new-privileges Compose controls, Caddy-compatible `searxng-core:8080` naming, and immutable-image-reference enforcement in the example Compose service.
+- Server-rendered VPS Search web UI exposes `/`, `/search`, local CSS, and OpenSearch discovery. Ordinary human searches use a bounded form-encoded POST so query text is not placed in the page URL; GET search remains for explicit OpenSearch/browser compatibility.
+- Result presentation includes canonical destination, title, snippet, source/provider labels, multi-source discovery counts, availability state, explicit third-party query-disclosure state, and inspectable “Why this result?” ranking explanations.
+- Web presentation uses no client-side JavaScript, remote fonts, remote icons, analytics, or third-party UI assets and includes visible focus, reduced-motion, reduced-transparency, increased-contrast, forced-colors, light/dark, responsive, and solid-material fallbacks.
 - Unit tests and CI for Python 3.11 and 3.12.
 - Explicit internal application version.
 
 ## Not implemented
 
-One opt-in external live provider adapter (Brave Web Search API) ships in this Development candidate, but it is not production-accepted. The GoreeCloud Index adapter still has no authenticated runtime transport. Portable Lens serialization, a loopback Development HTTP API, and a VPS Docker deployment candidate are implemented, but production service authentication/authorization, rate/abuse controls, readiness semantics, published immutable artifact acceptance, live VPS provider validation, file persistence, automatic import/export UI, remote sharing/discovery, signatures/trust, synchronized Lens state, hosted Lens registry, Lens UI, Browser integration, AI synthesis, persistent history, and verified production deployment are not implemented yet.
+One opt-in external live provider adapter (Brave Web Search API) ships in this Development candidate, but it is not production-accepted. The GoreeCloud Index adapter still has no authenticated runtime transport. Portable Lens serialization, local/container Development HTTP APIs, a VPS Docker deployment candidate, and an initial VPS web search surface are implemented, but production service authentication/authorization, rate/abuse controls, readiness semantics, published immutable artifact acceptance, live VPS provider validation, repository-local Glaze UI acceptance, Lens management UI, Browser configuration, file persistence, remote sharing/discovery, signatures/trust, synchronized Lens state, AI synthesis, persistent history, and verified production deployment are not implemented yet.

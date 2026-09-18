@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev11
+  version: 0.1.0.dev12
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -26,6 +26,8 @@ runtime_scope:
     - container-network-development-http-api-v1
     - vps-docker-development-profile
     - runtime-file-secret-input
+    - private-vps-server-rendered-web-ui
+    - opensearch-discovery
   provider_execution_orchestration: true
   query_disclosure_budgeting: true
   content_policy_hooks: true
@@ -34,11 +36,13 @@ runtime_scope:
   production_safesearch_classifier: false
   built_in_live_network_provider: true
   persistent_user_state: false
-  user_interface: false
+  user_interface: true
   local_development_http_api: true
   container_network_development_http_api: true
   vps_docker_development_profile: true
   runtime_file_secret_input: true
+  private_vps_web_ui: true
+  opensearch_discovery: true
   private_reverse_proxy_candidate: true
   host_port_publication_required: false
   public_http_listener: false
@@ -66,10 +70,11 @@ platform_systems:
     conformance: blocked
     reason: Search is currently stateless at the application layer, but the VPS deployment requires recoverable configuration, protected secret restoration, immutable artifact rollback, and verified target-host recovery evidence. The native repository has not yet integrated an accepted Everkeep recovery contract.
   glaze_ui:
-    applicable: false
-    status: not_applicable_current_runtime
-    conformance: not_applicable
-    reason: No GoreeCloud-controlled user or administrator interface exists in this runtime slice. Re-evaluate before any UI is accepted.
+    applicable: true
+    target_version: 1.5.1
+    status: development_adoption_unaccepted
+    conformance: blocked
+    reason: A GoreeCloud-controlled private VPS Search web surface now exists and targets the current Stable Glaze UI 1.5.1 semantics. Source-level responsive, focus, contrast, motion/transparency fallback, material, local-asset, state-truth, and accessibility behavior is implemented, but no Search-specific exact-revision rendered, assistive-technology, human, supported-browser/device, or target-runtime acceptance exists and shared consumer-registry acceptance has not been established.
   goreecloud_mesh:
     applicable: true
     status: not_implemented
@@ -105,4 +110,5 @@ evidence:
     - A declaration is not implementation evidence.
     - CI passing does not establish Platform-System conformance, target-host deployment acceptance, or Stable qualification.
     - This schema_version 1 declaration is transitional and does not itself establish complete Integral Platform Systems v3.0 nine-system conformance.
-    - The VPS Docker profile is a Development candidate only; no native image from this rewritten repository is recorded as deployed on goreecloud-vps-01.
+    - The VPS Docker profile and private web UI are Development candidates only; no native image from this rewritten repository is recorded as deployed on goreecloud-vps-01.
+    - Glaze UI 1.5.1 is the required Stable target, not an accepted conformance claim.
