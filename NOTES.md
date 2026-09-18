@@ -17,6 +17,7 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - The Brave Web Search adapter is an opt-in Development path; its presence is not production provider acceptance.
 - The local HTTP API is fixed to IPv4 loopback and is a Development boundary only; production authentication, abuse controls, readiness, UI, and deployment acceptance remain open.
 - The verified GoreeCloud hardware inventory identifies the current laptop as a Lenovo running Zorin OS Linux. The repository now contains a matching systemd user-service Development profile, but no actual laptop deployment or SearXNG retirement has been verified.
+- The local Search page targets Glaze UI 1.5.1 presentation semantics. Search is not currently present in the shared Glaze consumer registry and has no repository-local rendered/human/target-runtime acceptance, so Glaze conformance and production eligibility remain blocked.
 - This version is Development only.
 
 ## Open decisions
@@ -30,4 +31,4 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 
 ## Stacked implementation candidates
 
-The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider` → `feature/local-http-api` → `feature/zorin-user-service`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
+The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider` → `feature/local-http-api` → `feature/zorin-user-service` → `feature/local-web-ui`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
