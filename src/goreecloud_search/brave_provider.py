@@ -6,8 +6,8 @@ import json
 from json import JSONDecodeError
 from typing import Any, Mapping, Protocol
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.parse import urlencode, urlsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, SearchCategory
 from .providers import ProviderSearchBatch, ResultCandidate
@@ -111,13 +111,35 @@ def _language(query: ParsedQuery, configured: str | None) -> str | None:
     return normalized
 
 
+class _NoRedirect(HTTPRedirectHandler):
+    """Refuse redirects so the provider credential cannot follow a new origin."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        del req, fp, code, msg, headers, newurl
+        return None
+
+
+def _valid_result_url(value: str) -> bool:
+    try:
+        parts = urlsplit(value)
+        _ = parts.port
+    except ValueError:
+        return False
+    return (
+        parts.scheme.casefold() in {"http", "https"}
+        and bool(parts.hostname)
+        and parts.username is None
+        and parts.password is None
+    )
+
+
 class UrllibBraveSearchTransport:
     """Dependency-free HTTPS transport for the fixed Brave Search endpoint."""
 
     def __init__(self, *, timeout_seconds: float = 2.5) -> None:
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
-        self._timeout_seconds = timeout_seconds
+        self._timeout_seconds = timeout_seconds\n        self._opener = build_opener(_NoRedirect())
 
     async def search(
         self,
