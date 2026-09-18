@@ -23,9 +23,11 @@ services:
       - ALL
     environment:
       BRAVE_SEARCH_API_KEY_FILE: /run/secrets/brave_search_api_key
-    secrets:
-      - source: brave_search_api_key
-        target: brave_search_api_key
+    volumes:
+      - type: bind
+        source: /srv/docker/secrets/searxng/brave-search-api-key
+        target: /run/secrets/brave_search_api_key
+        read_only: true
     expose:
       - "8080"
     tmpfs:
@@ -40,9 +42,9 @@ services:
         max-file: "5"
     stop_grace_period: 10s
 
-secrets:
-  brave_search_api_key:
-    file: /srv/docker/secrets/searxng/brave-search-api-key
+# Before deployment, the host secret file must be owned by the container
+# runtime identity (10001:10001), mode 0400, and protected by the governed
+# /srv/docker/secrets backup/recovery process.
 
 networks:
   searxng-internal:
