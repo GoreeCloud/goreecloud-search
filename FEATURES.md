@@ -21,7 +21,9 @@ This file records implemented behavior in the current development candidate. It 
 - Provider-facing queries strip Search-local Lens selection so adapters do not receive the selected Lens name from this layer.
 - Versioned `goreecloud.search-lens.v1` portable JSON representation with deterministic export and strict import validation.
 - Portable Lens parser rejects unknown fields/versions, duplicate JSON keys, unsupported rule enums, non-finite values, oversized documents, excessive rules, and invalid weights.
-- Bounded query-aware snippet generation for already-authorized plain text.\n- Opt-in Brave Web Search API adapter for General search, with fixed-endpoint HTTPS transport, environment-only credentials, query minimization, region/language mapping, bounded date ranges, provider-side SafeSearch selection, response-size bounds, redirect refusal, and malformed-result degradation.\n- Development CLI supports local parsing, explicit Brave-backed search, and a loopback-only local service command.
+- Bounded query-aware snippet generation for already-authorized plain text.
+- Opt-in Brave Web Search API adapter for General search, with fixed-endpoint HTTPS transport, environment-only credentials, query minimization, region/language mapping, bounded date ranges, provider-side SafeSearch selection, response-size bounds, redirect refusal, and malformed-result degradation.
+- Development CLI supports local parsing, explicit Brave-backed search, and a loopback-only local service command.
 - Development HTTP API exposes `/healthz` and versioned `/api/v1/search`, fixed to IPv4 loopback with no CORS header, `no-store`/anti-sniffing/frame/referrer headers, bounded request/query/limit handling, generic server errors, and no request-target logging.
 - Unit tests and CI for Python 3.11 and 3.12.
 - Explicit internal application version.
