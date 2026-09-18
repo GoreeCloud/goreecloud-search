@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "recordId": "goreecloud.search.v0.1.0.dev12.pr18.rendered-machine",
+  "recordType": "rendered-machine",
+  "lifecycle": "Development",
+  "source": {
+    "repository": "GoreeCloud/goreecloud-search",
+    "pullRequest": 18,
+    "revision": "7930107d7a572478d852641e74d48e09d0129995",
+    "version": "0.1.0.dev12",
+    "blobs": {
+      "src/goreecloud_search/web_ui.py": "271f26013e21c8170ab8ead3c78b6c49695c3db9",
+      "src/goreecloud_search/static/search.css": "a48523f198beea2dd4e22183945b9ee6ce8c4359",
+      "src/goreecloud_search/version.py": "86b304a424ab370e529ecd89099540d04f44aad9"
+    }
+  },
+  "glazeUi": {
+    "targetVersion": "1.5.1",
+    "consumerAcceptanceEstablished": false,
+    "productionEligible": false
+  },
+  "renderer": {
+    "engine": "Chromium",
+    "version": "144.0.7559.96",
+    "environment": "Debian GNU/Linux 13 sandbox",
+    "liveVps": false,
+    "liveProvider": false,
+    "fixture": "synthetic representative SearchResponse presentation fixture"
+  },
+  "states": {
+    "desktopLight": {
+      "viewport": [
+        1440,
+        900
+      ],
+      "noHorizontalOverflow": true,
+      "scripts": 0,
+      "remoteResources": 0,
+      "formMethod": "post",
+      "formAction": "/search",
+      "resultCount": 3,
+      "screenshot": {
+        "fileName": "desktop-light-results.png",
+        "sha256": "e88cda8b0d7e3c31cd5ce777ba62b8247f2a276e1f03a84681b73da96241aa73",
+        "bytes": 357393
+      }
+    },
+    "keyboardFocus": {
+      "firstTab": {
+        "element": "a.skip-link",
+        "outline": "rgb(44, 102, 228) solid 3px"
+      },
+      "secondTab": {
+        "element": "input#query",
+        "outline": "rgb(44, 102, 228) solid 3px"
+      },
+      "screenshot": {
+        "fileName": "desktop-keyboard-focus.png",
+        "sha256": "6064234a304168e329174cd713b2df72a15c8ab0560ea45ef6fde89495048eb7",
+        "bytes": 357175
+      }
+    },
+    "mobileDarkReducedMotion": {
+      "viewport": [
+        390,
+        844
+      ],
+      "noHorizontalOverflow": true,
+      "scripts": 0,
+      "remoteResources": 0,
+      "resultCount": 3,
+      "screenshot": {
+        "fileName": "mobile-dark-results.png",
+        "sha256": "5f8c7ef7c46588a79d17ec5176abf90e69561f3593dfdf2bd4641e8ee996b219",
+        "bytes": 176898
+      }
+    },
+    "reducedTransparencyHighContrast": {
+      "viewport": [
+        1024,
+        768
+      ],
+      "noHorizontalOverflow": true,
+      "backdropFilter": "none",
+      "boxShadow": "none",
+      "borderTopWidth": "2px",
+      "background": "rgb(255, 255, 255)",
+      "screenshot": {
+        "fileName": "reduced-transparency-high-contrast.png",
+        "sha256": "a1bc816b28bb45711b0275531b6ed1d44796e19879b766f1fbf6de7d9965979e",
+        "bytes": 228722
+      }
+    },
+    "errorState": {
+      "viewport": [
+        1280,
+        800
+      ],
+      "noHorizontalOverflow": true,
+      "role": "alert",
+      "text": "Search unavailable — The Search service could not complete this request.",
+      "screenshot": {
+        "fileName": "error-state.png",
+        "sha256": "cb25de9a6645e49810d8f5ef9df632a619f6f0272a0bce32297671e7b0f52b01",
+        "bytes": 206248
+      }
+    }
+  },
+  "accessibilityTree": {
+    "landmarks": [
+      "main",
+      "search"
+    ],
+    "interactive": [
+      "Skip to results",
+      "Search button",
+      "result links"
+    ],
+    "headings": [
+      "Search the web",
+      "Search",
+      "result headings",
+      "Search unavailable"
+    ],
+    "note": "Browser accessibility-tree machine evidence only; this is not assistive-technology acceptance."
+  },
+  "durableEvidence": {
+    "driveFileId": "1Dk-wqcTIHzjuZNUprlSQGuMtWQx72JC-",
+    "title": "GoreeCloud Search — PR 18 Rendered Machine Evidence.docx"
+  },
+  "disposition": {
+    "renderedMachineEvidence": "verified",
+    "ownerHumanReview": "open",
+    "assistiveTechnology": "open",
+    "supportedLaptopBrowserDevice": "open",
+    "caddyPrivateDns": "open",
+    "liveProviderVpsRuntime": "open",
+    "deployedArtifact": "open",
+    "browserIntegration": "open",
+    "productionAcceptance": "open",
+    "stableQualification": "open"
+  },
+  "nonClaims": [
+    "No live Brave or other provider request was made.",
+    "No goreecloud-vps-01 runtime was exercised.",
+    "No Caddy or private DNS behavior was validated.",
+    "No owner or human visual approval was recorded.",
+    "No assistive-technology acceptance was recorded.",
+    "No Search Glaze UI consumer acceptance was established.",
+    "No deployment, production acceptance, or Stable qualification was established."
+  ]
+}
