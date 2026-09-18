@@ -6,6 +6,7 @@ SEARCH_COMPOSE="${SEARCH_COMPOSE:-/srv/docker/stacks/searxng/docker-compose.yml}
 SEARCH_CONTAINER="${SEARCH_CONTAINER:-searxng-core}"
 LEGACY_VALKEY_CONTAINER="${LEGACY_VALKEY_CONTAINER:-searxng-valkey}"
 SEARCH_HOST="${SEARCH_HOST:-search.goreecloud.com}"
+PRIVATE_SEARCH_ADDRESS="${PRIVATE_SEARCH_ADDRESS:-100.71.27.119}"
 PROXY_NETWORK="${PROXY_NETWORK:-proxy}"
 CADDY_ROOT="${CADDY_ROOT:-/srv/docker/caddy}"
 SEARCH_SECRET_FILE="${SEARCH_SECRET_FILE:-/srv/docker/secrets/searxng/brave-search-api-key}"
@@ -130,6 +131,7 @@ kv mutation_permitted "no"
 kv secret_values_printed "no"
 kv live_provider_query_performed "no"
 kv expected_search_host "$SEARCH_HOST"
+kv expected_private_search_address "$PRIVATE_SEARCH_ADDRESS"
 
 section "Host"
 kv hostname "$(hostname)"
@@ -227,20 +229,36 @@ else
     kv caddy_root_exists "no"
 fi
 
-section "Private DNS And HTTPS"
+section "DNS And HTTPS Readback"
 RESOLVED_ADDRESSES="$(getent ahosts "$SEARCH_HOST" | awk '{print $1}' | sort -u | paste -sd, -)"
 if [ -n "$RESOLVED_ADDRESSES" ]; then
     kv private_dns_resolves "yes"
     kv resolved_addresses "$RESOLVED_ADDRESSES"
+    case ",$RESOLVED_ADDRESSES," in
+        *",$PRIVATE_SEARCH_ADDRESS,"*) kv vps_dns_matches_expected_private_address "yes" ;;
+        *) kv vps_dns_matches_expected_private_address "no" ;;
+    esac
 else
     kv private_dns_resolves "no"
+    kv vps_dns_matches_expected_private_address "no"
 fi
 
 printf '%s\n' "https_probe_begin"
-curl --fail --silent --show-error --output /dev/null --max-time 10 \
+HTTPS_PROBE_EXIT=0
+curl --silent --show-error --output /dev/null --max-time 10 \
     --write-out 'https_status=%{http_code}\nhttps_ssl_verify_result=%{ssl_verify_result}\nhttps_content_type=%{content_type}\nhttps_time_total=%{time_total}\n' \
-    "https://$SEARCH_HOST/"
+    "https://$SEARCH_HOST/" || HTTPS_PROBE_EXIT=$?
+kv https_curl_exit_code "$HTTPS_PROBE_EXIT"
 printf '%s\n' "https_probe_end"
+
+printf '%s\n' "private_https_probe_begin"
+PRIVATE_HTTPS_PROBE_EXIT=0
+curl --silent --show-error --output /dev/null --max-time 10 \
+    --resolve "$SEARCH_HOST:443:$PRIVATE_SEARCH_ADDRESS" \
+    --write-out 'private_https_status=%{http_code}\nprivate_https_ssl_verify_result=%{ssl_verify_result}\nprivate_https_content_type=%{content_type}\nprivate_https_time_total=%{time_total}\n' \
+    "https://$SEARCH_HOST/" || PRIVATE_HTTPS_PROBE_EXIT=$?
+kv private_https_curl_exit_code "$PRIVATE_HTTPS_PROBE_EXIT"
+printf '%s\n' "private_https_probe_end"
 
 section "Preflight Boundary"
 kv compose_raw_contents_printed "no"
