@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev8`
+**Repository version:** `0.1.0.dev9`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -38,7 +38,7 @@ Completed checkboxes describe the stacked development candidate only until accep
 - [x] Add conservative canonical URL handling.
 - [x] Add canonical-URL and content-hash deduplication.
 - [x] Add source-agreement counts.
-- [ ] Add snippet generation.
+- [x] Add bounded query-aware snippet generation.
 - [x] Add initial deterministic ranking with inspectable scoring signals.
 - [x] Add provider/result provenance primitives and initial “Why this result?” explanations.
 - [x] Add SafeSearch/content-policy hooks and administrator domain policy controls.
@@ -52,7 +52,7 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 - [ ] Provider SDK/adapter lifecycle.
 - [ ] Explicit provider capability declarations.
-- [ ] Approved external provider integrations.
+- [x] Add the first Development external provider adapter (Brave Web Search API).\n- [ ] Complete production acceptance for the approved external provider set.
 - [x] Bounded execution foundation with per-provider timeouts and concurrency controls.
 - [ ] Retry/rate/cost controls beyond the current timeout foundation.
 - [x] Query-disclosure budgets with pre-execution third-party provider caps and plan evidence.
