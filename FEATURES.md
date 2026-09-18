@@ -1,7 +1,7 @@
 # GoreeCloud Search — Current Features
 
 **Lifecycle:** Development  
-**Version:** `0.1.0.dev12`
+**Version:** `0.1.0.dev13`
 
 This file records implemented behavior in the current development candidate. It does not claim release, deployment, production acceptance, or Stable qualification.
 
@@ -25,10 +25,10 @@ This file records implemented behavior in the current development candidate. It 
 - Opt-in Brave Web Search API adapter for General search, with fixed-endpoint HTTPS transport, environment-only credentials, query minimization, region/language mapping, bounded date ranges, provider-side SafeSearch selection, response-size bounds, redirect refusal, and malformed-result degradation.
 - Development CLI supports local parsing, explicit Brave-backed search, and a loopback-only local service command.
 - Development HTTP API exposes `/healthz` and versioned `/api/v1/search`, fixed to IPv4 loopback with no CORS header, `no-store`/anti-sniffing/frame/referrer headers, bounded request/query/limit handling, generic server errors, and no request-target logging.
-- Zorin OS/Linux systemd user-service profile installs the pure-Python source into a user-owned data directory, keeps the Brave API key in a 0600 runtime environment file outside source control, requires Python 3.11+, applies systemd hardening, health-checks startup, and preserves the existing SearXNG runtime for rollback.
+- Zorin OS/Linux systemd user-service profile installs the pure-Python source into a user-owned data directory, keeps the Brave API key in a 0600 runtime environment file outside source control, requires Python 3.10+, applies systemd hardening, health-checks startup, and preserves the existing SearXNG runtime for rollback.
 - Server-rendered local web UI provides a search form, result list, provenance/source-disclosure state, explainable ranking details, responsive layout, light/dark adaptation, reduced-motion handling, forced-colors support, and no external UI dependencies or client-side JavaScript.
 - Local OpenSearch discovery descriptor exposes the loopback Search form as a browser-search integration target without changing browser settings automatically.
-- Unit tests and CI for Python 3.11 and 3.12.
+- Unit tests and CI for Python 3.10, 3.11, and 3.12.
 - Explicit internal application version.
 
 ## Not implemented
