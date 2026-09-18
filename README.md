@@ -3,7 +3,7 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev12`  
+> **Version:** `0.1.0.dev13`  
 > **License:** `AGPL-3.0-or-later`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, deterministic explainable ranking, bounded snippet generation, and an opt-in Brave Web Search API adapter. Production provider acceptance and production safety classification remain open.
 
@@ -28,7 +28,7 @@ The repository now ships one opt-in external network provider, a loopback-only H
 
 ## Development use
 
-Requires Python 3.11 or newer.
+Requires Python 3.10 or newer.
 
 ```bash
 python -m pip install -e .
