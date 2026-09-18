@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev9
+  version: 0.1.0.dev10
   lifecycle: development
   stable: false
   license: AGPL-3.0-or-later
@@ -31,6 +31,8 @@ runtime_scope:
   built_in_live_network_provider: true
   persistent_user_state: false
   user_interface: false
+  local_development_http_api: true
+  public_http_listener: false
   administrator_interface: false
 
 platform_systems:
@@ -68,7 +70,7 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: A Development external provider credential can be supplied at runtime, but GoreeCloud Identity integration remains absent and is required before protected service operations are accepted.
+    reason: A Development external provider credential and loopback-only HTTP API now exist, but GoreeCloud Identity integration remains absent and is required before protected or production service operations are accepted.
 
 specialized_services:
   goreecloud_sync:
