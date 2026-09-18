@@ -96,7 +96,7 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 - [x] Add a GoreeCloud-owned non-root Docker image candidate for the native service.
 - [x] Add a VPS Compose service candidate that preserves the verified `searxng-core:8080` Caddy backend contract, uses no host port, and requires an exact tag@digest image reference.
-- [x] Add Docker-secret-file provider credential input and container health validation.
+- [x] Add protected runtime credential-file input and container health validation.
 - [x] Add independent CI that builds and exercises the hardened container without making a live provider request.
 - [ ] Read back and reconcile the actual `/srv/docker/stacks/searxng/docker-compose.yml` before any target-host change.
 - [ ] Build/publish an immutable GHCR image with exact version, revision, architecture, and digest evidence.
