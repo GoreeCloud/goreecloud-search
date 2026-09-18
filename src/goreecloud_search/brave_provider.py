@@ -279,6 +279,7 @@ class BraveWebSearchProvider:
                 or not title.strip()
                 or not isinstance(url, str)
                 or not url.strip()
+                or not _valid_result_url(url.strip())
             ):
                 malformed += 1
                 continue
