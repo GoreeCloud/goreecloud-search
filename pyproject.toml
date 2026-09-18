@@ -15,3 +15,7 @@ goreecloud-search = "goreecloud_search.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+
+[tool.setuptools.package-data]
+goreecloud_search = ["static/*.css"]
