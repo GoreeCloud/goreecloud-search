@@ -22,5 +22,6 @@ All notable verified changes to GoreeCloud Search will be recorded here.
 - Opt-in Brave Web Search API provider and CLI search path with fixed-endpoint HTTPS, environment-only credentials, minimized provider queries, bounded response parsing, redirect refusal, result-URL validation, region/language controls, bounded date-range mapping, and provider-side SafeSearch selection.
 - Loopback-only Development HTTP API with health and versioned search endpoints, bounded request parsing, privacy-preserving request logging behavior, no CORS exposure, and defensive response headers.
 - Non-root Zorin OS/Linux systemd user-service deployment profile with a protected runtime environment file, source-direct installation, Python 3.11+ runtime gating, service hardening, health-gated startup, and rollback-safe removal that leaves SearXNG unchanged.
+- Server-rendered loopback Search UI and OpenSearch discovery with escaped result/query content, source-disclosure state, ranking explanations, no client-side JavaScript or remote UI assets, responsive/adaptive styling, accessibility fallbacks, and stronger browser-facing response isolation. Glaze UI 1.5.1 is the target, but repository-local consumer acceptance remains unresolved.
 
 No release, deployment, production acceptance, or Stable qualification is claimed by these unreleased changes.
