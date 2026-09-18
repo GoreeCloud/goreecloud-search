@@ -52,7 +52,8 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 - [ ] Provider SDK/adapter lifecycle.
 - [ ] Explicit provider capability declarations.
-- [x] Add the first Development external provider adapter (Brave Web Search API).\n- [ ] Complete production acceptance for the approved external provider set.
+- [x] Add the first Development external provider adapter (Brave Web Search API).
+- [ ] Complete production acceptance for the approved external provider set.
 - [x] Bounded execution foundation with per-provider timeouts and concurrency controls.
 - [ ] Retry/rate/cost controls beyond the current timeout foundation.
 - [x] Query-disclosure budgets with pre-execution third-party provider caps and plan evidence.
