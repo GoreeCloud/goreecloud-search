@@ -173,7 +173,7 @@ class VPSDeploymentArtifactTests(unittest.TestCase):
         dockerfile = (REPO_ROOT / "Dockerfile").read_text()
         self.assertIn("FROM python:3.12.14-slim-bookworm", dockerfile)
         self.assertIn("USER 10001:10001", dockerfile)
-        self.assertIn("BRAVE_SEARCH_API_KEY_FILE=/run/secrets/", dockerfile)
+        self.assertNotIn("BRAVE_SEARCH_API_KEY_FILE=", dockerfile)
         self.assertIn('"serve-container"', dockerfile)
         self.assertNotIn('"--host"', dockerfile)
         self.assertIn("HEALTHCHECK", dockerfile)
@@ -193,7 +193,10 @@ class VPSDeploymentArtifactTests(unittest.TestCase):
         self.assertIn("read_only: true", compose)
         self.assertIn("searxng-internal", compose)
         self.assertIn("proxy", compose)
+        self.assertIn("BRAVE_SEARCH_API_KEY_FILE: /run/secrets/", compose)
         self.assertIn("/srv/docker/secrets/searxng/", compose)
+        self.assertIn("read_only: true", compose)
+        self.assertIn("mode 0400", compose)
         self.assertIn("tag@sha256 digest", compose)
 
 
