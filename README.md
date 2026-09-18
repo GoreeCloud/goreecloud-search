@@ -3,7 +3,7 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev10`  
+> **Version:** `0.1.0.dev11`  
 > **License:** `AGPL-3.0-or-later`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, deterministic explainable ranking, bounded snippet generation, and an opt-in Brave Web Search API adapter. Production provider acceptance and production safety classification remain open.
 
@@ -24,7 +24,7 @@ GoreeCloud Search is the privacy-first, self-hostable search and information-dis
 - Versioned `goreecloud.search-lens.v1` JSON import/export with deterministic serialization and strict schema/size validation.
 - Unit tests and pull-request CI.
 
-The repository now ships one opt-in external network provider and a loopback-only HTTP API for Development use. The API is not a production service boundary: it has no GoreeCloud Identity integration, no production rate/abuse controls, no user-facing Glaze UI, and no deployment acceptance. It does not make Brave a production-accepted provider, add an authenticated live GoreeCloud Index transport, establish a production SafeSearch classifier or Wardveil feed, retire SearXNG, or establish Stable qualification.
+The repository now ships one opt-in external network provider, a loopback-only HTTP API, and a non-root Zorin/systemd user-service profile for Development use. The API is not a production service boundary: it has no GoreeCloud Identity integration, no production rate/abuse controls, no user-facing Glaze UI, and no deployment acceptance. The laptop profile does not stop, disable, remove, or reconfigure SearXNG; retirement remains a separate target-host cutover step after live-provider, browser/UI, monitoring, rollback, and replacement acceptance. It does not make Brave a production-accepted provider, add an authenticated live GoreeCloud Index transport, establish a production SafeSearch classifier or Wardveil feed, or establish Stable qualification.
 
 ## Development use
 
