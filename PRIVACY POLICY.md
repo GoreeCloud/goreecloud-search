@@ -21,7 +21,9 @@ Portable Lens documents intentionally contain only format version, user-visible 
 
 The Brave adapter does not persist queries, API responses, or search history. External-provider operation remains subject to the provider's own service and privacy terms and is not equivalent to GoreeCloud-only search.
 
-The Development HTTP search endpoint uses GET query parameters. A browser, local client, intermediary debugging tool, or operating-system component outside this server may retain requested URLs according to its own settings. The server's `no-store` response and suppressed request-target logging do not control those external histories. A production Browser integration must define the final history/private-search behavior explicitly.\n\n## Future network features
+The Development HTTP search endpoint uses GET query parameters. A browser, local client, intermediary debugging tool, or operating-system component outside this server may retain requested URLs according to its own settings. The server's `no-store` response and suppressed request-target logging do not control those external histories. A production Browser integration must define the final history/private-search behavior explicitly.
+
+## Future network features
 
 Any live network provider transport, remote suggestion, Lens sharing/discovery/synchronization, account storage, analytics, AI, Browser, Index, or other network-capable feature must update this policy to match verified behavior and apply the relevant GoreeCloud Identity, Privacy Shield, Wardveil Security, retention, consent, minimization, and disclosure controls before production acceptance.
 
