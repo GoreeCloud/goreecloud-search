@@ -3,7 +3,7 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev11`  
+> **Version:** `0.1.0.dev12`  
 > **License:** `AGPL-3.0-or-later`  
 > **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution, query-disclosure budgeting, content-policy hooks, transparent local Lenses with a strict portable v1 format, a versioned GoreeCloud Index contract with pagination, Search-owned normalization/deduplication, deterministic explainable ranking, bounded snippet generation, and an opt-in Brave Web Search API adapter. Production provider acceptance and production safety classification remain open.
 
@@ -22,9 +22,11 @@ GoreeCloud Search is the privacy-first, self-hostable search and information-dis
 - Search-local GoreeCloud Lenses with transparent domain, filetype, and language boost/lower/exclude rules.
 - Lens explanations and exclusions are explicit; the selected Lens is removed from the provider-facing query before provider execution.
 - Versioned `goreecloud.search-lens.v1` JSON import/export with deterministic serialization and strict schema/size validation.
+- Server-rendered Search web surface for the private VPS service, including POST-based ordinary form searches, GET-based OpenSearch/browser integration, provenance/source-disclosure state, explainable result details, responsive accessibility fallbacks, and no remote UI assets or client-side JavaScript.
+- OpenSearch discovery at `/opensearch.xml` using the configured service origin.
 - Unit tests and pull-request CI.
 
-The repository now ships one opt-in external network provider, a loopback-only Development HTTP API, and a separate Docker-network Development listener intended for the verified VPS reverse-proxy topology. The container path preserves the current `searxng-core:8080` Caddy backend contract without publishing a host port, supports a runtime file for the Brave credential, and includes a hardened non-root container/Compose candidate. This is not deployment acceptance: no image from this native repository has been published or deployed to `goreecloud-vps-01`, no live provider credential has been exercised there, and no user-facing Glaze UI, production rate/abuse controls, Identity acceptance, SearXNG-derived dependency retirement, or Stable qualification is established.
+The repository now ships one opt-in external network provider, a loopback-only Development HTTP API, and a separate Docker-network Development listener intended for the verified VPS reverse-proxy topology. The container path preserves the current `searxng-core:8080` Caddy backend contract without publishing a host port, supports a runtime file for the Brave credential, and includes a hardened non-root container/Compose candidate. This is not deployment acceptance: no image from this native repository has been published or deployed to `goreecloud-vps-01`, no live provider credential has been exercised there, and production rate/abuse controls, Identity acceptance, SearXNG-derived dependency retirement, Glaze UI consumer acceptance, and Stable qualification remain open.
 
 ## Development use
 
@@ -36,7 +38,7 @@ goreecloud-search parse 'privacy "search engine" site:example.com category:docs'
 python -m unittest discover -s tests -v
 ```
 
-The Docker candidate is built from the repository root. Its default command is `serve-container --port 8080 --service-hostname search.goreecloud.com`. The container listener is intentionally separate from `serve`, which remains fixed to `127.0.0.1`. The repository Compose example under `deploy/vps/` is a service candidate only; it must not overwrite the live `/srv/docker/stacks/searxng/docker-compose.yml` without authoritative readback and controlled reconciliation.
+The Docker candidate is built from the repository root. Its default command is `serve-container --port 8080 --service-hostname search.goreecloud.com`. The container listener is intentionally separate from `serve`, which remains fixed to `127.0.0.1`. The human Search page is available at `/`; ordinary page searches submit to `/search` with POST so query text is not placed in the page URL, while GET `/search?q=...` remains available for OpenSearch/browser integration. The repository Compose example under `deploy/vps/` is a service candidate only; it must not overwrite the live `/srv/docker/stacks/searxng/docker-compose.yml` without authoritative readback and controlled reconciliation.
 
 ## Architecture direction
 
@@ -79,3 +81,8 @@ Third-party material remains governed by its own applicable license terms.
 ## Status integrity
 
 A branch, pull request, passing CI run, configuration declaration, or documented plan does not mean a feature is released, deployed, production-accepted, or Stable.
+
+
+## Web UI acceptance boundary
+
+The current web surface targets the authoritative Glaze UI Stable baseline, **1.5.1**. It implements a bounded Development surface with solid durable result content, glazed/interactive search chrome where supported, opaque fallbacks, visible focus, Reduced Motion, Reduced Transparency, Increased Contrast, Forced Colors, responsive layout, semantic state text, local/system typography, and no remote presentation dependencies. This source implementation does **not** by itself establish Glaze UI consumer conformance. Search still requires exact-revision rendered, accessibility, human, and target-runtime acceptance plus shared consumer-registry reconciliation before production eligibility may be claimed.
