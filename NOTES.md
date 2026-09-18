@@ -6,7 +6,7 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 
 ## Design decisions
 
-- Python 3.11+ keeps the initial core dependency-light.
+- Python 3.10+ keeps the initial core dependency-light while broadening compatibility with the verified Zorin laptop target.
 - Provider execution is policy-following rather than provider-selecting: only source-plan-approved providers can run.
 - Query-disclosure budgets narrow the plan before execution and never expand provider eligibility.
 - Provider exceptions/timeouts become explicit execution state; caller cancellation propagates.
@@ -31,4 +31,4 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 
 ## Stacked implementation candidates
 
-The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider` → `feature/local-http-api` → `feature/zorin-user-service` → `feature/local-web-ui`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
+The current stack continues through the Lens, snippet, and external-provider candidates: `feature/native-search-core-foundation` → `feature/index-contract-normalization` → `feature/deterministic-ranking-explanations` → `feature/provider-execution-pipeline` → `feature/query-disclosure-budget` → `feature/content-policy-hooks` → licensing/Lens candidates → `feature/snippet-generation` → `feature/brave-web-provider` → `feature/local-http-api` → `feature/zorin-user-service` → `feature/local-web-ui` → `feature/python310-zorin-compat`. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
