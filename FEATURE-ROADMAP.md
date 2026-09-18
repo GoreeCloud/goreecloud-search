@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev9`
+**Repository version:** `0.1.0.dev10`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -63,7 +63,8 @@ Completed checkboxes describe the stacked development candidate only until accep
 
 **Status:** Planned
 
-- Versioned HTTP API and health/readiness endpoints.
+- [x] Add a loopback-only Development `/api/v1/search` and `/healthz` HTTP boundary.
+- [ ] Add production service authentication/authorization, readiness semantics, rate/abuse controls, and target-runtime acceptance.
 - GoreeCloud Identity authentication and requester identity.
 - Privacy Shield permitted-use enforcement.
 - Wardveil Security trust/risk/safety integration.
