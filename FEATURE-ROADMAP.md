@@ -98,7 +98,8 @@ Completed checkboxes describe the stacked development candidate only until accep
 - [x] Add a VPS Compose service candidate that preserves the verified `searxng-core:8080` Caddy backend contract, uses no host port, and requires an exact tag@digest image reference.
 - [x] Add protected runtime credential-file input and container health validation.
 - [x] Add independent CI that builds and exercises the hardened container without making a live provider request.
-- [ ] Read back and reconcile the actual `/srv/docker/stacks/searxng/docker-compose.yml` before any target-host change.
+- [x] Add a stdout-only, non-mutating VPS preflight collector that reads the authoritative Search Compose identity, active container/image/health/security/network state, protected credential metadata, Caddy route references, private DNS, and HTTPS homepage state without printing secrets or raw configuration.
+- [ ] Run the read-only preflight on `goreecloud-vps-01`, retain the resulting evidence, and reconcile the actual `/srv/docker/stacks/searxng/docker-compose.yml` before any target-host change.
 - [ ] Build/publish an immutable GHCR image with exact version, revision, architecture, and digest evidence.
 - [ ] Perform real-provider and target-runtime validation on `goreecloud-vps-01`.
 - [ ] Complete controlled rollback preparation and private Caddy/DNS acceptance before cutover.
