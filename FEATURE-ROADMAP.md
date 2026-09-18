@@ -99,7 +99,8 @@ Completed checkboxes describe the stacked development candidate only until accep
 - [x] Add protected runtime credential-file input and container health validation.
 - [x] Add independent CI that builds and exercises the hardened container without making a live provider request.
 - [ ] Read back and reconcile the actual `/srv/docker/stacks/searxng/docker-compose.yml` before any target-host change.
-- [ ] Build/publish an immutable GHCR image with exact version, revision, architecture, and digest evidence.
+- [x] Add a manual, main-only GHCR publication workflow candidate that is exact-SHA/version gated, publishes no latest tag, targets the verified linux/amd64 VPS architecture, emits SBOM/provenance attestations, and verifies the remote digest/OCI labels.
+- [ ] After the source chain is merged and separately authorized, run the guarded workflow for the exact merged revision and record the published immutable GHCR digest.
 - [ ] Perform real-provider and target-runtime validation on `goreecloud-vps-01`.
 - [ ] Complete controlled rollback preparation and private Caddy/DNS acceptance before cutover.
 - [ ] Retire legacy SearXNG-derived Valkey/config/naming only when separately proven unnecessary.
