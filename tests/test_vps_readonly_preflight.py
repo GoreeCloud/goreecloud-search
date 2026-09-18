@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import subprocess
 import unittest
 
 
@@ -85,6 +86,7 @@ class VPSReadOnlyPreflightTests(unittest.TestCase):
         )[1].split('section "Caddy Search Route References"', 1)[0]
         self.assertIn("file_exists", secret_section)
         self.assertIn("file_stat", secret_section)
+        self.assertIn("provider_secret_file_exists", secret_section)
         self.assertNotIn("file_sha256", secret_section)
         self.assertNotIn("grep_paths", secret_section)
 
