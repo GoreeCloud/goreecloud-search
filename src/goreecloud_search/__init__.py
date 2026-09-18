@@ -1,5 +1,16 @@
 """GoreeCloud Search core package."""
 
+from .brave_provider import (
+    BRAVE_MAX_QUERY_CHARS,
+    BRAVE_MAX_QUERY_WORDS,
+    BRAVE_MAX_RESULTS,
+    BRAVE_WEB_SEARCH_URL,
+    BraveSearchProviderError,
+    BraveSearchTransport,
+    BraveWebSearchProvider,
+    BraveWebSearchRequest,
+    UrllibBraveSearchTransport,
+)
 from .content_policy import (
     ContentPolicyAction,
     ContentPolicyDecision,
@@ -28,7 +39,10 @@ from .index_contract import (
     IndexSearchRequest,
     IndexSearchResponse,
 )
-from .index_provider import GoreeCloudIndexProvider, IndexTransport
+from .index_provider import (
+    GoreeCloudIndexProvider,
+    IndexTransport,
+)
 from .lens_contract import (
     LENS_FORMAT_VERSION,
     MAX_LENS_DOCUMENT_BYTES,
@@ -49,12 +63,42 @@ from .lenses import (
     LensRuleTarget,
     apply_lens,
 )
-from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryDisclosureBudget, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
-from .normalization import NormalizedResult, ResultNormalizationError, ResultProvenance, canonicalize_url, normalize_and_deduplicate
-from .planner import SourcePlanningError, plan_sources
-from .providers import ProviderSearchBatch, ResultCandidate, SearchProvider
-from .query_parser import QueryParseError, parse_query
-from .ranking import RankedResult, RankingSignal, rank_results
+from .models import (
+    ParsedQuery,
+    ProviderDescriptor,
+    ProviderOrigin,
+    QueryDisclosureBudget,
+    QueryFilters,
+    SearchCategory,
+    SourceMode,
+    SourcePlan,
+    SourcePlanStep,
+)
+from .normalization import (
+    NormalizedResult,
+    ResultNormalizationError,
+    ResultProvenance,
+    canonicalize_url,
+    normalize_and_deduplicate,
+)
+from .planner import (
+    SourcePlanningError,
+    plan_sources,
+)
+from .providers import (
+    ProviderSearchBatch,
+    ResultCandidate,
+    SearchProvider,
+)
+from .query_parser import (
+    QueryParseError,
+    parse_query,
+)
+from .ranking import (
+    RankedResult,
+    RankingSignal,
+    rank_results,
+)
 from .service import SearchCore, SearchResponse
 from .snippets import (
     DEFAULT_SNIPPET_MAX_CHARS,
@@ -66,24 +110,85 @@ from .snippets import (
 from .version import __version__
 
 __all__ = [
-    "__version__", "INDEX_CONTRACT_VERSION", "ContentPolicyAction",
-    "ContentPolicyDecision", "ContentPolicyEngine", "ContentPolicyError",
-    "ContentPolicyHook", "ContentPolicyOutcome", "ContentPolicyReport",
-    "DomainPolicyHook", "SafeSearchMode", "LENS_FORMAT_VERSION",
-    "MAX_LENS_DOCUMENT_BYTES", "MAX_LENS_RULES", "LensFormatError",
-    "export_lens", "import_lens", "lens_to_document", "Lens", "LensRule", "LensRuleAction",
-    "LensRuleTarget", "LensRegistry", "LensError", "LensExclusion",
-    "LensApplicationReport", "apply_lens", "ParsedQuery", "ProviderDescriptor",
-    "ProviderOrigin", "QueryDisclosureBudget", "QueryFilters", "SearchCategory", "SourceMode", "SourcePlan",
-    "SourcePlanStep", "QueryParseError", "SourcePlanningError", "IndexContractError",
-    "ResultNormalizationError", "ProviderExecutionError", "IndexCapabilities",
-    "IndexDocumentCandidate", "IndexSearchRequest", "IndexSearchResponse",
-    "GoreeCloudIndexProvider", "IndexTransport", "ResultCandidate",
-    "ProviderSearchBatch", "SearchProvider", "ResultProvenance", "NormalizedResult",
-    "canonicalize_url", "normalize_and_deduplicate", "RankingSignal", "RankedResult",
-    "rank_results", "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt",
-    "ExecutionReport", "SearchAvailability", "SearchExecutor", "SearchResponse",
-    "DEFAULT_SNIPPET_MAX_CHARS", "MAX_SNIPPET_SOURCE_CHARS", "GeneratedSnippet",
-    "SnippetGenerationError", "generate_snippet",
-    "parse_query", "plan_sources", "SearchCore",
+    "__version__",
+    "INDEX_CONTRACT_VERSION",
+    "BRAVE_WEB_SEARCH_URL",
+    "BRAVE_MAX_RESULTS",
+    "BRAVE_MAX_QUERY_CHARS",
+    "BRAVE_MAX_QUERY_WORDS",
+    "BraveSearchProviderError",
+    "BraveSearchTransport",
+    "BraveWebSearchProvider",
+    "BraveWebSearchRequest",
+    "UrllibBraveSearchTransport",
+    "ContentPolicyAction",
+    "ContentPolicyDecision",
+    "ContentPolicyEngine",
+    "ContentPolicyError",
+    "ContentPolicyHook",
+    "ContentPolicyOutcome",
+    "ContentPolicyReport",
+    "DomainPolicyHook",
+    "SafeSearchMode",
+    "LENS_FORMAT_VERSION",
+    "MAX_LENS_DOCUMENT_BYTES",
+    "MAX_LENS_RULES",
+    "LensFormatError",
+    "export_lens",
+    "import_lens",
+    "lens_to_document",
+    "Lens",
+    "LensRule",
+    "LensRuleAction",
+    "LensRuleTarget",
+    "LensRegistry",
+    "LensError",
+    "LensExclusion",
+    "LensApplicationReport",
+    "apply_lens",
+    "ParsedQuery",
+    "ProviderDescriptor",
+    "ProviderOrigin",
+    "QueryDisclosureBudget",
+    "QueryFilters",
+    "SearchCategory",
+    "SourceMode",
+    "SourcePlan",
+    "SourcePlanStep",
+    "QueryParseError",
+    "SourcePlanningError",
+    "IndexContractError",
+    "ResultNormalizationError",
+    "ProviderExecutionError",
+    "IndexCapabilities",
+    "IndexDocumentCandidate",
+    "IndexSearchRequest",
+    "IndexSearchResponse",
+    "GoreeCloudIndexProvider",
+    "IndexTransport",
+    "ResultCandidate",
+    "ProviderSearchBatch",
+    "SearchProvider",
+    "ResultProvenance",
+    "NormalizedResult",
+    "canonicalize_url",
+    "normalize_and_deduplicate",
+    "RankingSignal",
+    "RankedResult",
+    "rank_results",
+    "ExecutionPolicy",
+    "ProviderExecutionStatus",
+    "ProviderAttempt",
+    "ExecutionReport",
+    "SearchAvailability",
+    "SearchExecutor",
+    "SearchResponse",
+    "DEFAULT_SNIPPET_MAX_CHARS",
+    "MAX_SNIPPET_SOURCE_CHARS",
+    "GeneratedSnippet",
+    "SnippetGenerationError",
+    "generate_snippet",
+    "parse_query",
+    "plan_sources",
+    "SearchCore",
 ]
