@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Protocol
 
 from .index_contract import (
@@ -11,7 +10,7 @@ from .index_contract import (
     IndexSearchResponse,
 )
 from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin
-from .providers import ResultCandidate
+from .providers import ProviderSearchBatch, ResultCandidate
 
 
 class IndexTransport(Protocol):
@@ -55,7 +54,7 @@ class GoreeCloudIndexProvider:
     def capabilities(self) -> IndexCapabilities:
         return self._capabilities
 
-    async def search(self, query: ParsedQuery, *, limit: int) -> Sequence[ResultCandidate]:
+    async def search(self, query: ParsedQuery, *, limit: int) -> ProviderSearchBatch:
         if query.filters.category not in self._capabilities.categories:
             raise IndexContractError(
                 f"Index does not support category: {query.filters.category.value}"
@@ -63,27 +62,55 @@ class GoreeCloudIndexProvider:
         if limit < 1:
             raise IndexContractError("limit must be positive")
 
-        page_size = min(limit, self._capabilities.max_page_size)
-        response = await self._transport.search(
-            IndexSearchRequest.from_query(query, page_size=page_size)
-        )
-        response.validate(self._capabilities)
+        candidates: list[ResultCandidate] = []
+        warnings: list[str] = []
+        degraded = False
+        cursor: str | None = None
+        seen_cursors: set[str] = set()
 
-        return tuple(
-            ResultCandidate(
-                title=item.title,
-                url=item.url,
-                snippet=item.snippet,
-                provider=self._descriptor.name,
-                provider_rank=item.rank,
-                published_at=item.published_at,
-                content_type=item.content_type,
-                canonical_url=item.canonical_url,
-                source_id=item.document_id,
-                content_hash=item.content_hash,
-                language=item.language,
-                last_crawled_at=item.last_crawled_at,
-                provider_contract_version=INDEX_CONTRACT_VERSION,
+        while len(candidates) < limit:
+            page_size = min(limit - len(candidates), self._capabilities.max_page_size)
+            response = await self._transport.search(
+                IndexSearchRequest.from_query(query, page_size=page_size, cursor=cursor)
             )
-            for item in response.candidates[:limit]
+            response.validate(self._capabilities)
+            degraded = degraded or response.degraded
+            warnings.extend(response.warnings)
+
+            candidates.extend(
+                ResultCandidate(
+                    title=item.title,
+                    url=item.url,
+                    snippet=item.snippet,
+                    provider=self._descriptor.name,
+                    provider_rank=item.rank,
+                    published_at=item.published_at,
+                    content_type=item.content_type,
+                    canonical_url=item.canonical_url,
+                    source_id=item.document_id,
+                    content_hash=item.content_hash,
+                    language=item.language,
+                    last_crawled_at=item.last_crawled_at,
+                    provider_contract_version=INDEX_CONTRACT_VERSION,
+                )
+                for item in response.candidates
+            )
+
+            next_cursor = response.next_cursor
+            if not next_cursor or len(candidates) >= limit:
+                break
+            if next_cursor in seen_cursors or next_cursor == cursor:
+                raise IndexContractError("Index pagination cursor repeated")
+            seen_cursors.add(next_cursor)
+            if not response.candidates:
+                degraded = True
+                warnings.append("Index returned an empty page with a continuation cursor")
+                break
+            cursor = next_cursor
+
+        unique_warnings = tuple(dict.fromkeys(warnings))
+        return ProviderSearchBatch(
+            candidates=tuple(candidates[:limit]),
+            degraded=degraded,
+            warnings=unique_warnings,
         )

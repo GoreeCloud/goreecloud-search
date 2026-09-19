@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev3
+  version: 0.1.0.dev4
   lifecycle: development
   stable: false
 
@@ -15,7 +15,10 @@ runtime_scope:
     - search-index-contract-v1
     - result-normalization-and-deduplication
     - deterministic-ranking-and-explanations
-  network_provider_execution: false
+    - provider-execution-orchestration
+    - index-cursor-pagination
+  provider_execution_orchestration: true
+  built_in_live_network_provider: false
   persistent_user_state: false
   user_interface: false
   administrator_interface: false
@@ -31,13 +34,13 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: The local planner enforces a narrow no-external-disclosure invariant, but no Privacy Shield runtime contract is integrated.
+    reason: The planner and executor enforce local source-plan boundaries, but no Privacy Shield runtime authorization contract is integrated for live network providers.
 
   wardveil_security:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: Security validation exists only as local input/planning tests; no Wardveil runtime contract is integrated.
+    reason: Local execution controls include timeouts, cancellation, failure isolation, and provenance validation, but no Wardveil runtime contract is integrated.
 
   everkeep:
     applicable: false
@@ -61,7 +64,7 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: No authenticated network or administrative interface exists yet; Identity integration is required before protected service operations are accepted.
+    reason: No authenticated live network provider or administrative interface exists yet; Identity integration is required before protected service operations are accepted.
 
 specialized_services:
   goreecloud_sync:

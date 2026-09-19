@@ -1,7 +1,7 @@
 # GoreeCloud Search — Current Features
 
 **Lifecycle:** Development  
-**Version:** `0.1.0.dev3`
+**Version:** `0.1.0.dev4`
 
 This file records implemented behavior in the current development candidate. It does not claim release, deployment, production acceptance, or Stable qualification.
 
@@ -22,10 +22,16 @@ This file records implemented behavior in the current development candidate. It 
 - Offline/local planning.
 - Explicit third-party query-disclosure signal.
 - Fail-closed privacy invariant for GoreeCloud-only and offline/local modes.
-- Replaceable provider protocol.
+- Replaceable provider protocol with typed provider search batches.
+- Bounded asynchronous provider execution with configurable per-provider timeout and maximum concurrency.
+- Outer cancellation propagation that cancels in-flight provider work.
+- Provider failure isolation: one timeout/error does not fail successful providers.
+- Explicit `available`, `degraded`, and `unavailable` execution states.
+- Index-first fallback execution that invokes external fallback sources only when the primary stage does not fill the requested raw-result target.
+- Fail-closed rejection of provider batches that spoof another provider's provenance.
 - Versioned `goreecloud.search-index.v1` Search ↔ Index contract.
 - First-party GoreeCloud Index adapter boundary with injected transport.
-- Index category/capability negotiation and page-size enforcement.
+- Index category/capability negotiation, page-size enforcement, cursor pagination, repeated-cursor protection, and degraded/warning propagation.
 - Enriched result-candidate data contract with canonical URL, source ID, content hash, language, crawl timestamp, and provider-contract provenance.
 - Conservative URL canonicalization that removes fragments and known tracking parameters without collapsing HTTP/HTTPS semantics.
 - Canonical-URL and content-hash deduplication.
@@ -40,4 +46,4 @@ This file records implemented behavior in the current development candidate. It 
 
 ## Not implemented
 
-No provider performs live network search in this candidate. The GoreeCloud Index adapter has a tested contract boundary but no authenticated runtime transport. No user-facing web UI, Browser integration, AI synthesis, persistent history, or production deployment exists yet.
+No authenticated live network provider ships in this candidate. The execution engine can run explicitly injected adapters, but the GoreeCloud Index adapter still has no authenticated runtime transport and no approved external network provider is included. No user-facing web UI, Browser integration, AI synthesis, persistent history, or production deployment exists yet.
