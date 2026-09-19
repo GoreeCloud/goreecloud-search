@@ -18,7 +18,7 @@ from .index_contract import (
     IndexSearchResponse,
 )
 from .index_provider import GoreeCloudIndexProvider, IndexTransport
-from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
+from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryDisclosureBudget, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
 from .normalization import NormalizedResult, ResultNormalizationError, ResultProvenance, canonicalize_url, normalize_and_deduplicate
 from .planner import SourcePlanningError, plan_sources
 from .providers import ProviderSearchBatch, ResultCandidate, SearchProvider
@@ -29,14 +29,15 @@ from .version import __version__
 
 __all__ = [
     "__version__", "INDEX_CONTRACT_VERSION", "ParsedQuery", "ProviderDescriptor",
-    "ProviderOrigin", "QueryFilters", "SearchCategory", "SourceMode", "SourcePlan",
-    "SourcePlanStep", "QueryParseError", "SourcePlanningError", "IndexContractError",
-    "ResultNormalizationError", "ProviderExecutionError", "IndexCapabilities",
-    "IndexDocumentCandidate", "IndexSearchRequest", "IndexSearchResponse",
-    "GoreeCloudIndexProvider", "IndexTransport", "ResultCandidate",
-    "ProviderSearchBatch", "SearchProvider", "ResultProvenance", "NormalizedResult",
-    "canonicalize_url", "normalize_and_deduplicate", "RankingSignal", "RankedResult",
-    "rank_results", "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt",
-    "ExecutionReport", "SearchAvailability", "SearchExecutor", "SearchResponse",
-    "parse_query", "plan_sources", "SearchCore",
+    "ProviderOrigin", "QueryDisclosureBudget", "QueryFilters", "SearchCategory",
+    "SourceMode", "SourcePlan", "SourcePlanStep", "QueryParseError",
+    "SourcePlanningError", "IndexContractError", "ResultNormalizationError",
+    "ProviderExecutionError", "IndexCapabilities", "IndexDocumentCandidate",
+    "IndexSearchRequest", "IndexSearchResponse", "GoreeCloudIndexProvider",
+    "IndexTransport", "ResultCandidate", "ProviderSearchBatch", "SearchProvider",
+    "ResultProvenance", "NormalizedResult", "canonicalize_url",
+    "normalize_and_deduplicate", "RankingSignal", "RankedResult", "rank_results",
+    "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt", "ExecutionReport",
+    "SearchAvailability", "SearchExecutor", "SearchResponse", "parse_query",
+    "plan_sources", "SearchCore",
 ]

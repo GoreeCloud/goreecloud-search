@@ -2,7 +2,7 @@
 
 ## Current status
 
-GoreeCloud Search is in Development. Version `0.1.0.dev4` is a developer-facing foundation and is not a complete search engine release.
+GoreeCloud Search is in Development. Version `0.1.0.dev5` is a developer-facing foundation and is not a complete search engine release.
 
 ## Install for development
 
@@ -36,6 +36,10 @@ The command prints a normalized JSON representation of the query. It does not co
 - `"quoted phrase"`
 - `-excluded-term`
 
+## Developer privacy control
+
+The Python API can apply `QueryDisclosureBudget(max_third_party_providers=N)` when planning or executing a search. The budget is enforced before provider execution. This is a development API capability; there is not yet a user-facing preferences interface for it.
+
 ## Current limitations
 
-Authenticated live search transport, Browser integration, approved external-provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet. The developer core now includes provider execution orchestration and Index pagination, but no authenticated live Index transport or approved external network adapter ships with it.
+Authenticated live search transport, Browser integration, approved external-provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet. The developer core includes provider execution orchestration, Index pagination, and disclosure budgeting, but no authenticated live Index transport or approved external network adapter ships with it.

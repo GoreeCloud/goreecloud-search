@@ -86,6 +86,17 @@ class ProviderDescriptor:
 
 
 @dataclass(frozen=True, slots=True)
+class QueryDisclosureBudget:
+    """Upper bound on distinct third-party providers that may receive one query."""
+
+    max_third_party_providers: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.max_third_party_providers is not None and self.max_third_party_providers < 0:
+            raise ValueError("max_third_party_providers must be non-negative or None")
+
+
+@dataclass(frozen=True, slots=True)
 class SourcePlanStep:
     provider: str
     stage: str
@@ -99,3 +110,6 @@ class SourcePlan:
     category: SearchCategory
     steps: tuple[SourcePlanStep, ...]
     third_party_query_disclosure: bool
+    third_party_provider_count: int = 0
+    disclosure_budget: int | None = None
+    third_party_providers_omitted: int = 0

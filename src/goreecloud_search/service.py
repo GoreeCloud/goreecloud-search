@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 from .execution import ExecutionPolicy, ExecutionReport, SearchExecutor
-from .models import ParsedQuery, ProviderDescriptor, SourceMode, SourcePlan
+from .models import ParsedQuery, ProviderDescriptor, QueryDisclosureBudget, SourceMode, SourcePlan
 from .normalization import NormalizedResult, normalize_and_deduplicate
 from .planner import plan_sources
 from .providers import ResultCandidate, SearchProvider
@@ -59,9 +59,15 @@ class SearchCore:
         raw_query: str,
         *,
         mode: SourceMode = SourceMode.INDEX_FIRST,
+        disclosure_budget: QueryDisclosureBudget | None = None,
     ) -> tuple[ParsedQuery, SourcePlan]:
         query = self.parse(raw_query)
-        return query, plan_sources(query, mode, self._providers)
+        return query, plan_sources(
+            query,
+            mode,
+            self._providers,
+            disclosure_budget=disclosure_budget,
+        )
 
     def normalize(self, candidates: Iterable[ResultCandidate]) -> tuple[NormalizedResult, ...]:
         return normalize_and_deduplicate(tuple(candidates), self._providers)
@@ -79,12 +85,14 @@ class SearchCore:
         *,
         mode: SourceMode = SourceMode.INDEX_FIRST,
         limit: int = 10,
+        disclosure_budget: QueryDisclosureBudget | None = None,
     ) -> SearchResponse:
-        query, plan = self.plan(raw_query, mode=mode)
-        executor = SearchExecutor(
-            self._provider_adapters,
-            policy=self._execution_policy,
+        query, plan = self.plan(
+            raw_query,
+            mode=mode,
+            disclosure_budget=disclosure_budget,
         )
+        executor = SearchExecutor(self._provider_adapters, policy=self._execution_policy)
         execution = await executor.execute(query, plan, limit=limit)
         normalized = self.normalize(execution.candidates)
         ranked = self.rank(query, normalized)

@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev4`
+**Repository version:** `0.1.0.dev5`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -49,14 +49,14 @@ Normalization deliberately does not rerank results. Ranking is a separate Search
 
 ## Phase 3 — Federated providers
 
-**Status:** Planned
+**Status:** In implementation
 
 - Provider SDK/adapter lifecycle.
 - Explicit provider capability declarations.
 - Approved external provider integrations.
 - [x] Bounded execution foundation with per-provider timeouts and concurrency controls.
 - Retry/rate/cost controls beyond the current timeout foundation.
-- Query-disclosure budgets.
+- [x] Query-disclosure budgets with pre-execution third-party provider caps and plan evidence.
 - Provider health and graceful degradation.
 - External suggestions only when explicitly enabled.
 

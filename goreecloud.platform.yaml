@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev4
+  version: 0.1.0.dev5
   lifecycle: development
   stable: false
 
@@ -16,8 +16,10 @@ runtime_scope:
     - result-normalization-and-deduplication
     - deterministic-ranking-and-explanations
     - provider-execution-orchestration
+    - query-disclosure-budgeting
     - index-cursor-pagination
   provider_execution_orchestration: true
+  query_disclosure_budgeting: true
   built_in_live_network_provider: false
   persistent_user_state: false
   user_interface: false
@@ -34,7 +36,7 @@ platform_systems:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: The planner and executor enforce local source-plan boundaries, but no Privacy Shield runtime authorization contract is integrated for live network providers.
+    reason: The planner and executor enforce source-plan boundaries and optional third-party disclosure budgets, but no Privacy Shield runtime authorization contract is integrated for live network providers.
 
   wardveil_security:
     applicable: true
