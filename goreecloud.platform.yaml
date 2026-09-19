@@ -4,7 +4,7 @@ product:
   name: GoreeCloud Search
   repository: GoreeCloud/goreecloud-search
   type: service
-  version: 0.1.0.dev1
+  version: 0.1.0.dev2
   lifecycle: development
   stable: false
 
@@ -12,6 +12,8 @@ runtime_scope:
   implemented:
     - local-query-parsing
     - source-planning
+    - search-index-contract-v1
+    - result-normalization-and-deduplication
   network_provider_execution: false
   persistent_user_state: false
   user_interface: false
@@ -23,42 +25,48 @@ platform_systems:
     status: not_implemented
     conformance: blocked
     reason: Administrative inventory, health, configuration, and lifecycle integration is planned but absent.
+
   privacy_shield:
     applicable: true
     status: not_implemented
     conformance: blocked
     reason: The local planner enforces a narrow no-external-disclosure invariant, but no Privacy Shield runtime contract is integrated.
+
   wardveil_security:
     applicable: true
     status: not_implemented
     conformance: blocked
     reason: Security validation exists only as local input/planning tests; no Wardveil runtime contract is integrated.
+
   everkeep:
     applicable: false
     status: not_applicable_current_runtime
     conformance: not_applicable
     reason: This runtime slice is stateless and persists no material user or service data. Re-evaluate when persistent state or deployment recovery is introduced.
+
   glaze_ui:
     applicable: false
     status: not_applicable_current_runtime
     conformance: not_applicable
     reason: No GoreeCloud-controlled user or administrator interface exists in this runtime slice. Re-evaluate before any UI is accepted.
+
   goreecloud_mesh:
     applicable: true
     status: not_implemented
     conformance: blocked
     reason: Service discovery, capability exchange, events, and integration coordination are planned but absent.
+
   goreecloud_identity:
     applicable: true
     status: not_implemented
     conformance: blocked
-    reason: No authenticated network or administrative interface exists yet; Identity integration is required before protected operations are accepted.
+    reason: No authenticated network or administrative interface exists yet; Identity integration is required before protected service operations are accepted.
 
 specialized_services:
   goreecloud_sync:
     applicable: false
     status: not_applicable_current_runtime
-    reason: No search history, preferences, or synchronized persistent user state exists in this runtime slice.
+    reason: No search history, preferences, or other synchronized persistent user state exists in this runtime slice.
 
 evidence:
   status: development_candidate

@@ -3,8 +3,8 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev1`  
-> **Current scope:** Native query parsing and privacy-aware source planning. Live web retrieval is not implemented in this revision.
+> **Version:** `0.1.0.dev2`  
+> **Current scope:** Native query parsing, privacy-aware source planning, a versioned GoreeCloud Index contract boundary, and Search-owned result normalization/deduplication. Live web retrieval is not implemented in this revision.
 
 ## What exists now
 
@@ -17,6 +17,8 @@ This repository currently contains the first native implementation foundation:
 - A deterministic source planner for Index First, Federated, GoreeCloud Only, External Only, and Offline / Local Index operation.
 - A replaceable provider contract for future GoreeCloud Index and federated adapters.
 - A privacy invariant that prevents external-provider inclusion in GoreeCloud Only and Offline / Local modes.
+- Versioned Search ↔ GoreeCloud Index v1 contract models and a transport-injected first-party adapter boundary.
+- Conservative URL canonicalization, canonical-URL/content-hash deduplication, source agreement, and result provenance.
 - Unit tests and pull-request CI.
 
 The current code does **not** contact external search engines, GoreeCloud Index, GoreeCloud Identity, Privacy Shield, Wardveil Security, Mesh, or any deployed service.
@@ -40,6 +42,8 @@ python -m unittest discover -s tests -v
 
 ## Architecture direction
 
+The intended separation is:
+
 ```text
 Browser / AI / API clients
           |
@@ -59,7 +63,7 @@ GoreeCloud   optional
   Index      providers
 ```
 
-Only the query/parser and source-planning portion is implemented today. See `FEATURE-ROADMAP.md` for planned work and `FEATURES.md` for current implementation state.
+The current development candidates implement the query/parser, source-planning, Search ↔ Index contract, and initial normalization/deduplication layers. See `FEATURE-ROADMAP.md` for planned work and `FEATURES.md` for current implementation state.
 
 ## Privacy boundary
 
@@ -68,3 +72,7 @@ No live provider execution exists in this revision. The planning layer distingui
 ## Status integrity
 
 A branch, pull request, passing CI run, configuration declaration, or documented plan does not mean a feature is released, deployed, production-accepted, or Stable.
+
+## Current implementation expansion
+
+The current stacked development candidate adds the versioned `goreecloud.search-index.v1` contract, a first-party Index provider adapter boundary, and Search-owned result normalization/deduplication. Live Index connectivity and runtime Platform-System enforcement remain unimplemented and are not implied by these interfaces.

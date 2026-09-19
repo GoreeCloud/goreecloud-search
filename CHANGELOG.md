@@ -11,6 +11,9 @@ All notable verified changes to GoreeCloud Search will be recorded here.
 - Replaceable provider contract.
 - Development CLI.
 - Baseline unit tests and CI.
-- Repository documentation and truthful Platform-System status declaration.
+- Required repository documentation and truthful Platform-System status declaration.
+- Versioned Search ↔ GoreeCloud Index v1 contract and capability model.
+- First-party GoreeCloud Index adapter boundary with injected transport.
+- Conservative URL canonicalization, content-hash/canonical-URL deduplication, source agreement, and result provenance primitives.
 
 No release, deployment, production acceptance, or Stable qualification is claimed by these unreleased changes.

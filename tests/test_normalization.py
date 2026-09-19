@@ -1,0 +1,106 @@
+import unittest
+
+from goreecloud_search import (
+    ProviderDescriptor,
+    ProviderOrigin,
+    ResultCandidate,
+    ResultNormalizationError,
+    SearchCategory,
+    SearchCore,
+    canonicalize_url,
+)
+
+
+class NormalizationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.index = ProviderDescriptor(
+            name="goreecloud-index",
+            origin=ProviderOrigin.GOREECLOUD_INDEX,
+            categories=frozenset({SearchCategory.GENERAL}),
+            priority=10,
+        )
+        self.external = ProviderDescriptor(
+            name="external-example",
+            origin=ProviderOrigin.EXTERNAL,
+            categories=frozenset({SearchCategory.GENERAL}),
+            priority=100,
+        )
+        self.core = SearchCore((self.index, self.external))
+
+    def test_canonicalize_url_removes_fragment_trackers_and_default_port(self) -> None:
+        self.assertEqual(
+            canonicalize_url(
+                "HTTPS://Example.COM:443/path?utm_source=newsletter&a=1&fbclid=x#section"
+            ),
+            "https://example.com/path?a=1",
+        )
+
+    def test_same_canonical_url_merges_provider_provenance(self) -> None:
+        results = self.core.normalize(
+            (
+                ResultCandidate(
+                    title="First",
+                    url="https://example.com/page?utm_medium=x",
+                    snippet="one",
+                    provider="goreecloud-index",
+                    source_id="doc-1",
+                    content_hash="hash-a",
+                    provider_contract_version="goreecloud.search-index.v1",
+                ),
+                ResultCandidate(
+                    title="Duplicate",
+                    url="https://example.com/page#fragment",
+                    snippet="two",
+                    provider="external-example",
+                ),
+            )
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].canonical_url, "https://example.com/page")
+        self.assertEqual(results[0].source_agreement, 2)
+        self.assertEqual(
+            {item.provider for item in results[0].provenance},
+            {"goreecloud-index", "external-example"},
+        )
+        self.assertTrue(any(item.indexed_by_goreecloud for item in results[0].provenance))
+
+    def test_content_hash_merges_mirror_urls(self) -> None:
+        results = self.core.normalize(
+            (
+                ResultCandidate(
+                    title="Original",
+                    url="https://example.com/a",
+                    snippet="one",
+                    provider="goreecloud-index",
+                    content_hash="same-content",
+                ),
+                ResultCandidate(
+                    title="Mirror",
+                    url="https://mirror.example.net/a",
+                    snippet="two",
+                    provider="external-example",
+                    content_hash="same-content",
+                ),
+            )
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].source_agreement, 2)
+
+    def test_distinct_urls_remain_distinct_without_shared_hash(self) -> None:
+        results = self.core.normalize(
+            (
+                ResultCandidate("A", "https://example.com/a", "a", "goreecloud-index"),
+                ResultCandidate("B", "https://example.com/b", "b", "external-example"),
+            )
+        )
+        self.assertEqual(len(results), 2)
+
+    def test_undeclared_provider_fails_closed(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            self.core.normalize(
+                (ResultCandidate("A", "https://example.com/a", "a", "unknown"),)
+            )
+
+
+if __name__ == "__main__":
+    unittest.main()

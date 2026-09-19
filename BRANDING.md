@@ -2,11 +2,13 @@
 
 ## Product name
 
-Use **GoreeCloud Search** in user-facing and formal product references. Technical identifiers may use `goreecloud-search` where lowercase conventions apply.
+Use **GoreeCloud Search** in user-facing and formal product references.
+
+The repository/package identifier may use `goreecloud-search` where technical conventions require lowercase identifiers.
 
 ## Current interface state
 
-No GoreeCloud-controlled user or administrator interface is implemented in version `0.1.0.dev1`.
+No GoreeCloud-controlled user or administrator interface is implemented in version `0.1.0.dev2`.
 
 When an interface is introduced, it must use the then-current approved Stable Glaze UI contract and preserve truthful privacy, security, source, and degraded-state presentation.
 
