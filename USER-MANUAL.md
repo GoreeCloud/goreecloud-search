@@ -2,7 +2,7 @@
 
 ## Current status
 
-GoreeCloud Search is in Development. Version `0.1.0.dev2` is a developer-facing foundation and is not a complete search engine release.
+GoreeCloud Search is in Development. Version `0.1.0.dev3` is a developer-facing foundation and is not a complete search engine release.
 
 ## Install for development
 

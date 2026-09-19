@@ -2,7 +2,7 @@
 
 ## Current development implementation
 
-Version `0.1.0.dev2` contains a local query parser, source planner, versioned Search ↔ Index contract models, a transport-injected Index adapter boundary, and local result normalization/deduplication. The repository code in this version:
+Version `0.1.0.dev3` contains a local query parser, source planner, versioned Search ↔ Index contract models, a transport-injected Index adapter boundary, and local result normalization/deduplication. The repository code in this version:
 
 - Does not send search queries over the network. The Index adapter has no built-in network transport.
 - Does not contact third-party search providers.
@@ -10,6 +10,7 @@ Version `0.1.0.dev2` contains a local query parser, source planner, versioned Se
 - Does not contain advertising or tracking code.
 - Does not build behavioral profiles.
 - Does not require third-party analytics.
+- Does not use click history, cross-query behavioral profiles, advertising identifiers, or paid placement for the implemented ranking baseline.
 
 ## Source planning
 

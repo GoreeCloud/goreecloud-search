@@ -8,7 +8,7 @@ The repository/package identifier may use `goreecloud-search` where technical co
 
 ## Current interface state
 
-No GoreeCloud-controlled user or administrator interface is implemented in version `0.1.0.dev2`.
+No GoreeCloud-controlled user or administrator interface is implemented in version `0.1.0.dev3`.
 
 When an interface is introduced, it must use the then-current approved Stable Glaze UI contract and preserve truthful privacy, security, source, and degraded-state presentation.
 

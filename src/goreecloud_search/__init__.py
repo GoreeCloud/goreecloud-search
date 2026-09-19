@@ -14,6 +14,7 @@ from .normalization import NormalizedResult, ResultNormalizationError, ResultPro
 from .planner import SourcePlanningError, plan_sources
 from .providers import ResultCandidate, SearchProvider
 from .query_parser import QueryParseError, parse_query
+from .ranking import RankedResult, RankingSignal, rank_results
 from .service import SearchCore
 from .version import __version__
 
@@ -25,5 +26,6 @@ __all__ = [
     "IndexSearchRequest", "IndexSearchResponse", "GoreeCloudIndexProvider",
     "IndexTransport", "ResultCandidate", "SearchProvider", "ResultProvenance",
     "NormalizedResult", "canonicalize_url", "normalize_and_deduplicate",
+    "RankingSignal", "RankedResult", "rank_results",
     "parse_query", "plan_sources", "SearchCore",
 ]
