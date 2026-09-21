@@ -12,9 +12,9 @@ Use GitHub private vulnerability reporting when it is enabled for this repositor
 
 ## Current security boundary
 
-Version `0.1.0.dev5` ships a provider-execution framework but no authenticated live network transport. Implemented controls include input validation, deterministic source planning, a fail-closed rule preventing external-provider inclusion in GoreeCloud-only and offline/local modes, pre-execution third-party disclosure budgeting, execution only of plan-approved providers, bounded concurrency and per-provider timeouts, cancellation propagation, failure isolation, provider-provenance validation, strict Search ↔ Index contract-version/pagination validation, conservative result-URL validation, rejection of candidates from undeclared providers, and deterministic ranking that does not invoke network services.
+Version `0.1.0.dev14` adds a bounded authenticated Index-originated HTTP source boundary around the provider-execution framework, but no deployed or production-accepted network transport. Implemented controls include input validation, deterministic source planning, a fail-closed rule preventing external-provider inclusion in GoreeCloud-only and offline/local modes, pre-execution third-party disclosure budgeting, execution only of plan-approved providers, bounded concurrency and per-provider timeouts, cancellation propagation, failure isolation, provider-provenance validation, strict Search ↔ Index contract-version/pagination validation, conservative result-URL validation, rejection of candidates from undeclared providers, and deterministic ranking that does not invoke network services.
 
-## Future requirements
+The HTTP boundary rejects missing/duplicate/malformed authentication material, requires the authenticated requester to resolve exactly to `goreecloud-index`, requires a canonical bounded `psc_*` reference, calls the injected Privacy Shield verifier with exact expected resource/purpose/operation/zone/destination/retention claims and `consume=true`, rejects extra JSON fields, keeps query text out of request logs, and invokes only `SearchCore.search_from_index(...)`. Capability discovery explicitly reports `production_accepted=false`.\n\n## Future requirements
 
 Before network-capable or privileged service operation is production-accepted, Search must implement and verify applicable:
 
