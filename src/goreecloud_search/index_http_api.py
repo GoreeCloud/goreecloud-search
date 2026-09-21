@@ -175,6 +175,7 @@ class SearchIndexHTTPServer(ThreadingHTTPServer):
         host: str = "127.0.0.1",
         port: int = 0,
         allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "search.goreecloud.com"),
+        authority_transports_ready: bool = False,
     ) -> None:
         normalized_hosts = frozenset(item.casefold().rstrip(".") for item in allowed_hosts if item.strip())
         if not normalized_hosts:
@@ -183,11 +184,12 @@ class SearchIndexHTTPServer(ThreadingHTTPServer):
         self.identity_verifier = identity_verifier
         self.privacy_verifier = privacy_verifier
         self.allowed_hosts = normalized_hosts
+        self.authority_transports_ready = bool(authority_transports_ready)
         super().__init__((host, port), _IndexRequestHandler)
 
     @property
     def ready(self) -> bool:
-        return any(
+        return self.authority_transports_ready and any(
             descriptor.enabled and descriptor.origin is ProviderOrigin.EXTERNAL
             for descriptor in self.search_core.providers
         )
@@ -442,6 +444,7 @@ def create_index_http_server(
     host: str = "127.0.0.1",
     port: int = 0,
     allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "search.goreecloud.com"),
+    authority_transports_ready: bool = False,
 ) -> SearchIndexHTTPServer:
     """Create the bounded Index-originated Search HTTP server.
 
@@ -456,4 +459,5 @@ def create_index_http_server(
         host=host,
         port=port,
         allowed_hosts=allowed_hosts,
+        authority_transports_ready=authority_transports_ready,
     )
