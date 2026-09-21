@@ -1,0 +1,299 @@
+from __future__ import annotations
+
+from contextlib import contextmanager
+import http.client
+import json
+import threading
+import unittest
+
+from goreecloud_search import (
+    ProviderDescriptor,
+    ProviderOrigin,
+    ProviderSearchBatch,
+    ResultCandidate,
+    SearchCategory,
+    SearchCore,
+)
+from goreecloud_search.index_http_api import (
+    AuthenticatedRequester,
+    PrivacyCapabilityVerification,
+    SEARCH_DESTINATION,
+    SEARCH_INDEX_REQUESTER_ID,
+    SEARCH_PROCESSING_ZONE,
+    SEARCH_QUERY_CAPABILITY_ID,
+    SEARCH_RESOURCE_ID,
+    SEARCH_RETENTION_MODE,
+    SEARCH_VERIFICATION_CONSUMER_ID,
+    capability_record,
+    create_index_http_server,
+)
+
+
+class FakeProvider:
+    def __init__(self, name: str, origin: ProviderOrigin, *, fail: bool = False) -> None:
+        self._descriptor = ProviderDescriptor(
+            name=name,
+            origin=origin,
+            categories=frozenset({SearchCategory.GENERAL}),
+            priority=10,
+        )
+        self.fail = fail
+        self.calls = 0
+
+    @property
+    def descriptor(self) -> ProviderDescriptor:
+        return self._descriptor
+
+    async def search(self, query, *, limit: int) -> ProviderSearchBatch:
+        self.calls += 1
+        if self.fail:
+            raise RuntimeError("provider unavailable")
+        return ProviderSearchBatch(
+            candidates=(
+                ResultCandidate(
+                    title=f"{self._descriptor.name} result",
+                    url="https://example.com/result?utm_source=test",
+                    snippet="goreecloud authenticated result",
+                    provider=self._descriptor.name,
+                ),
+            )[:limit],
+        )
+
+
+class IdentityVerifier:
+    def __init__(self, *, requester_id: str = SEARCH_INDEX_REQUESTER_ID) -> None:
+        self.requester_id = requester_id
+        self.credentials: list[str] = []
+
+    async def verify_bearer(self, bearer_credential: str) -> AuthenticatedRequester:
+        self.credentials.append(bearer_credential)
+        return AuthenticatedRequester(
+            requester_id=self.requester_id,
+            requester_type="application",
+        )
+
+
+class PrivacyVerifier:
+    def __init__(self, *, authorized: bool = True) -> None:
+        self.authorized = authorized
+        self.requests = []
+
+    async def verify_reference(self, request):
+        self.requests.append(request)
+        return PrivacyCapabilityVerification(
+            authorized=self.authorized,
+            requester_id=request.requester_id,
+            verification_consumer_id=SEARCH_VERIFICATION_CONSUMER_ID,
+            consumed=self.authorized,
+        )
+
+
+@contextmanager
+def running_server(core, identity=None, privacy=None):
+    server = create_index_http_server(
+        core,
+        identity or IdentityVerifier(),
+        privacy or PrivacyVerifier(),
+        host="127.0.0.1",
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+
+
+def request(server, method: str, path: str, *, headers=None, body: bytes | None = None):
+    connection = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=2)
+    try:
+        connection.request(method, path, body=body, headers=headers or {})
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        return response.status, dict(response.getheaders()), payload
+    finally:
+        connection.close()
+
+
+class IndexHTTPAPITests(unittest.TestCase):
+    def test_capability_is_production_shaped_but_not_production_accepted(self) -> None:
+        record = capability_record()
+
+        self.assertEqual("search.query", record["id"])
+        self.assertEqual("POST", record["preferred_method"])
+        self.assertEqual("json_body", record["preferred_query_transport"])
+        self.assertTrue(record["privacy_authorization_required"])
+        self.assertEqual("required", record["privacy_authorization_enforcement"])
+        self.assertTrue(record["authenticated_requester_required"])
+        self.assertFalse(record["production_accepted"])
+        self.assertEqual(
+            "goreecloud.search-index-delegation.v1",
+            record["index_delegation_contract_version"],
+        )
+        self.assertEqual("external_only", record["index_delegation_mode"])
+        self.assertFalse(record["index_provider_reentry_allowed"])
+        self.assertFalse(record["index_delegation_fallback_allowed"])
+
+    def test_status_and_health_are_non_secret_and_readiness_requires_external_provider(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("local", ProviderOrigin.LOCAL),))
+        with running_server(core) as server:
+            health_status, _, health = request(server, "GET", "/healthz")
+            ready_status, _, ready = request(server, "GET", "/readyz")
+            status_code, _, status = request(server, "GET", "/api/v1/status")
+
+        self.assertEqual(200, health_status)
+        self.assertEqual("ok", health["status"])
+        self.assertEqual(503, ready_status)
+        self.assertEqual("not_ready", ready["status"])
+        self.assertEqual(200, status_code)
+        self.assertEqual("development", status["lifecycle"])
+        self.assertFalse(status["production_accepted"])
+        self.assertEqual(["search.query"], [item["id"] for item in status["capability_evidence"]])
+
+    def test_missing_authority_fails_before_verifiers_and_provider(self) -> None:
+        external = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier()
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(external,))
+
+        with running_server(core, identity, privacy) as server:
+            body = json.dumps({"query": "goreecloud", "category": "general", "limit": 3}).encode()
+            status, headers, payload = request(
+                server,
+                "POST",
+                "/api/v1/search",
+                headers={"Content-Type": "application/json"},
+                body=body,
+            )
+
+        self.assertEqual(401, status)
+        self.assertEqual("Bearer", headers["WWW-Authenticate"])
+        self.assertEqual("authorization_required", payload["error"])
+        self.assertEqual([], identity.credentials)
+        self.assertEqual([], privacy.requests)
+        self.assertEqual(0, external.calls)
+
+    def test_authenticated_request_consumes_privacy_reference_and_executes_external_only(self) -> None:
+        index = FakeProvider("index", ProviderOrigin.GOREECLOUD_INDEX)
+        local = FakeProvider("local", ProviderOrigin.LOCAL)
+        external = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier()
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(index, local, external))
+
+        with running_server(core, identity, privacy) as server:
+            body = json.dumps({"query": "goreecloud", "category": "general", "limit": 3}).encode()
+            status, _, payload = request(
+                server,
+                "POST",
+                "/api/v1/search",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer identity_test_token",
+                    "X-GoreeCloud-Privacy-Capability": "psc_test_reference",
+                },
+                body=body,
+            )
+
+        self.assertEqual(200, status)
+        self.assertEqual(["identity_test_token"], identity.credentials)
+        self.assertEqual(1, len(privacy.requests))
+        verification = privacy.requests[0]
+        self.assertEqual("psc_test_reference", verification.capability_reference)
+        self.assertEqual(SEARCH_INDEX_REQUESTER_ID, verification.requester_id)
+        self.assertEqual(SEARCH_RESOURCE_ID, verification.resource_id)
+        self.assertEqual(SEARCH_QUERY_CAPABILITY_ID, verification.operation)
+        self.assertEqual(SEARCH_PROCESSING_ZONE, verification.processing_zone)
+        self.assertEqual(SEARCH_DESTINATION, verification.destination)
+        self.assertEqual(SEARCH_RETENTION_MODE, verification.retention_mode)
+        self.assertEqual(SEARCH_VERIFICATION_CONSUMER_ID, verification.verification_consumer_id)
+        self.assertTrue(verification.consume)
+        self.assertEqual(0, index.calls)
+        self.assertEqual(0, local.calls)
+        self.assertEqual(1, external.calls)
+        self.assertEqual("1", payload["apiVersion"])
+        self.assertEqual("goreecloud", payload["query"])
+        self.assertEqual("general", payload["category"])
+        self.assertEqual("https://example.com/result", payload["results"][0]["url"])
+
+    def test_wrong_authenticated_requester_fails_before_privacy_and_provider(self) -> None:
+        external = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier(requester_id="untrusted-client")
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(external,))
+
+        with running_server(core, identity, privacy) as server:
+            body = json.dumps({"query": "goreecloud", "category": "general", "limit": 1}).encode()
+            status, _, payload = request(
+                server,
+                "POST",
+                "/api/v1/search",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer identity_test_token",
+                    "X-GoreeCloud-Privacy-Capability": "psc_test_reference",
+                },
+                body=body,
+            )
+
+        self.assertEqual(401, status)
+        self.assertEqual("authorization_required", payload["error"])
+        self.assertEqual([], privacy.requests)
+        self.assertEqual(0, external.calls)
+
+    def test_privacy_denial_fails_before_provider_execution(self) -> None:
+        external = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        privacy = PrivacyVerifier(authorized=False)
+        core = SearchCore(provider_adapters=(external,))
+
+        with running_server(core, privacy=privacy) as server:
+            body = json.dumps({"query": "goreecloud", "category": "general", "limit": 1}).encode()
+            status, _, payload = request(
+                server,
+                "POST",
+                "/api/v1/search",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer identity_test_token",
+                    "X-GoreeCloud-Privacy-Capability": "psc_test_reference",
+                },
+                body=body,
+            )
+
+        self.assertEqual(401, status)
+        self.assertEqual("authorization_required", payload["error"])
+        self.assertEqual(0, external.calls)
+
+    def test_search_get_and_unbounded_or_extra_json_fields_fail_closed(self) -> None:
+        external = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        core = SearchCore(provider_adapters=(external,))
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer identity_test_token",
+            "X-GoreeCloud-Privacy-Capability": "psc_test_reference",
+        }
+
+        with running_server(core) as server:
+            get_status, _, _ = request(server, "GET", "/api/v1/search")
+            extra_body = json.dumps(
+                {"query": "goreecloud", "category": "general", "limit": 1, "local_results": ["secret"]}
+            ).encode()
+            post_status, _, payload = request(
+                server,
+                "POST",
+                "/api/v1/search",
+                headers=headers,
+                body=extra_body,
+            )
+
+        self.assertEqual(405, get_status)
+        self.assertEqual(400, post_status)
+        self.assertEqual("invalid_search_request", payload["error"])
+        self.assertEqual(0, external.calls)
+
+
+if __name__ == "__main__":
+    unittest.main()
