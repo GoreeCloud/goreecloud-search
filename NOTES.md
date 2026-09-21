@@ -22,6 +22,10 @@ The cycle-safe contract and its bounded authenticated HTTP carrier are accepted 
 
 Authoritative `main` also carries the accepted Platform Contract 0.4 nine-system declaration from PR #22. Runtime Platform-System acceptance remains separate and blocked.
 
+## 2026-09-21 — Fail-closed runtime readiness candidate
+
+The Index-originated HTTP server now requires an explicit host-supplied `authority_transports_ready` acceptance signal in addition to at least one enabled external provider before `/readyz` can return ready. The default is false. This prevents source-level provider configuration from overstating runtime readiness while live GoreeCloud Identity and Privacy Shield verifier transports remain unaccepted. The signal does not bypass per-request Identity or Privacy Shield verification and does not itself establish production acceptance.
+
 ## Open decisions
 
 - Final production service/runtime framework.
