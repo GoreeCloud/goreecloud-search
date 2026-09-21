@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from .execution import ExecutionPolicy, ExecutionReport, SearchExecutor
 from .models import ParsedQuery, ProviderDescriptor, QueryDisclosureBudget, SourceMode, SourcePlan
 from .normalization import NormalizedResult, normalize_and_deduplicate
-from .planner import plan_sources
+from .planner import plan_index_originated_delegation, plan_sources
 from .providers import ResultCandidate, SearchProvider
 from .query_parser import parse_query
 from .ranking import RankedResult, rank_results
@@ -69,6 +69,20 @@ class SearchCore:
             disclosure_budget=disclosure_budget,
         )
 
+    def plan_from_index(
+        self,
+        raw_query: str,
+        *,
+        disclosure_budget: QueryDisclosureBudget | None = None,
+    ) -> tuple[ParsedQuery, SourcePlan]:
+        """Plan an Index-originated delegation using the cycle-safe external-only contract."""
+        query = self.parse(raw_query)
+        return query, plan_index_originated_delegation(
+            query,
+            self._providers,
+            disclosure_budget=disclosure_budget,
+        )
+
     def normalize(self, candidates: Iterable[ResultCandidate]) -> tuple[NormalizedResult, ...]:
         return normalize_and_deduplicate(tuple(candidates), self._providers)
 
@@ -78,6 +92,24 @@ class SearchCore:
         results: Iterable[NormalizedResult],
     ) -> tuple[RankedResult, ...]:
         return rank_results(query, tuple(results))
+
+    async def _execute_plan(
+        self,
+        query: ParsedQuery,
+        plan: SourcePlan,
+        *,
+        limit: int,
+    ) -> SearchResponse:
+        executor = SearchExecutor(self._provider_adapters, policy=self._execution_policy)
+        execution = await executor.execute(query, plan, limit=limit)
+        normalized = self.normalize(execution.candidates)
+        ranked = self.rank(query, normalized)
+        return SearchResponse(
+            query=query,
+            plan=plan,
+            execution=execution,
+            results=ranked[:limit],
+        )
 
     async def search(
         self,
@@ -92,13 +124,18 @@ class SearchCore:
             mode=mode,
             disclosure_budget=disclosure_budget,
         )
-        executor = SearchExecutor(self._provider_adapters, policy=self._execution_policy)
-        execution = await executor.execute(query, plan, limit=limit)
-        normalized = self.normalize(execution.candidates)
-        ranked = self.rank(query, normalized)
-        return SearchResponse(
-            query=query,
-            plan=plan,
-            execution=execution,
-            results=ranked[:limit],
+        return await self._execute_plan(query, plan, limit=limit)
+
+    async def search_from_index(
+        self,
+        raw_query: str,
+        *,
+        limit: int = 10,
+        disclosure_budget: QueryDisclosureBudget | None = None,
+    ) -> SearchResponse:
+        """Execute the dedicated cycle-safe path for an Index-originated Internet query."""
+        query, plan = self.plan_from_index(
+            raw_query,
+            disclosure_budget=disclosure_budget,
         )
+        return await self._execute_plan(query, plan, limit=limit)

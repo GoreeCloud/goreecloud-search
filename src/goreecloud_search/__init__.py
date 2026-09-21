@@ -20,7 +20,15 @@ from .index_contract import (
 from .index_provider import GoreeCloudIndexProvider, IndexTransport
 from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryDisclosureBudget, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
 from .normalization import NormalizedResult, ResultNormalizationError, ResultProvenance, canonicalize_url, normalize_and_deduplicate
-from .planner import SourcePlanningError, plan_sources
+from .planner import (
+    INDEX_ORIGINATED_DELEGATION_CONTRACT_VERSION,
+    INDEX_ORIGINATED_DELEGATION_MODE,
+    INDEX_ORIGINATED_FALLBACK_ALLOWED,
+    INDEX_ORIGINATED_INDEX_PROVIDER_REENTRY_ALLOWED,
+    SourcePlanningError,
+    plan_index_originated_delegation,
+    plan_sources,
+)
 from .providers import ProviderSearchBatch, ResultCandidate, SearchProvider
 from .query_parser import QueryParseError, parse_query
 from .ranking import RankedResult, RankingSignal, rank_results
@@ -39,5 +47,10 @@ __all__ = [
     "normalize_and_deduplicate", "RankingSignal", "RankedResult", "rank_results",
     "ExecutionPolicy", "ProviderExecutionStatus", "ProviderAttempt", "ExecutionReport",
     "SearchAvailability", "SearchExecutor", "SearchResponse", "parse_query",
-    "plan_sources", "SearchCore",
+    "plan_sources", "plan_index_originated_delegation",
+    "INDEX_ORIGINATED_DELEGATION_CONTRACT_VERSION",
+    "INDEX_ORIGINATED_DELEGATION_MODE",
+    "INDEX_ORIGINATED_INDEX_PROVIDER_REENTRY_ALLOWED",
+    "INDEX_ORIGINATED_FALLBACK_ALLOWED",
+    "SearchCore",
 ]
