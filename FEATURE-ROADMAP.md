@@ -14,8 +14,8 @@ This is the repository-coupled roadmap source. Planned items remain implementati
 - [ ] Merge and verify privacy-aware source planning.
 - [ ] Merge and verify the replaceable provider contract.
 - [ ] Merge and verify baseline CI and test coverage.
-- [ ] Reconcile required repository documentation and Platform-System declarations.
-  - Current `goreecloud.platform.yaml` still uses the pre-Contract-0.4 seven-system declaration; this remains a separate governance/promotion blocker for new source work.
+- [x] Reconcile required repository Platform Contract declaration to Contract 0.4 with all nine Integral Platform Systems.
+  - PR #22 is accepted on authoritative `main`; runtime Platform-System implementation and acceptance remain separate Development/nonconformant obligations.
 
 The current topic branch is a candidate only; checkboxes remain incomplete until accepted on the authoritative integration line with required verification.
 
