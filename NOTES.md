@@ -20,7 +20,7 @@ The dedicated Index-originated path is intentionally not the ordinary Search `IN
 
 This is a source-level readiness contract only. Search still has no authenticated live Index-originated HTTP transport on authoritative `main`.
 
-The repository's current `goreecloud.platform.yaml` also remains on the older seven-system declaration. This cycle-safety slice does not silently migrate that control plane; current Contract 0.4/nine-system reconciliation remains a separate promotion blocker.
+Authoritative `main` now carries the accepted Platform Contract 0.4 nine-system declaration from PR #22. This cycle-safety candidate inherits that control plane without changing its Development/nonconformant status; runtime Platform-System acceptance remains separate and blocked.
 
 ## Open decisions
 
