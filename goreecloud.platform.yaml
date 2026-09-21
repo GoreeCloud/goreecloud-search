@@ -129,6 +129,7 @@ compatibility:
     - goreecloud.search-index.v1
     - goreecloud-search-provider-execution
     - goreecloud-search-query-disclosure-budget
+    - goreecloud-search-authenticated-index-delegation-http-v1
     - goreecloud.search-index-delegation.v1
     - goreecloud-search-index-http-boundary-v1
 
