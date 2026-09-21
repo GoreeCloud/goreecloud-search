@@ -3,13 +3,13 @@
 ## Lifecycle
 
 - Product: GoreeCloud Search
-- Version: `0.1.0.dev5`
+- Version: `0.1.0.dev14`
 - Lifecycle: Development
 - Stable: No
 
 ## Current implementation boundary
 
-The current native development candidates provide a query parser and privacy-aware source planner, bounded asynchronous provider execution, pre-execution third-party query-disclosure budgeting, a versioned Search ↔ Index contract boundary with pagination, Search-owned normalization/deduplication primitives, and an initial deterministic ranking layer.
+The current native development candidate provides a query parser and privacy-aware source planner, bounded asynchronous provider execution, pre-execution third-party query-disclosure budgeting, a versioned Search ↔ Index contract boundary with pagination, a cycle-safe Index-originated delegation path, a bounded authenticated Index HTTP source boundary, Search-owned normalization/deduplication primitives, and an initial deterministic ranking layer.
 
 ### Query model
 
@@ -27,16 +27,13 @@ Provider adapters remain replaceable and declare supported categories and origin
 
 ## Not yet implemented
 
-- Authenticated live GoreeCloud Index transport and runtime integration.
+- Producer-authoritative live GoreeCloud Identity and Privacy Shield verifier transport plus target-runtime acceptance for the Index HTTP boundary.
 - External search-provider adapters.
-- HTTP API.
 - Snippet generation and advanced ranking signals beyond the current deterministic baseline.
 - SafeSearch enforcement.
 - Private View.
 - GoreeCloud Browser integration.
 - GoreeCloud AI answer integration.
-- Identity-authenticated service requests.
-- Privacy Shield runtime authorization.
 - Wardveil Security runtime checks.
 - GoreeCloud Mesh discovery/events.
 - GoreeCloud Manager administration.
@@ -58,7 +55,7 @@ That path is fixed to `external_only` planning. It cannot accept a caller-select
 
 The ordinary Search user/service path may still use `index_first` or other source modes. The dedicated Index-originated path exists specifically to prevent recursive `Index → Search → Index` execution.
 
-No live network transport or approved external provider is introduced by this source contract.
+The candidate now includes a server-side HTTP source boundary for this contract: `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`. Query execution requires a verified `goreecloud-index` Identity requester and a consumed opaque Privacy Shield capability reference with exact expected claims. The capability is explicitly not production accepted, and no concrete authority-service client, approved live external provider, reverse proxy, deployment, or production runtime acceptance is introduced.
 
 ## Ranking boundary
 
