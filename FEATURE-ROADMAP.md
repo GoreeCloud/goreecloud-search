@@ -2,7 +2,7 @@
 
 **Product:** GoreeCloud Search  
 **Lifecycle:** Development  
-**Repository version:** `0.1.0.dev5`
+**Repository version:** `0.1.0.dev14`
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
@@ -26,7 +26,7 @@ The current topic branch is a candidate only; checkboxes remain incomplete until
 - [x] Implement the first-party GoreeCloud Index provider adapter boundary.
 - [x] Define the versioned Search ↔ Index request/response contract.
 - [x] Add initial category/capability negotiation.
-- [ ] Add authenticated live Index transport.
+- [ ] Add authenticated live Index transport and runtime acceptance.\n  - [x] Current candidate adds the bounded server-side Index HTTP carrier with injected Identity and Privacy Shield verification; real authority transports, approved provider execution, deployment, and target-runtime acceptance remain open.
 - [x] Add timeout, cancellation, pagination execution, and degraded-state behavior.
 - [x] Add Index provenance fields required for later ranking and result explanations.
 - [x] Add a cycle-safe Index-originated delegation source path that is external-only and cannot re-enter Index or create a fallback stage.
