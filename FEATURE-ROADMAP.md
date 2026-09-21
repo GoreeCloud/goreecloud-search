@@ -13,11 +13,11 @@ This is the repository-coupled roadmap source. Planned items remain implementati
 - [ ] Merge and verify the native query model/parser.
 - [ ] Merge and verify privacy-aware source planning.
 - [ ] Merge and verify the replaceable provider contract.
-- [ ] Merge and verify baseline CI and test coverage.
+- [x] Merge and verify baseline CI and test coverage.
 - [x] Reconcile required repository Platform Contract declaration to Contract 0.4 with all nine Integral Platform Systems.
   - PR #22 is accepted on authoritative `main`; runtime Platform-System implementation and acceptance remain separate Development/nonconformant obligations.
 
-The current topic branch is a candidate only; checkboxes remain incomplete until accepted on the authoritative integration line with required verification.
+Completed checkboxes are bound to the current verified Development integration line and its cited exact-revision evidence. They do not establish live provider authority, deployment, Production acceptance, or Stable qualification.
 
 ## Phase 1 — GoreeCloud Index path
 
@@ -27,7 +27,7 @@ The current topic branch is a candidate only; checkboxes remain incomplete until
 - [x] Define the versioned Search ↔ Index request/response contract.
 - [x] Add initial category/capability negotiation.
 - [ ] Add authenticated live Index transport and runtime acceptance.
-  - [x] Current candidate adds the bounded server-side Index HTTP carrier with injected Identity and Privacy Shield verification; real authority transports, approved provider execution, deployment, and target-runtime acceptance remain open.
+  - [x] Authoritative `main` includes the bounded server-side Index HTTP carrier with injected Identity and Privacy Shield verification; real authority transports, approved provider execution, deployment, and target-runtime acceptance remain open.
 - [x] Add timeout, cancellation, pagination execution, and degraded-state behavior.
 - [x] Add Index provenance fields required for later ranking and result explanations.
 - [x] Add a cycle-safe Index-originated delegation source path that is external-only and cannot re-enter Index or create a fallback stage.
