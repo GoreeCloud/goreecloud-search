@@ -2,7 +2,7 @@
 
 ## Current development baseline
 
-The repository's authoritative `main` line was initialized on September 16, 2026. The current implementation work remains on stacked development candidates and is not accepted on `main`.
+Authoritative `main` is `551b57c87ccf32619b75fb41950384389fa9efbd`. Runtime-bearing PR #23 is integrated beneath that documentation checkpoint at `7d79959e79ad4de13b807973347944bd92563fbe`, with post-merge CI run `35625485445` passing on that exact runtime revision. Search remains Development/nonconformant: live GoreeCloud Identity and Privacy Shield verifier transports, an approved external provider, deployment, representative runtime acceptance, Production acceptance, and Stable qualification remain open.
 
 ## Design decisions
 
@@ -18,9 +18,9 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 
 The dedicated Index-originated path is intentionally not the ordinary Search `INDEX_FIRST` path. It is fixed to external-only planning so an Index request cannot be routed back into the GoreeCloud Index provider or another first-party/local provider and cannot fall back into Index after an external failure.
 
-This is a source-level readiness contract only. Search still has no authenticated live Index-originated HTTP transport on authoritative `main`.
+The cycle-safe contract and its bounded authenticated HTTP carrier are accepted on authoritative `main`. The HTTP boundary requires an authenticated `goreecloud-index` application identity through an injected Identity verifier and an opaque `psc_*` Privacy Shield capability reference through an injected producer-authoritative verifier/consumer before dispatch. No live verifier service, real credential, approved external provider, deployment, or Production acceptance is implied.
 
-Authoritative `main` now carries the accepted Platform Contract 0.4 nine-system declaration from PR #22. This cycle-safety candidate inherits that control plane without changing its Development/nonconformant status; runtime Platform-System acceptance remains separate and blocked.
+Authoritative `main` also carries the accepted Platform Contract 0.4 nine-system declaration from PR #22. Runtime Platform-System acceptance remains separate and blocked.
 
 ## Open decisions
 
@@ -30,9 +30,9 @@ Authoritative `main` now carries the accepted Platform Contract 0.4 nine-system 
 - Exact current Stable Platform-System contract versions at the time each integration is implemented.
 - Production deployment topology and persistence model.
 
-## Stacked implementation candidates
+## Historical stacked implementation provenance
 
-`feature/index-contract-normalization` is based on `feature/native-search-core-foundation`; `feature/deterministic-ranking-explanations` is stacked on it; `feature/provider-execution-pipeline` is stacked on the ranking branch; and `feature/query-disclosure-budget` is stacked on the execution branch. Each child must be retargeted/reconciled and revalidated when a parent changes or merges.
+Earlier normalization, ranking, provider-execution, and disclosure-budget branches are development staging history. Their accepted behavior has since been integrated into the authoritative Development line. Historical branch state must not override current `main`.
 
 ## Ranking baseline
 
@@ -42,8 +42,8 @@ The initial ranker intentionally avoids provider-specific hidden boosts and beha
 
 The budget is enforced in source planning, before execution. It can reduce or eliminate third-party providers but cannot add a provider that the selected source mode, category, source filter, or provider configuration would otherwise exclude. A zero budget prevents external fallback execution rather than contacting an external provider and discarding its response afterward.
 
-## 2026-09-21 — Authenticated Index transport source candidate
+## 2026-09-21 — Authenticated Index transport integrated
 
-A fresh candidate from authoritative Contract 0.4 `main` adds the server-side HTTP half of Index → Search delegation while preserving `goreecloud.search-index-delegation.v1`, `external_only`, no Index re-entry, and no fallback. GoreeCloud Identity and Privacy Shield remain injected producer-authoritative verifier interfaces. Capability evidence is production-shaped but explicitly not production accepted.
+PR #23 integrated the server-side HTTP half of Index → Search delegation while preserving `goreecloud.search-index-delegation.v1`, `external_only`, no Index re-entry, and no fallback. GoreeCloud Identity and Privacy Shield remain injected producer-authoritative verifier interfaces. Capability evidence is production-shaped but explicitly `production_accepted=false`.
 
-No live verifier, approved external provider, deployment, Production acceptance, or Stable qualification is implied.
+Post-merge CI run `35625485445` passed on exact runtime-bearing revision `7d79959e79ad4de13b807973347944bd92563fbe`. PR #24 then advanced main with documentation-only reconciliation. No live verifier, approved external provider, deployment, Production acceptance, or Stable qualification is implied.
