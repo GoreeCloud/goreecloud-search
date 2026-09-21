@@ -1,83 +1,153 @@
-schema_version: 1
+schema_version: '0.4'
 
-product:
-  name: GoreeCloud Search
-  repository: GoreeCloud/goreecloud-search
+component:
   type: service
-  version: 0.1.0.dev5
-  lifecycle: development
-  stable: false
+  id: goreecloud-search
+  product_name: GoreeCloud Search
+  repository: GoreeCloud/goreecloud-search
 
-runtime_scope:
-  implemented:
-    - local-query-parsing
-    - source-planning
-    - search-index-contract-v1
-    - result-normalization-and-deduplication
-    - deterministic-ranking-and-explanations
-    - provider-execution-orchestration
-    - query-disclosure-budgeting
-    - index-cursor-pagination
-  provider_execution_orchestration: true
-  query_disclosure_budgeting: true
-  built_in_live_network_provider: false
-  persistent_user_state: false
-  user_interface: false
-  administrator_interface: false
+lifecycle: development
+version: 0.1.0.dev5
+
+supported_platforms:
+  - linux
+
+api:
+  versions:
+    - goreecloud.search-index.v1
+  endpoints: []
 
 platform_systems:
-  goreecloud_manager:
-    applicable: true
-    status: not_implemented
-    conformance: blocked
-    reason: Administrative inventory, health, configuration, and lifecycle integration is planned but absent.
+  manager:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - FEATURE-ROADMAP.md
+    notes: GoreeCloud Manager operational inventory, configuration, lifecycle, health, and administrative visibility are applicable to Search, but no accepted Manager runtime integration or administrator interface exists on authoritative main.
 
   privacy_shield:
-    applicable: true
-    status: not_implemented
-    conformance: blocked
-    reason: The planner and executor enforce source-plan boundaries and optional third-party disclosure budgets, but no Privacy Shield runtime authorization contract is integrated for live network providers.
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - PRIVACY POLICY.md
+      - FEATURE-ROADMAP.md
+    notes: Search has privacy-aware source planning and bounded third-party query disclosure, but no accepted producer-authoritative Privacy Shield runtime decision adapter or production acceptance exists.
 
   wardveil_security:
-    applicable: true
-    status: not_implemented
-    conformance: blocked
-    reason: Local execution controls include timeouts, cancellation, failure isolation, and provenance validation, but no Wardveil runtime contract is integrated.
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SECURITY.md
+      - FEATURE-ROADMAP.md
+    notes: Search implements bounded provider execution and provenance validation, but no accepted Wardveil Security runtime evidence, trust, threat, or protection integration exists.
 
   everkeep:
-    applicable: false
-    status: not_applicable_current_runtime
-    conformance: not_applicable
-    reason: This runtime slice is stateless and persists no material user or service data. Re-evaluate when persistent state or deployment recovery is introduced.
+    result: not-applicable-justified
+    version: null
+    evidence:
+      - README.md
+      - PRIVACY POLICY.md
+    notes: Authoritative main persists no search history, account data, index data, or other material user/service state. Everkeep must be re-evaluated before persistent state, deployed configuration state, or recovery-critical runtime data is accepted.
 
   glaze_ui:
-    applicable: false
-    status: not_applicable_current_runtime
-    conformance: not_applicable
-    reason: No GoreeCloud-controlled user or administrator interface exists in this runtime slice. Re-evaluate before any UI is accepted.
+    result: not-applicable-justified
+    version: null
+    evidence:
+      - README.md
+      - FEATURE-ROADMAP.md
+    notes: Authoritative main exposes no accepted GoreeCloud-controlled user or administrator interface. Glaze UI becomes applicable before any Search UI is accepted.
 
-  goreecloud_mesh:
-    applicable: true
-    status: not_implemented
-    conformance: blocked
-    reason: Service discovery, capability exchange, events, and integration coordination are planned but absent.
+  mesh:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - FEATURE-ROADMAP.md
+    notes: GoreeCloud Mesh discovery, dependency, capability, and service-coordination integration are planned but not implemented or accepted on authoritative main.
+    capabilities: []
+    dependencies: []
+    published_events: []
+    consumed_events: []
 
-  goreecloud_identity:
-    applicable: true
-    status: not_implemented
-    conformance: blocked
-    reason: No authenticated live network provider or administrative interface exists yet; Identity integration is required before protected service operations are accepted.
+  identity:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SECURITY.md
+      - FEATURE-ROADMAP.md
+    notes: GoreeCloud Identity is required before authenticated or protected service operation is accepted, but authoritative main has no authenticated live provider transport or accepted Identity integration.
 
-specialized_services:
-  goreecloud_sync:
-    applicable: false
-    status: not_applicable_current_runtime
-    reason: No search history, preferences, or other synchronized persistent user state exists in this runtime slice.
+  policy:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - FEATURE-ROADMAP.md
+      - SECURITY.md
+    notes: GoreeCloud Policy is applicable to shared content, source, provider, administrative, and execution policy decisions, but producer-authoritative Policy evaluation, freshness, explanation, enforcement, and evidence integration are not implemented or accepted on authoritative main.
+
+  observability:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - FEATURE-ROADMAP.md
+      - SECURITY.md
+    notes: GoreeCloud Observability is applicable to health, readiness, provider diagnostics, latency, failures, degradation, and operational evidence, but no accepted Observability integration or health/readiness publication exists on authoritative main.
+
+health:
+  health_endpoint: null
+  readiness_endpoint: null
+
+continuity:
+  backup:
+    required: false
+    requirements: []
+  restore:
+    required: false
+    requirements: []
+  export:
+    required: false
+    requirements: []
+  portability:
+    required: false
+    requirements: []
+
+external_dependencies: []
+
+compatibility:
+  platform_contract: '0.4'
+  glaze_ui_required: null
+  requires:
+    - goreecloud-platform-contract==0.4
+  provides:
+    - goreecloud.search-index.v1
+    - goreecloud-search-provider-execution
+    - goreecloud-search-query-disclosure-budget
 
 evidence:
-  status: development_candidate
-  accepted_revision: null
-  stable_qualification: blocked
-  notes:
-    - A declaration is not implementation evidence.
-    - CI passing does not establish Platform-System conformance or Stable qualification.
+  acceptance_tests: []
+  release: []
+
+conformance:
+  status: nonconformant
+  validated_at: null
+  evidence:
+    - README.md
+    - FEATURE-ROADMAP.md
+    - PRIVACY POLICY.md
+    - SECURITY.md
+    - NOTES.md
+  blockers:
+    - GoreeCloud Manager operational integration and acceptance are incomplete.
+    - Producer-authoritative Privacy Shield runtime integration and acceptance are incomplete.
+    - Wardveil Security runtime evidence and production security acceptance are incomplete.
+    - GoreeCloud Mesh discovery, dependency, capability, and runtime coordination acceptance are incomplete.
+    - GoreeCloud Identity authentication, authorization, isolation, revocation, and runtime acceptance are incomplete.
+    - GoreeCloud Policy decision, enforcement, freshness, explanation, and evidence integration are incomplete.
+    - GoreeCloud Observability health, readiness, diagnostics, performance, freshness, and operational evidence integration are incomplete.
+    - Search exposes no accepted health/readiness interfaces.
+    - Authoritative main ships no authenticated live provider transport or approved external network provider.
+    - No accepted GoreeCloud-controlled Search UI exists; Glaze UI remains not applicable to the current authoritative runtime slice and must be re-evaluated before UI acceptance.
+    - Persistent-state continuity requirements remain not applicable to the current authoritative runtime slice and must be re-evaluated before persistent or recovery-critical state is accepted.
+    - No Stable or production-approved GoreeCloud Search release evidence is declared.
