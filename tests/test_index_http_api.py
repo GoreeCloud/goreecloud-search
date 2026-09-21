@@ -89,13 +89,14 @@ class PrivacyVerifier:
 
 
 @contextmanager
-def running_server(core, identity=None, privacy=None):
+def running_server(core, identity=None, privacy=None, *, authority_transports_ready=False):
     server = create_index_http_server(
         core,
         identity or IdentityVerifier(),
         privacy or PrivacyVerifier(),
         host="127.0.0.1",
         port=0,
+        authority_transports_ready=authority_transports_ready,
     )
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -139,7 +140,7 @@ class IndexHTTPAPITests(unittest.TestCase):
 
     def test_status_and_health_are_non_secret_and_readiness_requires_external_provider(self) -> None:
         core = SearchCore(provider_adapters=(FakeProvider("local", ProviderOrigin.LOCAL),))
-        with running_server(core) as server:
+        with running_server(core, authority_transports_ready=True) as server:
             health_status, _, health = request(server, "GET", "/healthz")
             ready_status, _, ready = request(server, "GET", "/readyz")
             status_code, _, status = request(server, "GET", "/api/v1/status")
@@ -152,6 +153,20 @@ class IndexHTTPAPITests(unittest.TestCase):
         self.assertEqual("development", status["lifecycle"])
         self.assertFalse(status["production_accepted"])
         self.assertEqual(["search.query"], [item["id"] for item in status["capability_evidence"]])
+
+    def test_readiness_requires_explicit_authority_transport_acceptance(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+
+        with running_server(core) as blocked_server:
+            blocked_status, _, blocked = request(blocked_server, "GET", "/readyz")
+
+        with running_server(core, authority_transports_ready=True) as accepted_server:
+            accepted_status, _, accepted = request(accepted_server, "GET", "/readyz")
+
+        self.assertEqual(503, blocked_status)
+        self.assertEqual("not_ready", blocked["status"])
+        self.assertEqual(200, accepted_status)
+        self.assertEqual("ready", accepted["status"])
 
     def test_missing_authority_fails_before_verifiers_and_provider(self) -> None:
         external = FakeProvider("external", ProviderOrigin.EXTERNAL)
