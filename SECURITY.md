@@ -26,3 +26,9 @@ Before network-capable or privileged service operation is production-accepted, S
 - Stronger provider sandboxing/isolation plus retry, rate, cost, and abuse controls beyond the implemented timeout/cancellation foundation.
 - Dependency and artifact integrity.
 - Security testing and evidence.
+
+## Authenticated Index Delegation Candidate — 2026-09-21
+
+The Development source now rejects Index HTTP query execution unless injected producer-authoritative GoreeCloud Identity and Privacy Shield verifiers approve the expected `goreecloud-index` application identity and the one-operation capability reference. Request structure is validated before the capability is consumed, so malformed bodies cannot burn a valid single-use reference. Credentials and capability references are not returned in responses or ordinary request logs.
+
+This is source/CI evidence only. No production Identity verifier, Privacy Shield verifier transport, provider credential, reverse proxy, deployment, production security acceptance, or Stable qualification is established.
