@@ -26,7 +26,9 @@ This file records implemented behavior in the current development candidate. It 
 - Dedicated cycle-safe Index-originated delegation path using external-only primary providers with Index re-entry and fallback disabled.
 - Bounded authenticated Index HTTP source boundary with `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`.
 - Fail-closed injected GoreeCloud Identity bearer verification and Privacy Shield capability-reference verification/consumption before provider execution.
-- Production-shaped capability evidence that remains explicitly `production_accepted=false` until separate runtime acceptance.\n- Bounded Index-originated HTTP source boundary with capability discovery, JSON-body POST, health/readiness endpoints, injected GoreeCloud Identity requester verification, injected Privacy Shield capability-reference verification/consumption, strict request bounds, and generic fail-closed authorization errors.\n- Capability evidence is deliberately `production_accepted=false`; the source boundary is Development evidence rather than runtime or Production acceptance.
+- Production-shaped capability evidence that remains explicitly `production_accepted=false` until separate runtime acceptance.
+- Bounded Index-originated HTTP source boundary with capability discovery, JSON-body POST, health/readiness endpoints, injected GoreeCloud Identity requester verification, injected Privacy Shield capability-reference verification/consumption, strict request bounds, and generic fail-closed authorization errors.
+- Capability evidence is deliberately `production_accepted=false`; the source boundary is Development evidence rather than runtime or Production acceptance.
 - Enriched result candidates with canonical URL, source ID, content hash, language, crawl timestamp, and provider-contract provenance.
 - Conservative URL canonicalization, canonical-URL/content-hash deduplication, multi-provider source agreement, and provenance aggregation.
 - Fail-closed rejection of candidates from undeclared providers.
