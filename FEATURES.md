@@ -1,7 +1,7 @@
 # GoreeCloud Search — Current Features
 
 **Lifecycle:** Development  
-**Version:** `0.1.0.dev5`
+**Version:** `0.1.0.dev14`
 
 This file records implemented behavior in the current development candidate. It does not claim release, deployment, production acceptance, or Stable qualification.
 
@@ -23,7 +23,7 @@ This file records implemented behavior in the current development candidate. It 
 - Fail-closed rejection of provider batches that spoof another provider's provenance.
 - Versioned `goreecloud.search-index.v1` Search ↔ Index contract and first-party adapter boundary with injected transport.
 - Index category/capability negotiation, page-size enforcement, cursor pagination, repeated-cursor protection, and degraded/warning propagation.
-- Dedicated cycle-safe Index-originated delegation path using external-only primary providers with Index re-entry and fallback disabled.
+- Dedicated cycle-safe Index-originated delegation path using external-only primary providers with Index re-entry and fallback disabled.\n- Bounded Index-originated HTTP source boundary with capability discovery, JSON-body POST, health/readiness endpoints, injected GoreeCloud Identity requester verification, injected Privacy Shield capability-reference verification/consumption, strict request bounds, and generic fail-closed authorization errors.\n- Capability evidence is deliberately `production_accepted=false`; the source boundary is Development evidence rather than runtime or Production acceptance.
 - Enriched result candidates with canonical URL, source ID, content hash, language, crawl timestamp, and provider-contract provenance.
 - Conservative URL canonicalization, canonical-URL/content-hash deduplication, multi-provider source agreement, and provenance aggregation.
 - Fail-closed rejection of candidates from undeclared providers.
@@ -36,4 +36,4 @@ This file records implemented behavior in the current development candidate. It 
 
 ## Not implemented
 
-No authenticated live network provider ships in this candidate. The execution engine can run explicitly injected adapters, but the GoreeCloud Index adapter still has no authenticated runtime transport and no approved external network provider is included. No user-facing web UI, Browser integration, AI synthesis, persistent history, or production deployment exists yet.
+No approved live external provider, credential issuer, live Identity/Privacy Shield verifier transport, user-facing web UI, Browser integration, AI synthesis, persistent history, or production deployment ships in this candidate. The authenticated Index HTTP boundary is source/CI infrastructure only and is not automatically started or registered.
