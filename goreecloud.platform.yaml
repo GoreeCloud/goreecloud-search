@@ -17,10 +17,18 @@ api:
     - goreecloud.search-index.v1
     - '1'
   endpoints:
-    - GET /api/v1/status
-    - POST /api/v1/search
-    - GET /healthz
-    - GET /readyz
+    - name: search-capability-discovery
+      url: /api/v1/status
+      purpose: Development capability discovery for the bounded Index-originated Search contract.
+    - name: index-originated-search
+      url: /api/v1/search
+      purpose: Development authenticated JSON POST boundary for cycle-safe Index-originated Search delegation.
+    - name: service-health
+      url: /healthz
+      purpose: Development liveness surface; not accepted production health evidence.
+    - name: service-readiness
+      url: /readyz
+      purpose: Development source-level readiness surface; not accepted production readiness evidence.
 
 platform_systems:
   manager:
@@ -134,9 +142,7 @@ compatibility:
     - goreecloud-search-index-http-boundary-v1
 
 evidence:
-  acceptance_tests:
-    - tests/test_index_originated_delegation.py
-    - tests/test_index_http_api.py
+  acceptance_tests: []
   release: []
 
 conformance:
