@@ -22,7 +22,8 @@ This repository currently contains the first native implementation foundation:
 - Versioned Search ↔ GoreeCloud Index v1 contract models, transport-injected first-party adapter boundary, cursor pagination, and provider-reported degraded-state/warning propagation.
 - Conservative URL canonicalization, canonical-URL/content-hash deduplication, source agreement, and result provenance.
 - Deterministic ranking with inspectable scoring signals and human-readable result explanations.
-- A bounded Index-originated HTTP boundary exposing `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`; query execution requires an authenticated `goreecloud-index` requester plus a consumed `psc_*` Privacy Shield capability reference before `search_from_index(...)` can execute.\n- Unit tests and pull-request CI.
+- A bounded Index-originated HTTP boundary exposing `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`; query execution requires an authenticated `goreecloud-index` requester plus a consumed `psc_*` Privacy Shield capability reference before `search_from_index(...)` can execute.
+- Unit tests and pull-request CI.
 
 The repository now contains a source-level authenticated Index HTTP boundary, but it is not automatically started or deployed. Identity and Privacy Shield authorities are injected interfaces; no credential issuer, signing key, reusable token, live verifier endpoint, production provider credential, or deployment configuration is embedded. The development CLI still performs no network access.
 
