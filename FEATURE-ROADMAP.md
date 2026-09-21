@@ -6,6 +6,10 @@
 
 This is the repository-coupled roadmap source. Planned items remain implementation obligations until implemented and verified or explicitly superseded/cancelled.
 
+## Current verified Development checkpoint
+
+PR #23 is integrated on authoritative `main` at `7d79959e79ad4de13b807973347944bd92563fbe`. Post-merge CI run `35625485445` passed on that exact revision. The source now contains the bounded authenticated Index delegation HTTP boundary, but live GoreeCloud Identity and Privacy Shield verifier transports, approved external provider execution, deployment, representative runtime/client acceptance, Production acceptance, and Stable qualification remain open.
+
 ## Phase 0 — Native foundation
 
 **Status:** In implementation
@@ -33,7 +37,7 @@ The current topic branch is a candidate only; checkboxes remain incomplete until
 - [x] Add a cycle-safe Index-originated delegation source path that is external-only and cannot re-enter Index or create a fallback stage.
 - [ ] Verify Privacy Shield, Identity, Wardveil Security, and runtime authority boundaries for live Index requests.
 
-Completed checkboxes above describe the stacked development candidate only until that candidate is accepted onto the authoritative integration line.
+Completed checkboxes above describe behavior now accepted on the authoritative Development integration line where identified by the current verified checkpoint; they do not establish live authority transport, deployment, Production acceptance, or Stable qualification.
 
 ## Phase 2 — Search result pipeline
 
