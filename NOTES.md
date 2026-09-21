@@ -41,3 +41,9 @@ The initial ranker intentionally avoids provider-specific hidden boosts and beha
 ## Query-disclosure budget candidate
 
 The budget is enforced in source planning, before execution. It can reduce or eliminate third-party providers but cannot add a provider that the selected source mode, category, source filter, or provider configuration would otherwise exclude. A zero budget prevents external fallback execution rather than contacting an external provider and discarding its response afterward.
+
+## 2026-09-21 — Authenticated Index transport source candidate
+
+A fresh candidate from authoritative Contract 0.4 `main` adds the server-side HTTP half of Index → Search delegation while preserving `goreecloud.search-index-delegation.v1`, `external_only`, no Index re-entry, and no fallback. GoreeCloud Identity and Privacy Shield remain injected producer-authoritative verifier interfaces. Capability evidence is production-shaped but explicitly not production accepted.
+
+No live verifier, approved external provider, deployment, Production acceptance, or Stable qualification is implied.

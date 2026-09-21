@@ -26,3 +26,9 @@ Any live network provider transport, remote suggestion, synchronization, account
 ## Development warning
 
 This document describes the current repository implementation. It does not claim that a future hosted deployment has the same data flows until that deployment is separately verified.
+
+## Authenticated Index Delegation Candidate — 2026-09-21
+
+The Development HTTP boundary accepts only `query`, `category`, and `limit` in the request body. The GoreeCloud Identity credential and opaque Privacy Shield capability reference use separate headers and are not included in Search results or ordinary request logging. Request syntax is validated before the capability-reference verifier is asked to consume the one-operation reference.
+
+No live authority service, approved external provider, retained search history, production processing, or deployment is enabled by this candidate.

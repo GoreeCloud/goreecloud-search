@@ -7,7 +7,7 @@ component:
   repository: GoreeCloud/goreecloud-search
 
 lifecycle: development
-version: 0.1.0.dev5
+version: 0.1.0.dev14
 
 supported_platforms:
   - linux
@@ -15,7 +15,20 @@ supported_platforms:
 api:
   versions:
     - goreecloud.search-index.v1
-  endpoints: []
+    - '1'
+  endpoints:
+    - name: search-capability-discovery
+      url: /api/v1/status
+      purpose: Development capability discovery for the bounded Index-originated Search contract.
+    - name: index-originated-search
+      url: /api/v1/search
+      purpose: Development authenticated JSON POST boundary for cycle-safe Index-originated Search delegation.
+    - name: service-health
+      url: /healthz
+      purpose: Development liveness surface; not accepted production health evidence.
+    - name: service-readiness
+      url: /readyz
+      purpose: Development source-level readiness surface; not accepted production readiness evidence.
 
 platform_systems:
   manager:
@@ -33,7 +46,7 @@ platform_systems:
       - README.md
       - PRIVACY POLICY.md
       - FEATURE-ROADMAP.md
-    notes: Search has privacy-aware source planning and bounded third-party query disclosure, but no accepted producer-authoritative Privacy Shield runtime decision adapter or production acceptance exists.
+    notes: Search has privacy-aware planning plus a Development source boundary that requires an injected producer-authoritative Privacy Shield capability-reference verifier with exact expected claims and single-use consumption before Index-originated execution. No accepted live verifier transport, receipt/evidence integration, or production acceptance exists.
 
   wardveil_security:
     result: applicable-blocked
@@ -77,7 +90,7 @@ platform_systems:
       - README.md
       - SECURITY.md
       - FEATURE-ROADMAP.md
-    notes: GoreeCloud Identity is required before authenticated or protected service operation is accepted, but authoritative main has no authenticated live provider transport or accepted Identity integration.
+    notes: The Development candidate requires an injected GoreeCloud Identity verifier and binds the authenticated requester exactly to goreecloud-index before Search execution. No accepted live Identity transport, token issuer/format, isolation, revocation, or production acceptance exists.
 
   policy:
     result: applicable-blocked
@@ -93,11 +106,11 @@ platform_systems:
     evidence:
       - FEATURE-ROADMAP.md
       - SECURITY.md
-    notes: GoreeCloud Observability is applicable to health, readiness, provider diagnostics, latency, failures, degradation, and operational evidence, but no accepted Observability integration or health/readiness publication exists on authoritative main.
+    notes: The Development candidate exposes bounded source-level health and readiness endpoints, but no accepted Observability integration, target-runtime publication, signal freshness, alerting, or operational acceptance exists.
 
 health:
-  health_endpoint: null
-  readiness_endpoint: null
+  health_endpoint: /healthz
+  readiness_endpoint: /readyz
 
 continuity:
   backup:
@@ -124,6 +137,9 @@ compatibility:
     - goreecloud.search-index.v1
     - goreecloud-search-provider-execution
     - goreecloud-search-query-disclosure-budget
+    - goreecloud-search-authenticated-index-delegation-http-v1
+    - goreecloud.search-index-delegation.v1
+    - goreecloud-search-index-http-boundary-v1
 
 evidence:
   acceptance_tests: []
@@ -140,14 +156,14 @@ conformance:
     - NOTES.md
   blockers:
     - GoreeCloud Manager operational integration and acceptance are incomplete.
-    - Producer-authoritative Privacy Shield runtime integration and acceptance are incomplete.
+    - Producer-authoritative Privacy Shield source verification is present for the Index HTTP candidate, but live verifier transport, evidence/receipt integration, runtime acceptance, and production acceptance are incomplete.
     - Wardveil Security runtime evidence and production security acceptance are incomplete.
     - GoreeCloud Mesh discovery, dependency, capability, and runtime coordination acceptance are incomplete.
-    - GoreeCloud Identity authentication, authorization, isolation, revocation, and runtime acceptance are incomplete.
+    - GoreeCloud Identity requester verification is required by the Index HTTP candidate, but live authentication transport, issuer/credential policy, authorization, isolation, revocation, and runtime acceptance are incomplete.
     - GoreeCloud Policy decision, enforcement, freshness, explanation, and evidence integration are incomplete.
-    - GoreeCloud Observability health, readiness, diagnostics, performance, freshness, and operational evidence integration are incomplete.
-    - Search exposes no accepted health/readiness interfaces.
-    - Authoritative main ships no authenticated live provider transport or approved external network provider.
+    - Source-level health/readiness endpoints exist in the candidate, but GoreeCloud Observability diagnostics, performance, freshness, alerting, and operational acceptance are incomplete.
+    - Candidate source exposes health/readiness interfaces, but no target-runtime or production health/readiness acceptance exists.
+    - The candidate adds a bounded authenticated Index HTTP source boundary, but it is not automatically started or deployed and no approved live external network provider is present.
     - No accepted GoreeCloud-controlled Search UI exists; Glaze UI remains not applicable to the current authoritative runtime slice and must be re-evaluated before UI acceptance.
     - Persistent-state continuity requirements remain not applicable to the current authoritative runtime slice and must be re-evaluated before persistent or recovery-critical state is accepted.
     - No Stable or production-approved GoreeCloud Search release evidence is declared.

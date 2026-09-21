@@ -15,5 +15,6 @@ All notable verified changes to GoreeCloud Search will be recorded here.
 - Optional per-query third-party disclosure budgets enforced during source planning, before any provider execution.
 - Source-plan evidence recording third-party provider count, applied disclosure cap, and omitted providers.
 - Cycle-safe Index-originated Search delegation contract and external-only execution path that prohibits recursive Index re-entry and fallback.
+- Development `0.1.0.dev14` authenticated Index HTTP boundary with capability discovery, bounded JSON POST, Identity requester verification, Privacy Shield capability-reference verification/consumption, health/readiness behavior, and fail-closed cycle-safe dispatch. The advertised capability remains explicitly not production accepted.
 
 No release, deployment, production acceptance, or Stable qualification is claimed by these unreleased changes.

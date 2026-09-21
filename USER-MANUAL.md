@@ -2,7 +2,7 @@
 
 ## Current status
 
-GoreeCloud Search is in Development. Version `0.1.0.dev5` is a developer-facing foundation and is not a complete search engine release.
+GoreeCloud Search is in Development. Version `0.1.0.dev14` is a developer-facing foundation and is not a complete search engine release.
 
 ## Install for development
 
@@ -42,4 +42,4 @@ The Python API can apply `QueryDisclosureBudget(max_third_party_providers=N)` wh
 
 ## Current limitations
 
-Authenticated live search transport, Browser integration, approved external-provider federation, Private View, AI answers, history, synchronization, and production administration are not implemented yet. The developer core includes provider execution orchestration, Index pagination, and disclosure budgeting, but no authenticated live Index transport or approved external network adapter ships with it.
+The repository now includes a developer-facing authenticated Index HTTP source boundary, but it is not a user-facing search surface and is not production accepted. It requires injected GoreeCloud Identity and Privacy Shield verifier implementations and an eligible external provider before query execution can succeed. Browser integration, approved external-provider federation, live authority-service connectivity, Private View, AI answers, history, synchronization, production administration, deployment, and Stable qualification remain unimplemented or unaccepted.

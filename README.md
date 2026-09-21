@@ -3,8 +3,8 @@
 GoreeCloud Search is the privacy-first, self-hostable search and information-discovery service for the GoreeCloud ecosystem.
 
 > **Lifecycle:** Development  
-> **Version:** `0.1.0.dev5`  
-> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution orchestration, a versioned GoreeCloud Index contract boundary with pagination, Search-owned normalization/deduplication, and deterministic explainable ranking. No authenticated live provider transport ships in this revision.
+> **Version:** `0.1.0.dev14`  
+> **Current scope:** Native query parsing, privacy-aware source planning, bounded provider execution orchestration, a versioned GoreeCloud Index contract boundary with pagination, cycle-safe Index-originated delegation, and a bounded authenticated Index HTTP boundary with injected Identity and Privacy Shield verifiers. No real credentials, approved live external provider, deployment, Production acceptance, or Stable qualification are established.
 
 ## What exists now
 
@@ -22,9 +22,10 @@ This repository currently contains the first native implementation foundation:
 - Versioned Search ↔ GoreeCloud Index v1 contract models, transport-injected first-party adapter boundary, cursor pagination, and provider-reported degraded-state/warning propagation.
 - Conservative URL canonicalization, canonical-URL/content-hash deduplication, source agreement, and result provenance.
 - Deterministic ranking with inspectable scoring signals and human-readable result explanations.
+- A bounded Index-originated HTTP boundary exposing `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`; query execution requires an authenticated `goreecloud-index` requester plus a consumed `psc_*` Privacy Shield capability reference before `search_from_index(...)` can execute.
 - Unit tests and pull-request CI.
 
-The repository ships no authenticated live provider transport. The development CLI performs no network access. The execution engine can invoke explicitly injected provider adapters, so any future network-capable adapter must satisfy the applicable privacy, identity, security, and deployment controls before acceptance.
+The repository now contains a source-level authenticated Index HTTP boundary, but it is not automatically started or deployed. Identity and Privacy Shield authorities are injected interfaces; no credential issuer, signing key, reusable token, live verifier endpoint, production provider credential, or deployment configuration is embedded. The development CLI still performs no network access.
 
 ## Development use
 
@@ -81,11 +82,11 @@ Search now has a dedicated source-level `SearchCore.search_from_index(...)` path
 
 The source contract identifier is `goreecloud.search-index-delegation.v1`, with mode `external_only`, Index-provider re-entry disabled, and fallback disabled.
 
-This prevents the architectural cycle `Index → Search → Index` at the Search planning/execution boundary. It does **not** add an authenticated transport, HTTP endpoint, provider credential, live external provider, Identity registration, Privacy Shield runtime acceptance, deployment, or production approval.
+This prevents the architectural cycle `Index → Search → Index` at the Search planning/execution boundary. The current candidate adds a bounded HTTP carrier around that path, but it does **not** provide real Identity credentials, a live Privacy Shield verifier, an approved external provider, deployment, Production acceptance, or Stable qualification.
 
 ## Privacy boundary
 
-The planning layer distinguishes third-party query disclosure, can apply an explicit per-query third-party-provider disclosure budget, and fails closed for source modes that prohibit disclosure. The execution layer runs only providers already admitted by that plan, applies bounded concurrency/timeouts, and reports degraded or unavailable states instead of silently substituting providers. No authenticated live network adapter is shipped; future network-capable adapters must integrate applicable GoreeCloud Identity, Privacy Shield, Wardveil Security, and other platform controls before production acceptance.
+The planning layer distinguishes third-party query disclosure, can apply an explicit per-query third-party-provider disclosure budget, and fails closed for source modes that prohibit disclosure. The Index HTTP boundary authenticates the requester through an injected GoreeCloud Identity verifier and requires producer-authoritative Privacy Shield capability-reference verification with `consume=true` after bounded request-shape validation and before Search execution. The execution layer still runs only externally originated providers admitted by the cycle-safe plan. Wardveil Security, live verifier transports, approved providers, target-runtime controls, deployment, and production acceptance remain separate blockers.
 
 ## Status integrity
 
@@ -93,4 +94,4 @@ A branch, pull request, passing CI run, configuration declaration, or documented
 
 ## Current implementation expansion
 
-The current stacked development candidate adds the versioned `goreecloud.search-index.v1` contract, a first-party Index provider adapter boundary with pagination, bounded provider execution/fallback behavior, Search-owned result normalization/deduplication, deterministic ranking, and pre-execution third-party query-disclosure budgeting. Authenticated live Index connectivity and runtime Platform-System enforcement remain unimplemented and are not implied by these interfaces.
+The current Development candidate adds the bounded authenticated Index HTTP carrier around the accepted cycle-safe source contract. It advertises a production-shaped `search.query` capability but explicitly sets `production_accepted=false`; live Identity/Privacy Shield verification transports, approved external provider execution, deployment, runtime Platform-System acceptance, Production, and Stable remain unestablished.

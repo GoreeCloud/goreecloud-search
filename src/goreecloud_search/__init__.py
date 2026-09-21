@@ -18,6 +18,17 @@ from .index_contract import (
     IndexSearchResponse,
 )
 from .index_provider import GoreeCloudIndexProvider, IndexTransport
+from .index_http_api import (
+    AuthenticatedRequester,
+    IndexHTTPBoundaryError,
+    PrivacyCapabilityVerification,
+    PrivacyCapabilityVerificationRequest,
+    PrivacyCapabilityVerifier,
+    RequesterIdentityVerifier,
+    SearchIndexHTTPServer,
+    capability_record,
+    create_index_http_server,
+)
 from .models import ParsedQuery, ProviderDescriptor, ProviderOrigin, QueryDisclosureBudget, QueryFilters, SearchCategory, SourceMode, SourcePlan, SourcePlanStep
 from .normalization import NormalizedResult, ResultNormalizationError, ResultProvenance, canonicalize_url, normalize_and_deduplicate
 from .planner import (
@@ -52,5 +63,8 @@ __all__ = [
     "INDEX_ORIGINATED_DELEGATION_MODE",
     "INDEX_ORIGINATED_INDEX_PROVIDER_REENTRY_ALLOWED",
     "INDEX_ORIGINATED_FALLBACK_ALLOWED",
-    "SearchCore",
+    "SearchCore", "AuthenticatedRequester", "IndexHTTPBoundaryError",
+    "PrivacyCapabilityVerification", "PrivacyCapabilityVerificationRequest",
+    "PrivacyCapabilityVerifier", "RequesterIdentityVerifier", "SearchIndexHTTPServer",
+    "capability_record", "create_index_http_server",
 ]
