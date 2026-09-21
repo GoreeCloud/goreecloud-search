@@ -85,7 +85,7 @@ This prevents the architectural cycle `Index → Search → Index` at the Search
 
 ## Privacy boundary
 
-The planning layer distinguishes third-party query disclosure, can apply an explicit per-query third-party-provider disclosure budget, and fails closed for source modes that prohibit disclosure. The Index HTTP boundary authenticates the requester through an injected GoreeCloud Identity verifier and requires producer-authoritative Privacy Shield capability-reference verification with `consume=true` before parsing/executing the query. The execution layer still runs only externally originated providers admitted by the cycle-safe plan. Wardveil Security, live verifier transports, approved providers, target-runtime controls, deployment, and production acceptance remain separate blockers.
+The planning layer distinguishes third-party query disclosure, can apply an explicit per-query third-party-provider disclosure budget, and fails closed for source modes that prohibit disclosure. The Index HTTP boundary authenticates the requester through an injected GoreeCloud Identity verifier and requires producer-authoritative Privacy Shield capability-reference verification with `consume=true` after bounded request-shape validation and before Search execution. The execution layer still runs only externally originated providers admitted by the cycle-safe plan. Wardveil Security, live verifier transports, approved providers, target-runtime controls, deployment, and production acceptance remain separate blockers.
 
 ## Status integrity
 
