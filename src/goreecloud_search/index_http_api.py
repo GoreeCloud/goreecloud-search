@@ -116,9 +116,18 @@ def _json_loads_strict(body: bytes) -> Any:
     def reject_constant(value: str) -> None:
         raise ValueError(f"unsupported JSON constant: {value}")
 
+    def reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON field: {key}")
+            result[key] = value
+        return result
+
     return json.loads(
         body.decode("utf-8"),
         parse_constant=reject_constant,
+        object_pairs_hook=reject_duplicate_keys,
     )
 
 
@@ -372,15 +381,15 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            self._authenticate()
-        except IndexHTTPBoundaryError:
-            self._send_json(401, {"error": "authorization_required"}, authenticate=True)
-            return
-
-        try:
             query, limit = self._read_search_request()
         except IndexHTTPBoundaryError:
             self._send_json(400, {"error": "invalid_search_request"})
+            return
+
+        try:
+            self._authenticate()
+        except IndexHTTPBoundaryError:
+            self._send_json(401, {"error": "authorization_required"}, authenticate=True)
             return
 
         try:
