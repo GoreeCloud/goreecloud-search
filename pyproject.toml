@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "goreecloud-search"
-version = "0.1.0.dev5"
-description = "Privacy-first GoreeCloud Search core with transparent source planning, bounded provider execution, query-disclosure budgets, Index contracts, normalization, and deterministic ranking."
+version = "0.1.0.dev14"
+description = "Privacy-first GoreeCloud Search core with bounded authenticated Index delegation, transparent source planning, provider execution, normalization, and deterministic ranking."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
