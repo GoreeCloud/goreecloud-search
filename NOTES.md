@@ -14,6 +14,14 @@ The repository's authoritative `main` line was initialized on September 16, 2026
 - No external provider is silently substituted when a privacy-restrictive source mode is selected.
 - This version is Development only.
 
+## Index-originated cycle-safety decision
+
+The dedicated Index-originated path is intentionally not the ordinary Search `INDEX_FIRST` path. It is fixed to external-only planning so an Index request cannot be routed back into the GoreeCloud Index provider or another first-party/local provider and cannot fall back into Index after an external failure.
+
+This is a source-level readiness contract only. Search still has no authenticated live Index-originated HTTP transport on authoritative `main`.
+
+Authoritative `main` now carries the accepted Platform Contract 0.4 nine-system declaration from PR #22. This cycle-safety candidate inherits that control plane without changing its Development/nonconformant status; runtime Platform-System acceptance remains separate and blocked.
+
 ## Open decisions
 
 - Final production service/runtime framework.

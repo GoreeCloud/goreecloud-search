@@ -17,6 +17,12 @@ class SourcePlanningError(ValueError):
     """Raised when no provider can satisfy the requested plan."""
 
 
+INDEX_ORIGINATED_DELEGATION_CONTRACT_VERSION = "goreecloud.search-index-delegation.v1"
+INDEX_ORIGINATED_DELEGATION_MODE = SourceMode.EXTERNAL_ONLY.value
+INDEX_ORIGINATED_INDEX_PROVIDER_REENTRY_ALLOWED = False
+INDEX_ORIGINATED_FALLBACK_ALLOWED = False
+
+
 def _eligible(query: ParsedQuery, providers: Iterable[ProviderDescriptor]) -> list[ProviderDescriptor]:
     requested_sources = set(query.filters.sources)
     eligible = [
@@ -121,3 +127,32 @@ def plan_sources(
         disclosure_budget=maximum,
         third_party_providers_omitted=omitted_by_budget,
     )
+
+
+def plan_index_originated_delegation(
+    query: ParsedQuery,
+    providers: Iterable[ProviderDescriptor],
+    *,
+    disclosure_budget: QueryDisclosureBudget | None = None,
+) -> SourcePlan:
+    """Plan an Index-originated Internet/web delegation without recursive Index re-entry.
+
+    Index is the caller on this path, so Search may execute only explicitly configured
+    external providers. The caller cannot select INDEX_FIRST/FEDERATED behavior, Search
+    cannot execute a GOREECLOUD_INDEX/GOREECLOUD_SERVICE/LOCAL provider, and no fallback
+    stage is permitted.
+    """
+
+    plan = plan_sources(
+        query,
+        SourceMode.EXTERNAL_ONLY,
+        providers,
+        disclosure_budget=disclosure_budget,
+    )
+    if plan.mode is not SourceMode.EXTERNAL_ONLY:
+        raise AssertionError("Index-originated delegation must remain external-only")
+    if any(step.stage != "primary" for step in plan.steps):
+        raise AssertionError("Index-originated delegation must not create fallback stages")
+    if any(step.origin is not ProviderOrigin.EXTERNAL for step in plan.steps):
+        raise AssertionError("Index-originated delegation must not re-enter GoreeCloud Index or another non-external provider")
+    return plan

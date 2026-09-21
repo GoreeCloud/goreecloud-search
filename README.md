@@ -69,6 +69,20 @@ GoreeCloud   optional
 
 The current development candidates implement the query/parser, source-planning, bounded provider execution, Search ↔ Index contract/pagination, normalization/deduplication, and initial deterministic ranking layers. See `FEATURE-ROADMAP.md` for planned work and `FEATURES.md` for current implementation state.
 
+## Cycle-safe Index-originated delegation
+
+Search now has a dedicated source-level `SearchCore.search_from_index(...)` path for a future request that originates from GoreeCloud Index. This path is deliberately different from Search's ordinary `INDEX_FIRST` behavior:
+
+- it always plans with `EXTERNAL_ONLY`;
+- every selected step must be a primary `ProviderOrigin.EXTERNAL` provider;
+- `GOREECLOUD_INDEX`, `GOREECLOUD_SERVICE`, and `LOCAL` providers are excluded;
+- no fallback stage is permitted;
+- an Index-only configuration, an Index-directed `source:` filter, or a zero third-party-disclosure budget fails before provider dispatch.
+
+The source contract identifier is `goreecloud.search-index-delegation.v1`, with mode `external_only`, Index-provider re-entry disabled, and fallback disabled.
+
+This prevents the architectural cycle `Index → Search → Index` at the Search planning/execution boundary. It does **not** add an authenticated transport, HTTP endpoint, provider credential, live external provider, Identity registration, Privacy Shield runtime acceptance, deployment, or production approval.
+
 ## Privacy boundary
 
 The planning layer distinguishes third-party query disclosure, can apply an explicit per-query third-party-provider disclosure budget, and fails closed for source modes that prohibit disclosure. The execution layer runs only providers already admitted by that plan, applies bounded concurrency/timeouts, and reports degraded or unavailable states instead of silently substituting providers. No authenticated live network adapter is shipped; future network-capable adapters must integrate applicable GoreeCloud Identity, Privacy Shield, Wardveil Security, and other platform controls before production acceptance.

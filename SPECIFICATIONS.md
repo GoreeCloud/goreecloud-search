@@ -50,6 +50,16 @@ These remain planned and must not be represented as implemented until code and v
 
 The development candidate defines `goreecloud.search-index.v1` as the first versioned in-process contract model between Search and a future authenticated GoreeCloud Index transport. Search owns query planning, normalization, deduplication, source agreement, and user-facing ranking. Index supplies document candidates and index-specific provenance. The adapter is transport-injected, supports bounded multi-page retrieval, and reports Index degraded state/warnings to the execution layer. It does not establish live connectivity, authentication, authorization, privacy acceptance, or production runtime integration.
 
+## Index-originated delegation boundary
+
+A future request originating from GoreeCloud Index must use the dedicated cycle-safe contract `goreecloud.search-index-delegation.v1`.
+
+That path is fixed to `external_only` planning. It cannot accept a caller-selected source mode, cannot execute a `GOREECLOUD_INDEX`, `GOREECLOUD_SERVICE`, or `LOCAL` provider, and cannot create a fallback stage. If no approved external provider remains after source filters and the third-party disclosure budget are applied, planning fails before dispatch.
+
+The ordinary Search user/service path may still use `index_first` or other source modes. The dedicated Index-originated path exists specifically to prevent recursive `Index → Search → Index` execution.
+
+No live network transport or approved external provider is introduced by this source contract.
+
 ## Ranking boundary
 
 The current ranker uses transparent deterministic signals derived from parsed query and normalized result evidence: quoted-phrase matches, title/snippet term matches, explicit site/filetype/language matches, and a bounded source-agreement bonus. GoreeCloud Index presence is exposed as provenance with zero ranking weight. Provider rank, click history, advertising payment, cross-query profiles, and hidden behavioral signals are not used.

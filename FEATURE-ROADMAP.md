@@ -14,7 +14,8 @@ This is the repository-coupled roadmap source. Planned items remain implementati
 - [ ] Merge and verify privacy-aware source planning.
 - [ ] Merge and verify the replaceable provider contract.
 - [ ] Merge and verify baseline CI and test coverage.
-- [ ] Reconcile required repository documentation and Platform-System declarations.
+- [x] Reconcile required repository Platform Contract declaration to Contract 0.4 with all nine Integral Platform Systems.
+  - PR #22 is accepted on authoritative `main`; runtime Platform-System implementation and acceptance remain separate Development/nonconformant obligations.
 
 The current topic branch is a candidate only; checkboxes remain incomplete until accepted on the authoritative integration line with required verification.
 
@@ -28,6 +29,7 @@ The current topic branch is a candidate only; checkboxes remain incomplete until
 - [ ] Add authenticated live Index transport.
 - [x] Add timeout, cancellation, pagination execution, and degraded-state behavior.
 - [x] Add Index provenance fields required for later ranking and result explanations.
+- [x] Add a cycle-safe Index-originated delegation source path that is external-only and cannot re-enter Index or create a fallback stage.
 - [ ] Verify Privacy Shield, Identity, Wardveil Security, and runtime authority boundaries for live Index requests.
 
 Completed checkboxes above describe the stacked development candidate only until that candidate is accepted onto the authoritative integration line.
