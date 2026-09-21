@@ -66,10 +66,10 @@ Normalization deliberately does not rerank results. Ranking is a separate Search
 
 **Status:** Planned
 
-- Versioned HTTP API.
-- Health/readiness endpoints.
-- GoreeCloud Identity authentication and requester identity.
-- Privacy Shield permitted-use enforcement.
+- [x] Add a bounded versioned Index-delegation HTTP source boundary.
+- [x] Add source-level health/readiness endpoints; accepted Observability runtime integration remains open.
+- [ ] Connect GoreeCloud Identity authentication/requester verification to its authoritative runtime service.
+- [ ] Connect Privacy Shield capability-reference verification/consumption to its authoritative runtime service.
 - Wardveil Security trust/risk enforcement.
 - GoreeCloud Mesh discovery and integration contracts.
 - GoreeCloud Manager administrative state.
