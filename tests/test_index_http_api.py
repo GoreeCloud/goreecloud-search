@@ -282,6 +282,31 @@ class IndexHTTPAPITests(unittest.TestCase):
         self.assertEqual("authorization_required", payload["error"])
         self.assertEqual(0, external.calls)
 
+    def test_query_control_characters_fail_closed_before_provider_execution(self) -> None:
+        for query in ("goreecloud\nmail", "goreecloud\tmail", "goreecloud\rmail", "goreecloud\x7fmail"):
+            with self.subTest(query=repr(query)):
+                external = FakeProvider("external", ProviderOrigin.EXTERNAL)
+                core = SearchCore(provider_adapters=(external,))
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer identity_test_token",
+                    "X-GoreeCloud-Privacy-Capability": "psc_test_reference",
+                }
+
+                with running_server(core) as server:
+                    body = json.dumps({"query": query, "category": "general", "limit": 1}).encode()
+                    status, _, payload = request(
+                        server,
+                        "POST",
+                        "/api/v1/search",
+                        headers=headers,
+                        body=body,
+                    )
+
+                self.assertEqual(400, status)
+                self.assertEqual("invalid_search_request", payload["error"])
+                self.assertEqual(0, external.calls)
+
     def test_search_get_and_unbounded_or_extra_json_fields_fail_closed(self) -> None:
         external = FakeProvider("external", ProviderOrigin.EXTERNAL)
         core = SearchCore(provider_adapters=(external,))
