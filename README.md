@@ -68,7 +68,7 @@ GoreeCloud   optional
   Index      providers
 ```
 
-The current development candidates implement the query/parser, source-planning, bounded provider execution, Search ↔ Index contract/pagination, normalization/deduplication, and initial deterministic ranking layers. See `FEATURE-ROADMAP.md` for planned work and `FEATURES.md` for current implementation state.
+The current development candidate implements the query/parser, source-planning, bounded provider execution, Search ↔ Index contract/pagination, normalization/deduplication, initial deterministic ranking, and the fail-closed authority-readiness boundary. See [`IMPLEMENTED-FEATURES.md`](IMPLEMENTED-FEATURES.md) for verified current behavior, [`PLANNED-FEATURES.md`](PLANNED-FEATURES.md) for open product/acceptance obligations, and [`CHANGELOGS.md`](CHANGELOGS.md) for current and historical change records.
 
 ## Cycle-safe Index-originated delegation
 
@@ -94,4 +94,4 @@ A branch, pull request, passing CI run, configuration declaration, or documented
 
 ## Current implementation expansion
 
-The current Development candidate adds the bounded authenticated Index HTTP carrier around the accepted cycle-safe source contract. It advertises a production-shaped `search.query` capability but explicitly sets `production_accepted=false`; live Identity/Privacy Shield verification transports, approved external provider execution, deployment, runtime Platform-System acceptance, Production, and Stable remain unestablished.
+The current Development candidate adds the bounded authenticated Index HTTP carrier around the accepted cycle-safe source contract and the PR #28 fail-closed runtime-readiness condition. It advertises a production-shaped `search.query` capability but explicitly sets `production_accepted=false`; live Identity/Privacy Shield verification transports, approved external provider execution, deployment, runtime Platform-System acceptance, Production, and Stable remain unestablished.
