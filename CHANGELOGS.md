@@ -1,0 +1,116 @@
+# GoreeCloud Search — Changelogs
+
+**Record type:** Authoritative repository changelog index and current change history  
+**Repository:** `GoreeCloud/goreecloud-search`  
+**Lifecycle:** Development / nonconformant  
+**Migration state:** Candidate on `migration/repository-feature-records`; becomes authoritative only after accepted merge to the protected default branch.  
+**Current evidence baseline:** `main` at `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6` (PR #28).  
+**Governing standard:** Standard — Repository Feature Tracking and Changelog Governance v1.0, effective September 22, 2026.
+
+## Authority and interpretation
+
+This file is the repository-local changelog authority for current and future GoreeCloud Search changes after migration. Historical Search chronology formerly stored in Google Drive is preserved under `docs/changelog-history/` as exact migrated provenance.
+
+Historical entries describe the state, repositories, candidates, deployments, release labels, and evidence that existed at their own dates. They do **not** override current authoritative `main`, current lifecycle, or current architecture. Earlier maintained-fork and prior native-line Production/RC/Stable language must therefore be read as exact-revision historical evidence rather than a claim about the current `0.1.0.dev14` native line.
+
+Draft/unmerged pull requests are not accepted changes. PR #29 remains candidate-only and is not recorded as implemented below.
+
+## Historical archive migrated from Google Drive
+
+Legacy Drive source: `Change Log — Search.docx`, file ID `1uEAtCFrxl8D3HnVxzRInMe92lRAiJKBv`.
+
+The complete converted chronology is preserved in four repository files so the long record remains reviewable without making this root index unwieldy:
+
+- [`docs/changelog-history/2026-08-16-to-2026-08-19.md`](docs/changelog-history/2026-08-16-to-2026-08-19.md)
+- [`docs/changelog-history/2026-08-21-to-2026-08-23.md`](docs/changelog-history/2026-08-21-to-2026-08-23.md)
+- [`docs/changelog-history/2026-08-24-to-2026-08-31.md`](docs/changelog-history/2026-08-24-to-2026-08-31.md)
+- [`docs/changelog-history/2026-09-01-to-2026-09-09.md`](docs/changelog-history/2026-09-01-to-2026-09-09.md)
+
+Those archives preserve the meaningful historical chronology of the retired Drive changelog, including maintained-fork development, deployment/release evidence, native rebuild work, Sync/provider/ranking work, platform and Glaze checkpoints, and later stabilization. They are historical provenance, not a shadow current-state authority.
+
+## Current native-line changelog
+
+### September 22, 2026 — Repository feature/changelog governance migration candidate
+
+- Added root `IMPLEMENTED-FEATURES.md`, `PLANNED-FEATURES.md`, and `CHANGELOGS.md` under the repository-native governance standard.
+- Migrated the complete legacy Drive changelog into repository history archives.
+- Reconciled former root `FEATURE-ROADMAP.md` and the broader Drive planned-capabilities record into implemented/open feature inventories.
+- Retired root `FEATURE-ROADMAP.md` from the migration branch after its material obligations were dispositioned.
+- Migrated the content of the former root singular `CHANGELOG.md` into this authoritative changelog and retired the singular file to prevent split changelog authority.
+- Reconciled README and repository notes to the new records/current baseline.
+- Added a focused repository-governance test to require the three root records and reject the two retired root filenames.
+- No runtime source, deployment, provider, authority-service, lifecycle, Production, Release Candidate, or Stable state is changed by this migration.
+- Google Drive sources remain undeleted until this migration is merged, authoritative `main` is read back successfully, and the deletion gate is satisfied.
+
+### September 21, 2026 — PR #28: fail closed readiness until authority transports are accepted
+
+- Merged PR #28 to authoritative `main` as `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`.
+- `/readyz` now requires at least one enabled external provider **and** explicit host-supplied `authority_transports_ready=true` before reporting ready.
+- The authority-transport readiness signal defaults false and does not bypass per-request Identity or Privacy Shield verification.
+- Exact-main CI run #78 / `35662686554` passed and Platform Contract run #20 / `35662687737` passed.
+- Search remains Development/nonconformant; no live authority transport, approved external provider, deployment, Production Acceptance, or Stable qualification is established.
+
+### September 21, 2026 — PR #27: main-state documentation reconciliation
+
+- Reconciled documentation to the integrated authenticated Index-delegation boundary without runtime changes.
+- Preserved the distinction between runtime-bearing exact revisions and later documentation-only checkpoints.
+- Historical stacked branches remain provenance only and do not override `main`.
+
+### September 21, 2026 — PR #24: roadmap reconciliation after authenticated Index boundary
+
+- Reconciled the then-current roadmap to verified PR #23 integration.
+- Documentation-only; did not connect live Identity/Privacy Shield services, approve an external provider, deploy Search, or change lifecycle.
+
+### September 21, 2026 — PR #23: authenticated Index delegation HTTP boundary
+
+- Integrated the bounded server-side Index delegation HTTP carrier.
+- Added `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`.
+- Required injected GoreeCloud Identity requester verification and producer-authoritative Privacy Shield capability verification/consumption before query dispatch.
+- Preserved the cycle-safe `goreecloud.search-index-delegation.v1` external-only/no-reentry/no-fallback contract.
+- Capability evidence remained explicitly `production_accepted=false`.
+- Exact candidate CI and Platform Contract checks passed; post-merge CI passed on the runtime-bearing revision recorded in repository notes.
+
+### September 21, 2026 — PR #22: Platform Contract 0.4 reconciliation
+
+- Migrated the repository control plane to Platform Contract 0.4 and declared exactly the nine Integral Platform Systems.
+- Preserved lifecycle `development` and overall `nonconformant` state.
+- Added the pinned repository Platform Contract workflow.
+- Did not change Search runtime behavior or establish platform-system runtime acceptance.
+
+### September 21, 2026 — PR #21: cycle-safe Index-originated Search delegation
+
+- Added `goreecloud.search-index-delegation.v1` and `SearchCore.search_from_index(...)`.
+- Forced Index-originated requests to external-only providers, prohibited Index/service/local provider re-entry, and prohibited fallback to Index.
+- Preserved separate ordinary Search source modes for non-Index callers.
+- Source/CI integration only; no live transport, credentials, approved provider, deployment, Production, or Stable claim.
+
+## Migrated former root `CHANGELOG.md` state
+
+The former singular changelog recorded the following implemented current-native foundations, all now represented in `IMPLEMENTED-FEATURES.md` and the current entries above:
+
+- native query model/parser and privacy-aware planning;
+- versioned Search ↔ Index contract and pagination;
+- normalization/deduplication/source agreement/provenance;
+- deterministic Search-owned ranking and result explanations;
+- bounded asynchronous provider execution and failure isolation;
+- query-disclosure budgets and source-plan evidence;
+- cycle-safe Index-originated delegation; and
+- the authenticated Index HTTP source boundary.
+
+The former file explicitly made no release, deployment, Production Acceptance, or Stable claim; that boundary is preserved here.
+
+## Drive retirement gate
+
+The Drive changelog and planned-feature source are migration sources only. They must not be deleted until:
+
+1. this migration is merged through the protected-branch workflow;
+2. required checks pass on the exact candidate;
+3. the three root records and historical archive are read back from authoritative `main`;
+4. the retired root files are confirmed absent; and
+5. the repository-side historical/feature reconciliation is confirmed complete.
+
+Only after those gates pass may the successfully migrated Drive sources be deleted and their absence independently verified. The deletion event must then be recorded here.
+
+## Maintenance rule
+
+Record meaningful implementation, lifecycle, migration, security/privacy, compatibility, deployment, recovery, and release changes here with exact evidence where relevant. Preserve prior entries. Do not rewrite historical evidence merely because current architecture or lifecycle differs.
