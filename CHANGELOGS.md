@@ -9,7 +9,7 @@
 
 ## Authority and interpretation
 
-This file is the repository-local changelog authority for current and future GoreeCloud Search changes after migration. Historical Search chronology formerly stored in Google Drive is preserved under `docs/changelog-history/` as exact migrated provenance.
+This file is the repository-local changelog authority for current and future GoreeCloud Search changes after migration. Historical Search chronology formerly stored in Google Drive is preserved under `docs/changelog-history/` as normalized migrated provenance.
 
 Historical entries describe the state, repositories, candidates, deployments, release labels, and evidence that existed at their own dates. They do **not** override current authoritative `main`, current lifecycle, or current architecture. Earlier maintained-fork and prior native-line Production/RC/Stable language must therefore be read as exact-revision historical evidence rather than a claim about the current `0.1.0.dev14` native line.
 
@@ -19,12 +19,16 @@ Draft/unmerged pull requests are not accepted changes. PR #29 remains candidate-
 
 Legacy Drive source: `Change Log — Search.docx`, file ID `1uEAtCFrxl8D3HnVxzRInMe92lRAiJKBv`.
 
-The complete converted chronology is preserved in four repository files so the long record remains reviewable without making this root index unwieldy:
+The complete meaningful chronology is normalized into eight repository archive files so all 77 dated Drive entries remain represented without making this root index unwieldy:
 
-- [`docs/changelog-history/2026-08-16-to-2026-08-19.md`](docs/changelog-history/2026-08-16-to-2026-08-19.md)
-- [`docs/changelog-history/2026-08-21-to-2026-08-23.md`](docs/changelog-history/2026-08-21-to-2026-08-23.md)
-- [`docs/changelog-history/2026-08-24-to-2026-08-31.md`](docs/changelog-history/2026-08-24-to-2026-08-31.md)
-- [`docs/changelog-history/2026-09-01-to-2026-09-09.md`](docs/changelog-history/2026-09-01-to-2026-09-09.md)
+- [`docs/changelog-history/legacy-drive-history-part-01.md`](docs/changelog-history/legacy-drive-history-part-01.md) — entries 1–10
+- [`docs/changelog-history/legacy-drive-history-part-02.md`](docs/changelog-history/legacy-drive-history-part-02.md) — entries 11–20
+- [`docs/changelog-history/legacy-drive-history-part-03.md`](docs/changelog-history/legacy-drive-history-part-03.md) — entries 21–30
+- [`docs/changelog-history/legacy-drive-history-part-04.md`](docs/changelog-history/legacy-drive-history-part-04.md) — entries 31–40
+- [`docs/changelog-history/legacy-drive-history-part-05.md`](docs/changelog-history/legacy-drive-history-part-05.md) — entries 41–50
+- [`docs/changelog-history/legacy-drive-history-part-06.md`](docs/changelog-history/legacy-drive-history-part-06.md) — entries 51–60
+- [`docs/changelog-history/legacy-drive-history-part-07.md`](docs/changelog-history/legacy-drive-history-part-07.md) — entries 61–70
+- [`docs/changelog-history/legacy-drive-history-part-08.md`](docs/changelog-history/legacy-drive-history-part-08.md) — entries 71–77
 
 Those archives preserve the meaningful historical chronology of the retired Drive changelog, including maintained-fork development, deployment/release evidence, native rebuild work, Sync/provider/ranking work, platform and Glaze checkpoints, and later stabilization. They are historical provenance, not a shadow current-state authority.
 
