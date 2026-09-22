@@ -2,7 +2,11 @@
 
 ## Current development baseline
 
-Authoritative `main` is `551b57c87ccf32619b75fb41950384389fa9efbd`. Runtime-bearing PR #23 is integrated beneath that documentation checkpoint at `7d79959e79ad4de13b807973347944bd92563fbe`, with post-merge CI run `35625485445` passing on that exact runtime revision. Search remains Development/nonconformant: live GoreeCloud Identity and Privacy Shield verifier transports, an approved external provider, deployment, representative runtime acceptance, Production acceptance, and Stable qualification remain open.
+Authoritative `main` is `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, the merge of PR #28, **Fail closed Search readiness until authority transports are accepted**. Exact-main CI run #78 / `35662686554` and Platform Contract run #20 / `35662687737` passed on that revision. Search remains Development/nonconformant: live GoreeCloud Identity and Privacy Shield verifier transports, an approved external provider, deployment, representative runtime acceptance, Production acceptance, and Stable qualification remain open.
+
+PR #29 is a separate Draft security candidate and is not authoritative current behavior unless and until it is accepted through the normal protected-branch workflow.
+
+The repository-native feature/changelog governance migration is carried on `migration/repository-feature-records`. Until that branch is accepted, the new root records remain migration candidates rather than default-branch authority.
 
 ## Design decisions
 
@@ -22,9 +26,9 @@ The cycle-safe contract and its bounded authenticated HTTP carrier are accepted 
 
 Authoritative `main` also carries the accepted Platform Contract 0.4 nine-system declaration from PR #22. Runtime Platform-System acceptance remains separate and blocked.
 
-## 2026-09-21 — Fail-closed runtime readiness candidate
+## 2026-09-21 — Fail-closed runtime readiness integrated
 
-The Index-originated HTTP server now requires an explicit host-supplied `authority_transports_ready` acceptance signal in addition to at least one enabled external provider before `/readyz` can return ready. The default is false. This prevents source-level provider configuration from overstating runtime readiness while live GoreeCloud Identity and Privacy Shield verifier transports remain unaccepted. The signal does not bypass per-request Identity or Privacy Shield verification and does not itself establish production acceptance.
+PR #28 merged the runtime-readiness condition into authoritative `main`. The Index-originated HTTP server requires an explicit host-supplied `authority_transports_ready` acceptance signal in addition to at least one enabled external provider before `/readyz` can return ready. The default is false. This prevents source-level provider configuration from overstating runtime readiness while live GoreeCloud Identity and Privacy Shield verifier transports remain unaccepted. The signal does not bypass per-request Identity or Privacy Shield verification and does not itself establish production acceptance.
 
 ## Open decisions
 
@@ -36,13 +40,15 @@ The Index-originated HTTP server now requires an explicit host-supplied `authori
 
 ## Historical stacked implementation provenance
 
-Earlier normalization, ranking, provider-execution, and disclosure-budget branches are development staging history. Their accepted behavior has since been integrated into the authoritative Development line. Historical branch state must not override current `main`.
+Earlier normalization, ranking, provider-execution, disclosure-budget, maintained-fork, release-candidate, native-rebuild, Sync, Glaze, and deployment branches are development or historical staging evidence. Their accepted behavior must be evaluated against the current native repository line; historical branch/lifecycle state must not override current `main`.
+
+The feature/changelog migration preserves the retired Drive chronology under `docs/changelog-history/` for this reason.
 
 ## Ranking baseline
 
 The initial ranker intentionally avoids provider-specific hidden boosts and behavioral signals. GoreeCloud Index presence is recorded as provenance but contributes zero score. Source agreement is bounded so federation consensus cannot dominate lexical/query-intent relevance.
 
-## Query-disclosure budget candidate
+## Query-disclosure budget
 
 The budget is enforced in source planning, before execution. It can reduce or eliminate third-party providers but cannot add a provider that the selected source mode, category, source filter, or provider configuration would otherwise exclude. A zero budget prevents external fallback execution rather than contacting an external provider and discarding its response afterward.
 
@@ -50,4 +56,4 @@ The budget is enforced in source planning, before execution. It can reduce or el
 
 PR #23 integrated the server-side HTTP half of Index → Search delegation while preserving `goreecloud.search-index-delegation.v1`, `external_only`, no Index re-entry, and no fallback. GoreeCloud Identity and Privacy Shield remain injected producer-authoritative verifier interfaces. Capability evidence is production-shaped but explicitly `production_accepted=false`.
 
-Post-merge CI run `35625485445` passed on exact runtime-bearing revision `7d79959e79ad4de13b807973347944bd92563fbe`. PR #24 then advanced main with documentation-only reconciliation. No live verifier, approved external provider, deployment, Production acceptance, or Stable qualification is implied.
+Post-merge CI run `35625485445` passed on exact runtime-bearing revision `7d79959e79ad4de13b807973347944bd92563fbe`. Later accepted PRs #24, #27, and #28 advanced documentation/readiness behavior without converting those injected interfaces into accepted live authority transports. No live verifier, approved external provider, deployment, Production acceptance, or Stable qualification is implied.
