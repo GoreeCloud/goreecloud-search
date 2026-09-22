@@ -4,7 +4,7 @@ component:
   type: service
   id: goreecloud-search
   product_name: GoreeCloud Search
-  repository: GoreeCloud/goreecloud-search
+  repository: GoreeCloud/search
 
 lifecycle: development
 version: 0.1.0.dev14
