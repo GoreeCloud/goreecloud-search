@@ -4,8 +4,8 @@
 **Repository:** `GoreeCloud/goreecloud-search`  
 **Lifecycle:** Development / nonconformant  
 **Repository version:** `0.1.0.dev14`  
-**Migration state:** Candidate on `migration/repository-feature-records`; becomes authoritative only after accepted merge to the protected default branch.  
-**Evidence baseline:** authoritative `main` at `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, merged by PR #28 on September 21, 2026.  
+**Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
+**Governance baseline:** `main` at `db15ea4c6e7e29c395204a94cad07d886f9242ff`, merged by PR #30 on September 22, 2026.  
 **Governing standard:** Standard — Repository Feature Tracking and Changelog Governance v1.0, effective September 22, 2026.
 
 ## Interpretation
@@ -18,7 +18,9 @@ Draft or unmerged pull requests are not implementation authority. In particular,
 
 ## Current verified Development baseline
 
-Authoritative `main` is `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, the merge of PR #28, **Fail closed Search readiness until authority transports are accepted**. Exact-main CI run #78 / `35662686554` passed, and Platform Contract run #20 / `35662687737` passed on that exact revision.
+The latest runtime-bearing Search baseline remains `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, the merge of PR #28, **Fail closed Search readiness until authority transports are accepted**. Exact-main CI run #78 / `35662686554` passed, and Platform Contract run #20 / `35662687737` passed on that exact runtime-bearing revision.
+
+Repository-governance PR #30 then merged as `db15ea4c6e7e29c395204a94cad07d886f9242ff`; exact-main CI run #81 / `35732002017` and Platform Contract run #23 / `35732002972` passed. PR #30 changed documentation/governance only and did not alter Search runtime behavior.
 
 The current line remains Development/nonconformant. The host-supplied authority-transport-readiness signal defaults false and cannot replace per-request GoreeCloud Identity or Privacy Shield verification.
 
@@ -98,6 +100,7 @@ The current line remains Development/nonconformant. The host-supplied authority-
 - Repository CI on Python 3.11 and 3.12.
 - Platform Contract validation workflow pinned to the governed reusable validator revision used by the accepted control-plane change.
 - Explicit internal application version and Development lifecycle documentation.
+- Repository-native implemented/planned/changelog governance with a regression test that requires the three root records and rejects the retired root roadmap/singular changelog filenames.
 
 ## Implemented-but-not-accepted boundaries
 
@@ -125,6 +128,10 @@ Current authoritative `main` does not establish:
 - GoreeCloud AI answer synthesis;
 - production deployment artifacts or an active deployment of this current native line;
 - Production Acceptance, Release Candidate, or Stable qualification.
+
+## Legacy-source retirement
+
+The former Drive `Change Log — Search.docx` (`1uEAtCFrxl8D3HnVxzRInMe92lRAiJKBv`) and `goreecloud-search-planned-features-and-capabilities.md` (`1Ja7M0-aWvhg9Zis6WIqeqirD1wTGAl4w`) were deleted only after PR #30 merged, the replacement records/history were read back from protected `main`, the retired root files were confirmed absent, and exact-main validation passed. Independent Drive readback now returns 404 for both retired IDs.
 
 ## Maintenance rule
 

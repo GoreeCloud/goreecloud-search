@@ -4,8 +4,8 @@
 **Repository:** `GoreeCloud/goreecloud-search`  
 **Lifecycle:** Development / nonconformant  
 **Repository version:** `0.1.0.dev14`  
-**Migration state:** Candidate on `migration/repository-feature-records`; becomes authoritative only after accepted merge to the protected default branch.  
-**Evidence baseline:** authoritative `main` at `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, merged by PR #28 on September 21, 2026.  
+**Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
+**Governance baseline:** `main` at `db15ea4c6e7e29c395204a94cad07d886f9242ff`, merged by PR #30 on September 22, 2026.  
 **Governing standard:** Standard — Repository Feature Tracking and Changelog Governance v1.0, effective September 22, 2026.
 
 ## Purpose and migration sources
@@ -13,11 +13,11 @@
 This file carries forward every material open, partial, deferred, blocked, acceptance-gated, or future capability from the retired roadmap model. It reconciles:
 
 - former root `FEATURE-ROADMAP.md`;
-- legacy Drive `goreecloud-search-planned-features-and-capabilities.md` (file ID `1Ja7M0-aWvhg9Zis6WIqeqirD1wTGAl4w`);
+- retired Drive `goreecloud-search-planned-features-and-capabilities.md` (file ID `1Ja7M0-aWvhg9Zis6WIqeqirD1wTGAl4w`);
 - current repository specifications/features/notes; and
 - verified current `main` state.
 
-The Drive planned-capabilities record is broad product-direction history. Where it conflicts with newer verified repository state, current repository evidence controls current disposition while the historical scope is preserved here. The Drive file remains a migration source only until the post-merge deletion gate is satisfied.
+The Drive planned-capabilities record was broad product-direction history. Where it conflicted with newer verified repository state, current repository evidence controls current disposition while the historical scope is preserved here. That Drive file was deleted only after the repository migration merged, authoritative `main` readback succeeded, the retired root files were confirmed absent, and exact-main CI/Platform Contract validation passed; independent Drive readback now returns 404 for the retired ID.
 
 Draft PR #29 (`security/reject-search-control-characters-20260921`) is a separate candidate. Its passing checks do not make its control-character hardening implemented on current `main`.
 
@@ -246,7 +246,7 @@ The former root roadmap's phases are preserved as follows:
 | Phase 6 — Advanced discovery | Planned. |
 | Phase 7 — Production/self-hosting | Planned for current native line; historical deployments/releases do not establish current-native production acceptance. |
 
-The former Drive-sync roadmap obligation is superseded by repository-native governance. Google Drive is not an active or mirrored feature authority after successful migration and deletion verification.
+The former Drive-sync roadmap obligation is superseded by repository-native governance. Google Drive is no longer an active or mirrored feature/changelog authority for Search; both mapped legacy feature/changelog file IDs were deleted after the repository deletion gate passed and now return 404.
 
 ## Maintenance rule
 

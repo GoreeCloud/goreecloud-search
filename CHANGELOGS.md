@@ -3,13 +3,14 @@
 **Record type:** Authoritative repository changelog index and current change history  
 **Repository:** `GoreeCloud/goreecloud-search`  
 **Lifecycle:** Development / nonconformant  
-**Migration state:** Candidate on `migration/repository-feature-records`; becomes authoritative only after accepted merge to the protected default branch.  
-**Current evidence baseline:** `main` at `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6` (PR #28).  
+**Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
+**Governance baseline:** `main` at `db15ea4c6e7e29c395204a94cad07d886f9242ff`, merged by PR #30 on September 22, 2026.  
+**Runtime-bearing baseline:** `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, merged by PR #28 on September 21, 2026.  
 **Governing standard:** Standard — Repository Feature Tracking and Changelog Governance v1.0, effective September 22, 2026.
 
 ## Authority and interpretation
 
-This file is the repository-local changelog authority for current and future GoreeCloud Search changes after migration. Historical Search chronology formerly stored in Google Drive is preserved under `docs/changelog-history/` as normalized migrated provenance.
+This file is the repository-local changelog authority for current and future GoreeCloud Search changes. Historical Search chronology formerly stored in Google Drive is preserved under `docs/changelog-history/` as normalized migrated provenance.
 
 Historical entries describe the state, repositories, candidates, deployments, release labels, and evidence that existed at their own dates. They do **not** override current authoritative `main`, current lifecycle, or current architecture. Earlier maintained-fork and prior native-line Production/RC/Stable language must therefore be read as exact-revision historical evidence rather than a claim about the current `0.1.0.dev14` native line.
 
@@ -17,7 +18,7 @@ Draft/unmerged pull requests are not accepted changes. PR #29 remains candidate-
 
 ## Historical archive migrated from Google Drive
 
-Legacy Drive source: `Change Log — Search.docx`, file ID `1uEAtCFrxl8D3HnVxzRInMe92lRAiJKBv`.
+Retired Drive source: `Change Log — Search.docx`, file ID `1uEAtCFrxl8D3HnVxzRInMe92lRAiJKBv`.
 
 The complete meaningful chronology is normalized into eight repository archive files so all 77 dated Drive entries remain represented without making this root index unwieldy:
 
@@ -34,17 +35,31 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 ## Current native-line changelog
 
+### September 22, 2026 — Repository migration accepted and legacy Drive sources retired
+
+- PR #30, **Migrate Search feature tracking and changelog governance**, merged to protected `main` as `db15ea4c6e7e29c395204a94cad07d886f9242ff`.
+- Exact-head CI run #80 / `35731880345` passed on migration candidate `f97aee9bbe985fe262847769f26c318ea7a37a9c`, including Python 3.11 and 3.12.
+- Exact-head Platform Contract run #22 / `35731881274` passed on the same candidate.
+- After merge, exact-main CI run #81 / `35732002017` passed and Platform Contract run #23 / `35732002972` passed on `db15ea4c6e7e29c395204a94cad07d886f9242ff`.
+- Authoritative `main` readback confirmed `IMPLEMENTED-FEATURES.md`, `PLANNED-FEATURES.md`, `CHANGELOGS.md`, and the migrated historical archive are present.
+- Authoritative `main` readback confirmed retired root `FEATURE-ROADMAP.md` and singular `CHANGELOG.md` are absent.
+- After those deletion gates passed, Drive `Change Log — Search.docx` (`1uEAtCFrxl8D3HnVxzRInMe92lRAiJKBv`) and `goreecloud-search-planned-features-and-capabilities.md` (`1Ja7M0-aWvhg9Zis6WIqeqirD1wTGAl4w`) were permanently deleted.
+- Independent post-deletion Drive reads returned `404 / not found` for both retired file IDs.
+- Search remains **Development / nonconformant**. This migration and retirement do not add live authority transports, an approved external provider, deployment, Production Acceptance, Release Candidate, or Stable qualification.
+- PR #29 remains a separate Draft security candidate and is not included in accepted implementation state.
+
 ### September 22, 2026 — Repository feature/changelog governance migration candidate
 
+This entry records the candidate state that preceded the accepted migration above.
+
 - Added root `IMPLEMENTED-FEATURES.md`, `PLANNED-FEATURES.md`, and `CHANGELOGS.md` under the repository-native governance standard.
-- Migrated the complete legacy Drive changelog into repository history archives.
+- Migrated all 77 dated entries from the legacy Drive changelog into eight repository history archives.
 - Reconciled former root `FEATURE-ROADMAP.md` and the broader Drive planned-capabilities record into implemented/open feature inventories.
 - Retired root `FEATURE-ROADMAP.md` from the migration branch after its material obligations were dispositioned.
 - Migrated the content of the former root singular `CHANGELOG.md` into this authoritative changelog and retired the singular file to prevent split changelog authority.
 - Reconciled README and repository notes to the new records/current baseline.
 - Added a focused repository-governance test to require the three root records and reject the two retired root filenames.
-- No runtime source, deployment, provider, authority-service, lifecycle, Production, Release Candidate, or Stable state is changed by this migration.
-- Google Drive sources remain undeleted until this migration is merged, authoritative `main` is read back successfully, and the deletion gate is satisfied.
+- No runtime source, deployment, provider, authority-service, lifecycle, Production, Release Candidate, or Stable state was changed by this migration candidate.
 
 ### September 21, 2026 — PR #28: fail closed readiness until authority transports are accepted
 
@@ -103,17 +118,18 @@ The former singular changelog recorded the following implemented current-native 
 
 The former file explicitly made no release, deployment, Production Acceptance, or Stable claim; that boundary is preserved here.
 
-## Drive retirement gate
+## Drive retirement verification
 
-The Drive changelog and planned-feature source are migration sources only. They must not be deleted until:
+Repository migration and Drive retirement are complete for the mapped Search feature/changelog sources:
 
-1. this migration is merged through the protected-branch workflow;
-2. required checks pass on the exact candidate;
-3. the three root records and historical archive are read back from authoritative `main`;
-4. the retired root files are confirmed absent; and
-5. the repository-side historical/feature reconciliation is confirmed complete.
+1. PR #30 merged through protected `main` after exact-head CI and Platform Contract validation.
+2. The three root records and the eight-part historical archive were read back from authoritative `main`.
+3. Retired root `FEATURE-ROADMAP.md` and `CHANGELOG.md` were confirmed absent.
+4. Exact-main CI and Platform Contract validation passed on the merged migration revision.
+5. The two mapped Drive files were permanently deleted.
+6. Independent post-deletion Drive reads returned `404 / not found` for both IDs.
 
-Only after those gates pass may the successfully migrated Drive sources be deleted and their absence independently verified. The deletion event must then be recorded here.
+Google Drive is no longer an active or mirrored Search feature/changelog authority. Other Search project/evidence records outside these two mapped feature/changelog files were not deleted by this migration.
 
 ## Maintenance rule
 
