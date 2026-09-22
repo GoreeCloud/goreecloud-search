@@ -322,7 +322,7 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         query = query.strip()
         if not query or len(query) > SEARCH_MAX_QUERY_CHARS:
             raise IndexHTTPBoundaryError("query is empty or too large")
-        if any(ord(char) < 32 and char not in "\t\n\r" for char in query):
+        if any(ord(char) < 32 or ord(char) == 127 for char in query):
             raise IndexHTTPBoundaryError("query contains unsupported control characters")
         if category != "general":
             raise IndexHTTPBoundaryError("only the initial general category is accepted")
