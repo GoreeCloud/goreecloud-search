@@ -43,6 +43,10 @@ class NormalizationTests(unittest.TestCase):
         with self.assertRaises(ResultNormalizationError):
             canonicalize_url("https://example.com/private\npath")
 
+    def test_bidi_control_bearing_result_url_is_rejected(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            canonicalize_url("https://example.com/invoice\u202efdp.exe")
+
     def test_safe_canonical_alias_cannot_launder_unsafe_open_url(self) -> None:
         with self.assertRaises(ResultNormalizationError):
             self.core.normalize(
@@ -52,6 +56,53 @@ class NormalizationTests(unittest.TestCase):
                         url="https://user:pass@example.com/private",
                         canonical_url="https://example.com/private",
                         snippet="unsafe",
+                        provider="external-example",
+                    ),
+                )
+            )
+
+    def test_provider_display_text_is_sanitized_and_whitespace_normalized(self) -> None:
+        results = self.core.normalize(
+            (
+                ResultCandidate(
+                    title="Invoice\u202efdp.exe\u2066\n ready",
+                    url="https://example.com/invoice",
+                    snippet="  First\tline\x00 second   line  ",
+                    provider="external-example",
+                ),
+            )
+        )
+
+        self.assertEqual(results[0].title, "Invoice fdp.exe ready")
+        self.assertEqual(results[0].snippet, "First line second line")
+        self.assertNotIn("\u202e", results[0].title)
+        self.assertNotIn("\x00", results[0].snippet)
+
+    def test_provider_display_text_is_bounded(self) -> None:
+        results = self.core.normalize(
+            (
+                ResultCandidate(
+                    title="T" * 700,
+                    url="https://example.com/long",
+                    snippet="S" * 5000,
+                    provider="external-example",
+                ),
+            )
+        )
+
+        self.assertEqual(len(results[0].title), 512)
+        self.assertTrue(results[0].title.endswith("…"))
+        self.assertEqual(len(results[0].snippet), 4096)
+        self.assertTrue(results[0].snippet.endswith("…"))
+
+    def test_title_that_becomes_empty_after_sanitization_fails_closed(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            self.core.normalize(
+                (
+                    ResultCandidate(
+                        title="\x00\n\u202e",
+                        url="https://example.com/empty-title",
+                        snippet="safe",
                         provider="external-example",
                     ),
                 )
