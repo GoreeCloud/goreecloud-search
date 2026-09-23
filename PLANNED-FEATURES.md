@@ -38,7 +38,7 @@ Historical Draft PR #29 remains unmerged provenance; equivalent query-control ha
 - Complete SafeSearch/content-policy hooks and administrator policy enforcement.
 - Expand transparent ranking signals only when they remain inspectable, reproducible, privacy-preserving, and evidence-backed.
 - Expand “Why this result?” explanations and source/provenance presentation.
-- Continue richer canonicalization/duplicate relationships where supported by authoritative Index/provider evidence. The central normalization boundary now separately validates the provider's actual open URL so a safe canonical alias cannot launder credential-bearing or raw control-bearing targets.
+- Continue richer canonicalization/duplicate relationships where supported by authoritative Index/provider evidence. The central normalization boundary now separately validates the provider's actual open URL so a safe canonical alias cannot launder credential-bearing or control/bidirectional-bearing targets, and it bounds/sanitizes provider title/snippet display text before ranking or presentation.
 - Define caching/freshness behavior, invalidation, staleness indicators, and query/result cache privacy controls.
 
 ### P0 — Federated provider system
