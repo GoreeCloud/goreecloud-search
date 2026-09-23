@@ -119,7 +119,70 @@ def request(server, method: str, path: str, *, headers=None, body: bytes | None 
         connection.close()
 
 
+def request_with_headers(server, method: str, path: str, headers: list[tuple[str, str]], body: bytes = b""):
+    connection = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=2)
+    try:
+        connection.putrequest(method, path, skip_host=True)
+        for name, value in headers:
+            connection.putheader(name, value)
+        connection.endheaders(body)
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        return response.status, payload
+    finally:
+        connection.close()
+
+
 class IndexHTTPAPITests(unittest.TestCase):
+    def test_duplicate_and_malformed_host_authorities_fail_closed(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+        with running_server(core) as server:
+            for hosts in (
+                ["127.0.0.1", "localhost"],
+                ["localhost:invalid"],
+                ["localhost:65536"],
+                ["localhost:80:extra"],
+                ["localhost@untrusted.invalid"],
+            ):
+                with self.subTest(hosts=hosts):
+                    status, payload = request_with_headers(
+                        server,
+                        "GET",
+                        "/healthz",
+                        [("Host", host) for host in hosts],
+                    )
+                    self.assertEqual(421, status)
+                    self.assertEqual("misdirected_request", payload["error"])
+
+    def test_ambiguous_json_and_length_headers_fail_before_authentication(self) -> None:
+        provider = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier()
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(provider,))
+        body = json.dumps({"query": "goreecloud", "category": "general", "limit": 1}).encode()
+        required = [
+            ("Host", "127.0.0.1"),
+            ("Content-Type", "application/json"),
+            ("Content-Length", str(len(body))),
+            ("Authorization", "Bearer identity_test_token"),
+            ("X-GoreeCloud-Privacy-Capability", "psc_test_reference"),
+        ]
+        with running_server(core, identity, privacy) as server:
+            for extras in (
+                [("Content-Type", "application/json")],
+                [("Content-Length", str(len(body)))],
+                [("Transfer-Encoding", "chunked")],
+            ):
+                with self.subTest(extras=extras):
+                    status, payload = request_with_headers(
+                        server, "POST", "/api/v1/search", required + extras, body
+                    )
+                    self.assertEqual(400, status)
+                    self.assertEqual("invalid_search_request", payload["error"])
+        self.assertEqual([], identity.credentials)
+        self.assertEqual([], privacy.requests)
+        self.assertEqual(0, provider.calls)
+
     def test_capability_is_production_shaped_but_not_production_accepted(self) -> None:
         record = capability_record()
 
