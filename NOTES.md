@@ -10,7 +10,7 @@ The two mapped legacy Drive feature/changelog sources were deleted only after th
 
 Historical Draft PR #29 remains unmerged provenance; equivalent C0/DEL query-control hardening was replayed and accepted through PR #34 on current `main`.
 
-Result normalization treats provider result/open URLs as independently untrusted from any separately supplied canonical identity. A provider cannot use a safe canonical alias to carry a credential-bearing or raw control-bearing open target into normalized results.
+Result normalization treats provider result/open URLs as independently untrusted from any separately supplied canonical identity. A provider cannot use a safe canonical alias to carry a credential-bearing, raw control-bearing, or bidirectional-formatting-bearing open target into normalized results. Provider title/snippet display text is separately sanitized and bounded before ranking/presentation so untrusted providers cannot inject terminal-style controls, bidi reordering, or unbounded visible text into normalized results.
 
 ## Design decisions
 
