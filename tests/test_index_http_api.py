@@ -351,7 +351,19 @@ class IndexHTTPAPITests(unittest.TestCase):
         self.assertEqual(0, external.calls)
 
     def test_query_control_characters_fail_closed_before_provider_execution(self) -> None:
-        for query in ("goreecloud\nmail", "goreecloud\tmail", "goreecloud\rmail", "goreecloud\x7fmail", "\ngoreecloud", "goreecloud\n", "\tgoreecloud", "goreecloud\r"):
+        for query in (
+            "goreecloud\nmail",
+            "goreecloud\tmail",
+            "goreecloud\rmail",
+            "goreecloud\x7fmail",
+            "goreecloud\u0085mail",
+            "goreecloud\u009fmail",
+            "\ngoreecloud",
+            "goreecloud\n",
+            "\tgoreecloud",
+            "goreecloud\r",
+            "\u0085goreecloud",
+        ):
             with self.subTest(query=repr(query)):
                 external = FakeProvider("external", ProviderOrigin.EXTERNAL)
                 core = SearchCore(provider_adapters=(external,))
