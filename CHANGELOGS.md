@@ -39,8 +39,9 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 - Central normalization now validates the provider's actual result/open URL even when a separate canonical URL is supplied.
 - Credential-bearing HTTP(S) targets are rejected rather than normalized into a credential-free identity while leaving the unsafe open target intact.
-- Raw Unicode control-category characters are rejected before URL parsing can normalize or discard them.
-- Added regression coverage for direct credential-bearing URLs, control-bearing URLs, and attempted unsafe-open-URL laundering through a safe canonical alias.
+- Raw Unicode control-category and bidirectional-formatting characters are rejected before URL parsing can normalize or discard them.
+- Provider titles/snippets are sanitized before normalized-result ranking/presentation: controls and bidi formatting are removed, whitespace is collapsed, title/snippet lengths are capped at 512/4096 characters, and empty-after-sanitization titles fail closed.
+- Added regression coverage for direct credential-bearing URLs, control/bidi-bearing URLs, unsafe-open-URL laundering through a safe canonical alias, display-text sanitization, output bounds, and empty-title rejection.
 - This remains Development source hardening and does not add a provider, authorize content retrieval, deploy Search, or establish Production/RC/Stable status.
 
 ### September 22, 2026 — Repository migration accepted and legacy Drive sources retired
