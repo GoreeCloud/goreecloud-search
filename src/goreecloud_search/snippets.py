@@ -73,12 +73,14 @@ def _needles(query: ParsedQuery) -> tuple[str, ...]:
 
 
 def _best_match(text: str, needles: tuple[str, ...]) -> tuple[int, int] | None:
-    folded = text.casefold()
+    # Keep spans anchored to the original normalized string. Building offsets
+    # from casefolded text is unsafe because Unicode case folding can change
+    # string length (for example, some characters expand to multiple code points).
     matches: list[tuple[int, int, int]] = []
     for needle in needles:
-        start = folded.find(needle.casefold())
-        if start >= 0:
-            matches.append((start, -len(needle), start + len(needle)))
+        match = re.search(re.escape(needle), text, flags=re.IGNORECASE)
+        if match is not None:
+            matches.append((match.start(), -len(match.group(0)), match.end()))
     if not matches:
         return None
     start, _, end = min(matches)
