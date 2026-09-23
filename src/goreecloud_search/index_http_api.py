@@ -326,7 +326,7 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         if len(content_lengths) != 1:
             raise IndexHTTPBoundaryError("content length must be supplied exactly once")
         raw_length = content_lengths[0].strip()
-        if not raw_length.isascii() or not raw_length.isdecimal():
+        if not raw_length or len(raw_length) > 5 or not raw_length.isascii() or not raw_length.isdecimal():
             raise IndexHTTPBoundaryError("content length is invalid")
         content_length = int(raw_length)
         if content_length < 2 or content_length > SEARCH_MAX_REQUEST_BYTES:
@@ -346,11 +346,13 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         limit = payload["limit"]
         if not isinstance(query, str):
             raise IndexHTTPBoundaryError("query must be a string")
+        # Reject original untrusted text before normalization; stripping first
+        # would otherwise accept newline/tab/CR on the input boundaries.
+        if any(ord(char) < 32 or ord(char) == 127 for char in query):
+            raise IndexHTTPBoundaryError("query contains unsupported control characters")
         query = query.strip()
         if not query or len(query) > SEARCH_MAX_QUERY_CHARS:
             raise IndexHTTPBoundaryError("query is empty or too large")
-        if any(ord(char) < 32 or ord(char) == 127 for char in query):
-            raise IndexHTTPBoundaryError("query contains unsupported control characters")
         if category != "general":
             raise IndexHTTPBoundaryError("only the initial general category is accepted")
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= SEARCH_MAX_RESULTS:
