@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from ipaddress import AddressValueError, IPv6Address
 import json
 from typing import Any, Protocol
 
@@ -236,13 +237,17 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
 
         if raw.startswith("["):
             closing = raw.find("]")
-            if closing <= 1:
+            if closing <= 1 or raw.count("[") != 1 or raw.count("]") != 1:
                 return ""
             host = raw[1:closing]
+            try:
+                normalized_host = str(IPv6Address(host))
+            except AddressValueError:
+                return ""
             suffix = raw[closing + 1:]
             if suffix and (not suffix.startswith(":") or not self._valid_port(suffix[1:])):
                 return ""
-            return host.casefold().rstrip(".")
+            return normalized_host.casefold()
 
         # Unbracketed IPv6, user-info and ambiguous separators are invalid Host
         # authorities even if a substring would match an allowed host.
