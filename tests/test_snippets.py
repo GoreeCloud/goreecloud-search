@@ -62,7 +62,7 @@ class SnippetGenerationTests(unittest.TestCase):
             "Invoice\u202efdp.exe\u2066 is ready.\x00 Continue safely.",
         )
 
-        self.assertEqual(result.text, "Invoice fdp.exe is ready.…")
+        self.assertEqual(result.text, "Invoice fdp.exe is ready. Continue safely.")
         self.assertNotIn("\u202e", result.text)
         self.assertNotIn("\u2066", result.text)
         self.assertNotIn("\x00", result.text)
