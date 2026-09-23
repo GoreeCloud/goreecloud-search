@@ -225,11 +225,39 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _normalized_host(self) -> str:
-        raw = self.headers.get("Host", "").strip()
+        # Do not trust the first of multiple Host headers or silently discard an
+        # invalid port: proxy and application routing must see one authority.
+        hosts = self.headers.get_all("Host") or []
+        if len(hosts) != 1:
+            return ""
+        raw = hosts[0].strip()
+        if not raw or any(ord(char) <= 32 or ord(char) == 127 for char in raw):
+            return ""
+
         if raw.startswith("["):
             closing = raw.find("]")
-            return raw[1:closing].casefold().rstrip(".") if closing > 0 else ""
-        return raw.rsplit(":", 1)[0].casefold().rstrip(".")
+            if closing <= 1:
+                return ""
+            host = raw[1:closing]
+            suffix = raw[closing + 1:]
+            if suffix and (not suffix.startswith(":") or not self._valid_port(suffix[1:])):
+                return ""
+            return host.casefold().rstrip(".")
+
+        # Unbracketed IPv6, user-info and ambiguous separators are invalid Host
+        # authorities even if a substring would match an allowed host.
+        if raw.count(":") > 1:
+            return ""
+        host, separator, port = raw.partition(":")
+        if not host or any(character in host for character in "@[]/\\"):
+            return ""
+        if separator and not self._valid_port(port):
+            return ""
+        return host.casefold().rstrip(".")
+
+    @staticmethod
+    def _valid_port(value: str) -> bool:
+        return bool(value) and value.isascii() and value.isdecimal() and 1 <= int(value) <= 65535
 
     def _host_allowed(self) -> bool:
         return self._normalized_host() in self.server.allowed_hosts
@@ -289,19 +317,18 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         return requester, privacy_reference
 
     def _read_search_request(self) -> tuple[str, int]:
-        content_type = self.headers.get("Content-Type", "").split(";", 1)[0].strip().casefold()
-        if content_type != "application/json":
-            raise IndexHTTPBoundaryError("content type must be application/json")
-        transfer_encoding = self.headers.get("Transfer-Encoding")
-        if transfer_encoding:
+        content_types = self.headers.get_all("Content-Type") or []
+        if len(content_types) != 1 or content_types[0].split(";", 1)[0].strip().casefold() != "application/json":
+            raise IndexHTTPBoundaryError("content type must be supplied exactly once as application/json")
+        if self.headers.get_all("Transfer-Encoding"):
             raise IndexHTTPBoundaryError("transfer encoding is not supported")
-        raw_length = self.headers.get("Content-Length")
-        if raw_length is None:
-            raise IndexHTTPBoundaryError("content length is required")
-        try:
-            content_length = int(raw_length)
-        except ValueError as exc:
-            raise IndexHTTPBoundaryError("content length is invalid") from exc
+        content_lengths = self.headers.get_all("Content-Length") or []
+        if len(content_lengths) != 1:
+            raise IndexHTTPBoundaryError("content length must be supplied exactly once")
+        raw_length = content_lengths[0].strip()
+        if not raw_length.isascii() or not raw_length.isdecimal():
+            raise IndexHTTPBoundaryError("content length is invalid")
+        content_length = int(raw_length)
         if content_length < 2 or content_length > SEARCH_MAX_REQUEST_BYTES:
             raise IndexHTTPBoundaryError("request body size is invalid")
 
