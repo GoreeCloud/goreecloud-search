@@ -1,11 +1,11 @@
 # GoreeCloud Search — Changelogs
 
 **Record type:** Authoritative repository changelog index and current change history  
-**Repository:** `GoreeCloud/goreecloud-search`  
+**Repository:** `GoreeCloud/search`  
 **Lifecycle:** Development / nonconformant  
 **Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
 **Governance baseline:** `main` at `db15ea4c6e7e29c395204a94cad07d886f9242ff`, merged by PR #30 on September 22, 2026.  
-**Runtime-bearing baseline:** `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, merged by PR #28 on September 21, 2026.  
+**Current accepted runtime-bearing main:** `66ff984b8dd79624a739ab6117c42a572dc44475`, merged by PR #34 on September 22, 2026.  
 **Governing standard:** Standard — Repository Feature Tracking and Changelog Governance v1.0, effective September 22, 2026.
 
 ## Authority and interpretation
@@ -14,7 +14,7 @@ This file is the repository-local changelog authority for current and future Gor
 
 Historical entries describe the state, repositories, candidates, deployments, release labels, and evidence that existed at their own dates. They do **not** override current authoritative `main`, current lifecycle, or current architecture. Earlier maintained-fork and prior native-line Production/RC/Stable language must therefore be read as exact-revision historical evidence rather than a claim about the current `0.1.0.dev14` native line.
 
-Draft/unmerged pull requests are not accepted changes. PR #29 remains candidate-only and is not recorded as implemented below.
+Draft/unmerged pull requests are not accepted changes. Historical Draft PR #29 remains unmerged provenance; equivalent query-control hardening was independently accepted through PR #34.
 
 ## Historical archive migrated from Google Drive
 
@@ -34,6 +34,14 @@ The complete meaningful chronology is normalized into eight repository archive f
 Those archives preserve the meaningful historical chronology of the retired Drive changelog, including maintained-fork development, deployment/release evidence, native rebuild work, Sync/provider/ranking work, platform and Glaze checkpoints, and later stabilization. They are historical provenance, not a shadow current-state authority.
 
 ## Current native-line changelog
+
+### September 23, 2026 — Provider result URL boundary hardening
+
+- Central normalization now validates the provider's actual result/open URL even when a separate canonical URL is supplied.
+- Credential-bearing HTTP(S) targets are rejected rather than normalized into a credential-free identity while leaving the unsafe open target intact.
+- Raw Unicode control-category characters are rejected before URL parsing can normalize or discard them.
+- Added regression coverage for direct credential-bearing URLs, control-bearing URLs, and attempted unsafe-open-URL laundering through a safe canonical alias.
+- This remains Development source hardening and does not add a provider, authorize content retrieval, deploy Search, or establish Production/RC/Stable status.
 
 ### September 22, 2026 — Repository migration accepted and legacy Drive sources retired
 
