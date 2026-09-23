@@ -143,6 +143,10 @@ class IndexHTTPAPITests(unittest.TestCase):
                 ["localhost:65536"],
                 ["localhost:80:extra"],
                 ["localhost@untrusted.invalid"],
+                ["[127.0.0.1]"],
+                ["[localhost]"],
+                ["[search.goreecloud.com]"],
+                ["[::1]]"],
             ):
                 with self.subTest(hosts=hosts):
                     status, payload = request_with_headers(
