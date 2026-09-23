@@ -1,7 +1,7 @@
 # GoreeCloud Search — Implemented Features
 
 **Record type:** Repository implemented-feature inventory  
-**Repository:** `GoreeCloud/goreecloud-search`  
+**Repository:** `GoreeCloud/search`  
 **Lifecycle:** Development / nonconformant  
 **Repository version:** `0.1.0.dev14`  
 **Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
@@ -14,11 +14,11 @@ This record describes behavior implemented in the current native GoreeCloud Sear
 
 A partially implemented capability can appear here for the verified portion that exists and in `PLANNED-FEATURES.md` for the remaining work. Historical maintained-fork, release-candidate, deployment, native-rebuild, and prior-repository evidence is preserved under `docs/changelog-history/`; historical lifecycle claims do not override current `main`.
 
-Draft or unmerged pull requests are not implementation authority. In particular, PR #29 remains a separate Draft security candidate and is not represented below as accepted behavior.
+Draft or unmerged pull requests are not implementation authority. Historical Draft PR #29 remains unmerged provenance; equivalent query-control hardening was replayed and accepted on current `main` through PR #34.
 
 ## Current verified Development baseline
 
-The latest runtime-bearing Search baseline remains `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, the merge of PR #28, **Fail closed Search readiness until authority transports are accepted**. Exact-main CI run #78 / `35662686554` passed, and Platform Contract run #20 / `35662687737` passed on that exact runtime-bearing revision.
+Current authoritative Search `main` is `66ff984b8dd79624a739ab6117c42a572dc44475`, merged through PR #34 after PR #33 corrected the repository identity. Exact-main CI #87 / `35791305078` and Platform Contract #29 / `35791305711` passed on that current revision. PR #28 remains the earlier fail-closed readiness foundation within that history.
 
 Repository-governance PR #30 then merged as `db15ea4c6e7e29c395204a94cad07d886f9242ff`; exact-main CI run #81 / `35732002017` and Platform Contract run #23 / `35732002972` passed. PR #30 changed documentation/governance only and did not alter Search runtime behavior.
 
@@ -86,6 +86,7 @@ The current line remains Development/nonconformant. The host-supplied authority-
 
 - Enriched result candidates with canonical URL, source ID, content hash, language, crawl timestamp, and provider-contract provenance.
 - Conservative URL canonicalization.
+- Central result normalization validates the actual provider result/open URL even when a separate canonical identity is supplied, rejecting credential-bearing and raw control-bearing HTTP(S) targets before they can survive into normalized user-facing results.
 - Canonical-URL and content-hash deduplication.
 - Multi-provider source-agreement counts and provenance aggregation.
 - Fail-closed rejection of candidates from undeclared providers.
