@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from unicodedata import category as unicode_category
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from .models import ProviderDescriptor, ProviderOrigin
@@ -52,6 +53,28 @@ class NormalizedResult:
     provenance: tuple[ResultProvenance, ...]
 
 
+def _safe_web_url_parts(url: str):
+    if not isinstance(url, str):
+        raise ResultNormalizationError("result URL must be text")
+    raw = url.strip()
+    if not raw or raw != url:
+        raise ResultNormalizationError("result URL must not be empty or padded with whitespace")
+    if any(unicode_category(character) == "Cc" for character in raw):
+        raise ResultNormalizationError("result URL contains unsupported control characters")
+
+    try:
+        parts = urlsplit(raw)
+        host = parts.hostname
+    except ValueError as exc:
+        raise ResultNormalizationError(f"invalid result URL: {url!r}") from exc
+
+    if parts.scheme.casefold() not in {"http", "https"} or not host:
+        raise ResultNormalizationError(f"unsupported or invalid result URL: {url!r}")
+    if parts.username is not None or parts.password is not None:
+        raise ResultNormalizationError("credential-bearing result URLs are not accepted")
+    return raw, parts, host
+
+
 def canonicalize_url(url: str) -> str:
     """Return a conservative canonical URL suitable for result identity.
 
@@ -60,13 +83,10 @@ def canonicalize_url(url: str) -> str:
     not collapse HTTP into HTTPS or invent a canonical URL for the publisher.
     """
 
-    raw = url.strip()
-    parts = urlsplit(raw)
-    if parts.scheme.casefold() not in {"http", "https"} or not parts.hostname:
-        raise ResultNormalizationError(f"unsupported or invalid result URL: {url!r}")
+    raw, parts, parsed_host = _safe_web_url_parts(url)
 
     scheme = parts.scheme.casefold()
-    host = parts.hostname.casefold().rstrip(".")
+    host = parsed_host.casefold().rstrip(".")
     try:
         port = parts.port
     except ValueError as exc:
@@ -110,7 +130,15 @@ def normalize_and_deduplicate(
                 f"candidate references undeclared provider: {candidate.provider!r}"
             )
 
-        canonical = canonicalize_url(candidate.canonical_url or candidate.url)
+        # Validate the actual result/open URL even when a provider supplies a
+        # separate canonical identity. A safe canonical alias must not launder
+        # credential-bearing or control-bearing navigation targets.
+        result_url_canonical = canonicalize_url(candidate.url)
+        canonical = (
+            canonicalize_url(candidate.canonical_url)
+            if candidate.canonical_url
+            else result_url_canonical
+        )
         content_hash = candidate.content_hash.casefold() if candidate.content_hash else None
 
         indexes = {
