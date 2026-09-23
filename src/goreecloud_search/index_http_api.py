@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import AddressValueError, IPv6Address
 import json
 from typing import Any, Protocol
+from unicodedata import category as unicode_category
 
 from .models import ProviderOrigin
 from .planner import (
@@ -93,24 +94,28 @@ class PrivacyCapabilityVerifier(Protocol):
         ...
 
 
+def _contains_unicode_control(value: str) -> bool:
+    return any(unicode_category(char) == "Cc" for char in value)
+
+
 def _is_bounded_opaque(value: str, *, prefix: str | None, maximum: int) -> bool:
     if not value or len(value) > maximum:
         return False
     if prefix is not None and (not value.startswith(prefix) or len(value) <= len(prefix)):
         return False
-    return all(not char.isspace() and not char.iscontrol() if hasattr(char, "iscontrol") else not char.isspace() and ord(char) >= 32 and ord(char) != 127 for char in value)
+    return all(not char.isspace() for char in value) and not _contains_unicode_control(value)
 
 
 def _valid_bearer(value: str) -> bool:
     if not value or len(value) > SEARCH_MAX_BEARER_CHARS:
         return False
-    return all(not char.isspace() and ord(char) >= 32 and ord(char) != 127 for char in value)
+    return all(not char.isspace() for char in value) and not _contains_unicode_control(value)
 
 
 def _valid_capability_reference(value: str) -> bool:
     if not value.startswith("psc_") or len(value) <= 4 or len(value) > SEARCH_MAX_CAPABILITY_REFERENCE_CHARS:
         return False
-    return all(not char.isspace() and ord(char) >= 32 and ord(char) != 127 for char in value)
+    return all(not char.isspace() for char in value) and not _contains_unicode_control(value)
 
 
 def _json_loads_strict(body: bytes) -> Any:
@@ -232,7 +237,7 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         if len(hosts) != 1:
             return ""
         raw = hosts[0].strip()
-        if not raw or any(ord(char) <= 32 or ord(char) == 127 for char in raw):
+        if not raw or any(char.isspace() for char in raw) or _contains_unicode_control(raw):
             return ""
 
         if raw.startswith("["):
@@ -351,9 +356,10 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         limit = payload["limit"]
         if not isinstance(query, str):
             raise IndexHTTPBoundaryError("query must be a string")
-        # Reject original untrusted text before normalization; stripping first
-        # would otherwise accept newline/tab/CR on the input boundaries.
-        if any(ord(char) < 32 or ord(char) == 127 for char in query):
+        # Reject original untrusted text before normalization. Unicode Cc
+        # includes C0, DEL/C1 and other control code points that must not be
+        # accepted merely because they survive whitespace normalization.
+        if _contains_unicode_control(query):
             raise IndexHTTPBoundaryError("query contains unsupported control characters")
         query = query.strip()
         if not query or len(query) > SEARCH_MAX_QUERY_CHARS:
