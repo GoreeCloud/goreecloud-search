@@ -1,11 +1,11 @@
 # GoreeCloud Search — Changelogs
 
 **Record type:** Authoritative repository changelog index and current change history  
-**Repository:** `GoreeCloud/goreecloud-search`  
+**Repository:** `GoreeCloud/search`  
 **Lifecycle:** Development / nonconformant  
 **Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
 **Governance baseline:** `main` at `db15ea4c6e7e29c395204a94cad07d886f9242ff`, merged by PR #30 on September 22, 2026.  
-**Runtime-bearing baseline:** `1bf27785cf5502e32155d3d3d31bc5cbd052d3d6`, merged by PR #28 on September 21, 2026.  
+**Current accepted runtime-bearing main:** `66ff984b8dd79624a739ab6117c42a572dc44475`, merged by PR #34 on September 22, 2026.  
 **Governing standard:** Standard — Repository Feature Tracking and Changelog Governance v1.0, effective September 22, 2026.
 
 ## Authority and interpretation
@@ -14,7 +14,7 @@ This file is the repository-local changelog authority for current and future Gor
 
 Historical entries describe the state, repositories, candidates, deployments, release labels, and evidence that existed at their own dates. They do **not** override current authoritative `main`, current lifecycle, or current architecture. Earlier maintained-fork and prior native-line Production/RC/Stable language must therefore be read as exact-revision historical evidence rather than a claim about the current `0.1.0.dev14` native line.
 
-Draft/unmerged pull requests are not accepted changes. PR #29 remains candidate-only and is not recorded as implemented below.
+Draft/unmerged pull requests are not accepted changes. Historical Draft PR #29 remains unmerged, but equivalent query-control hardening was independently merged as PR #34 on current `main`.
 
 ## Historical archive migrated from Google Drive
 
@@ -34,6 +34,13 @@ The complete meaningful chronology is normalized into eight repository archive f
 Those archives preserve the meaningful historical chronology of the retired Drive changelog, including maintained-fork development, deployment/release evidence, native rebuild work, Sync/provider/ranking work, platform and Glaze checkpoints, and later stabilization. They are historical provenance, not a shadow current-state authority.
 
 ## Current native-line changelog
+
+### September 22, 2026 — Search repository identity and Index-query hardening accepted
+
+- PR #33 corrected the machine-readable repository identity to `GoreeCloud/search`; its merge established main `e6729dbb01d505d3f35a56b5bf9ebb9de9d608cb`.
+- PR #34 replayed and merged bounded C0 and DEL rejection for Index-originated queries before authentication or provider execution, establishing current accepted main `66ff984b8dd79624a739ab6117c42a572dc44475`.
+- Older unmerged Draft PR #29 remains historical provenance, not the source of current accepted behavior.
+- Both changes are Development/nonconformant source changes; live verifier transports, approved provider execution, target-runtime deployment, Production Acceptance, and Stable qualification remain open.
 
 ### September 22, 2026 — Repository migration accepted and legacy Drive sources retired
 
