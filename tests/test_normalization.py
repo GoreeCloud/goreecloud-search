@@ -35,6 +35,28 @@ class NormalizationTests(unittest.TestCase):
             "https://example.com/path?a=1",
         )
 
+    def test_credential_bearing_result_url_is_rejected(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            canonicalize_url("https://user:pass@example.com/private")
+
+    def test_control_bearing_result_url_is_rejected_before_parsing(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            canonicalize_url("https://example.com/private\npath")
+
+    def test_safe_canonical_alias_cannot_launder_unsafe_open_url(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            self.core.normalize(
+                (
+                    ResultCandidate(
+                        title="Unsafe target",
+                        url="https://user:pass@example.com/private",
+                        canonical_url="https://example.com/private",
+                        snippet="unsafe",
+                        provider="external-example",
+                    ),
+                )
+            )
+
     def test_same_canonical_url_merges_provider_provenance(self) -> None:
         results = self.core.normalize(
             (
