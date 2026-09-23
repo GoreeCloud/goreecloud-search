@@ -8,6 +8,25 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from .models import ProviderDescriptor, ProviderOrigin
 from .providers import ResultCandidate
 
+_MAX_RESULT_TITLE_CHARS = 512
+_MAX_RESULT_SNIPPET_CHARS = 4096
+_BIDI_CONTROLS = frozenset(
+    {
+        "\u061c",
+        "\u200e",
+        "\u200f",
+        "\u202a",
+        "\u202b",
+        "\u202c",
+        "\u202d",
+        "\u202e",
+        "\u2066",
+        "\u2067",
+        "\u2068",
+        "\u2069",
+    }
+)
+
 _TRACKING_QUERY_KEYS = frozenset(
     {
         "dclid",
@@ -53,13 +72,41 @@ class NormalizedResult:
     provenance: tuple[ResultProvenance, ...]
 
 
+def _sanitize_result_text(
+    value: str,
+    *,
+    field: str,
+    max_chars: int,
+    allow_empty: bool,
+) -> str:
+    if not isinstance(value, str):
+        raise ResultNormalizationError(f"{field} must be text")
+
+    sanitized = "".join(
+        " "
+        if unicode_category(character) == "Cc" or character in _BIDI_CONTROLS
+        else character
+        for character in value
+    )
+    normalized = " ".join(sanitized.split())
+
+    if not normalized and not allow_empty:
+        raise ResultNormalizationError(f"{field} must contain visible text")
+    if len(normalized) > max_chars:
+        normalized = normalized[: max_chars - 1].rstrip() + "…"
+    return normalized
+
+
 def _safe_web_url_parts(url: str):
     if not isinstance(url, str):
         raise ResultNormalizationError("result URL must be text")
     raw = url.strip()
     if not raw or raw != url:
         raise ResultNormalizationError("result URL must not be empty or padded with whitespace")
-    if any(unicode_category(character) == "Cc" for character in raw):
+    if any(
+        unicode_category(character) == "Cc" or character in _BIDI_CONTROLS
+        for character in raw
+    ):
         raise ResultNormalizationError("result URL contains unsupported control characters")
 
     try:
@@ -139,6 +186,18 @@ def normalize_and_deduplicate(
             if candidate.canonical_url
             else result_url_canonical
         )
+        safe_title = _sanitize_result_text(
+            candidate.title,
+            field="result title",
+            max_chars=_MAX_RESULT_TITLE_CHARS,
+            allow_empty=False,
+        )
+        safe_snippet = _sanitize_result_text(
+            candidate.snippet,
+            field="result snippet",
+            max_chars=_MAX_RESULT_SNIPPET_CHARS,
+            allow_empty=True,
+        )
         content_hash = candidate.content_hash.casefold() if candidate.content_hash else None
 
         indexes = {
@@ -166,6 +225,8 @@ def normalize_and_deduplicate(
             groups.append(
                 {
                     "candidate": candidate,
+                    "title": safe_title,
+                    "snippet": safe_snippet,
                     "canonical": canonical,
                     "hash": content_hash,
                     "provenance": [provenance],
@@ -207,10 +268,14 @@ def normalize_and_deduplicate(
             continue
         candidate = group["candidate"]
         provenance = group["provenance"]
+        title = group["title"]
+        snippet = group["snippet"]
         canonical = group["canonical"]
         content_hash = group["hash"]
         assert isinstance(candidate, ResultCandidate)
         assert isinstance(provenance, list)
+        assert isinstance(title, str)
+        assert isinstance(snippet, str)
         assert isinstance(canonical, str)
         assert content_hash is None or isinstance(content_hash, str)
 
@@ -218,10 +283,10 @@ def normalize_and_deduplicate(
         normalized.append(
             NormalizedResult(
                 result_id=_result_id(canonical, content_hash),
-                title=candidate.title,
+                title=title,
                 url=candidate.url,
                 canonical_url=canonical,
-                snippet=candidate.snippet,
+                snippet=snippet,
                 published_at=candidate.published_at,
                 content_type=candidate.content_type,
                 language=candidate.language,
