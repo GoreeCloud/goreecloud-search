@@ -171,6 +171,7 @@ class IndexHTTPAPITests(unittest.TestCase):
             for extras in (
                 [("Content-Type", "application/json")],
                 [("Content-Length", str(len(body)))],
+                [("Content-Length", "9" * 5000)],
                 [("Transfer-Encoding", "chunked")],
             ):
                 with self.subTest(extras=extras):
@@ -346,7 +347,7 @@ class IndexHTTPAPITests(unittest.TestCase):
         self.assertEqual(0, external.calls)
 
     def test_query_control_characters_fail_closed_before_provider_execution(self) -> None:
-        for query in ("goreecloud\nmail", "goreecloud\tmail", "goreecloud\rmail", "goreecloud\x7fmail"):
+        for query in ("goreecloud\nmail", "goreecloud\tmail", "goreecloud\rmail", "goreecloud\x7fmail", "\ngoreecloud", "goreecloud\n", "\tgoreecloud", "goreecloud\r"):
             with self.subTest(query=repr(query)):
                 external = FakeProvider("external", ProviderOrigin.EXTERNAL)
                 core = SearchCore(provider_adapters=(external,))
