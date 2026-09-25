@@ -35,6 +35,13 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 ## Current native-line changelog
 
+### September 25, 2026 — Index HTTP request-boundary hardening
+
+- Reject ambiguous or duplicated Host, Content-Type, and Content-Length declarations, unsupported transfer framing, invalid explicit ports, overlarge length declarations, and Unicode control-bearing request values before authority or provider execution.
+- Unsupported HTTP methods cross the same Host allowlist boundary before their method response; HEAD preserves header-only response behavior.
+- Host allowlist startup configuration is validated fail-closed: whitespace/control-bearing entries, port-bearing values, malformed bracket syntax, and unusable entries are rejected, while valid IPv6 entries are normalized to the same identity used by request validation.
+- This remains Development source hardening. It does not establish live Identity or Privacy Shield transports, approved provider execution, deployment, Production Acceptance, Release Candidate, or Stable qualification.
+
 ### September 22, 2026 — Search repository identity and Index-query hardening accepted
 
 - PR #33 corrected the machine-readable repository identity to `GoreeCloud/search`; its merge established main `e6729dbb01d505d3f35a56b5bf9ebb9de9d608cb`.
