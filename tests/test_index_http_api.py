@@ -183,6 +183,36 @@ class IndexHTTPAPITests(unittest.TestCase):
                     self.assertEqual(421, status)
                     self.assertEqual("misdirected_request", payload["error"])
 
+    def test_unsupported_methods_validate_host_before_method_response(self) -> None:
+        provider = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier()
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(provider,))
+
+        with running_server(core, identity, privacy) as server:
+            for method in ("PUT", "DELETE", "PATCH", "OPTIONS", "TRACE"):
+                with self.subTest(method=method):
+                    bad_status, bad_payload = request_with_headers(
+                        server,
+                        method,
+                        "/api/v1/search",
+                        [("Host", "untrusted.invalid")],
+                    )
+                    self.assertEqual(421, bad_status)
+                    self.assertEqual("misdirected_request", bad_payload["error"])
+
+                    good_status, _, good_payload = request(
+                        server,
+                        method,
+                        "/api/v1/search",
+                    )
+                    self.assertEqual(405, good_status)
+                    self.assertEqual("method_not_allowed", good_payload["error"])
+
+        self.assertEqual([], identity.credentials)
+        self.assertEqual([], privacy.requests)
+        self.assertEqual(0, provider.calls)
+
     def test_ambiguous_json_and_length_headers_fail_before_authentication(self) -> None:
         provider = FakeProvider("external", ProviderOrigin.EXTERNAL)
         identity = IdentityVerifier()
