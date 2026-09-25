@@ -1,7 +1,7 @@
 # GoreeCloud Search — Planned Features
 
 **Record type:** Repository planned/open feature inventory  
-**Repository:** `GoreeCloud/goreecloud-search`  
+**Repository:** `GoreeCloud/search`  
 **Lifecycle:** Development / nonconformant  
 **Repository version:** `0.1.0.dev14`  
 **Migration state:** Authoritative repository record on protected `main`; legacy Drive feature/changelog sources retired and independently verified absent on September 22, 2026.  
@@ -19,7 +19,7 @@ This file carries forward every material open, partial, deferred, blocked, accep
 
 The Drive planned-capabilities record was broad product-direction history. Where it conflicted with newer verified repository state, current repository evidence controls current disposition while the historical scope is preserved here. That Drive file was deleted only after the repository migration merged, authoritative `main` readback succeeded, the retired root files were confirmed absent, and exact-main CI/Platform Contract validation passed; independent Drive readback now returns 404 for the retired ID.
 
-Draft PR #29 (`security/reject-search-control-characters-20260921`) is a separate candidate. Its passing checks do not make its control-character hardening implemented on current `main`.
+Historical Draft PR #29 remains unmerged provenance; equivalent query-control hardening was replayed and accepted on current `main` through PR #34 (`66ff984b8dd79624a739ab6117c42a572dc44475`).
 
 ## Priority open obligations
 
@@ -38,7 +38,7 @@ Draft PR #29 (`security/reject-search-control-characters-20260921`) is a separat
 - Complete SafeSearch/content-policy hooks and administrator policy enforcement.
 - Expand transparent ranking signals only when they remain inspectable, reproducible, privacy-preserving, and evidence-backed.
 - Expand “Why this result?” explanations and source/provenance presentation.
-- Add richer canonicalization/duplicate relationships where supported by authoritative Index/provider evidence.
+- Continue richer canonicalization/duplicate relationships where supported by authoritative Index/provider evidence. The central normalization boundary now separately validates the provider's actual open URL so a safe canonical alias cannot launder credential-bearing targets or raw whitespace/control/format/backslash ambiguity; it canonicalizes valid internationalized DNS hosts to ASCII A-label form, rejects invalid DNS labels, IPv6 zone identifiers, and ambiguous numeric host forms, accepts only canonical four-octet decimal IPv4, and bounds/sanitizes provider title/snippet display text before ranking or presentation.
 - Define caching/freshness behavior, invalidation, staleness indicators, and query/result cache privacy controls.
 
 ### P0 — Federated provider system
