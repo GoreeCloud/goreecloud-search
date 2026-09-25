@@ -38,7 +38,7 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 ### September 23, 2026 — Bounded local snippet-generation source foundation
 
 - Added a local-only, query-aware snippet generator for already-authorized plain text.
-- Capped source processing at 32 KiB and output at 280 characters, with normalized-window offsets and source-truncation evidence.
+- Capped source processing at 32,768 Unicode characters and output at 280 characters, with normalized-window offsets and source-truncation evidence.
 - Removed C0/C1 and bidirectional formatting controls before snippet presentation.
 - Added regression coverage for query-focused selection, leading-sentence fallback, bounds, sanitization, empty input, and invalid limits.
 - This source foundation does not fetch content, add a provider, expose a user-facing Search UI, or establish production/runtime acceptance.
