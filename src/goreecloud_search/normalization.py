@@ -143,8 +143,12 @@ def canonicalize_url(url: str) -> str:
     except ValueError as exc:
         raise ResultNormalizationError(f"invalid result URL port: {url!r}") from exc
 
+    if port == 0:
+        raise ResultNormalizationError("result URL port 0 is not accepted")
+
     default_port = (scheme == "http" and port == 80) or (scheme == "https" and port == 443)
-    netloc = host if port is None or default_port else f"{host}:{port}"
+    host_for_netloc = f"[{host}]" if ":" in host else host
+    netloc = host_for_netloc if port is None or default_port else f"{host_for_netloc}:{port}"
 
     filtered_query: list[tuple[str, str]] = []
     for key, value in parse_qsl(parts.query, keep_blank_values=True):
