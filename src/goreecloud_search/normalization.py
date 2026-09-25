@@ -104,10 +104,14 @@ def _safe_web_url_parts(url: str):
     if not raw or raw != url:
         raise ResultNormalizationError("result URL must not be empty or padded with whitespace")
     if any(
-        unicode_category(character) == "Cc" or character in _BIDI_CONTROLS
+        character.isspace()
+        or unicode_category(character) in {"Cc", "Cf"}
+        or character == "\\"
         for character in raw
     ):
-        raise ResultNormalizationError("result URL contains unsupported control characters")
+        raise ResultNormalizationError(
+            "result URL contains unsupported whitespace, control, format, or backslash characters"
+        )
 
     try:
         parts = urlsplit(raw)
