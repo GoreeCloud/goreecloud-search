@@ -94,8 +94,29 @@ class PrivacyCapabilityVerifier(Protocol):
         ...
 
 
+_BIDI_FORMAT_CONTROLS = frozenset(
+    {
+        "\u061c",
+        "\u200e",
+        "\u200f",
+        "\u202a",
+        "\u202b",
+        "\u202c",
+        "\u202d",
+        "\u202e",
+        "\u2066",
+        "\u2067",
+        "\u2068",
+        "\u2069",
+    }
+)
+
+
 def _contains_unicode_control(value: str) -> bool:
-    return any(unicode_category(char) == "Cc" for char in value)
+    return any(
+        unicode_category(char) == "Cc" or char in _BIDI_FORMAT_CONTROLS
+        for char in value
+    )
 
 
 def _is_bounded_opaque(value: str, *, prefix: str | None, maximum: int) -> bool:
@@ -426,8 +447,9 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         if not isinstance(query, str):
             raise IndexHTTPBoundaryError("query must be a string")
         # Reject original untrusted text before normalization. Unicode Cc
-        # includes C0, DEL/C1 and other control code points that must not be
-        # accepted merely because they survive whitespace normalization.
+        # includes C0 and DEL/C1 controls; explicit bidi-format controls are
+        # also rejected so untrusted query text cannot visually reorder later
+        # presentation merely because it survives whitespace normalization.
         if _contains_unicode_control(query):
             raise IndexHTTPBoundaryError("query contains unsupported control characters")
         query = query.strip()
