@@ -86,7 +86,7 @@ The current line remains Development/nonconformant. The host-supplied authority-
 
 - Enriched result candidates with canonical URL, source ID, content hash, language, crawl timestamp, and provider-contract provenance.
 - Conservative URL canonicalization.
-- Central result normalization validates the actual provider result/open URL even when a separate canonical identity is supplied, rejecting credential-bearing, raw control-bearing, and bidirectional-formatting-bearing HTTP(S) targets before they can survive into normalized user-facing results.
+- Central result normalization validates the actual provider result/open URL even when a separate canonical identity is supplied, rejecting credential-bearing HTTP(S) targets plus raw whitespace, control/format characters, bidirectional formatting, and backslashes before they can survive into normalized user-facing results.
 - Provider result titles and snippets are normalized before ranking/presentation: C0/C1 controls and Unicode bidirectional formatting controls are removed, whitespace is collapsed, titles/snippets are bounded to 512/4096 characters, and titles that become empty fail closed.
 - Canonical-URL and content-hash deduplication.
 - Multi-provider source-agreement counts and provenance aggregation.
