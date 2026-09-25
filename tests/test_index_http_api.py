@@ -142,10 +142,13 @@ class IndexHTTPAPITests(unittest.TestCase):
             PrivacyVerifier(),
             host="127.0.0.1",
             port=0,
-            allowed_hosts=(" LOCALHOST. ", "[::1]"),
+            allowed_hosts=(" LOCALHOST. ", "[::1]", "BÜCHER.example.", "127.0.0.1"),
         )
         try:
-            self.assertEqual(frozenset({"localhost", "::1"}), server.allowed_hosts)
+            self.assertEqual(
+                frozenset({"localhost", "::1", "xn--bcher-kva.example", "127.0.0.1"}),
+                server.allowed_hosts,
+            )
         finally:
             server.server_close()
 
@@ -158,6 +161,13 @@ class IndexHTTPAPITests(unittest.TestCase):
             ("[localhost]",),
             ("local host",),
             ("local\u202ehost",),
+            ("exa_mple.com",),
+            ("-example.com",),
+            ("example-.com",),
+            ("127.1",),
+            ("2130706433",),
+            ("0177.0.0.1",),
+            ("0x7f.0.0.1",),
         ):
             with self.subTest(invalid_hosts=invalid_hosts):
                 with self.assertRaises(ValueError):
@@ -169,6 +179,33 @@ class IndexHTTPAPITests(unittest.TestCase):
                         port=0,
                         allowed_hosts=invalid_hosts,
                     )
+
+    def test_unicode_allowed_host_matches_ascii_alabel_request_authority(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+        server = create_index_http_server(
+            core,
+            IdentityVerifier(),
+            PrivacyVerifier(),
+            host="127.0.0.1",
+            port=0,
+            allowed_hosts=("bücher.example",),
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            status, payload = request_with_headers(
+                server,
+                "GET",
+                "/healthz",
+                [("Host", "xn--bcher-kva.example")],
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+        self.assertEqual(200, status)
+        self.assertEqual("ok", payload["status"])
 
     def test_duplicate_and_malformed_host_authorities_fail_closed(self) -> None:
         core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
