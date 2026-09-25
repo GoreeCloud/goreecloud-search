@@ -39,7 +39,7 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 - Reject ambiguous or duplicated Host, Content-Type, and Content-Length declarations, unsupported transfer framing, invalid explicit ports, overlarge length declarations, Unicode C0/C1 controls, and Unicode bidirectional-formatting controls before authority or provider execution.
 - Unsupported HTTP methods cross the same Host allowlist boundary before their method response; HEAD preserves header-only response behavior.
-- Host allowlist startup configuration is validated fail-closed: whitespace/control-bearing entries, port-bearing values, malformed bracket syntax, and unusable entries are rejected, while valid IPv6 entries are normalized to the same identity used by request validation.
+- Host allowlist startup configuration and incoming non-IPv6 Host authorities now share one fail-closed identity boundary: valid internationalized DNS names canonicalize to ASCII A-labels, canonical four-octet decimal IPv4 is accepted, valid IPv6 normalizes canonically, and invalid DNS labels, shortened/integer/octal-like/hexadecimal numeric IPv4 forms, whitespace/control-bearing entries, port-bearing configured values, malformed bracket syntax, and unusable authorities are rejected.
 - This remains Development source hardening. It does not establish live Identity or Privacy Shield transports, approved provider execution, deployment, Production Acceptance, Release Candidate, or Stable qualification.
 
 ### September 22, 2026 — Search repository identity and Index-query hardening accepted
