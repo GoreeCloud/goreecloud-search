@@ -47,6 +47,16 @@ class NormalizationTests(unittest.TestCase):
         with self.assertRaises(ResultNormalizationError):
             canonicalize_url("https://example.com/invoice\u202efdp.exe")
 
+    def test_raw_whitespace_format_and_backslash_result_urls_are_rejected(self) -> None:
+        for url in (
+            "https://example.com/a b",
+            "https://example.com/\u200bhidden",
+            "https://example.com\\evil.com/path",
+        ):
+            with self.subTest(url=repr(url)):
+                with self.assertRaises(ResultNormalizationError):
+                    canonicalize_url(url)
+
     def test_safe_canonical_alias_cannot_launder_unsafe_open_url(self) -> None:
         with self.assertRaises(ResultNormalizationError):
             self.core.normalize(
