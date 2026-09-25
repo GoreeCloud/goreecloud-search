@@ -234,6 +234,47 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_method_not_allowed(self, *, write_body: bool = True) -> None:
+        if not self._host_allowed():
+            if write_body:
+                self._send_json(421, {"error": "misdirected_request"})
+            else:
+                body = json.dumps(
+                    {"error": "misdirected_request"},
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
+                ).encode("utf-8")
+                self.send_response(421)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+                self.send_header("Referrer-Policy", "no-referrer")
+                self.send_header("X-Content-Type-Options", "nosniff")
+                self.send_header("X-Frame-Options", "DENY")
+                self.end_headers()
+            return
+
+        if write_body:
+            self._send_json(405, {"error": "method_not_allowed"})
+        else:
+            body = json.dumps(
+                {"error": "method_not_allowed"},
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            ).encode("utf-8")
+            self.send_response(405)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.end_headers()
+
     def _normalized_host(self) -> str:
         # Do not trust the first of multiple Host headers or silently discard an
         # invalid port: proxy and application routing must see one authority.
@@ -474,10 +515,25 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
         )
 
     def do_PUT(self) -> None:
-        self._send_json(405, {"error": "method_not_allowed"})
+        self._send_method_not_allowed()
 
     def do_DELETE(self) -> None:
-        self._send_json(405, {"error": "method_not_allowed"})
+        self._send_method_not_allowed()
+
+    def do_PATCH(self) -> None:
+        self._send_method_not_allowed()
+
+    def do_OPTIONS(self) -> None:
+        self._send_method_not_allowed()
+
+    def do_TRACE(self) -> None:
+        self._send_method_not_allowed()
+
+    def do_CONNECT(self) -> None:
+        self._send_method_not_allowed()
+
+    def do_HEAD(self) -> None:
+        self._send_method_not_allowed(write_body=False)
 
 
 def create_index_http_server(
