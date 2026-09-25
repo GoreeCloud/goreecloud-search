@@ -75,7 +75,7 @@ The current line remains Development/nonconformant. The host-supplied authority-
 
 - Bounded server-side endpoints `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`.
 - Strict JSON/body/request bounds for the Index delegation carrier, including duplicate/ambiguous authority and framing rejection, valid explicit-port enforcement, transfer-framing rejection, bounded body declarations, and rejection of Unicode C0/C1 plus bidirectional-formatting controls before authentication/provider execution.
-- Host allowlist configuration is normalized and validated fail-closed at server startup, including IPv6 normalization and rejection of empty, whitespace/control-bearing, port-bearing, malformed, or otherwise unusable authority entries.
+- Host allowlist configuration is normalized and validated fail-closed at server startup: valid internationalized DNS names canonicalize to ASCII A-labels, IPv4 is accepted only in canonical four-octet decimal form, IPv6 normalizes canonically, and empty, whitespace/control-bearing, port-bearing, invalid-DNS, ambiguous numeric, malformed, or otherwise unusable authority entries are rejected. Incoming non-IPv6 Host authorities use the same DNS/IPv4 identity rules.
 - Injected GoreeCloud Identity bearer/requester verification requiring the expected `goreecloud-index` caller identity before query dispatch.
 - Injected Privacy Shield opaque capability-reference verification and consumption before provider execution.
 - Generic fail-closed authorization errors that do not disclose verifier internals.
