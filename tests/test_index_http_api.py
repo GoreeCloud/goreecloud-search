@@ -134,6 +134,31 @@ def request_with_headers(server, method: str, path: str, headers: list[tuple[str
 
 
 class IndexHTTPAPITests(unittest.TestCase):
+    def test_allowed_host_configuration_normalizes_and_rejects_empty_values(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+        server = create_index_http_server(
+            core,
+            IdentityVerifier(),
+            PrivacyVerifier(),
+            host="127.0.0.1",
+            port=0,
+            allowed_hosts=(" LOCALHOST. ",),
+        )
+        try:
+            self.assertEqual(frozenset({"localhost"}), server.allowed_hosts)
+        finally:
+            server.server_close()
+
+        with self.assertRaises(ValueError):
+            create_index_http_server(
+                core,
+                IdentityVerifier(),
+                PrivacyVerifier(),
+                host="127.0.0.1",
+                port=0,
+                allowed_hosts=(" ", ".", "..."),
+            )
+
     def test_duplicate_and_malformed_host_authorities_fail_closed(self) -> None:
         core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
         with running_server(core) as server:
