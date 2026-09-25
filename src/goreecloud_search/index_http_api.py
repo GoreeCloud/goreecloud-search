@@ -183,9 +183,13 @@ class SearchIndexHTTPServer(ThreadingHTTPServer):
         allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "search.goreecloud.com"),
         authority_transports_ready: bool = False,
     ) -> None:
-        normalized_hosts = frozenset(item.casefold().rstrip(".") for item in allowed_hosts if item.strip())
+        normalized_hosts = frozenset(
+            normalized
+            for item in allowed_hosts
+            if (normalized := item.strip().casefold().rstrip("."))
+        )
         if not normalized_hosts:
-            raise ValueError("allowed_hosts must not be empty")
+            raise ValueError("allowed_hosts must contain at least one usable host")
         self.search_core = core
         self.identity_verifier = identity_verifier
         self.privacy_verifier = privacy_verifier
