@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from hashlib import sha256
+from ipaddress import AddressValueError, IPv4Address, IPv6Address
 from unicodedata import category as unicode_category
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -126,6 +127,74 @@ def _safe_web_url_parts(url: str):
     return raw, parts, host
 
 
+def _looks_like_numeric_ipv4(host: str) -> bool:
+    labels = host.split(".")
+    if not 1 <= len(labels) <= 4:
+        return False
+
+    def numeric_label(label: str) -> bool:
+        if label.isdecimal():
+            return True
+        lowered = label.casefold()
+        return (
+            lowered.startswith("0x")
+            and len(lowered) > 2
+            and all(character in "0123456789abcdef" for character in lowered[2:])
+        )
+
+    return all(numeric_label(label) for label in labels)
+
+
+def _canonicalize_web_host(host: str) -> str:
+    # Zone identifiers are machine-local routing details and are not portable
+    # result identities. Percent-encoded host ambiguity is rejected with them.
+    if "%" in host:
+        raise ResultNormalizationError("result URL host contains unsupported percent/zone syntax")
+
+    if ":" in host:
+        try:
+            return str(IPv6Address(host)).casefold()
+        except AddressValueError as exc:
+            raise ResultNormalizationError("result URL contains invalid IPv6 host syntax") from exc
+
+    source_host = host.rstrip(".")
+    if not source_host:
+        raise ResultNormalizationError("result URL host must not be empty")
+
+    try:
+        ascii_host = source_host.encode("idna").decode("ascii").casefold()
+    except UnicodeError as exc:
+        raise ResultNormalizationError("result URL host cannot be represented as a valid IDN") from exc
+
+    if len(ascii_host) > 253:
+        raise ResultNormalizationError("result URL host is too long")
+
+    labels = ascii_host.split(".")
+    if any(
+        not label
+        or len(label) > 63
+        or label.startswith("-")
+        or label.endswith("-")
+        or any(not (character.isascii() and (character.isalnum() or character == "-")) for character in label)
+        for label in labels
+    ):
+        raise ResultNormalizationError("result URL host contains invalid DNS label syntax")
+
+    # WHATWG/browser URL stacks may reinterpret shortened, integer, octal-like,
+    # or hexadecimal numeric forms as IPv4. Accept only canonical four-octet
+    # decimal IPv4 so Search cannot display one host identity and open another.
+    if _looks_like_numeric_ipv4(ascii_host):
+        try:
+            canonical_ipv4 = str(IPv4Address(ascii_host))
+        except AddressValueError as exc:
+            raise ResultNormalizationError("result URL contains ambiguous numeric host syntax") from exc
+        if ascii_host != canonical_ipv4:
+            raise ResultNormalizationError("result URL contains non-canonical IPv4 syntax")
+        return canonical_ipv4
+
+    return ascii_host
+
+
 def canonicalize_url(url: str) -> str:
     """Return a conservative canonical URL suitable for result identity.
 
@@ -137,7 +206,7 @@ def canonicalize_url(url: str) -> str:
     raw, parts, parsed_host = _safe_web_url_parts(url)
 
     scheme = parts.scheme.casefold()
-    host = parsed_host.casefold().rstrip(".")
+    host = _canonicalize_web_host(parsed_host)
     try:
         port = parts.port
     except ValueError as exc:
