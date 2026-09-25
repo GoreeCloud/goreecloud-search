@@ -37,7 +37,7 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 ### September 25, 2026 — Index HTTP request-boundary hardening
 
-- Reject ambiguous or duplicated Host, Content-Type, and Content-Length declarations, unsupported transfer framing, invalid explicit ports, overlarge length declarations, and Unicode control-bearing request values before authority or provider execution.
+- Reject ambiguous or duplicated Host, Content-Type, and Content-Length declarations, unsupported transfer framing, invalid explicit ports, overlarge length declarations, Unicode C0/C1 controls, and Unicode bidirectional-formatting controls before authority or provider execution.
 - Unsupported HTTP methods cross the same Host allowlist boundary before their method response; HEAD preserves header-only response behavior.
 - Host allowlist startup configuration is validated fail-closed: whitespace/control-bearing entries, port-bearing values, malformed bracket syntax, and unusable entries are rejected, while valid IPv6 entries are normalized to the same identity used by request validation.
 - This remains Development source hardening. It does not establish live Identity or Privacy Shield transports, approved provider execution, deployment, Production Acceptance, Release Candidate, or Stable qualification.
