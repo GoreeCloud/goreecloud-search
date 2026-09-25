@@ -39,9 +39,10 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 - Central normalization now validates the provider's actual result/open URL even when a separate canonical URL is supplied.
 - Credential-bearing HTTP(S) targets and explicit port 0 are rejected rather than normalized into an unsafe or unusable identity; valid IPv6 authorities retain their required brackets when the canonical URL is reconstructed.
-- Raw whitespace, Unicode control/format characters, bidirectional-formatting characters, and backslashes are rejected before URL parsing can normalize, reinterpret, or discard them.
+- Raw whitespace, Unicode control/format characters, bidirectional-formatting characters, backslashes, invalid DNS labels, IPv6 zone identifiers, and ambiguous numeric host forms are rejected before URL parsing or a downstream browser can normalize, reinterpret, or discard them.
+- Valid internationalized DNS hosts are canonicalized to deterministic ASCII A-label form, while IPv4 is accepted only in canonical four-octet decimal form.
 - Provider titles/snippets are sanitized before normalized-result ranking/presentation: controls and bidi formatting are removed, whitespace is collapsed, title/snippet lengths are capped at 512/4096 characters, and empty-after-sanitization titles fail closed.
-- Added regression coverage for direct credential-bearing URLs, control/bidi-bearing URLs, unsafe-open-URL laundering through a safe canonical alias, display-text sanitization, output bounds, and empty-title rejection.
+- Added regression coverage for direct credential-bearing URLs, control/bidi-bearing URLs, unsafe-open-URL laundering through a safe canonical alias, IDN A-label canonicalization, canonical/ambiguous numeric hosts, invalid DNS/IPv6-zone hosts, display-text sanitization, output bounds, and empty-title rejection.
 - This remains Development source hardening and does not add a provider, authorize content retrieval, deploy Search, or establish Production/RC/Stable status.
 
 ### September 22, 2026 — Repository migration accepted and legacy Drive sources retired
