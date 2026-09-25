@@ -74,7 +74,8 @@ The current line remains Development/nonconformant. The host-supplied authority-
 ### Authenticated Index HTTP source boundary
 
 - Bounded server-side endpoints `/api/v1/status`, `/api/v1/search`, `/healthz`, and `/readyz`.
-- Strict JSON/body/request bounds for the Index delegation carrier, including accepted C0 and DEL query rejection before authentication/provider execution on current `main`.
+- Strict JSON/body/request bounds for the Index delegation carrier, including duplicate/ambiguous authority and framing rejection, valid explicit-port enforcement, transfer-framing rejection, bounded body declarations, and Unicode control rejection before authentication/provider execution.
+- Host allowlist configuration is normalized and validated fail-closed at server startup, including IPv6 normalization and rejection of empty, whitespace/control-bearing, port-bearing, malformed, or otherwise unusable authority entries.
 - Injected GoreeCloud Identity bearer/requester verification requiring the expected `goreecloud-index` caller identity before query dispatch.
 - Injected Privacy Shield opaque capability-reference verification and consumption before provider execution.
 - Generic fail-closed authorization errors that do not disclose verifier internals.
