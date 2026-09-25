@@ -35,6 +35,20 @@ class NormalizationTests(unittest.TestCase):
             "https://example.com/path?a=1",
         )
 
+    def test_ipv6_result_url_preserves_brackets_and_default_port_semantics(self) -> None:
+        self.assertEqual(
+            "https://[2001:db8::1]/path",
+            canonicalize_url("https://[2001:db8::1]:443/path"),
+        )
+        self.assertEqual(
+            "http://[2001:db8::1]:8080/path",
+            canonicalize_url("http://[2001:db8::1]:8080/path"),
+        )
+
+    def test_result_url_port_zero_is_rejected(self) -> None:
+        with self.assertRaises(ResultNormalizationError):
+            canonicalize_url("https://example.com:0/path")
+
     def test_credential_bearing_result_url_is_rejected(self) -> None:
         with self.assertRaises(ResultNormalizationError):
             canonicalize_url("https://user:pass@example.com/private")
