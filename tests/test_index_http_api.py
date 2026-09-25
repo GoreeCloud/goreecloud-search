@@ -119,7 +119,178 @@ def request(server, method: str, path: str, *, headers=None, body: bytes | None 
         connection.close()
 
 
+def request_with_headers(server, method: str, path: str, headers: list[tuple[str, str]], body: bytes = b""):
+    connection = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=2)
+    try:
+        connection.putrequest(method, path, skip_host=True)
+        for name, value in headers:
+            connection.putheader(name, value)
+        connection.endheaders(body)
+        response = connection.getresponse()
+        payload = json.loads(response.read().decode("utf-8"))
+        return response.status, payload
+    finally:
+        connection.close()
+
+
 class IndexHTTPAPITests(unittest.TestCase):
+    def test_allowed_host_configuration_normalizes_and_rejects_empty_values(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+        server = create_index_http_server(
+            core,
+            IdentityVerifier(),
+            PrivacyVerifier(),
+            host="127.0.0.1",
+            port=0,
+            allowed_hosts=(" LOCALHOST. ", "[::1]", "BÜCHER.example.", "127.0.0.1"),
+        )
+        try:
+            self.assertEqual(
+                frozenset({"localhost", "::1", "xn--bcher-kva.example", "127.0.0.1"}),
+                server.allowed_hosts,
+            )
+        finally:
+            server.server_close()
+
+        for invalid_hosts in (
+            (),
+            (" ",),
+            (".",),
+            ("...",),
+            ("localhost:443",),
+            ("[localhost]",),
+            ("local host",),
+            ("local\u202ehost",),
+            ("exa_mple.com",),
+            ("-example.com",),
+            ("example-.com",),
+            ("127.1",),
+            ("2130706433",),
+            ("0177.0.0.1",),
+            ("0x7f.0.0.1",),
+        ):
+            with self.subTest(invalid_hosts=invalid_hosts):
+                with self.assertRaises(ValueError):
+                    create_index_http_server(
+                        core,
+                        IdentityVerifier(),
+                        PrivacyVerifier(),
+                        host="127.0.0.1",
+                        port=0,
+                        allowed_hosts=invalid_hosts,
+                    )
+
+    def test_unicode_allowed_host_matches_ascii_alabel_request_authority(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+        server = create_index_http_server(
+            core,
+            IdentityVerifier(),
+            PrivacyVerifier(),
+            host="127.0.0.1",
+            port=0,
+            allowed_hosts=("bücher.example",),
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            status, payload = request_with_headers(
+                server,
+                "GET",
+                "/healthz",
+                [("Host", "xn--bcher-kva.example")],
+            )
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
+        self.assertEqual(200, status)
+        self.assertEqual("ok", payload["status"])
+
+    def test_duplicate_and_malformed_host_authorities_fail_closed(self) -> None:
+        core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
+        with running_server(core) as server:
+            for hosts in (
+                ["127.0.0.1", "localhost"],
+                ["localhost:invalid"],
+                ["localhost:65536"],
+                ["localhost:80:extra"],
+                ["localhost@untrusted.invalid"],
+                ["[127.0.0.1]"],
+                ["[localhost]"],
+                ["[search.goreecloud.com]"],
+                ["[::1]]"],
+            ):
+                with self.subTest(hosts=hosts):
+                    status, payload = request_with_headers(
+                        server,
+                        "GET",
+                        "/healthz",
+                        [("Host", host) for host in hosts],
+                    )
+                    self.assertEqual(421, status)
+                    self.assertEqual("misdirected_request", payload["error"])
+
+    def test_unsupported_methods_validate_host_before_method_response(self) -> None:
+        provider = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier()
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(provider,))
+
+        with running_server(core, identity, privacy) as server:
+            for method in ("PUT", "DELETE", "PATCH", "OPTIONS", "TRACE"):
+                with self.subTest(method=method):
+                    bad_status, bad_payload = request_with_headers(
+                        server,
+                        method,
+                        "/api/v1/search",
+                        [("Host", "untrusted.invalid")],
+                    )
+                    self.assertEqual(421, bad_status)
+                    self.assertEqual("misdirected_request", bad_payload["error"])
+
+                    good_status, _, good_payload = request(
+                        server,
+                        method,
+                        "/api/v1/search",
+                    )
+                    self.assertEqual(405, good_status)
+                    self.assertEqual("method_not_allowed", good_payload["error"])
+
+        self.assertEqual([], identity.credentials)
+        self.assertEqual([], privacy.requests)
+        self.assertEqual(0, provider.calls)
+
+    def test_ambiguous_json_and_length_headers_fail_before_authentication(self) -> None:
+        provider = FakeProvider("external", ProviderOrigin.EXTERNAL)
+        identity = IdentityVerifier()
+        privacy = PrivacyVerifier()
+        core = SearchCore(provider_adapters=(provider,))
+        body = json.dumps({"query": "goreecloud", "category": "general", "limit": 1}).encode()
+        required = [
+            ("Host", "127.0.0.1"),
+            ("Content-Type", "application/json"),
+            ("Content-Length", str(len(body))),
+            ("Authorization", "Bearer identity_test_token"),
+            ("X-GoreeCloud-Privacy-Capability", "psc_test_reference"),
+        ]
+        with running_server(core, identity, privacy) as server:
+            for extras in (
+                [("Content-Type", "application/json")],
+                [("Content-Length", str(len(body)))],
+                [("Content-Length", "9" * 5000)],
+                [("Transfer-Encoding", "chunked")],
+            ):
+                with self.subTest(extras=extras):
+                    status, payload = request_with_headers(
+                        server, "POST", "/api/v1/search", required + extras, body
+                    )
+                    self.assertEqual(400, status)
+                    self.assertEqual("invalid_search_request", payload["error"])
+        self.assertEqual([], identity.credentials)
+        self.assertEqual([], privacy.requests)
+        self.assertEqual(0, provider.calls)
+
     def test_capability_is_production_shaped_but_not_production_accepted(self) -> None:
         record = capability_record()
 
@@ -283,7 +454,22 @@ class IndexHTTPAPITests(unittest.TestCase):
         self.assertEqual(0, external.calls)
 
     def test_query_control_characters_fail_closed_before_provider_execution(self) -> None:
-        for query in ("goreecloud\nmail", "goreecloud\tmail", "goreecloud\rmail", "goreecloud\x7fmail"):
+        for query in (
+            "goreecloud\nmail",
+            "goreecloud\tmail",
+            "goreecloud\rmail",
+            "goreecloud\x7fmail",
+            "goreecloud\u0085mail",
+            "goreecloud\u009fmail",
+            "goreecloud\u061cmail",
+            "goreecloud\u202email",
+            "goreecloud\u2066mail",
+            "\ngoreecloud",
+            "goreecloud\n",
+            "\tgoreecloud",
+            "goreecloud\r",
+            "\u0085goreecloud",
+        ):
             with self.subTest(query=repr(query)):
                 external = FakeProvider("external", ProviderOrigin.EXTERNAL)
                 core = SearchCore(provider_adapters=(external,))
