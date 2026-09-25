@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from ipaddress import AddressValueError, IPv6Address
+from ipaddress import AddressValueError, IPv4Address, IPv6Address
 import json
 from typing import Any, Protocol
 from unicodedata import category as unicode_category
@@ -139,6 +139,62 @@ def _valid_capability_reference(value: str) -> bool:
     return all(not char.isspace() for char in value) and not _contains_unicode_control(value)
 
 
+def _looks_like_numeric_ipv4(host: str) -> bool:
+    labels = host.split(".")
+    if not 1 <= len(labels) <= 4:
+        return False
+
+    def numeric_label(label: str) -> bool:
+        if label.isdecimal():
+            return True
+        lowered = label.casefold()
+        return (
+            lowered.startswith("0x")
+            and len(lowered) > 2
+            and all(character in "0123456789abcdef" for character in lowered[2:])
+        )
+
+    return all(numeric_label(label) for label in labels)
+
+
+def _normalize_dns_or_ipv4_host(value: str) -> str:
+    source = value.rstrip(".")
+    if not source:
+        raise ValueError("host must contain a usable DNS or IPv4 identity")
+    try:
+        normalized = source.encode("idna").decode("ascii").casefold()
+    except UnicodeError as exc:
+        raise ValueError("host cannot be represented as a valid IDN") from exc
+
+    if len(normalized) > 253:
+        raise ValueError("host exceeds the DNS length limit")
+
+    labels = normalized.split(".")
+    if any(
+        not label
+        or len(label) > 63
+        or label.startswith("-")
+        or label.endswith("-")
+        or any(
+            not (character.isascii() and (character.isalnum() or character == "-"))
+            for character in label
+        )
+        for label in labels
+    ):
+        raise ValueError("host contains invalid DNS label syntax")
+
+    if _looks_like_numeric_ipv4(normalized):
+        try:
+            canonical_ipv4 = str(IPv4Address(normalized))
+        except AddressValueError as exc:
+            raise ValueError("host contains ambiguous numeric IPv4 syntax") from exc
+        if normalized != canonical_ipv4:
+            raise ValueError("host contains non-canonical IPv4 syntax")
+        return canonical_ipv4
+
+    return normalized
+
+
 def _normalize_allowed_host(value: str) -> str:
     raw = value.strip()
     if not raw or any(char.isspace() for char in raw) or _contains_unicode_control(raw):
@@ -161,10 +217,7 @@ def _normalize_allowed_host(value: str) -> str:
     if any(character in raw for character in "@[]/\\"):
         raise ValueError("allowed host contains unsupported authority syntax")
 
-    normalized = raw.casefold().rstrip(".")
-    if not normalized:
-        raise ValueError("allowed host must contain a usable host")
-    return normalized
+    return _normalize_dns_or_ipv4_host(raw)
 
 
 def _json_loads_strict(body: bytes) -> Any:
@@ -353,7 +406,10 @@ class _IndexRequestHandler(BaseHTTPRequestHandler):
             return ""
         if separator and not self._valid_port(port):
             return ""
-        return host.casefold().rstrip(".")
+        try:
+            return _normalize_dns_or_ipv4_host(host)
+        except ValueError:
+            return ""
 
     @staticmethod
     def _valid_port(value: str) -> bool:
