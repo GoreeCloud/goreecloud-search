@@ -39,7 +39,7 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 
 - Central normalization now validates the provider's actual result/open URL even when a separate canonical URL is supplied.
 - Credential-bearing HTTP(S) targets are rejected rather than normalized into a credential-free identity while leaving the unsafe open target intact.
-- Raw Unicode control-category and bidirectional-formatting characters are rejected before URL parsing can normalize or discard them.
+- Raw whitespace, Unicode control/format characters, bidirectional-formatting characters, and backslashes are rejected before URL parsing can normalize, reinterpret, or discard them.
 - Provider titles/snippets are sanitized before normalized-result ranking/presentation: controls and bidi formatting are removed, whitespace is collapsed, title/snippet lengths are capped at 512/4096 characters, and empty-after-sanitization titles fail closed.
 - Added regression coverage for direct credential-bearing URLs, control/bidi-bearing URLs, unsafe-open-URL laundering through a safe canonical alias, display-text sanitization, output bounds, and empty-title rejection.
 - This remains Development source hardening and does not add a provider, authorize content retrieval, deploy Search, or establish Production/RC/Stable status.
