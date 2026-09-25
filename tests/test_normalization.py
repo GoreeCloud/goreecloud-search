@@ -45,6 +45,40 @@ class NormalizationTests(unittest.TestCase):
             canonicalize_url("http://[2001:db8::1]:8080/path"),
         )
 
+    def test_internationalized_result_host_is_canonicalized_to_ascii_alabel(self) -> None:
+        self.assertEqual(
+            "https://xn--bcher-kva.example/path",
+            canonicalize_url("https://bücher.example/path"),
+        )
+
+    def test_canonical_ipv4_result_host_is_preserved(self) -> None:
+        self.assertEqual(
+            "https://127.0.0.1/path",
+            canonicalize_url("https://127.0.0.1/path"),
+        )
+
+    def test_ambiguous_numeric_result_hosts_fail_closed(self) -> None:
+        for url in (
+            "http://127.1/path",
+            "http://2130706433/path",
+            "http://0177.0.0.1/path",
+            "http://0x7f.0.0.1/path",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(ResultNormalizationError):
+                    canonicalize_url(url)
+
+    def test_invalid_dns_label_and_ipv6_zone_hosts_fail_closed(self) -> None:
+        for url in (
+            "https://exa_mple.com/path",
+            "https://-example.com/path",
+            "https://example-.com/path",
+            "https://[fe80::1%25eth0]/path",
+        ):
+            with self.subTest(url=url):
+                with self.assertRaises(ResultNormalizationError):
+                    canonicalize_url(url)
+
     def test_result_url_port_zero_is_rejected(self) -> None:
         with self.assertRaises(ResultNormalizationError):
             canonicalize_url("https://example.com:0/path")
