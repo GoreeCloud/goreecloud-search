@@ -97,7 +97,7 @@ The current line remains Development/nonconformant. The host-supplied authority-
 ### Bounded local snippet-generation foundation
 
 - Deterministic query-aware snippet generation for plain text the caller is already authorized to process.
-- Source processing is capped at 32 KiB and generated output is capped at 280 characters.
+- Source processing is capped at 32,768 Unicode characters and generated output is capped at 280 characters.
 - Query phrases/terms can focus the selected window; no-match generation prefers a complete leading sentence when it fits.
 - Generated evidence records normalized-source offsets, query-match state, and source-truncation state without retaining full source text.
 - C0/C1 controls and Unicode bidirectional formatting controls are removed from snippet presentation input.
