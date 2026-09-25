@@ -38,7 +38,7 @@ Those archives preserve the meaningful historical chronology of the retired Driv
 ### September 23, 2026 — Provider result URL boundary hardening
 
 - Central normalization now validates the provider's actual result/open URL even when a separate canonical URL is supplied.
-- Credential-bearing HTTP(S) targets are rejected rather than normalized into a credential-free identity while leaving the unsafe open target intact.
+- Credential-bearing HTTP(S) targets and explicit port 0 are rejected rather than normalized into an unsafe or unusable identity; valid IPv6 authorities retain their required brackets when the canonical URL is reconstructed.
 - Raw whitespace, Unicode control/format characters, bidirectional-formatting characters, and backslashes are rejected before URL parsing can normalize, reinterpret, or discard them.
 - Provider titles/snippets are sanitized before normalized-result ranking/presentation: controls and bidi formatting are removed, whitespace is collapsed, title/snippet lengths are capped at 512/4096 characters, and empty-after-sanitization titles fail closed.
 - Added regression coverage for direct credential-bearing URLs, control/bidi-bearing URLs, unsafe-open-URL laundering through a safe canonical alias, display-text sanitization, output bounds, and empty-title rejection.
