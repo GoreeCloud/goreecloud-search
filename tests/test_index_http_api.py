@@ -157,6 +157,7 @@ class IndexHTTPAPITests(unittest.TestCase):
             ("localhost:443",),
             ("[localhost]",),
             ("local host",),
+            ("local\u202ehost",),
         ):
             with self.subTest(invalid_hosts=invalid_hosts):
                 with self.assertRaises(ValueError):
@@ -423,6 +424,9 @@ class IndexHTTPAPITests(unittest.TestCase):
             "goreecloud\x7fmail",
             "goreecloud\u0085mail",
             "goreecloud\u009fmail",
+            "goreecloud\u061cmail",
+            "goreecloud\u202email",
+            "goreecloud\u2066mail",
             "\ngoreecloud",
             "goreecloud\n",
             "\tgoreecloud",
