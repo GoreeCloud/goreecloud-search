@@ -142,22 +142,32 @@ class IndexHTTPAPITests(unittest.TestCase):
             PrivacyVerifier(),
             host="127.0.0.1",
             port=0,
-            allowed_hosts=(" LOCALHOST. ",),
+            allowed_hosts=(" LOCALHOST. ", "[::1]"),
         )
         try:
-            self.assertEqual(frozenset({"localhost"}), server.allowed_hosts)
+            self.assertEqual(frozenset({"localhost", "::1"}), server.allowed_hosts)
         finally:
             server.server_close()
 
-        with self.assertRaises(ValueError):
-            create_index_http_server(
-                core,
-                IdentityVerifier(),
-                PrivacyVerifier(),
-                host="127.0.0.1",
-                port=0,
-                allowed_hosts=(" ", ".", "..."),
-            )
+        for invalid_hosts in (
+            (),
+            (" ",),
+            (".",),
+            ("...",),
+            ("localhost:443",),
+            ("[localhost]",),
+            ("local host",),
+        ):
+            with self.subTest(invalid_hosts=invalid_hosts):
+                with self.assertRaises(ValueError):
+                    create_index_http_server(
+                        core,
+                        IdentityVerifier(),
+                        PrivacyVerifier(),
+                        host="127.0.0.1",
+                        port=0,
+                        allowed_hosts=invalid_hosts,
+                    )
 
     def test_duplicate_and_malformed_host_authorities_fail_closed(self) -> None:
         core = SearchCore(provider_adapters=(FakeProvider("external", ProviderOrigin.EXTERNAL),))
