@@ -10,7 +10,7 @@ The two mapped legacy Drive feature/changelog sources were deleted only after th
 
 Historical Draft PR #29 is not itself accepted. Its bounded query-control hardening was independently replayed and merged through PR #34 on current `main`.
 
-The current HTTP-boundary candidate additionally validates Host framing and host-allowlist configuration fail-closed. Startup configuration rejects empty, malformed, whitespace/control-bearing, and port-bearing allowed-host entries and normalizes valid IPv6 literals to the same request-authority identity. This candidate remains unmerged Development work until exact-head validation and independent review are satisfied.
+The current HTTP-boundary candidate additionally validates Host framing and host-allowlist configuration fail-closed. Startup configuration rejects empty, malformed, whitespace/control-bearing, bidirectional-formatting-bearing, and port-bearing allowed-host entries and normalizes valid IPv6 literals to the same request-authority identity. Index-originated query text also rejects the Unicode Bidi_Control set in addition to C0/C1 controls so untrusted query presentation cannot be visually reordered by formatting controls. Ordinary Unicode shaping characters outside that narrow set are not rejected by this boundary. This candidate remains unmerged Development work until exact-head validation and independent review are satisfied.
 
 ## Design decisions
 
