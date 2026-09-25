@@ -67,6 +67,12 @@ class SnippetGenerationTests(unittest.TestCase):
         self.assertNotIn("\u2066", result.text)
         self.assertNotIn("\x00", result.text)
 
+    def test_ordinary_unicode_shaping_is_preserved(self) -> None:
+        source = "Family 👩‍💻 workflows remain readable."
+        result = generate_snippet(parse_query("family"), source)
+
+        self.assertIn("👩‍💻", result.text)
+
     def test_source_processing_is_capped_before_generation(self) -> None:
         query = parse_query("needle")
         source = "a" * MAX_SNIPPET_SOURCE_CHARS + " needle after the processing cap"
