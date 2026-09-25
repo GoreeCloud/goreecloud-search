@@ -118,6 +118,34 @@ def _valid_capability_reference(value: str) -> bool:
     return all(not char.isspace() for char in value) and not _contains_unicode_control(value)
 
 
+def _normalize_allowed_host(value: str) -> str:
+    raw = value.strip()
+    if not raw or any(char.isspace() for char in raw) or _contains_unicode_control(raw):
+        raise ValueError("allowed host is empty or contains unsupported whitespace/control characters")
+
+    if raw.startswith("["):
+        if not raw.endswith("]") or raw.count("[") != 1 or raw.count("]") != 1:
+            raise ValueError("bracketed allowed host must be a single IPv6 literal")
+        try:
+            return str(IPv6Address(raw[1:-1])).casefold()
+        except AddressValueError as exc:
+            raise ValueError("bracketed allowed host must contain valid IPv6") from exc
+
+    if ":" in raw:
+        try:
+            return str(IPv6Address(raw)).casefold()
+        except AddressValueError as exc:
+            raise ValueError("allowed host must not include a port or malformed IPv6") from exc
+
+    if any(character in raw for character in "@[]/\\"):
+        raise ValueError("allowed host contains unsupported authority syntax")
+
+    normalized = raw.casefold().rstrip(".")
+    if not normalized:
+        raise ValueError("allowed host must contain a usable host")
+    return normalized
+
+
 def _json_loads_strict(body: bytes) -> Any:
     def reject_constant(value: str) -> None:
         raise ValueError(f"unsupported JSON constant: {value}")
@@ -183,11 +211,7 @@ class SearchIndexHTTPServer(ThreadingHTTPServer):
         allowed_hosts: tuple[str, ...] = ("127.0.0.1", "localhost", "search.goreecloud.com"),
         authority_transports_ready: bool = False,
     ) -> None:
-        normalized_hosts = frozenset(
-            normalized
-            for item in allowed_hosts
-            if (normalized := item.strip().casefold().rstrip("."))
-        )
+        normalized_hosts = frozenset(_normalize_allowed_host(item) for item in allowed_hosts)
         if not normalized_hosts:
             raise ValueError("allowed_hosts must contain at least one usable host")
         self.search_core = core
